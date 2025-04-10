@@ -7,3 +7,5 @@ export * from './backtesting/signals';
 export * from './backtesting/performanceCalculator';
 export * from './backtesting/mockDataGenerator';
 export * from './backtesting/patterns';
+export * from './whaleTrackerService';
+export * from './marketInformationService';
