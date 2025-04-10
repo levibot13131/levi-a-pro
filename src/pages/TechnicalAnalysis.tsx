@@ -12,6 +12,11 @@ import PriceVolumeChart from '@/components/technical-analysis/PriceVolumeChart';
 import TechnicalIndicators from '@/components/technical-analysis/TechnicalIndicators';
 import AdvancedAnalysisMethods from '@/components/technical-analysis/AdvancedAnalysisMethods';
 import AlertSettings from '@/components/technical-analysis/AlertSettings';
+import WhaleTracker from '@/components/technical-analysis/WhaleTracker';
+import TradingLearningSystem from '@/components/technical-analysis/TradingLearningSystem';
+import AdvancedPricePatterns from '@/components/technical-analysis/AdvancedPricePatterns';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LineWobble, BarChart3, Brain } from 'lucide-react';
 
 const timeframeOptions = [
   { value: '5m', label: '5 דקות' },
@@ -27,6 +32,7 @@ const TechnicalAnalysis = () => {
   const [selectedTimeframe, setSelectedTimeframe] = useState<string>('1d');
   const [selectedAnalysisMethod, setSelectedAnalysisMethod] = useState<string>('all');
   const [showVolume, setShowVolume] = useState<boolean>(true);
+  const [selectedTab, setSelectedTab] = useState<string>("basic");
   
   // שליפת נתונים
   const { data: assets } = useQuery({
@@ -91,40 +97,86 @@ const TechnicalAnalysis = () => {
         </div>
       )}
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="lg:col-span-2">
-          {/* גרף מחיר ונפח */}
-          <PriceVolumeChart 
-            historyLoading={historyLoading}
-            assetHistory={assetHistory}
-            showVolume={showVolume}
-            setShowVolume={setShowVolume}
+      {/* לשוניות לניווט בין תצוגות שונות */}
+      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="mb-6">
+        <TabsList className="grid grid-cols-3 w-full max-w-md mx-auto">
+          <TabsTrigger value="basic" className="flex items-center gap-1">
+            <BarChart3 className="h-4 w-4" />
+            בסיסי
+          </TabsTrigger>
+          <TabsTrigger value="advanced" className="flex items-center gap-1">
+            <LineWobble className="h-4 w-4" />
+            מתקדם
+          </TabsTrigger>
+          <TabsTrigger value="smart" className="flex items-center gap-1">
+            <Brain className="h-4 w-4" />
+            חכם
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+      
+      {/* תוכן הלשוניות */}
+      <TabsContent value="basic" className="mt-0">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="lg:col-span-2">
+            {/* גרף מחיר ונפח */}
+            <PriceVolumeChart 
+              historyLoading={historyLoading}
+              assetHistory={assetHistory}
+              showVolume={showVolume}
+              setShowVolume={setShowVolume}
+              formatPrice={formatPrice}
+              analysisData={analysisData}
+            />
+            
+            {/* אינדיקטורים טכניים */}
+            <TechnicalIndicators 
+              analysisLoading={analysisLoading}
+              analysisData={analysisData}
+              selectedAsset={selectedAsset}
+            />
+          </div>
+          
+          <div>
+            {/* שיטות ניתוח מתקדמות */}
+            <AdvancedAnalysisMethods 
+              selectedAnalysisMethod={selectedAnalysisMethod}
+              setSelectedAnalysisMethod={setSelectedAnalysisMethod}
+              wyckoffPatterns={wyckoffPatterns}
+              smcPatterns={smcPatterns}
+              formatPrice={formatPrice}
+            />
+            
+            {/* הגדרות התראות */}
+            <AlertSettings />
+          </div>
+        </div>
+      </TabsContent>
+      
+      <TabsContent value="advanced" className="mt-0">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* לשונית ניתוח מתקדם */}
+          <AdvancedPricePatterns 
+            assetId={selectedAssetId}
             formatPrice={formatPrice}
-            analysisData={analysisData}
           />
           
-          {/* אינדיקטורים טכניים */}
-          <TechnicalIndicators 
-            analysisLoading={analysisLoading}
-            analysisData={analysisData}
-            selectedAsset={selectedAsset}
-          />
-        </div>
-        
-        <div>
-          {/* שיטות ניתוח מתקדמות */}
-          <AdvancedAnalysisMethods 
-            selectedAnalysisMethod={selectedAnalysisMethod}
-            setSelectedAnalysisMethod={setSelectedAnalysisMethod}
-            wyckoffPatterns={wyckoffPatterns}
-            smcPatterns={smcPatterns}
+          {/* מעקב אחר ארנקים גדולים */}
+          <WhaleTracker 
+            assetId={selectedAssetId}
             formatPrice={formatPrice}
           />
-          
-          {/* הגדרות התראות */}
-          <AlertSettings />
         </div>
-      </div>
+      </TabsContent>
+      
+      <TabsContent value="smart" className="mt-0">
+        <div className="mb-6">
+          {/* מערכת הלמידה החכמה */}
+          <TradingLearningSystem 
+            assetId={selectedAssetId}
+          />
+        </div>
+      </TabsContent>
     </div>
   );
 };
