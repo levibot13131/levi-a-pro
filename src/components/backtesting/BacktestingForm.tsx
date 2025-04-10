@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -112,11 +113,21 @@ export function BacktestingForm({ onRunBacktest, isLoading }: BacktestingFormPro
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
+    // Ensure all required fields are provided with defaults if necessary
     onRunBacktest({
-      ...values, // This ensures all required properties are included
-      initialCapital: values.initialCapital || 100000, // Provide a default if not specified
+      initialCapital: values.initialCapital || 100000,
+      riskPerTrade: values.riskPerTrade || 1,
+      strategy: values.strategy || 'KSEM',
+      entryType: values.entryType || 'market',
+      stopLossType: values.stopLossType || 'fixed',
+      takeProfitType: values.takeProfitType || 'riskReward',
+      riskRewardRatio: values.riskRewardRatio || 2,
+      timeframe: values.timeframe || '1d',
       startDate: format(values.startDate, 'yyyy-MM-dd'),
       endDate: format(values.endDate, 'yyyy-MM-dd'),
+      trailingStop: values.trailingStop || false,
+      maxOpenTrades: values.maxOpenTrades || 5,
+      assetIds: values.assetIds || [],
     });
   }
 
