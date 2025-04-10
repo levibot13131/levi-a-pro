@@ -146,7 +146,8 @@ export const runParameterSweep = async (
       
       // Apply parameters from this combination
       Object.entries(paramSet).forEach(([param, value]) => {
-        settings[param as keyof BacktestSettings] = value;
+        // Fixed the error here by using the proper type indexing
+        (settings as any)[param] = value;
       });
       
       // Run backtest with these settings

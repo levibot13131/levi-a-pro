@@ -21,9 +21,11 @@ export const calculateOptimalPosition = (
   
   // Calculate risk-reward ratio if takeProfit is provided
   let riskRewardRatio = 0;
+  let potentialProfit = 0;
+  
   if (takeProfitPrice) {
-    const rewardAmount = Math.abs(takeProfitPrice - entryPrice) * positionSize;
-    riskRewardRatio = rewardAmount / riskAmount;
+    potentialProfit = Math.abs(takeProfitPrice - entryPrice) * positionSize;
+    riskRewardRatio = potentialProfit / riskAmount;
   }
   
   return {
@@ -34,9 +36,7 @@ export const calculateOptimalPosition = (
     takeProfitPrice,
     positionSize,
     maxLossAmount: riskAmount,
-    potentialProfit: takeProfitPrice 
-      ? Math.abs(takeProfitPrice - entryPrice) * positionSize 
-      : 0,
+    potentialProfit,
     riskRewardRatio,
   };
 };
