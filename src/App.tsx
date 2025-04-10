@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import TradingBots from "./pages/TradingBots";
 import MarketNews from "./pages/MarketNews";
 import TradingSignals from "./pages/TradingSignals";
+import TechnicalAnalysis from "./pages/TechnicalAnalysis";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/trading-bots" element={<TradingBots />} />
           <Route path="/market-news" element={<MarketNews />} />
           <Route path="/trading-signals" element={<TradingSignals />} />
+          <Route path="/technical-analysis" element={<TechnicalAnalysis />} />
           <Route path="/index" element={<Index />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
