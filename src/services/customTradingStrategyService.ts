@@ -65,8 +65,8 @@ export interface TradingJournalEntry {
 }
 
 export const tradingApproach = {
-  name: "קסם - KSEM",
-  description: "אסטרטגיית קסם (KSEM) היא שיטת מסחר המשלבת עקרונות טכניים וניהול סיכונים מתקדם",
+  name: "A.A - Advanced Analysis",
+  description: "שיטת A.A היא אסטרטגיית מסחר המשלבת עקרונות טכניים וניהול סיכונים מתקדם",
   keyPrinciples: [
     "שמירה על סיכון של עד 1% מהתיק לכל עסקה",
     "כניסה רק בעסקאות עם יחס סיכוי:סיכון של 2 ומעלה",

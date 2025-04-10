@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +21,7 @@ const BacktestingForm: React.FC<BacktestingFormProps> = ({ onRunBacktest, isLoad
   const [settings, setSettings] = useState<BacktestSettings>({
     initialCapital: 10000,
     riskPerTrade: 2,
-    strategy: 'KSEM',
+    strategy: 'A.A',
     entryType: 'market',
     stopLossType: 'fixed',
     takeProfitType: 'fixed',
@@ -35,7 +34,6 @@ const BacktestingForm: React.FC<BacktestingFormProps> = ({ onRunBacktest, isLoad
     assetIds: ['bitcoin']
   });
 
-  // Fetch assets when component mounts
   useEffect(() => {
     const fetchAssets = async () => {
       setLoadingAssets(true);
@@ -52,20 +50,17 @@ const BacktestingForm: React.FC<BacktestingFormProps> = ({ onRunBacktest, isLoad
     fetchAssets();
   }, []);
 
-  // Handle form field changes
   const handleChange = (field: keyof BacktestSettings, value: any) => {
     setSettings(prev => ({ ...prev, [field]: value }));
   };
 
-  // Handle asset selection
   const handleAssetChange = (assetId: string) => {
     setSettings(prev => ({
       ...prev,
-      assetIds: [assetId] // For now, only support single asset selection
+      assetIds: [assetId]
     }));
   };
 
-  // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onRunBacktest(settings);
@@ -133,7 +128,7 @@ const BacktestingForm: React.FC<BacktestingFormProps> = ({ onRunBacktest, isLoad
                 <SelectValue placeholder="בחר אסטרטגיה" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="KSEM">Key Structure Entry Method</SelectItem>
+                <SelectItem value="A.A">A.A - Advanced Analysis</SelectItem>
                 <SelectItem value="SMC">Smart Money Concept</SelectItem>
                 <SelectItem value="Wyckoff">Wyckoff Method</SelectItem>
                 <SelectItem value="Custom">מותאם אישית</SelectItem>
