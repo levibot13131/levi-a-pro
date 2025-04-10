@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Asset, AssetHistoricalData } from '@/types/asset';
+import { Asset, AssetHistoricalData, TimeframeType } from '@/types/asset';
 import { getAssets, getAssetHistory } from '@/services/mockDataService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ import MainNavigation from '@/components/MainNavigation';
 const Dashboard = () => {
   const { toast } = useToast();
   const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
-  const [timeframe, setTimeframe] = useState<AssetHistoricalData['timeframe']>('1m');
+  const [timeframe, setTimeframe] = useState<TimeframeType>('1d');
 
   const { data: assets, isLoading: assetsLoading, error: assetsError } = useQuery({
     queryKey: ['assets'],

@@ -1,7 +1,7 @@
 
 import React from 'react';
 
-export type TimeframeType = '1m' | '3m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w' | '1M' | '1y';
+export type TimeframeType = '1m' | '3m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w' | '1M' | '1y' | 'all';
 
 export const timeframeOptions = [
   { value: '5m', label: '5 דקות' },
@@ -25,6 +25,7 @@ export const extendedTimeframeOptions = [
   { value: '1w', label: 'שבועי' },
   { value: '1M', label: 'חודשי' },
   { value: '1y', label: 'שנתי' },
+  { value: 'all', label: 'הכל' },
 ];
 
 export default timeframeOptions;

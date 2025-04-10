@@ -1,4 +1,4 @@
-import { Asset, AssetHistoricalData, PricePoint, VolumePoint } from "@/types/asset";
+import { Asset, AssetHistoricalData, PricePoint, VolumePoint, TimeframeType } from "@/types/asset";
 
 // נתונים סטטיים לדוגמה
 const MOCK_ASSETS: Asset[] = [
@@ -54,6 +54,7 @@ const MOCK_ASSETS: Asset[] = [
     price: 1.0762,
     change24h: -0.25,
     volume24h: 98500000000,
+    marketCap: 0,
     imageUrl: "https://www.investopedia.com/thmb/cILSK5rWO3iqQbdNiMxKJOe7Zf4=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/EUR-USD_2019-69b39ed9619646d5b08fd7a2ee1a1c91.jpg"
   }
 ];
@@ -121,7 +122,7 @@ export const getAssetById = async (id: string): Promise<Asset | undefined> => {
 
 export const getAssetHistory = async (
   assetId: string,
-  timeframe: AssetHistoricalData['timeframe']
+  timeframe: TimeframeType
 ): Promise<AssetHistoricalData> => {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -135,9 +136,15 @@ export const getAssetHistory = async (
       switch (timeframe) {
         case '1d': days = 1; break;
         case '1w': days = 7; break;
+        case '5m': days = 1; break;
+        case '15m': days = 2; break;
+        case '1h': days = 5; break;
+        case '4h': days = 15; break;
         case '1m': days = 30; break;
         case '3m': days = 90; break;
         case '1y': days = 365; break;
+        case '30m': days = 3; break;
+        case '1M': days = 30; break;
         case 'all': days = 1095; break; // ~3 years
       }
       
