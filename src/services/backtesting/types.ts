@@ -1,10 +1,9 @@
-
 import { PositionSizingCalculation } from "@/services/customTradingStrategyService";
 
 export interface BacktestSettings {
   initialCapital: number;
   riskPerTrade: number;
-  strategy: 'KSEM' | 'SMC' | 'Wyckoff' | 'Custom';
+  strategy: 'A.A' | 'SMC' | 'Wyckoff' | 'Custom';
   entryType: 'market' | 'limit';
   stopLossType: 'fixed' | 'atr' | 'support';
   takeProfitType: 'fixed' | 'resistance' | 'riskReward';
