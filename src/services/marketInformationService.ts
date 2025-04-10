@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 
 // Types for financial news and market sources
@@ -9,7 +8,7 @@ export interface FinancialDataSource {
   url: string;
   category: 'news' | 'data' | 'analysis' | 'social';
   reliability: number; // 1-10 scale
-  accessType: 'free' | 'paid' | 'api';
+  accessType: 'free' | 'paid' | 'api' | 'freemium'; // Added 'freemium'
   languages: string[];
   updateFrequency: string;
   focused: boolean; // Is this source in user's focused list
