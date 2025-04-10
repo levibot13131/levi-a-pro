@@ -6,4 +6,5 @@ export * from './backtesting/positionSizer';
 export * from './backtesting/signalGenerator';
 export * from './backtesting/performanceCalculator';
 export * from './backtesting/mockDataGenerator';
-export * from './backtesting/patternAnalyzer';
+export * from './backtesting/patterns';
+
