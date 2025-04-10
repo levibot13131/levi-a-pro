@@ -13,6 +13,7 @@ import TradingBots from '@/pages/TradingBots';
 import ComprehensiveAnalysis from '@/pages/ComprehensiveAnalysis';
 import MarketNews from '@/pages/MarketNews';
 import Backtesting from '@/pages/Backtesting';
+import InformationSources from '@/pages/InformationSources';
 import { Toaster } from '@/components/ui/sonner';
 import './App.css';
 
@@ -33,6 +34,7 @@ function App() {
             <Route path="/comprehensive-analysis" element={<ComprehensiveAnalysis />} />
             <Route path="/market-news" element={<MarketNews />} />
             <Route path="/backtesting" element={<Backtesting />} />
+            <Route path="/information-sources" element={<InformationSources />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster richColors position="top-center" closeButton />
