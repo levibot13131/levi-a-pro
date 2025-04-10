@@ -180,4 +180,3 @@ export * from './positionSizer';
 export * from './performanceCalculator';
 export * from './mockDataGenerator';
 export * from './patterns';
-

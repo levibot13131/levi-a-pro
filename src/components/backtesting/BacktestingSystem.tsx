@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,14 +7,28 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import BacktestingForm from './BacktestingForm';
 import BacktestResults from './BacktestResults';
+import BacktestingHistory from './BacktestingHistory';
 import { BacktestResults as BacktestResultsType, BacktestSettings } from '@/services/backtesting/types';
 import { runBacktest } from '@/services/backtesting';
 
 const BacktestingSystem: React.FC = () => {
   const [backtestResults, setBacktestResults] = useState<BacktestResultsType | null>(null);
+  const [backtestHistory, setBacktestHistory] = useState<BacktestResultsType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [activeView, setActiveView] = useState<'form' | 'results'>('form');
+  const [activeView, setActiveView] = useState<'form' | 'results' | 'history'>('form');
   const [lastSettings, setLastSettings] = useState<BacktestSettings | null>(null);
+
+  // Load history from localStorage on component mount
+  useEffect(() => {
+    try {
+      const savedHistory = localStorage.getItem('backtestHistory');
+      if (savedHistory) {
+        setBacktestHistory(JSON.parse(savedHistory));
+      }
+    } catch (error) {
+      console.error('Error loading backtest history:', error);
+    }
+  }, []);
 
   const handleRunBacktest = async (settings: BacktestSettings) => {
     setIsLoading(true);
@@ -36,6 +51,18 @@ const BacktestingSystem: React.FC = () => {
       
       // Update state
       setBacktestResults(results);
+      
+      // Add to history
+      const updatedHistory = [results, ...backtestHistory].slice(0, 10);
+      setBacktestHistory(updatedHistory);
+      
+      // Save to localStorage
+      try {
+        localStorage.setItem('backtestHistory', JSON.stringify(updatedHistory));
+      } catch (error) {
+        console.error('Error saving backtest history:', error);
+      }
+      
       setActiveView('results');
     } catch (error) {
       toast.error('שגיאה בהרצת הבדיקה', {
@@ -54,6 +81,11 @@ const BacktestingSystem: React.FC = () => {
   
   const handleNewBacktest = () => {
     setActiveView('form');
+  };
+  
+  const handleSelectBacktest = (result: BacktestResultsType) => {
+    setBacktestResults(result);
+    setActiveView('results');
   };
 
   return (
@@ -78,6 +110,11 @@ const BacktestingSystem: React.FC = () => {
               >
                 תוצאות
               </Badge>
+              <Badge 
+                variant={activeView === 'history' ? 'default' : 'outline'}
+              >
+                היסטוריה
+              </Badge>
             </div>
             <CardTitle className="text-right">בדיקה היסטורית</CardTitle>
           </div>
@@ -86,7 +123,7 @@ const BacktestingSystem: React.FC = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeView} onValueChange={(value) => setActiveView(value as 'form' | 'results')}>
+          <Tabs value={activeView} onValueChange={(value) => setActiveView(value as 'form' | 'results' | 'history')}>
             <div className="flex justify-between items-center mb-4">
               <div className="flex gap-2">
                 {backtestResults && activeView === 'results' && (
@@ -106,6 +143,9 @@ const BacktestingSystem: React.FC = () => {
                 </TabsTrigger>
                 <TabsTrigger value="results" disabled={!backtestResults || isLoading}>
                   תוצאות
+                </TabsTrigger>
+                <TabsTrigger value="history">
+                  היסטוריה
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -152,6 +192,13 @@ const BacktestingSystem: React.FC = () => {
                   <p className="mt-2 text-sm text-muted-foreground">הגדר והרץ בדיקה היסטורית כדי לראות את התוצאות</p>
                 </div>
               )}
+            </TabsContent>
+            
+            <TabsContent value="history">
+              <BacktestingHistory 
+                results={backtestHistory} 
+                onSelectBacktest={handleSelectBacktest} 
+              />
             </TabsContent>
           </Tabs>
         </CardContent>

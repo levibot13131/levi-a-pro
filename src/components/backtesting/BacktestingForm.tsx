@@ -1,538 +1,279 @@
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { format } from 'date-fns';
-import { Calendar as CalendarIcon } from 'lucide-react';
 
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { DatePicker } from '@/components/ui/date-picker';
+import { Switch } from '@/components/ui/switch';
+import { BacktestSettings } from '@/services/backtesting/types';
 import { getAssets } from '@/services/mockDataService';
 import { Asset } from '@/types/asset';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { extendedTimeframeOptions } from '@/components/technical-analysis/TimeframeOptions';
-import { cn } from '@/lib/utils';
-import { BacktestSettings } from '@/services/backtesting/types';
 
 interface BacktestingFormProps {
   onRunBacktest: (settings: BacktestSettings) => void;
   isLoading: boolean;
 }
 
-const formSchema = z.object({
-  initialCapital: z.coerce.number().min(1000, {
-    message: "ההון ההתחלתי חייב להיות לפחות 1,000",
-  }),
-  riskPerTrade: z.coerce.number().min(0.1).max(10, {
-    message: "הסיכון לעסקה חייב להיות בין 0.1% ל-10%",
-  }),
-  strategy: z.enum(['KSEM', 'SMC', 'Wyckoff', 'Custom'], {
-    required_error: "יש לבחור אסטרטגיה",
-  }),
-  entryType: z.enum(['market', 'limit'], {
-    required_error: "יש לבחור סוג כניסה",
-  }),
-  stopLossType: z.enum(['fixed', 'atr', 'support'], {
-    required_error: "יש לבחור סוג סטופ לוס",
-  }),
-  takeProfitType: z.enum(['fixed', 'resistance', 'riskReward'], {
-    required_error: "יש לבחור סוג טייק פרופיט",
-  }),
-  riskRewardRatio: z.coerce.number().min(1).max(10, {
-    message: "יחס סיכוי/סיכון חייב להיות בין 1 ל-10",
-  }),
-  timeframe: z.string({
-    required_error: "יש לבחור טווח זמן",
-  }),
-  startDate: z.date({
-    required_error: "יש לבחור תאריך התחלה",
-  }),
-  endDate: z.date({
-    required_error: "יש לבחור תאריך סיום",
-  }),
-  trailingStop: z.boolean().default(false),
-  maxOpenTrades: z.coerce.number().min(1).max(20, {
-    message: "מספר העסקאות הפתוחות המקסימלי חייב להיות בין 1 ל-20",
-  }),
-  assetIds: z.array(z.string()).min(1, {
-    message: "יש לבחור לפחות נכס אחד",
-  }),
-});
-
-export function BacktestingForm({ onRunBacktest, isLoading }: BacktestingFormProps) {
-  const [selectedAssets, setSelectedAssets] = useState<Asset[]>([]);
-  
-  const { data: assets } = useQuery({
-    queryKey: ['assets'],
-    queryFn: getAssets,
+const BacktestingForm: React.FC<BacktestingFormProps> = ({ onRunBacktest, isLoading }) => {
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [loadingAssets, setLoadingAssets] = useState(false);
+  const [settings, setSettings] = useState<BacktestSettings>({
+    initialCapital: 10000,
+    riskPerTrade: 2,
+    strategy: 'KSEM',
+    entryType: 'market',
+    stopLossType: 'fixed',
+    takeProfitType: 'fixed',
+    riskRewardRatio: 2,
+    timeframe: '1d',
+    startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    endDate: new Date().toISOString().split('T')[0],
+    trailingStop: false,
+    maxOpenTrades: 3,
+    assetIds: ['bitcoin']
   });
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      initialCapital: 100000,
-      riskPerTrade: 1,
-      strategy: 'KSEM',
-      entryType: 'market',
-      stopLossType: 'fixed',
-      takeProfitType: 'riskReward',
-      riskRewardRatio: 2,
-      timeframe: '1d',
-      startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // 90 days ago
-      endDate: new Date(),
-      trailingStop: false,
-      maxOpenTrades: 5,
-      assetIds: [],
-    },
-  });
-
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Ensure all required fields are provided with defaults if necessary
-    onRunBacktest({
-      initialCapital: values.initialCapital || 100000,
-      riskPerTrade: values.riskPerTrade || 1,
-      strategy: values.strategy || 'KSEM',
-      entryType: values.entryType || 'market',
-      stopLossType: values.stopLossType || 'fixed',
-      takeProfitType: values.takeProfitType || 'riskReward',
-      riskRewardRatio: values.riskRewardRatio || 2,
-      timeframe: values.timeframe || '1d',
-      startDate: format(values.startDate, 'yyyy-MM-dd'),
-      endDate: format(values.endDate, 'yyyy-MM-dd'),
-      trailingStop: values.trailingStop || false,
-      maxOpenTrades: values.maxOpenTrades || 5,
-      assetIds: values.assetIds || [],
-    });
-  }
-
-  const handleAssetSelect = (asset: Asset) => {
-    const newAssets = [...selectedAssets];
-    const assetIndex = newAssets.findIndex(a => a.id === asset.id);
+  // Fetch assets when component mounts
+  useEffect(() => {
+    const fetchAssets = async () => {
+      setLoadingAssets(true);
+      try {
+        const assetsList = await getAssets();
+        setAssets(assetsList);
+      } catch (error) {
+        console.error("Error fetching assets:", error);
+      } finally {
+        setLoadingAssets(false);
+      }
+    };
     
-    if (assetIndex >= 0) {
-      newAssets.splice(assetIndex, 1);
-    } else {
-      newAssets.push(asset);
-    }
-    
-    setSelectedAssets(newAssets);
-    form.setValue('assetIds', newAssets.map(a => a.id));
+    fetchAssets();
+  }, []);
+
+  // Handle form field changes
+  const handleChange = (field: keyof BacktestSettings, value: any) => {
+    setSettings(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Handle asset selection
+  const handleAssetChange = (assetId: string) => {
+    setSettings(prev => ({
+      ...prev,
+      assetIds: [assetId] // For now, only support single asset selection
+    }));
+  };
+
+  // Handle form submission
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onRunBacktest(settings);
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-right">הגדרות הון וסיכון</h3>
-            
-            <FormField
-              control={form.control}
-              name="initialCapital"
-              render={({ field }) => (
-                <FormItem className="text-right">
-                  <FormLabel>הון התחלתי</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} placeholder="100000" />
-                  </FormControl>
-                  <FormDescription>
-                    סכום הכסף לבדיקה
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="riskPerTrade"
-              render={({ field }) => (
-                <FormItem className="text-right">
-                  <FormLabel>סיכון לעסקה</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.1" {...field} placeholder="1" />
-                  </FormControl>
-                  <FormDescription>
-                    אחוז מההון בסיכון לכל עסקה
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="maxOpenTrades"
-              render={({ field }) => (
-                <FormItem className="text-right">
-                  <FormLabel>מקסימום עסקאות פתוחות</FormLabel>
-                  <FormControl>
-                    <Input type="number" {...field} placeholder="5" />
-                  </FormControl>
-                  <FormDescription>
-                    מספר עסקאות פתוחות מקסימלי בו-זמנית
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="assetId" className="block text-right mb-1">נכס</Label>
+            <Select
+              disabled={loadingAssets || isLoading}
+              value={settings.assetIds[0]}
+              onValueChange={handleAssetChange}
+            >
+              <SelectTrigger id="assetId">
+                <SelectValue placeholder="בחר נכס" />
+              </SelectTrigger>
+              <SelectContent>
+                {loadingAssets ? (
+                  <SelectItem value="loading" disabled>טוען נכסים...</SelectItem>
+                ) : (
+                  assets.map(asset => (
+                    <SelectItem key={asset.id} value={asset.id}>
+                      {asset.name} ({asset.symbol})
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div>
+            <Label htmlFor="timeframe" className="block text-right mb-1">מסגרת זמן</Label>
+            <Select
+              disabled={isLoading}
+              value={settings.timeframe}
+              onValueChange={(value) => handleChange('timeframe', value)}
+            >
+              <SelectTrigger id="timeframe">
+                <SelectValue placeholder="בחר מסגרת זמן" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1m">דקה</SelectItem>
+                <SelectItem value="5m">5 דקות</SelectItem>
+                <SelectItem value="15m">15 דקות</SelectItem>
+                <SelectItem value="30m">30 דקות</SelectItem>
+                <SelectItem value="1h">שעה</SelectItem>
+                <SelectItem value="4h">4 שעות</SelectItem>
+                <SelectItem value="1d">יומי</SelectItem>
+                <SelectItem value="1w">שבועי</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div>
+            <Label htmlFor="strategy" className="block text-right mb-1">אסטרטגיה</Label>
+            <Select
+              disabled={isLoading}
+              value={settings.strategy}
+              onValueChange={(value) => handleChange('strategy', value as BacktestSettings['strategy'])}
+            >
+              <SelectTrigger id="strategy">
+                <SelectValue placeholder="בחר אסטרטגיה" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="KSEM">Key Structure Entry Method</SelectItem>
+                <SelectItem value="SMC">Smart Money Concept</SelectItem>
+                <SelectItem value="Wyckoff">Wyckoff Method</SelectItem>
+                <SelectItem value="Custom">מותאם אישית</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div>
+            <Label htmlFor="initialCapital" className="block text-right mb-1">הון התחלתי</Label>
+            <Input
+              id="initialCapital"
+              type="number"
+              disabled={isLoading}
+              value={settings.initialCapital}
+              onChange={(e) => handleChange('initialCapital', Number(e.target.value))}
+              min="1000"
+              step="1000"
+              className="text-left"
             />
           </div>
           
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-right">הגדרות אסטרטגיה</h3>
-            
-            <FormField
-              control={form.control}
-              name="strategy"
-              render={({ field }) => (
-                <FormItem className="text-right">
-                  <FormLabel>אסטרטגיה</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="בחר אסטרטגיה" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="KSEM">KSEM</SelectItem>
-                      <SelectItem value="SMC">Smart Money Concept</SelectItem>
-                      <SelectItem value="Wyckoff">Wyckoff</SelectItem>
-                      <SelectItem value="Custom">מותאם אישית</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    אסטרטגיית המסחר לבדיקה היסטורית
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="timeframe"
-              render={({ field }) => (
-                <FormItem className="text-right">
-                  <FormLabel>טווח זמן</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="בחר טווח זמן" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {extendedTimeframeOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    טווח הזמן של הנרות לבדיקה
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="riskRewardRatio"
-              render={({ field }) => (
-                <FormItem className="text-right">
-                  <FormLabel>יחס סיכוי/סיכון</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.1" {...field} placeholder="2" />
-                  </FormControl>
-                  <FormDescription>
-                    יחס בין רווח פוטנציאלי להפסד פוטנציאלי
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        </div>
-        
-        <Separator />
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-right">הגדרות כניסה ויציאה</h3>
-            
-            <FormField
-              control={form.control}
-              name="entryType"
-              render={({ field }) => (
-                <FormItem className="text-right">
-                  <FormLabel>סוג כניסה</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="בחר סוג כניסה" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="market">שוק (Market)</SelectItem>
-                      <SelectItem value="limit">לימיט (Limit)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    אופן הכניסה לעסקאות
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="stopLossType"
-              render={({ field }) => (
-                <FormItem className="text-right">
-                  <FormLabel>סוג סטופ לוס</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="בחר סוג סטופ לוס" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="fixed">קבוע (Fixed)</SelectItem>
-                      <SelectItem value="atr">ATR</SelectItem>
-                      <SelectItem value="support">תמיכה/התנגדות</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    שיטת קביעת סטופ לוס
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="takeProfitType"
-              render={({ field }) => (
-                <FormItem className="text-right">
-                  <FormLabel>סוג טייק פרופיט</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="בחר סוג טייק פרופיט" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="fixed">קבוע (Fixed)</SelectItem>
-                      <SelectItem value="resistance">תמיכה/התנגדות</SelectItem>
-                      <SelectItem value="riskReward">יחס סיכוי/סיכון</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    שיטת קביעת יעד רווח
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="trailingStop"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel>סטופ נגרר</FormLabel>
-                    <FormDescription>
-                      אפשר שימוש בסטופ נגרר
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
-          
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-right">הגדרות זמן ונכסים</h3>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="startDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col text-right">
-                    <FormLabel>תאריך התחלה</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "dd/MM/yyyy")
-                            ) : (
-                              <span>בחר תאריך</span>
-                            )}
-                            <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("2020-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="endDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col text-right">
-                    <FormLabel>תאריך סיום</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "dd/MM/yyyy")
-                            ) : (
-                              <span>בחר תאריך</span>
-                            )}
-                            <CalendarIcon className="mr-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date > new Date() || date < new Date("2020-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            
-            <FormItem className="text-right">
-              <FormLabel>נכסים</FormLabel>
-              <FormDescription>
-                בחר נכסים לבדיקה
-              </FormDescription>
-              
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                {assets?.map((asset) => (
-                  <div
-                    key={asset.id}
-                    className={cn(
-                      "flex items-center justify-between p-2 border rounded-md cursor-pointer transition-colors",
-                      selectedAssets.some(a => a.id === asset.id) 
-                        ? "border-primary bg-primary/10" 
-                        : "border-border hover:bg-muted"
-                    )}
-                    onClick={() => handleAssetSelect(asset)}
-                  >
-                    <div className="flex items-center gap-2">
-                      {asset.imageUrl && (
-                        <img 
-                          src={asset.imageUrl} 
-                          alt={asset.name} 
-                          className="w-6 h-6 object-contain" 
-                        />
-                      )}
-                      <span className="text-sm">{asset.symbol}</span>
-                    </div>
-                    {asset.type && (
-                      <Badge variant="outline" className="text-xs">
-                        {asset.type === 'crypto' ? 'קריפטו' : 
-                         asset.type === 'stock' ? 'מניה' : 'פורקס'}
-                      </Badge>
-                    )}
-                  </div>
-                ))}
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="w-16 text-center bg-gray-100 rounded py-1 text-sm">
+                {settings.riskPerTrade}%
               </div>
-              
-              {form.formState.errors.assetIds && (
-                <p className="text-sm font-medium text-destructive mt-2">
-                  {form.formState.errors.assetIds.message}
-                </p>
-              )}
-            </FormItem>
+              <Label htmlFor="riskPerTrade" className="text-right">סיכון לעסקה (%)</Label>
+            </div>
+            <Slider
+              id="riskPerTrade"
+              disabled={isLoading}
+              value={[settings.riskPerTrade]}
+              onValueChange={(value) => handleChange('riskPerTrade', value[0])}
+              min={0.5}
+              max={10}
+              step={0.5}
+            />
           </div>
         </div>
         
-        <div className="flex justify-center pt-4">
-          <Button 
-            type="submit" 
-            disabled={isLoading}
-            className="min-w-[200px]"
-          >
-            {isLoading ? "מבצע בדיקה..." : "הפעל בדיקה היסטורית"}
-          </Button>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="startDate" className="block text-right mb-1">תאריך התחלה</Label>
+            <Input
+              id="startDate"
+              type="date"
+              disabled={isLoading}
+              value={settings.startDate}
+              onChange={(e) => handleChange('startDate', e.target.value)}
+              max={settings.endDate}
+              className="text-left"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="endDate" className="block text-right mb-1">תאריך סיום</Label>
+            <Input
+              id="endDate"
+              type="date"
+              disabled={isLoading}
+              value={settings.endDate}
+              onChange={(e) => handleChange('endDate', e.target.value)}
+              min={settings.startDate}
+              max={new Date().toISOString().split('T')[0]}
+              className="text-left"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="entryType" className="block text-right mb-1">סוג כניסה</Label>
+            <Select
+              disabled={isLoading}
+              value={settings.entryType}
+              onValueChange={(value) => handleChange('entryType', value as 'market' | 'limit')}
+            >
+              <SelectTrigger id="entryType">
+                <SelectValue placeholder="בחר סוג כניסה" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="market">כניסת שוק</SelectItem>
+                <SelectItem value="limit">כניסת לימיט</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <div className="w-16 text-center bg-gray-100 rounded py-1 text-sm">
+                1:{settings.riskRewardRatio}
+              </div>
+              <Label htmlFor="riskRewardRatio" className="text-right">יחס סיכוי/סיכון</Label>
+            </div>
+            <Slider
+              id="riskRewardRatio"
+              disabled={isLoading}
+              value={[settings.riskRewardRatio]}
+              onValueChange={(value) => handleChange('riskRewardRatio', value[0])}
+              min={1}
+              max={5}
+              step={0.5}
+            />
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <Switch
+              id="trailingStop"
+              disabled={isLoading}
+              checked={settings.trailingStop}
+              onCheckedChange={(checked) => handleChange('trailingStop', checked)}
+            />
+            <Label htmlFor="trailingStop" className="cursor-pointer">סטופ נגרר</Label>
+          </div>
+          
+          <div>
+            <Label htmlFor="maxOpenTrades" className="block text-right mb-1">מקסימום עסקאות פתוחות</Label>
+            <Input
+              id="maxOpenTrades"
+              type="number"
+              disabled={isLoading}
+              value={settings.maxOpenTrades}
+              onChange={(e) => handleChange('maxOpenTrades', Number(e.target.value))}
+              min="1"
+              max="10"
+              className="text-left"
+            />
+          </div>
         </div>
-      </form>
-    </Form>
+      </div>
+      
+      <div className="flex justify-center pt-4">
+        <Button 
+          type="submit"
+          disabled={isLoading}
+          className="px-8"
+        >
+          {isLoading ? 'מריץ בדיקה...' : 'הרץ בדיקה היסטורית'}
+        </Button>
+      </div>
+    </form>
   );
-}
+};
 
 export default BacktestingForm;
