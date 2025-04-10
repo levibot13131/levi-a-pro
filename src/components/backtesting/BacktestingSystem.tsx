@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import BacktestingForm from './BacktestingForm';
 import BacktestResults from './BacktestResults';
-import { BacktestResults as BacktestResultsType, BacktestSettings, runBacktest } from '@/services/backtesting';
+import { BacktestResults as BacktestResultsType, BacktestSettings } from '@/services/backtesting/types';
+import { runBacktest } from '@/services/backtesting';
 
 const BacktestingSystem: React.FC = () => {
   const [backtestResults, setBacktestResults] = useState<BacktestResultsType | null>(null);

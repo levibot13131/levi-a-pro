@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -38,7 +37,7 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { extendedTimeframeOptions } from '@/components/technical-analysis/TimeframeOptions';
 import { cn } from '@/lib/utils';
-import { BacktestSettings } from '@/services/backtestingService';
+import { BacktestSettings } from '@/services/backtesting/types';
 
 interface BacktestingFormProps {
   onRunBacktest: (settings: BacktestSettings) => void;
