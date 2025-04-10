@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Newspaper, Target, Home, Activity } from 'lucide-react';
+import { BarChart3, Newspaper, Target, Home, Activity, Brain } from 'lucide-react';
 
 const MainNavigation = () => {
   const location = useLocation();
@@ -37,6 +37,13 @@ const MainNavigation = () => {
             <Link to="/technical-analysis">
               <Activity className="h-4 w-4 mr-2" />
               ניתוח טכני
+            </Link>
+          </Button>
+          
+          <Button variant="ghost" className={`${isActive('/comprehensive-analysis')}`} asChild>
+            <Link to="/comprehensive-analysis">
+              <Brain className="h-4 w-4 mr-2" />
+              ניתוח מקיף
             </Link>
           </Button>
           

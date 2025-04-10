@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Brain, BookOpen, SquarePlus, BookMarked } from 'lucide-react';
+import { Brain, BookOpen, SquarePlus, AlertCircle, BookMarked } from 'lucide-react';
 
 interface TradingLearningSystemProps {
   assetId: string;
@@ -26,7 +27,7 @@ const TradingLearningSystem = ({ assetId }: TradingLearningSystemProps) => {
               תבניות
             </TabsTrigger>
             <TabsTrigger value="risk">
-              <Alert className="h-4 w-4 mr-2" />
+              <AlertCircle className="h-4 w-4 mr-2" />
               ניהול סיכונים
             </TabsTrigger>
             <TabsTrigger value="advanced">
@@ -69,5 +70,3 @@ const TradingLearningSystem = ({ assetId }: TradingLearningSystemProps) => {
 };
 
 export default TradingLearningSystem;
-
-import { Alert } from "@/components/ui/alert"
