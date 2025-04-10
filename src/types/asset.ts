@@ -1,4 +1,3 @@
-
 export type AssetType = 'crypto' | 'stock' | 'forex';
 
 export interface Asset {
@@ -18,10 +17,16 @@ export interface PricePoint {
   price: number;
 }
 
+export interface VolumePoint {
+  timestamp: number; // UNIX timestamp
+  volume: number;
+}
+
 export interface AssetHistoricalData {
   assetId: string;
   timeframe: '1d' | '1w' | '1m' | '3m' | '1y' | 'all';
   data: PricePoint[];
+  volumeData?: VolumePoint[]; // Added this property
 }
 
 // הוספת סוגי נתונים חדשים לתמיכה בתכונות מבוקשות

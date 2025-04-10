@@ -1,5 +1,4 @@
-
-import { Asset, AssetHistoricalData, PricePoint } from "@/types/asset";
+import { Asset, AssetHistoricalData, PricePoint, VolumePoint } from "@/types/asset";
 
 // נתונים סטטיים לדוגמה
 const MOCK_ASSETS: Asset[] = [
@@ -81,6 +80,28 @@ const generateHistoricalData = (basePrice: number, days: number): PricePoint[] =
   return data;
 };
 
+// יצירת נתוני נפח מדומים
+const generateVolumeData = (baseVolume: number, days: number): VolumePoint[] => {
+  const data: VolumePoint[] = [];
+  const now = Date.now();
+  const dayInMs = 86400000;
+  
+  for (let i = days; i >= 0; i--) {
+    const timestamp = now - (i * dayInMs);
+    // נוסיף תנודתיות רנדומלית של עד 30%
+    const volatility = (Math.random() - 0.5) * 0.6;
+    const dayFactor = 1 + volatility;
+    const volume = baseVolume * Math.pow(dayFactor, Math.random() * 0.5);
+    
+    data.push({
+      timestamp,
+      volume: Math.round(volume)
+    });
+  }
+  
+  return data;
+};
+
 // פונקציות שירות לקבלת נתונים
 export const getAssets = async (): Promise<Asset[]> => {
   // מדמה תקשורת עם שרת
@@ -121,11 +142,13 @@ export const getAssetHistory = async (
       }
       
       const data = generateHistoricalData(asset.price, days);
+      const volumeData = generateVolumeData(asset.volume24h / 24, days); // Daily average volume
       
       resolve({
         assetId,
         timeframe,
-        data
+        data,
+        volumeData
       });
     }, 700);
   });
