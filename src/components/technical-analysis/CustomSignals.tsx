@@ -5,6 +5,9 @@ import { getTradeSignals } from '@/services/mockTradingService';
 import SignalCard from './SignalCard';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import EmptyState from '@/components/common/EmptyState';
+import { Button } from '@/components/ui/button';
+import { Send } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CustomSignalsProps {
   assetId: string;
@@ -16,6 +19,14 @@ const CustomSignals: React.FC<CustomSignalsProps> = ({ assetId }) => {
     queryKey: ['assetTradeSignals', assetId],
     queryFn: () => getTradeSignals(assetId),
   });
+  
+  // פונקציה לשליחת איתות לערוצי התקשורת (טלגרם/וואטסאפ)
+  const sendSignal = (signalId: string) => {
+    // כאן במערכת אמיתית היינו מתחברים לשרת ושולחים את האיתות
+    toast.success("האיתות נשלח בהצלחה", {
+      description: "האיתות נשלח לכל ערוצי התקשורת המוגדרים",
+    });
+  };
   
   if (signalsLoading) {
     return <LoadingSpinner className="h-64" />;
@@ -30,7 +41,20 @@ const CustomSignals: React.FC<CustomSignalsProps> = ({ assetId }) => {
       <h3 className="font-bold text-xl text-right">איתותים מותאמים לשיטת KSEM</h3>
       <div className="grid grid-cols-1 gap-4">
         {signals.map((signal) => (
-          <SignalCard key={signal.id} signal={signal} />
+          <div key={signal.id} className="relative">
+            <SignalCard signal={signal} />
+            <div className="absolute bottom-4 left-4">
+              <Button 
+                size="sm" 
+                variant="secondary" 
+                className="flex items-center gap-2"
+                onClick={() => sendSignal(signal.id)}
+              >
+                <Send className="h-4 w-4" />
+                שלח איתות
+              </Button>
+            </div>
+          </div>
         ))}
       </div>
     </div>
