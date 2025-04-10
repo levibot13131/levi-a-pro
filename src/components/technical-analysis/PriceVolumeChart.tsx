@@ -57,7 +57,6 @@ const PriceVolumeChart = ({
     return 'rgba(200, 165, 0, 0.5)';
   };
 
-  // Function to analyze strategy against historical data
   const analyzeStrategy = () => {
     if (!assetHistory || !assetHistory.data || assetHistory.data.length < 30) {
       toast.error("נדרשים נתונים היסטוריים מספקים לניתוח");
@@ -67,17 +66,14 @@ const PriceVolumeChart = ({
     setAnalysisBusy(true);
     toast.info("מנתח אסטרטגיה על נתונים היסטוריים...");
 
-    // Simulate trades based on historical patterns
-    // In a real implementation, this would use actual trading logic and backtest against historical data
     setTimeout(() => {
       try {
-        // Convert price history to mock trades for analysis
         const mockTrades: Trade[] = assetHistory.data.slice(0, -5).map((point, index) => {
           const futurePoints = assetHistory.data.slice(index + 1, index + 6);
-          const direction = Math.random() > 0.5 ? 'buy' : 'sell';
+          const direction = Math.random() > 0.5 ? 'long' : 'short';
           const entryPrice = point.price;
           const exitPrice = futurePoints[futurePoints.length - 1].price;
-          const profit = direction === 'buy' ? exitPrice - entryPrice : entryPrice - exitPrice;
+          const profit = direction === 'long' ? exitPrice - entryPrice : entryPrice - exitPrice;
           const profitPercentage = (profit / entryPrice) * 100;
           
           return {
@@ -89,30 +85,29 @@ const PriceVolumeChart = ({
             entryPrice,
             exitPrice,
             direction,
-            stopLoss: entryPrice * (direction === 'buy' ? 0.95 : 1.05),
-            takeProfit: entryPrice * (direction === 'buy' ? 1.10 : 0.90),
+            stopLoss: entryPrice * (direction === 'long' ? 0.95 : 1.05),
+            takeProfit: entryPrice * (direction === 'long' ? 1.10 : 0.90),
             positionSize: 100,
             profit,
             profitPercentage,
             strategyUsed: ['פריצת התנגדות', 'זיהוי תמיכה', 'תבנית מחיר', 'אינדיקטור RSI'][Math.floor(Math.random() * 4)],
-            duration: 5, // days
+            duration: 5,
             status: Math.random() > 0.2 ? 'closed' : 'open',
+            marketCondition: ['bull', 'bear', 'sideways'][Math.floor(Math.random() * 3)],
+            entryReason: 'סימן היפוך מגמה',
             notes: 'עסקה לבדיקת אסטרטגיה'
           };
         });
 
-        // Analyze trends and patterns in the mock trades
         const trendAnalysis = detectMarketTrends(mockTrades);
         const clusterAnalysis = analyzeTradeClusters(mockTrades);
         
-        // Create mock equity curve for regime analysis
         const equityCurve = assetHistory.data.map((point, index) => ({
           date: new Date(point.timestamp).toISOString(),
           value: 1000 * (1 + (index * 0.01)),
           drawdown: Math.random() * 5
         }));
         
-        // Mock backtest results
         const mockResults: BacktestResults = {
           trades: mockTrades,
           performance: {
@@ -133,19 +128,17 @@ const PriceVolumeChart = ({
           },
           equity: equityCurve,
           monthly: [
-            { month: '2025-01', return: 2.5, trades: 8 },
-            { month: '2025-02', return: -1.2, trades: 6 },
-            { month: '2025-03', return: 3.7, trades: 9 }
+            { period: '2025-01', return: 2.5, trades: 8 },
+            { period: '2025-02', return: -1.2, trades: 6 },
+            { period: '2025-03', return: 3.7, trades: 9 }
           ],
           assetPerformance: [
-            { assetId: 'sample-asset', name: 'מטבע לדוגמה', return: 3.5, trades: mockTrades.length }
+            { assetId: 'sample-asset', assetName: 'מטבע לדוגמה', return: 3.5, trades: mockTrades.length, winRate: 65.3 }
           ]
         };
         
-        // Analyze market regimes
         const regimeAnalysis = analyzeMarketRegimes(mockResults);
 
-        // Set analysis data
         setStrategyAnalysisData({
           trendAnalysis,
           clusterAnalysis,
