@@ -1,3 +1,4 @@
+
 export type AssetType = 'crypto' | 'stock' | 'forex';
 
 export interface Asset {
@@ -20,13 +21,22 @@ export interface PricePoint {
 export interface VolumePoint {
   timestamp: number; // UNIX timestamp
   volume: number;
+  abnormal?: boolean; // סימון לנפח חריג
 }
 
 export interface AssetHistoricalData {
   assetId: string;
-  timeframe: '1d' | '1w' | '1m' | '3m' | '1y' | 'all';
+  timeframe: '1d' | '1w' | '1m' | '3m' | '1y' | 'all' | '5m' | '15m' | '1h' | '4h';
   data: PricePoint[];
-  volumeData?: VolumePoint[]; // Added this property
+  volumeData?: VolumePoint[];
+}
+
+// Pattern chart area interface for visual representation
+export interface ChartArea {
+  startTimestamp: number;
+  endTimestamp: number;
+  minPrice: number;
+  maxPrice: number;
 }
 
 // הוספת סוגי נתונים חדשים לתמיכה בתכונות מבוקשות

@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAssets, getAssetHistory } from '@/services/mockDataService';
 import { analyzeAsset, getWyckoffPatterns, getSMCPatterns } from '@/services/technicalAnalysisService';
-import { Asset } from '@/types/asset';
+import { Asset, ChartArea } from '@/types/asset';
 
 // Import components
 import AssetSelector from '@/components/technical-analysis/AssetSelector';
@@ -79,12 +78,14 @@ const TechnicalAnalysis = () => {
           const dataLength = assetHistory.data.length;
           const quarter = Math.floor(dataLength / 4);
           
-          pattern.chartArea = {
+          const chartArea: ChartArea = {
             startTimestamp: assetHistory.data[quarter * (idx % 3)].timestamp,
             endTimestamp: assetHistory.data[Math.min(quarter * (idx % 3 + 1) + quarter, dataLength - 1)].timestamp,
             minPrice: Math.min(...assetHistory.data.slice(quarter * (idx % 3), quarter * (idx % 3 + 1) + quarter).map(p => p.price)) * 0.98,
             maxPrice: Math.max(...assetHistory.data.slice(quarter * (idx % 3), quarter * (idx % 3 + 1) + quarter).map(p => p.price)) * 1.02
           };
+          
+          pattern.chartArea = chartArea;
         }
         
         patterns.push({
@@ -102,12 +103,14 @@ const TechnicalAnalysis = () => {
           const dataLength = assetHistory.data.length;
           const third = Math.floor(dataLength / 3);
           
-          pattern.chartArea = {
+          const chartArea: ChartArea = {
             startTimestamp: assetHistory.data[third * (idx % 2) + third].timestamp,
             endTimestamp: assetHistory.data[Math.min(third * (idx % 2 + 1) + third, dataLength - 1)].timestamp,
             minPrice: pattern.entryZone?.min || (Math.min(...assetHistory.data.slice(third * (idx % 2) + third, third * (idx % 2 + 1) + third).map(p => p.price)) * 0.98),
             maxPrice: pattern.entryZone?.max || (Math.max(...assetHistory.data.slice(third * (idx % 2) + third, third * (idx % 2 + 1) + third).map(p => p.price)) * 1.02)
           };
+          
+          pattern.chartArea = chartArea;
         }
         
         patterns.push({
@@ -119,11 +122,11 @@ const TechnicalAnalysis = () => {
     
     enhancedData.patterns = patterns;
     
-    // הוספת רמות מפתח אם קיימות
-    const keyLevels = [];
-    
-    // רמות תמיכה והתנגדות לדוגמה - בגרסה אמיתית אלו יבואו מאלגוריתם ניתוח
-    if (assetHistory) {
+    // הוספת רמות מפתח אם קיימות ואם אין כבר רמות בניתוח
+    if (!enhancedData.keyLevels && assetHistory) {
+      const keyLevels = [];
+      
+      // רמות תמיכה והתנגדות לדוגמה - בגרסה אמיתית אלו יבואו מאלגוריתם ניתוח
       const prices = assetHistory.data.map(p => p.price);
       const maxPrice = Math.max(...prices);
       const minPrice = Math.min(...prices);
@@ -133,25 +136,25 @@ const TechnicalAnalysis = () => {
       keyLevels.push({
         name: 'התנגדות עליונה',
         price: maxPrice - (range * 0.1),
-        type: 'resistance'
+        type: 'resistance' as const
       });
       
       // רמת תמיכה תחתונה
       keyLevels.push({
         name: 'תמיכה עיקרית',
         price: minPrice + (range * 0.15),
-        type: 'support'
+        type: 'support' as const
       });
       
       // רמת פיבונאצ'י 0.618
       keyLevels.push({
         name: 'פיבונאצ\'י 0.618',
         price: minPrice + (range * 0.618),
-        type: range * 0.618 < (maxPrice - minPrice) / 2 ? 'support' : 'resistance'
+        type: range * 0.618 < (maxPrice - minPrice) / 2 ? 'support' as const : 'resistance' as const
       });
+      
+      enhancedData.keyLevels = keyLevels;
     }
-    
-    enhancedData.keyLevels = keyLevels;
     
     // הוספת הסברים מפורטים לסיגנלים
     if (enhancedData.signals) {
@@ -306,4 +309,3 @@ const TechnicalAnalysis = () => {
 };
 
 export default TechnicalAnalysis;
-

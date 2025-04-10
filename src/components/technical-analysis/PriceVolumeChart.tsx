@@ -1,7 +1,7 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   BarChart, Bar, ReferenceLine, ReferenceArea, Label 
@@ -32,27 +32,24 @@ const PriceVolumeChart = ({
   const [showSignals, setShowSignals] = useState<boolean>(true);
   const [selectedPattern, setSelectedPattern] = useState<any>(null);
 
-  // Extract patterns from analysis data
   const chartPatterns = analysisData?.patterns || [];
-  
-  // Function to get color based on pattern type
+
   const getPatternColor = (patternType: string) => {
     if (patternType.includes('bullish') || patternType.includes('buy')) {
       return 'rgba(0, 255, 0, 0.1)';
     } else if (patternType.includes('bearish') || patternType.includes('sell')) {
       return 'rgba(255, 0, 0, 0.1)';
     }
-    return 'rgba(255, 165, 0, 0.1)'; // neutral/consolidation pattern
+    return 'rgba(255, 165, 0, 0.1)';
   };
 
-  // Function to get pattern border color
   const getPatternBorder = (patternType: string) => {
     if (patternType.includes('bullish') || patternType.includes('buy')) {
       return 'rgba(0, 200, 0, 0.5)';
     } else if (patternType.includes('bearish') || patternType.includes('sell')) {
       return 'rgba(200, 0, 0, 0.5)';
     }
-    return 'rgba(200, 165, 0, 0.5)'; // neutral/consolidation pattern
+    return 'rgba(200, 165, 0, 0.5)';
   };
 
   return (
@@ -172,7 +169,6 @@ const PriceVolumeChart = ({
                   name="מחיר"
                 />
                 
-                {/* סימון אזורי תבניות על הגרף */}
                 {showPatterns && chartPatterns.map((pattern: any, idx: number) => {
                   if (!pattern.chartArea) return null;
                   
@@ -194,7 +190,6 @@ const PriceVolumeChart = ({
                   );
                 })}
                 
-                {/* סימון סיגנלים על הגרף */}
                 {showSignals && analysisData?.signals?.map((signal: any, idx: number) => (
                   <ReferenceLine 
                     key={idx}
@@ -218,7 +213,6 @@ const PriceVolumeChart = ({
                   </ReferenceLine>
                 ))}
                 
-                {/* סימון רמות תמיכה והתנגדות */}
                 {showPatterns && analysisData?.keyLevels?.map((level: any, idx: number) => (
                   <ReferenceLine 
                     key={`level-${idx}`}
@@ -243,12 +237,11 @@ const PriceVolumeChart = ({
           </div>
         )}
         
-        {/* תצוגת הסברים לתבניות שזוהו */}
-        {showPatterns && chartPatterns.length > 0 && !selectedPattern && (
+        {showPatterns && analysisData?.patterns && analysisData.patterns.length > 0 && !selectedPattern && (
           <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
             <h3 className="font-bold text-lg mb-2 text-right">תבניות מחיר שזוהו</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {chartPatterns.map((pattern: any, idx: number) => (
+              {analysisData.patterns.map((pattern: any, idx: number) => (
                 <div 
                   key={idx} 
                   className="p-2 border rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -327,9 +320,8 @@ const PriceVolumeChart = ({
                   name="נפח מסחר"
                 />
                 
-                {/* הדגשת נפחים חריגים */}
                 {assetHistory.volumeData.map((point, idx) => {
-                  if (point.abnormal) {
+                  if ('abnormal' in point && point.abnormal) {
                     return (
                       <ReferenceLine
                         key={`vol-${idx}`}
@@ -353,7 +345,6 @@ const PriceVolumeChart = ({
           </div>
         )}
         
-        {/* אזור הסבר לסיגנלים */}
         {analysisData?.signals && analysisData.signals.length > 0 && showSignals && (
           <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
             <h3 className="font-bold text-lg mb-2 text-right">הסברים לסיגנלים שזוהו</h3>
@@ -391,4 +382,3 @@ const PriceVolumeChart = ({
 };
 
 export default PriceVolumeChart;
-
