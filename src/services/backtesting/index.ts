@@ -9,7 +9,7 @@ import {
   detectPatterns, 
   analyzeTradeClusters,
   analyzeMarketRegimes
-} from './patternAnalyzer';
+} from './patterns';
 
 // Main function to run a backtest
 export const runBacktest = async (
@@ -179,4 +179,5 @@ export * from './signalGenerator';
 export * from './positionSizer';
 export * from './performanceCalculator';
 export * from './mockDataGenerator';
-export * from './patternAnalyzer';
+export * from './patterns';
+
