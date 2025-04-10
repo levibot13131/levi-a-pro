@@ -1,9 +1,8 @@
-
 import { BacktestSettings, BacktestResults } from './types';
 import { generateMockBacktestData } from './mockDataGenerator';
 import { calculatePerformanceMetrics } from './performanceCalculator';
 import { calculateOptimalPosition, calculatePositionWithVolatility, calculateKellyPosition } from './positionSizer';
-import { generateSignalsFromHistory } from './signalGenerator';
+import { generateSignalsFromHistory } from './signals';
 import { 
   detectMarketTrends, 
   detectPatterns, 
@@ -175,7 +174,7 @@ export const runParameterSweep = async (
 
 // Export types and all functions
 export * from './types';
-export * from './signalGenerator';
+export * from './signals';
 export * from './positionSizer';
 export * from './performanceCalculator';
 export * from './mockDataGenerator';
