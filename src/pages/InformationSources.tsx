@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -46,7 +45,7 @@ const InformationSources = () => {
   const [influencerFilter, setInfluencerFilter] = useState<string>('all');
   const [eventFilter, setEventFilter] = useState<string>('all');
   
-  // Fetch data
+  // Fetch data with proper type annotations
   const { data: sources, isLoading: sourcesLoading, refetch: refetchSources } = useQuery({
     queryKey: ['informationSources'],
     queryFn: getInformationSources,
@@ -62,31 +61,31 @@ const InformationSources = () => {
     queryFn: () => getUpcomingMarketEvents(90),
   });
   
-  // Filter functions
-  const filteredSources = sources?.filter(source => {
+  // Filter functions with proper type checks
+  const filteredSources = sources ? sources.filter(source => {
     const matchesSearch = source.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                         source.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = sourceCategory === 'all' || source.category === sourceCategory;
     return matchesSearch && matchesCategory;
-  });
+  }) : [];
   
-  const filteredInfluencers = influencers?.filter(influencer => {
+  const filteredInfluencers = influencers ? influencers.filter(influencer => {
     const matchesSearch = influencer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                         influencer.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = influencerFilter === 'all' || 
                         (influencerFilter === 'following' && influencer.followStatus === 'following') ||
                         (influencerFilter === 'specialty' && influencer.specialty.some(s => s.toLowerCase().includes(searchTerm.toLowerCase())));
     return matchesSearch && matchesFilter;
-  });
+  }) : [];
   
-  const filteredEvents = events?.filter(event => {
+  const filteredEvents = events ? events.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                         event.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = eventFilter === 'all' || 
                         (eventFilter === 'reminder' && event.reminder) ||
                         (eventFilter === 'critical' && event.importance === 'critical');
     return matchesSearch && matchesFilter;
-  });
+  }) : [];
   
   // Helper functions
   const handleToggleSource = async (sourceId: string, focused: boolean) => {
