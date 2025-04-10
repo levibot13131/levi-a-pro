@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAssets, getAssetHistory } from '@/services/mockDataService';
@@ -16,7 +15,7 @@ import WhaleTracker from '@/components/technical-analysis/WhaleTracker';
 import TradingLearningSystem from '@/components/technical-analysis/TradingLearningSystem';
 import AdvancedPricePatterns from '@/components/technical-analysis/AdvancedPricePatterns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LineWobble, BarChart3, Brain } from 'lucide-react';
+import { BarChart3, Brain, ActivitySquare } from 'lucide-react';
 
 const timeframeOptions = [
   { value: '5m', label: '5 דקות' },
@@ -105,7 +104,7 @@ const TechnicalAnalysis = () => {
             בסיסי
           </TabsTrigger>
           <TabsTrigger value="advanced" className="flex items-center gap-1">
-            <LineWobble className="h-4 w-4" />
+            <ActivitySquare className="h-4 w-4" />
             מתקדם
           </TabsTrigger>
           <TabsTrigger value="smart" className="flex items-center gap-1">
