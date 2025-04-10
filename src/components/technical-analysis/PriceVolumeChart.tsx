@@ -95,7 +95,8 @@ const PriceVolumeChart = ({
             status: Math.random() > 0.2 ? 'closed' : 'open',
             marketCondition: ['bull', 'bear', 'sideways'][Math.floor(Math.random() * 3)],
             entryReason: 'סימן היפוך מגמה',
-            notes: 'עסקה לבדיקת אסטרטגיה'
+            exitReason: Math.random() > 0.5 ? 'הגעה למטרה' : 'סטופ לוס',
+            tradingSession: Math.random() > 0.66 ? 'asian' : Math.random() > 0.5 ? 'european' : 'american'
           };
         });
 

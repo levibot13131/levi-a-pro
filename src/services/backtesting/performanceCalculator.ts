@@ -141,3 +141,4 @@ const generateAssetPerformance = (trades: Trade[]) => {
     winRate: (data.wins / data.trades) * 100
   }));
 };
+
