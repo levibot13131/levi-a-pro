@@ -12,7 +12,8 @@ const MOCK_NEWS: NewsItem[] = [
     publishedAt: "2025-04-08T08:30:00Z",
     sentiment: "positive",
     relatedAssets: ["bitcoin"],
-    imageUrl: "https://cryptologos.cc/logos/bitcoin-btc-logo.png"
+    imageUrl: "https://cryptologos.cc/logos/bitcoin-btc-logo.png",
+    category: "crypto"
   },
   {
     id: "news2",
@@ -23,7 +24,8 @@ const MOCK_NEWS: NewsItem[] = [
     publishedAt: "2025-04-07T21:15:00Z",
     sentiment: "positive",
     relatedAssets: ["apple"],
-    imageUrl: "https://companieslogo.com/img/orig/AAPL-bf1a4314.png"
+    imageUrl: "https://companieslogo.com/img/orig/AAPL-bf1a4314.png",
+    category: "stocks"
   },
   {
     id: "news3",
@@ -33,7 +35,8 @@ const MOCK_NEWS: NewsItem[] = [
     url: "https://www.bloomberg.com/fed-rates",
     publishedAt: "2025-04-06T16:45:00Z",
     sentiment: "neutral",
-    imageUrl: "https://companieslogo.com/img/orig/BLK-bb9c0c67.png"
+    imageUrl: "https://companieslogo.com/img/orig/BLK-bb9c0c67.png",
+    category: "economy"
   },
   {
     id: "news4",
@@ -44,7 +47,8 @@ const MOCK_NEWS: NewsItem[] = [
     publishedAt: "2025-04-05T12:20:00Z",
     sentiment: "positive",
     relatedAssets: ["ethereum"],
-    imageUrl: "https://cryptologos.cc/logos/ethereum-eth-logo.png"
+    imageUrl: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
+    category: "crypto"
   },
   {
     id: "news5",
@@ -55,7 +59,8 @@ const MOCK_NEWS: NewsItem[] = [
     publishedAt: "2025-04-04T09:10:00Z",
     sentiment: "positive",
     relatedAssets: ["microsoft"],
-    imageUrl: "https://companieslogo.com/img/orig/MSFT-a203b22d.png"
+    imageUrl: "https://companieslogo.com/img/orig/MSFT-a203b22d.png",
+    category: "stocks"
   }
 ];
 

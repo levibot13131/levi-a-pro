@@ -1,4 +1,3 @@
-
 export interface Asset {
   id: string;
   name: string;
@@ -133,16 +132,16 @@ export interface NewsItem {
 // טיפוסים לפוסטים חברתיים
 export interface SocialPost {
   id: string;
-  author: string;
-  authorHandle: string;
-  authorAvatar?: string;
   platform: 'twitter' | 'reddit' | 'telegram' | 'discord';
+  author: string;
+  authorUsername?: string;
+  authorImageUrl?: string;
   content: string;
   publishedAt: string;
   likes: number;
   comments: number;
-  shares: number;
+  shares?: number;
   sentiment?: 'positive' | 'negative' | 'neutral';
   relatedAssets?: string[];
-  url?: string;
+  postUrl?: string;
 }

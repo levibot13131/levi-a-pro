@@ -95,7 +95,7 @@ const BacktestingSystem: React.FC = () => {
                   </Badge>
                 )}
                 {backtestResults && activeView === 'results' && (
-                  <Badge variant={backtestResults.performance.totalReturnPercentage >= 0 ? 'success' : 'destructive'}>
+                  <Badge variant={backtestResults.performance.totalReturnPercentage >= 0 ? 'default' : 'destructive'}>
                     {backtestResults.performance.totalReturnPercentage.toFixed(2)}%
                   </Badge>
                 )}
