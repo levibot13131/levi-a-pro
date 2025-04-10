@@ -142,7 +142,7 @@ export const runParameterSweep = async (
   // Run backtest for each parameter combination
   const results = await Promise.all(
     paramCombinations.map(async (paramSet) => {
-      const settings = { ...baseSettings };
+      const settings = { ...baseSettings } as BacktestSettings;
       
       // Apply parameters from this combination
       Object.entries(paramSet).forEach(([param, value]) => {
