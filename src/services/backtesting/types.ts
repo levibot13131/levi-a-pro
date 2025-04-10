@@ -36,6 +36,44 @@ export interface Trade {
   maxDrawdown?: number;
   strategyUsed: string;
   signalId?: string;
+  marketCondition?: string; // e.g. 'bull', 'bear', 'sideways'
+  entryReason?: string;
+  exitReason?: string;
+  tradingSession?: 'asian' | 'european' | 'american'; // Trading session
+}
+
+export interface EnhancedAnalysis {
+  patterns: {
+    name: string;
+    type: 'bullish' | 'bearish' | 'neutral';
+    startDate: string;
+    endDate: string;
+    significance: number;
+    description: string;
+  }[];
+  trends: {
+    period: string;
+    direction: string;
+    strength: number;
+  }[];
+  overallTrend: string;
+  tradeClusters: {
+    clusters: { 
+      period: string; 
+      count: number; 
+      performance: number; 
+      strategy: string 
+    }[];
+    bestTimesToTrade: string[];
+    worstTimesToTrade: string[];
+  };
+  marketRegimes: {
+    bullMarketPerformance: number;
+    bearMarketPerformance: number;
+    rangeBoundPerformance: number;
+    volatilePerformance: number;
+    bestRegime: string;
+  };
 }
 
 export interface BacktestResults {
@@ -73,4 +111,5 @@ export interface BacktestResults {
     trades: number;
     winRate: number;
   }[];
+  enhancedAnalysis?: EnhancedAnalysis;
 }
