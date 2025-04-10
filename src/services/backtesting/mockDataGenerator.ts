@@ -139,8 +139,8 @@ const generateMockTrade = (date: Date, settings: BacktestSettings, index: number
   
   // Generate entry reason based on strategy
   let entryReason = '';
-  if (settings.strategy === 'KSEM') {
-    entryReason = isWin ? 'פריצת התנגדות קסם' : 'כשל בפריצת התנגדות';
+  if (settings.strategy === 'A.A') {
+    entryReason = isWin ? 'פריצת התנגדות A.A' : 'כשל בפריצת התנגדות';
   } else if (settings.strategy === 'SMC') {
     entryReason = isWin ? 'איתור רמת לחץ ומבנה מחיר' : 'חדירת אזור הביקוש';
   } else if (settings.strategy === 'Wyckoff') {
