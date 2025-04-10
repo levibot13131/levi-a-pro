@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -60,7 +59,6 @@ const RiskCalculator = ({ accountSize = 100000, onCalculate }: RiskCalculatorPro
     }
   };
   
-  // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS' }).format(amount);
   };
@@ -167,7 +165,7 @@ const RiskCalculator = ({ accountSize = 100000, onCalculate }: RiskCalculatorPro
               
               {result.targetPrice && (
                 <div className="flex justify-between">
-                  <Badge variant={result.riskRewardRatio >= 2 ? "success" : "warning"} className="font-mono">
+                  <Badge variant={result.riskRewardRatio >= 2 ? "secondary" : "default"} className="font-mono">
                     {result.riskRewardRatio.toFixed(2)}:1
                   </Badge>
                   <div>יחס סיכוי:סיכון:</div>
@@ -175,7 +173,7 @@ const RiskCalculator = ({ accountSize = 100000, onCalculate }: RiskCalculatorPro
               )}
               
               <div className="pt-2 border-t">
-                <Alert variant={values.riskPercentage <= 1 ? "success" : "warning"} className="flex items-start">
+                <Alert variant={values.riskPercentage <= 1 ? "default" : "destructive"} className="flex items-start">
                   {values.riskPercentage <= 1 ? (
                     <CheckCircle2 className="h-4 w-4 mt-0.5" />
                   ) : (
@@ -187,7 +185,7 @@ const RiskCalculator = ({ accountSize = 100000, onCalculate }: RiskCalculatorPro
                     </AlertTitle>
                     <AlertDescription className="text-xs">
                       {values.riskPercentage <= 1 
-                        ? "אחוז הסיכון עומד בכללים של אסטרטגיית הסיכון שלך" 
+                        ? "אחוז הסיכ��ן עומד בכללים של אסטרטגיית הסיכון שלך" 
                         : "אחוז הסיכון גבוה מהמומלץ באסטרטגיה (1%)"}
                     </AlertDescription>
                   </div>
