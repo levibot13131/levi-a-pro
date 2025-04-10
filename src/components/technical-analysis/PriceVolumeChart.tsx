@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +8,7 @@ import {
   BarChart, Bar, ReferenceLine, ReferenceArea, Label 
 } from 'recharts';
 import { Volume2, AlertTriangle, Eye, EyeOff, Info } from 'lucide-react';
-import { AssetHistoricalData } from '@/types/asset';
+import { AssetHistoricalData, VolumePoint } from '@/types/asset';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 

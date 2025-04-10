@@ -1,3 +1,4 @@
+
 import { AssetHistoricalData, ChartArea } from "@/types/asset";
 import { getAssetHistory } from "@/services/mockDataService";
 
@@ -191,4 +192,148 @@ export const analyzeAsset = async (
     
     // רמת התנגדות עליונה
     keyLevels.push({
-      name: '
+      name: 'התנגדות עליונה',
+      price: maxPrice - (range * 0.1),
+      type: 'resistance' as const
+    });
+    
+    // רמת תמיכה תחתונה
+    keyLevels.push({
+      name: 'תמיכה עיקרית',
+      price: minPrice + (range * 0.15),
+      type: 'support' as const
+    });
+    
+    // רמת פיבונאצ'י 0.618
+    keyLevels.push({
+      name: "פיבונאצ'י 0.618",
+      price: minPrice + (range * 0.618),
+      type: (range * 0.618 < (maxPrice - minPrice) / 2) ? 'support' as const : 'resistance' as const
+    });
+  }
+  
+  return {
+    rsiData,
+    rsiInterpretation: avgRsi > 70 
+      ? "ה-RSI נמצא באזור של קנייתר יתר, מה שמצביע על אפשרות לתיקון כלפי מטה או התמתנות בטווח הקרוב." 
+      : avgRsi < 30 
+        ? "ה-RSI נמצא באזור של מכירת יתר, מה שמצביע על אפשרות להיפוך מגמה כלפי מעלה או התאוששות בטווח הקרוב."
+        : "ה-RSI נמצא בתחום הניטרלי, ללא אינדיקציה חזקה לכיוון כלשהו.",
+    indicators,
+    signals: signalPoints,
+    overallSignal,
+    signalStrength,
+    conclusion,
+    keyLevels
+  };
+};
+
+// פונקציה מדומה להחזרת תבניות וויקוף
+export const getWyckoffPatterns = async (
+  assetId: string,
+  timeframe: AssetHistoricalData['timeframe']
+): Promise<WyckoffAnalysis> => {
+  // בגרסת אמת, כאן תהיה קריאה לשירות ניתוח וויקוף
+  await new Promise(resolve => setTimeout(resolve, 500)); // חיקוי עיכוב רשת
+  
+  // נתונים מדומים
+  return {
+    phase: Math.random() > 0.5 ? 'אקומולציה' : 'דיסטריביושן',
+    patterns: [
+      {
+        name: 'נקודת כניסה ראשונית (PSY)',
+        phase: 'אקומולציה',
+        description: 'ירידת מחיר עם נפח יורד, סימן לכסף חכם שמתחיל לצבור',
+        probability: 75,
+        events: [
+          'נפח יורד בזמן ירידות המחיר',
+          'תמיכה חזקה ברמה התחתונה',
+          'כישלון בשבירת הרמה התחתונה'
+        ]
+      },
+      {
+        name: 'בדיקה (SC)',
+        phase: 'אקומולציה',
+        description: 'תנועה חזרה לכיוון הרמה התחתונה, עם נפח נמוך, לבדיקת הביקוש',
+        probability: 65,
+        events: [
+          'ירידה לעבר הרמה התחתונה',
+          'נפח נמוך יחסית',
+          'תמיכה מהירה והיפוך'
+        ]
+      },
+      {
+        name: 'סוף הפצה (UTAD)',
+        phase: 'דיסטריביושן',
+        description: 'עלייה אחרונה לשיא, עם נפח נמוך, לפני ירידה משמעותית',
+        probability: 70,
+        events: [
+          'עלייה לשיא חדש עם נפח נמוך',
+          'אי-יכולת להחזיק ברמה הגבוהה',
+          'חולשה מתחת לרמות תמיכה קודמות'
+        ]
+      }
+    ],
+    conclusion: "נראה שהנכס נמצא בשלב אקומולציה מוקדם. זיהינו סימנים של צבירה על ידי 'כסף חכם', עם ירידה בנפח בזמן ירידות מחיר ותמיכה חזקה ברמות תחתונות. המלצה: שקול פוזיציות קנייה בתיקונים לרמות תמיכה מזוהות."
+  };
+};
+
+// פונקציה מדומה להחזרת תבניות SMC
+export const getSMCPatterns = async (
+  assetId: string,
+  timeframe: AssetHistoricalData['timeframe']
+): Promise<SMCAnalysis> => {
+  // בגרסת אמת, כאן תהיה קריאה לשירות ניתוח SMC
+  await new Promise(resolve => setTimeout(resolve, 500)); // חיקוי עיכוב רשת
+  
+  // נתונים מדומים
+  return {
+    patterns: [
+      {
+        name: 'Order Block קנייה',
+        bias: 'bullish',
+        description: 'אזור מחיר שממנו התחילה תנועה חזקה כלפי מעלה, וכעת המחיר חזר לבדוק אותו',
+        entryZone: {
+          min: 26500,
+          max: 27000
+        },
+        targetPrice: 32000,
+        stopLoss: 25800,
+        riskRewardRatio: 3.5,
+        keyLevels: [
+          {
+            name: 'אזור כניסה',
+            price: 26750
+          },
+          {
+            name: 'תמיכה קריטית',
+            price: 25800
+          }
+        ]
+      },
+      {
+        name: 'Fair Value Gap',
+        bias: 'bearish',
+        description: 'פער במחיר שנוצר בגלל תנועה מהירה, שצפוי להיסגר בהמשך',
+        entryZone: {
+          min: 29800,
+          max: 30200
+        },
+        targetPrice: 27500,
+        stopLoss: 31000,
+        riskRewardRatio: 2.2,
+        keyLevels: [
+          {
+            name: 'התנגדות',
+            price: 30800
+          },
+          {
+            name: 'יעד ראשון',
+            price: 28500
+          }
+        ]
+      }
+    ],
+    conclusion: "זיהינו מספר הזדמנויות SMC בנכס, כאשר המשמעותית ביותר היא ה-Order Block באזור 26,500-27,000. אזור זה היווה נקודת מפנה היסטורית ומהווה הזדמנות כניסה פוטנציאלית עם יחס סיכוי/סיכון אטרקטיבי של 1:3.5."
+  };
+};

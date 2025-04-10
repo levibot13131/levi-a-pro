@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAssets, getAssetHistory } from '@/services/mockDataService';
@@ -15,6 +16,7 @@ import WhaleTracker from '@/components/technical-analysis/WhaleTracker';
 import TradingLearningSystem from '@/components/technical-analysis/TradingLearningSystem';
 import AdvancedPricePatterns from '@/components/technical-analysis/AdvancedPricePatterns';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { BarChart3, Brain, ActivitySquare } from 'lucide-react';
 
 const timeframeOptions = [
