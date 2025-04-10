@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { NewsItem, SocialPost } from '@/types/asset';
+import React from 'react';
 import { Badge } from '@/components/ui/badge';
 
 export const useMarketNews = () => {
