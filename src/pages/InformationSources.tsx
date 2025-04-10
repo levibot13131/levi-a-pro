@@ -46,17 +46,17 @@ const InformationSources = () => {
   const [eventFilter, setEventFilter] = useState<string>('all');
   
   // Fetch data with proper type annotations
-  const { data: sources, isLoading: sourcesLoading, refetch: refetchSources } = useQuery({
+  const { data: sources, isLoading: sourcesLoading, refetch: refetchSources } = useQuery<FinancialDataSource[]>({
     queryKey: ['informationSources'],
     queryFn: getInformationSources,
   });
   
-  const { data: influencers, isLoading: influencersLoading, refetch: refetchInfluencers } = useQuery({
+  const { data: influencers, isLoading: influencersLoading, refetch: refetchInfluencers } = useQuery<MarketInfluencer[]>({
     queryKey: ['marketInfluencers'],
     queryFn: getMarketInfluencers,
   });
   
-  const { data: events, isLoading: eventsLoading, refetch: refetchEvents } = useQuery({
+  const { data: events, isLoading: eventsLoading, refetch: refetchEvents } = useQuery<MarketEvent[]>({
     queryKey: ['marketEvents'],
     queryFn: () => getUpcomingMarketEvents(90),
   });

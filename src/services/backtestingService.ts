@@ -8,4 +8,17 @@ export * from './backtesting/performanceCalculator';
 export * from './backtesting/mockDataGenerator';
 export * from './backtesting/patterns';
 export * from './whaleTrackerService';
-export * from './marketInformationService';
+
+// Re-export from marketInformationService but exclude timeRangeOptions to avoid conflict
+export {
+  FinancialDataSource,
+  MarketInfluencer,
+  MarketEvent,
+  getInformationSources,
+  getMarketInfluencers,
+  getUpcomingMarketEvents,
+  toggleSourceFocus,
+  toggleInfluencerFollow,
+  setEventReminder,
+  addCustomEvent
+} from './marketInformationService';

@@ -2,49 +2,37 @@
 import { FinancialDataSource, MarketInfluencer, MarketEvent } from '@/types/marketInformation';
 
 // Mock data for information sources
-export const FINANCIAL_SOURCES: FinancialDataSource[] = [
+export const INFORMATION_SOURCES: FinancialDataSource[] = [
   {
     id: "source-1",
-    name: "Bloomberg",
-    description: "Global financial news and market data provider",
-    url: "https://www.bloomberg.com/",
-    category: "news",
-    reliability: 9,
-    accessType: "paid",
-    languages: ["English", "Japanese", "Chinese"],
-    updateFrequency: "Real-time",
-    focused: true
-  },
-  {
-    id: "source-2",
-    name: "Yahoo Finance",
-    description: "Market data, news and analysis for stocks, cryptocurrencies and more",
-    url: "https://finance.yahoo.com/",
-    category: "data",
-    reliability: 7,
-    accessType: "free",
-    languages: ["English", "Spanish"],
-    updateFrequency: "15 min delay",
-    focused: true
-  },
-  {
-    id: "source-3",
     name: "CoinDesk",
-    description: "News and insights on cryptocurrencies and blockchain technology",
+    description: "Leading cryptocurrency news site covering Bitcoin, Ethereum, and blockchain tech",
     url: "https://www.coindesk.com/",
     category: "news",
     reliability: 8,
     accessType: "free",
     languages: ["English"],
     updateFrequency: "Hourly",
-    focused: false
+    focused: true
   },
   {
-    id: "source-4",
-    name: "Financial Times",
-    description: "Global business, financial and political news",
-    url: "https://www.ft.com/",
-    category: "news",
+    id: "source-2",
+    name: "CoinMarketCap",
+    description: "Cryptocurrency market capitalization rankings and data",
+    url: "https://coinmarketcap.com/",
+    category: "data",
+    reliability: 9,
+    accessType: "freemium",
+    languages: ["English", "Chinese", "Russian"],
+    updateFrequency: "Real-time",
+    focused: true
+  },
+  {
+    id: "source-3",
+    name: "Glassnode",
+    description: "On-chain market intelligence platform for blockchain data",
+    url: "https://glassnode.com/",
+    category: "analysis",
     reliability: 9,
     accessType: "paid",
     languages: ["English"],
@@ -52,41 +40,79 @@ export const FINANCIAL_SOURCES: FinancialDataSource[] = [
     focused: false
   },
   {
+    id: "source-4",
+    name: "Crypto Twitter",
+    description: "Twitter discussions about cryptocurrency",
+    url: "https://twitter.com/explore",
+    category: "social",
+    reliability: 5,
+    accessType: "free",
+    languages: ["Multiple"],
+    updateFrequency: "Real-time",
+    focused: true
+  },
+  {
     id: "source-5",
     name: "TradingView",
-    description: "Advanced financial visualization platform and social network",
+    description: "Charting platform with social features and trading ideas",
     url: "https://www.tradingview.com/",
     category: "analysis",
     reliability: 8,
     accessType: "freemium",
-    languages: ["English", "Russian", "Spanish", "Portuguese"],
+    languages: ["English", "Spanish", "Russian"],
     updateFrequency: "Real-time",
-    focused: true
+    focused: false
   }
 ];
 
-// Mock data for influential market figures
+// Mock data for market influencers
 export const MARKET_INFLUENCERS: MarketInfluencer[] = [
   {
     id: "influencer-1",
-    name: "Warren Buffett",
-    description: "CEO of Berkshire Hathaway and legendary value investor",
+    name: "Vitalik Buterin",
+    description: "Co-founder of Ethereum and blockchain thought leader",
     platforms: [
       {
-        type: "other",
-        url: "https://www.berkshirehathaway.com/",
+        type: "twitter",
+        url: "https://twitter.com/VitalikButerin",
+        followers: 4200000
+      },
+      {
+        type: "blog",
+        url: "https://vitalik.ca/",
         followers: 0
       }
     ],
-    specialty: ["Value Investing", "Long-term Strategy"],
-    reliability: 10,
-    sentiment: "variable",
+    specialty: ["Ethereum", "Blockchain Technology", "Scaling Solutions"],
+    reliability: 9,
+    sentiment: "neutral",
     followStatus: "following"
   },
   {
     id: "influencer-2",
+    name: "Michael Saylor",
+    description: "MicroStrategy CEO and Bitcoin advocate",
+    platforms: [
+      {
+        type: "twitter",
+        url: "https://twitter.com/saylor",
+        followers: 2800000
+      },
+      {
+        type: "youtube",
+        url: "https://www.youtube.com/c/MichaelSaylor",
+        followers: 200000
+      }
+    ],
+    specialty: ["Bitcoin", "Corporate Treasury", "Macro Economics"],
+    reliability: 7,
+    sentiment: "bullish",
+    followStatus: "following"
+  },
+  {
+    id: "influencer-3",
     name: "Cathie Wood",
-    description: "Founder and CEO of ARK Invest, focused on disruptive innovation",
+    description: "CEO of Ark Invest and tech investment strategist",
     platforms: [
       {
         type: "twitter",
@@ -94,70 +120,78 @@ export const MARKET_INFLUENCERS: MarketInfluencer[] = [
         followers: 1500000
       },
       {
-        type: "youtube",
-        url: "https://www.youtube.com/c/ARKInvestChannel",
-        followers: 200000
+        type: "linkedin",
+        url: "https://www.linkedin.com/in/cathie-wood/",
+        followers: 500000
       }
     ],
-    specialty: ["Innovation", "Growth Investing", "Technology"],
-    reliability: 7,
-    sentiment: "bullish",
-    followStatus: "following"
-  },
-  {
-    id: "influencer-3",
-    name: "Michael Burry",
-    description: "Founder of Scion Asset Management, known for predicting the 2008 crisis",
-    platforms: [
-      {
-        type: "twitter",
-        url: "https://twitter.com/michaeljburry",
-        followers: 800000
-      }
-    ],
-    specialty: ["Contrarian Investing", "Market Bubbles", "Short Selling"],
+    specialty: ["Tech Stocks", "Bitcoin", "Disruptive Innovation"],
     reliability: 8,
-    sentiment: "bearish",
+    sentiment: "variable",
     followStatus: "not-following"
   }
 ];
 
-// Mock data for upcoming market events
+// Mock data for market events
 export const MARKET_EVENTS: MarketEvent[] = [
   {
     id: "event-1",
     title: "Federal Reserve Interest Rate Decision",
-    description: "The Federal Reserve announces its decision on interest rates following the FOMC meeting",
-    date: "2025-05-01T18:00:00Z",
+    description: "The Federal Reserve announces its latest interest rate decision and monetary policy outlook",
+    date: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString(), // 15 days from now
     category: "economic",
     importance: "critical",
-    relatedAssets: ["sp500", "nasdaq", "usd"],
+    relatedAssets: ["USD", "BTC", "Gold"],
     expectedImpact: "variable",
     source: "Federal Reserve",
     reminder: true
   },
   {
     id: "event-2",
-    title: "Apple Q2 2025 Earnings",
-    description: "Apple Inc. releases its second quarter earnings report for fiscal year 2025",
-    date: "2025-04-30T20:30:00Z",
-    category: "earnings",
+    title: "Bitcoin Halving",
+    description: "Bitcoin's fourth mining reward halving event, reducing block rewards from 6.25 to 3.125 BTC",
+    date: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString(), // 45 days from now
+    category: "other",
     importance: "high",
-    relatedAssets: ["apple", "nasdaq", "tech-etf"],
+    relatedAssets: ["BTC", "Mining Stocks"],
     expectedImpact: "positive",
-    source: "Apple Investor Relations",
-    reminder: false
+    source: "Bitcoin Network",
+    reminder: true
   },
   {
     id: "event-3",
-    title: "EU Crypto Regulation Framework",
-    description: "European Union votes on comprehensive cryptocurrency regulation framework",
-    date: "2025-05-15T09:00:00Z",
-    category: "regulatory",
+    title: "U.S. CPI Data Release",
+    description: "Monthly Consumer Price Index data release showing inflation trends",
+    date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+    category: "economic",
     importance: "high",
-    relatedAssets: ["bitcoin", "ethereum", "binance"],
+    relatedAssets: ["USD", "BTC", "ETH", "Gold"],
     expectedImpact: "variable",
-    source: "European Commission",
+    source: "Bureau of Labor Statistics",
+    reminder: false
+  },
+  {
+    id: "event-4",
+    title: "Ethereum DevCon",
+    description: "Annual Ethereum developer conference showcasing new developments and roadmap",
+    date: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(), // 60 days from now
+    category: "other",
+    importance: "medium",
+    relatedAssets: ["ETH"],
+    expectedImpact: "positive",
+    source: "Ethereum Foundation",
+    reminder: false
+  },
+  {
+    id: "event-5",
+    title: "SEC Bitcoin ETF Decision",
+    description: "SEC ruling on pending spot Bitcoin ETF applications",
+    date: new Date(Date.now() + 25 * 24 * 60 * 60 * 1000).toISOString(), // 25 days from now
+    category: "regulatory",
+    importance: "critical",
+    relatedAssets: ["BTC", "ETH", "Exchange Tokens"],
+    expectedImpact: "positive",
+    source: "SEC",
     reminder: true
   }
 ];
