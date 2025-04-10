@@ -3,8 +3,8 @@ import { Asset, PricePoint, TradeSignal } from "@/types/asset";
 import { PositionSizingCalculation } from "@/services/customTradingStrategyService";
 
 export interface BacktestSettings {
-  initialCapital: number;
-  riskPerTrade: number; // percentage of capital
+  initialCapital: number; // Make this required
+  riskPerTrade: number;
   strategy: 'KSEM' | 'SMC' | 'Wyckoff' | 'Custom';
   entryType: 'market' | 'limit';
   stopLossType: 'fixed' | 'atr' | 'support';

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -114,7 +113,8 @@ export function BacktestingForm({ onRunBacktest, isLoading }: BacktestingFormPro
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     onRunBacktest({
-      ...values,
+      ...values, // This ensures all required properties are included
+      initialCapital: values.initialCapital || 100000, // Provide a default if not specified
       startDate: format(values.startDate, 'yyyy-MM-dd'),
       endDate: format(values.endDate, 'yyyy-MM-dd'),
     });
