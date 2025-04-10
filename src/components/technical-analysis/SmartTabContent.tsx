@@ -1,13 +1,8 @@
 
 import React, { useState } from 'react';
-import TradingLearningSystem from './TradingLearningSystem';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, Brain, BookOpen, Target, ShieldAlert, Lightbulb, ActivitySquare } from 'lucide-react';
-import { tradingApproach, riskManagementRules } from '@/services/customTradingStrategyService';
-import { useQuery } from '@tanstack/react-query';
-import { getTradeSignals } from '@/services/mockTradingService';
+import { Brain, BookOpen, Target } from 'lucide-react';
+import TradingLearningSystem from './TradingLearningSystem';
 import TradingStrategy from './TradingStrategy';
 import CustomSignals from './CustomSignals';
 
