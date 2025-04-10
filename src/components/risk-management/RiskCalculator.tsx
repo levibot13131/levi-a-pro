@@ -167,7 +167,7 @@ const RiskCalculator = ({ accountSize = 100000, onCalculate }: RiskCalculatorPro
               
               {result.targetPrice && (
                 <div className="flex justify-between">
-                  <Badge variant={result.riskRewardRatio >= 2 ? "secondary" : "default"} className="font-mono">
+                  <Badge variant={result.riskRewardRatio >= 2 ? "success" : "warning"} className="font-mono">
                     {result.riskRewardRatio.toFixed(2)}:1
                   </Badge>
                   <div>יחס סיכוי:סיכון:</div>
@@ -175,7 +175,7 @@ const RiskCalculator = ({ accountSize = 100000, onCalculate }: RiskCalculatorPro
               )}
               
               <div className="pt-2 border-t">
-                <Alert variant={values.riskPercentage <= 1 ? "default" : "destructive"} className="flex items-start">
+                <Alert variant={values.riskPercentage <= 1 ? "success" : "warning"} className="flex items-start">
                   {values.riskPercentage <= 1 ? (
                     <CheckCircle2 className="h-4 w-4 mt-0.5" />
                   ) : (
