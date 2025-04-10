@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import BacktestingForm from './BacktestingForm';
 import BacktestResults from './BacktestResults';
-import { BacktestResults as BacktestResultsType, BacktestSettings, runBacktest } from '@/services/backtestingService';
+import { BacktestResults as BacktestResultsType, BacktestSettings, runBacktest } from '@/services/backtesting';
 
 const BacktestingSystem: React.FC = () => {
   const [backtestResults, setBacktestResults] = useState<BacktestResultsType | null>(null);
