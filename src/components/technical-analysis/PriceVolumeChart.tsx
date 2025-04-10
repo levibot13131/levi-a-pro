@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AssetHistoricalData } from '@/types/asset';
@@ -12,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { LineChart, Gauge, ArrowUpDown, Brain, History } from 'lucide-react';
 import { detectMarketTrends, analyzeTradeClusters, analyzeMarketRegimes } from '@/services/backtestingService';
 import { toast } from 'sonner';
+import { Trade, BacktestResults } from '@/services/backtesting/types';
 
 interface PriceVolumeChartProps {
   historyLoading: boolean;
@@ -72,7 +72,7 @@ const PriceVolumeChart = ({
     setTimeout(() => {
       try {
         // Convert price history to mock trades for analysis
-        const mockTrades = assetHistory.data.slice(0, -5).map((point, index) => {
+        const mockTrades: Trade[] = assetHistory.data.slice(0, -5).map((point, index) => {
           const futurePoints = assetHistory.data.slice(index + 1, index + 6);
           const direction = Math.random() > 0.5 ? 'buy' : 'sell';
           const entryPrice = point.price;
@@ -89,10 +89,14 @@ const PriceVolumeChart = ({
             entryPrice,
             exitPrice,
             direction,
+            stopLoss: entryPrice * (direction === 'buy' ? 0.95 : 1.05),
+            takeProfit: entryPrice * (direction === 'buy' ? 1.10 : 0.90),
+            positionSize: 100,
             profit,
             profitPercentage,
             strategyUsed: ['פריצת התנגדות', 'זיהוי תמיכה', 'תבנית מחיר', 'אינדיקטור RSI'][Math.floor(Math.random() * 4)],
             duration: 5, // days
+            status: Math.random() > 0.2 ? 'closed' : 'open',
             notes: 'עסקה לבדיקת אסטרטגיה'
           };
         });
@@ -109,7 +113,7 @@ const PriceVolumeChart = ({
         }));
         
         // Mock backtest results
-        const mockResults = {
+        const mockResults: BacktestResults = {
           trades: mockTrades,
           performance: {
             totalReturn: mockTrades.reduce((sum, t) => sum + (t.profit || 0), 0),
@@ -127,7 +131,15 @@ const PriceVolumeChart = ({
             losingTrades: mockTrades.filter(t => (t.profit || 0) <= 0).length,
             averageTradeDuration: 5
           },
-          equity: equityCurve
+          equity: equityCurve,
+          monthly: [
+            { month: '2025-01', return: 2.5, trades: 8 },
+            { month: '2025-02', return: -1.2, trades: 6 },
+            { month: '2025-03', return: 3.7, trades: 9 }
+          ],
+          assetPerformance: [
+            { assetId: 'sample-asset', name: 'מטבע לדוגמה', return: 3.5, trades: mockTrades.length }
+          ]
         };
         
         // Analyze market regimes
@@ -269,7 +281,6 @@ const PriceVolumeChart = ({
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* מדדי ביצוע */}
               <div className="bg-muted/40 p-4 rounded-lg">
                 <h4 className="font-bold text-right mb-2 flex items-center justify-end gap-1">
                   <Gauge className="h-4 w-4" />
@@ -295,7 +306,6 @@ const PriceVolumeChart = ({
                 </div>
               </div>
               
-              {/* סטאפים מובילים */}
               <div className="bg-muted/40 p-4 rounded-lg">
                 <h4 className="font-bold text-right mb-2 flex items-center justify-end gap-1">
                   <LineChart className="h-4 w-4" />
@@ -314,7 +324,6 @@ const PriceVolumeChart = ({
                 </div>
               </div>
               
-              {/* טעויות נפוצות */}
               <div className="bg-red-50 dark:bg-red-950/20 p-4 rounded-lg">
                 <h4 className="font-bold text-right mb-2 text-red-600 dark:text-red-400">טעויות נפוצות</h4>
                 <ul className="list-disc list-inside space-y-1 text-right">
@@ -324,7 +333,6 @@ const PriceVolumeChart = ({
                 </ul>
               </div>
               
-              {/* המלצות לשיפור */}
               <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg">
                 <h4 className="font-bold text-right mb-2 text-green-600 dark:text-green-400">המלצות לשיפור</h4>
                 <ul className="list-disc list-inside space-y-1 text-right">
@@ -334,7 +342,6 @@ const PriceVolumeChart = ({
                 </ul>
               </div>
               
-              {/* ביצועים לפי תנאי שוק */}
               <div className="bg-muted/40 p-4 rounded-lg md:col-span-2">
                 <h4 className="font-bold text-right mb-2 flex items-center justify-end gap-1">
                   <ArrowUpDown className="h-4 w-4" />
@@ -351,7 +358,6 @@ const PriceVolumeChart = ({
                 </div>
               </div>
               
-              {/* המלצה מסכמת */}
               <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg md:col-span-2">
                 <h4 className="font-bold text-right mb-2 flex items-center justify-end gap-1">
                   <Brain className="h-4 w-4" />
