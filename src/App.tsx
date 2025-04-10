@@ -12,6 +12,7 @@ import MarketNews from "./pages/MarketNews";
 import TradingSignals from "./pages/TradingSignals";
 import TechnicalAnalysis from "./pages/TechnicalAnalysis";
 import ComprehensiveAnalysis from "./pages/ComprehensiveAnalysis";
+import RiskManagement from "./pages/RiskManagement";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/trading-signals" element={<TradingSignals />} />
           <Route path="/technical-analysis" element={<TechnicalAnalysis />} />
           <Route path="/comprehensive-analysis" element={<ComprehensiveAnalysis />} />
+          <Route path="/risk-management" element={<RiskManagement />} />
           <Route path="/index" element={<Index />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

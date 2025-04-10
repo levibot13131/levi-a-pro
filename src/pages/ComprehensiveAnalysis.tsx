@@ -9,7 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
   LineChart, BarChart, Brain, ActivitySquare, 
   BookOpen, ShieldCheck, TrendingUp, BarChart3, 
-  Landmark, Calendar, ListChecks, FileCheck 
+  Landmark, Calendar, ListChecks, FileCheck, BookMarked 
 } from 'lucide-react';
 import { getAssets, getAssetHistory } from '@/services/mockDataService';
 import { analyzeAsset, getWyckoffPatterns, getSMCPatterns } from '@/services/technicalAnalysisService';
