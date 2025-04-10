@@ -11,11 +11,13 @@ interface TradingRulesProps {
 }
 
 const TradingRules = ({ showDetails = true }: TradingRulesProps) => {
-  // Categorize rules
-  const stopLossRules = riskManagementRules.filter(rule => rule.category === 'stopLoss');
-  const positionRules = riskManagementRules.filter(rule => rule.category === 'positionSize');
-  const psychologyRules = riskManagementRules.filter(rule => rule.category === 'psychology');
-  const generalRules = riskManagementRules.filter(rule => rule.category === 'general');
+  // Categorize rules - using rule property instead of missing category
+  const stopLossRules = riskManagementRules.filter(rule => rule.rule.includes('סטופ') || rule.rule.includes('stop'));
+  const positionRules = riskManagementRules.filter(rule => rule.rule.includes('פוזיציה') || rule.rule.includes('גודל'));
+  const psychologyRules = riskManagementRules.filter(rule => rule.rule.includes('פסיכולוגיה') || rule.rule.includes('רגש'));
+  const generalRules = riskManagementRules.filter(rule => !stopLossRules.includes(rule) && 
+                                                       !positionRules.includes(rule) && 
+                                                       !psychologyRules.includes(rule));
   
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
@@ -62,7 +64,7 @@ const TradingRules = ({ showDetails = true }: TradingRulesProps) => {
                 <div key={rule.id} className="border rounded-lg p-2">
                   <div className="flex justify-between items-start">
                     {getPriorityBadge(rule.priority)}
-                    <div className="text-right font-medium">{rule.description}</div>
+                    <div className="text-right font-medium">{rule.rule}</div>
                   </div>
                 </div>
               ))}
@@ -82,7 +84,7 @@ const TradingRules = ({ showDetails = true }: TradingRulesProps) => {
                 <div key={rule.id} className="border rounded-lg p-2">
                   <div className="flex justify-between items-start">
                     {getPriorityBadge(rule.priority)}
-                    <div className="text-right font-medium">{rule.description}</div>
+                    <div className="text-right font-medium">{rule.rule}</div>
                   </div>
                 </div>
               ))}
@@ -102,7 +104,7 @@ const TradingRules = ({ showDetails = true }: TradingRulesProps) => {
                 <div key={rule.id} className="border rounded-lg p-2">
                   <div className="flex justify-between items-start">
                     {getPriorityBadge(rule.priority)}
-                    <div className="text-right font-medium">{rule.description}</div>
+                    <div className="text-right font-medium">{rule.rule}</div>
                   </div>
                 </div>
               ))}
@@ -124,7 +126,7 @@ const TradingRules = ({ showDetails = true }: TradingRulesProps) => {
                     <div key={rule.id} className="border rounded-lg p-2">
                       <div className="flex justify-between items-start">
                         {getPriorityBadge(rule.priority)}
-                        <div className="text-right font-medium">{rule.description}</div>
+                        <div className="text-right font-medium">{rule.rule}</div>
                       </div>
                     </div>
                   ))}

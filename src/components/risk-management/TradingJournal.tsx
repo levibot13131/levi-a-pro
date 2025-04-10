@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BookOpen, Plus, Filter, ArrowUpDown } from 'lucide-react';
 import { addTradingJournalEntry, TradingJournalEntry } from '@/services/customTradingStrategyService';
 import { toast } from "sonner";
+import { TradeJournalEntry } from '@/types/asset';
 
 interface TradingJournalProps {
   initialEntries?: TradingJournalEntry[];
@@ -19,14 +20,14 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
-    asset: '',
+    assetId: '',
     direction: 'long',
     entryPrice: '',
     stopLoss: '',
-    target: '',
+    targetPrice: '',
     positionSize: '',
-    reasonForEntry: '',
-    followedStrategy: true
+    notes: '',
+    strategy: 'KSM'
   });
   
   const handleChange = (field: string, value: any) => {
@@ -36,7 +37,7 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.asset || !formData.entryPrice || !formData.stopLoss) {
+    if (!formData.assetId || !formData.entryPrice || !formData.stopLoss) {
       toast.error("נא למלא את כל השדות הנדרשים");
       return;
     }
@@ -52,34 +53,36 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
       
       // Mock account size for risk percentage calculation
       const mockAccountSize = 100000;
-      const riskPercentage = (riskAmount / mockAccountSize) * 100;
+      const risk = (riskAmount / mockAccountSize) * 100;
       
       const newEntry = await addTradingJournalEntry({
+        id: '',
         date: formData.date,
-        asset: formData.asset,
+        assetId: formData.assetId,
+        assetName: formData.assetId, // Using assetId as name for simplicity
         direction: formData.direction as 'long' | 'short',
         entryPrice,
         stopLoss,
-        target: formData.target ? parseFloat(formData.target) : undefined,
+        targetPrice: formData.targetPrice ? parseFloat(formData.targetPrice) : undefined,
         positionSize,
-        riskAmount,
-        riskPercentage,
-        reasonForEntry: formData.reasonForEntry,
-        followedStrategy: formData.followedStrategy
+        risk,
+        notes: formData.notes,
+        strategy: formData.strategy,
+        tags: []
       });
       
       setEntries(prev => [newEntry, ...prev]);
       setShowForm(false);
       setFormData({
         date: new Date().toISOString().split('T')[0],
-        asset: '',
+        assetId: '',
         direction: 'long',
         entryPrice: '',
         stopLoss: '',
-        target: '',
+        targetPrice: '',
         positionSize: '',
-        reasonForEntry: '',
-        followedStrategy: true
+        notes: '',
+        strategy: 'KSM'
       });
       
     } catch (err: any) {
@@ -125,8 +128,8 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
                     <label className="text-sm font-medium mb-1 block">נכס</label>
                     <Input
                       placeholder="למשל: BTC/USD"
-                      value={formData.asset}
-                      onChange={(e) => handleChange('asset', e.target.value)}
+                      value={formData.assetId}
+                      onChange={(e) => handleChange('assetId', e.target.value)}
                     />
                   </div>
                 </div>
@@ -186,18 +189,18 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
                       type="number"
                       step="0.01"
                       placeholder="מחיר יעד"
-                      value={formData.target}
-                      onChange={(e) => handleChange('target', e.target.value)}
+                      value={formData.targetPrice}
+                      onChange={(e) => handleChange('targetPrice', e.target.value)}
                     />
                   </div>
                 </div>
                 
                 <div>
-                  <label className="text-sm font-medium mb-1 block">סיבה לכניסה</label>
+                  <label className="text-sm font-medium mb-1 block">הערות</label>
                   <Textarea
-                    placeholder="סיבת הכניסה לעסקה, התבנית שזוהתה, וכו'"
-                    value={formData.reasonForEntry}
-                    onChange={(e) => handleChange('reasonForEntry', e.target.value)}
+                    placeholder="הערות לעסקה, התבנית שזוהתה, וכו'"
+                    value={formData.notes}
+                    onChange={(e) => handleChange('notes', e.target.value)}
                     rows={3}
                   />
                 </div>
@@ -257,7 +260,7 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
                          'פתוח'}
                       </Badge>
                       <div className="flex items-center">
-                        <span className="font-medium">{entry.asset}</span>
+                        <span className="font-medium">{entry.assetName}</span>
                         <Badge className="mx-2" variant="outline">
                           {entry.direction === 'long' ? 'לונג' : 'שורט'}
                         </Badge>
@@ -279,7 +282,7 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
                       </div>
                       <div>
                         <div className="text-xs text-muted-foreground">יעד</div>
-                        <div className="font-medium">{entry.target || '-'}</div>
+                        <div className="font-medium">{entry.targetPrice || '-'}</div>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-right">
@@ -290,16 +293,16 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
                       <div>
                         <div className="text-xs text-muted-foreground">סיכון</div>
                         <div className="font-medium">
-                          {entry.riskPercentage.toFixed(2)}% 
-                          ({entry.riskAmount.toLocaleString()} ש"ח)
+                          {entry.risk.toFixed(2)}% 
+                          ({(entry.risk * 1000).toLocaleString()} ש"ח)
                         </div>
                       </div>
                     </div>
                     
-                    {entry.reasonForEntry && (
+                    {entry.notes && (
                       <div className="mt-2 border-t pt-2">
-                        <div className="text-xs text-muted-foreground">סיבת כניסה:</div>
-                        <p className="text-sm mt-1">{entry.reasonForEntry}</p>
+                        <div className="text-xs text-muted-foreground">הערות:</div>
+                        <p className="text-sm mt-1">{entry.notes}</p>
                       </div>
                     )}
                   </CardContent>
