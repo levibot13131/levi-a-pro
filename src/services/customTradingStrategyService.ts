@@ -1,4 +1,3 @@
-
 export interface PositionSizingCalculation {
   accountSize: number;
   riskPercentage: number;
@@ -11,7 +10,6 @@ export interface PositionSizingCalculation {
   riskRewardRatio: number;
 }
 
-// Adding missing exports referenced by components
 export const calculatePositionSize = (
   accountSize: number,
   riskPercentage: number,
@@ -66,7 +64,6 @@ export interface TradingJournalEntry {
   strategy: string;
 }
 
-// Mock data for the trading approach
 export const tradingApproach = {
   name: "קסם - KSEM",
   description: "אסטרטגיית קסם (KSEM) היא שיטת מסחר המשלבת עקרונות טכניים וניהול סיכונים מתקדם",
@@ -81,7 +78,27 @@ export const tradingApproach = {
   ]
 };
 
-// Risk management rules
+export interface TradingPerformanceStats {
+  winRate: number;
+  profitFactor: number;
+  maxDrawdown: number;
+  averageWin: number;
+  averageLoss: number;
+  expectancy: number;
+  totalTrades: number;
+  profitableTrades: number;
+  losingTrades: number;
+}
+
+export interface TrendTradingStats {
+  firstTargetSuccessRate: number;
+  secondTargetSuccessRate: number;
+  thirdTargetSuccessRate: number;
+  averageRR: number;
+  bestTimeframes: string[];
+  bestPatterns: string[];
+}
+
 export const riskManagementRules = [
   {
     id: 1,
@@ -120,21 +137,16 @@ export const riskManagementRules = [
   }
 ];
 
-// Mock function for adding trading journal entries
 export const addTradingJournalEntry = async (entry: TradingJournalEntry): Promise<TradingJournalEntry> => {
-  // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 1000));
   
-  // Return the entry with an ID if it doesn't have one
   return {
     ...entry,
     id: entry.id || `entry-${Date.now()}`
   };
 };
 
-// Mock function for getting trading performance stats
 export const getTradingPerformanceStats = async () => {
-  // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 1000));
   
   return {
@@ -150,9 +162,7 @@ export const getTradingPerformanceStats = async () => {
   };
 };
 
-// Mock function for getting trend trading stats
 export const getTrendTradingStats = async () => {
-  // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 1000));
   
   return {
