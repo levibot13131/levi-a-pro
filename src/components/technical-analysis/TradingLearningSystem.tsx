@@ -35,6 +35,7 @@ const TradingLearningSystem = ({ assetId }: TradingLearningSystemProps) => {
               מתקדם
             </TabsTrigger>
           </TabsList>
+          
           <TabsContent value="fundamentals" className="space-y-4 mt-4">
             <div className="text-right">
               <h3 className="text-lg font-semibold mb-2">ניתוח בסיסי</h3>
@@ -42,6 +43,7 @@ const TradingLearningSystem = ({ assetId }: TradingLearningSystemProps) => {
               <Badge variant="secondary">רמת קושי: קל</Badge>
             </div>
           </TabsContent>
+          
           <TabsContent value="patterns" className="space-y-4 mt-4">
             <div className="text-right">
               <h3 className="text-lg font-semibold mb-2">זיהוי תבניות</h3>
@@ -49,6 +51,7 @@ const TradingLearningSystem = ({ assetId }: TradingLearningSystemProps) => {
               <Badge variant="secondary">רמת קושי: בינוני</Badge>
             </div>
           </TabsContent>
+          
           <TabsContent value="risk" className="space-y-4 mt-4">
             <div className="text-right">
               <h3 className="text-lg font-semibold mb-2">ניהול סיכונים</h3>
@@ -56,6 +59,7 @@ const TradingLearningSystem = ({ assetId }: TradingLearningSystemProps) => {
               <Badge variant="secondary">רמת קושי: בינוני</Badge>
             </div>
           </TabsContent>
+          
           <TabsContent value="advanced" className="space-y-4 mt-4">
             <div className="text-right">
               <h3 className="text-lg font-semibold mb-2">טכניקות מתקדמות</h3>

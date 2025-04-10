@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAssets, getAssetHistory } from '@/services/mockDataService';
@@ -112,70 +113,70 @@ const TechnicalAnalysis = () => {
             חכם
           </TabsTrigger>
         </TabsList>
+      
+        {/* תוכן הלשוניות */}
+        <TabsContent value="basic" className="mt-0">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <div className="lg:col-span-2">
+              {/* גרף מחיר ונפח */}
+              <PriceVolumeChart 
+                historyLoading={historyLoading}
+                assetHistory={assetHistory}
+                showVolume={showVolume}
+                setShowVolume={setShowVolume}
+                formatPrice={formatPrice}
+                analysisData={analysisData}
+              />
+              
+              {/* אינדיקטורים טכניים */}
+              <TechnicalIndicators 
+                analysisLoading={analysisLoading}
+                analysisData={analysisData}
+                selectedAsset={selectedAsset}
+              />
+            </div>
+            
+            <div>
+              {/* שיטות ניתוח מתקדמות */}
+              <AdvancedAnalysisMethods 
+                selectedAnalysisMethod={selectedAnalysisMethod}
+                setSelectedAnalysisMethod={setSelectedAnalysisMethod}
+                wyckoffPatterns={wyckoffPatterns}
+                smcPatterns={smcPatterns}
+                formatPrice={formatPrice}
+              />
+              
+              {/* הגדרות התראות */}
+              <AlertSettings />
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="advanced" className="mt-0">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {/* לשונית ניתוח מתקדם */}
+            <AdvancedPricePatterns 
+              assetId={selectedAssetId}
+              formatPrice={formatPrice}
+            />
+            
+            {/* מעקב אחר ארנקים גדולים */}
+            <WhaleTracker 
+              assetId={selectedAssetId}
+              formatPrice={formatPrice}
+            />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="smart" className="mt-0">
+          <div className="mb-6">
+            {/* מערכת הלמידה החכמה */}
+            <TradingLearningSystem 
+              assetId={selectedAssetId}
+            />
+          </div>
+        </TabsContent>
       </Tabs>
-      
-      {/* תוכן הלשוניות */}
-      <TabsContent value="basic" className="mt-0">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          <div className="lg:col-span-2">
-            {/* גרף מחיר ונפח */}
-            <PriceVolumeChart 
-              historyLoading={historyLoading}
-              assetHistory={assetHistory}
-              showVolume={showVolume}
-              setShowVolume={setShowVolume}
-              formatPrice={formatPrice}
-              analysisData={analysisData}
-            />
-            
-            {/* אינדיקטורים טכניים */}
-            <TechnicalIndicators 
-              analysisLoading={analysisLoading}
-              analysisData={analysisData}
-              selectedAsset={selectedAsset}
-            />
-          </div>
-          
-          <div>
-            {/* שיטות ניתוח מתקדמות */}
-            <AdvancedAnalysisMethods 
-              selectedAnalysisMethod={selectedAnalysisMethod}
-              setSelectedAnalysisMethod={setSelectedAnalysisMethod}
-              wyckoffPatterns={wyckoffPatterns}
-              smcPatterns={smcPatterns}
-              formatPrice={formatPrice}
-            />
-            
-            {/* הגדרות התראות */}
-            <AlertSettings />
-          </div>
-        </div>
-      </TabsContent>
-      
-      <TabsContent value="advanced" className="mt-0">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {/* לשונית ניתוח מתקדם */}
-          <AdvancedPricePatterns 
-            assetId={selectedAssetId}
-            formatPrice={formatPrice}
-          />
-          
-          {/* מעקב אחר ארנקים גדולים */}
-          <WhaleTracker 
-            assetId={selectedAssetId}
-            formatPrice={formatPrice}
-          />
-        </div>
-      </TabsContent>
-      
-      <TabsContent value="smart" className="mt-0">
-        <div className="mb-6">
-          {/* מערכת הלמידה החכמה */}
-          <TradingLearningSystem 
-            assetId={selectedAssetId}
-          />
-        </div>
-      </TabsContent>
     </div>
   );
 };
