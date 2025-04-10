@@ -1,5 +1,5 @@
 
-import { AssetHistoricalData, ChartArea } from "@/types/asset";
+import { AssetHistoricalData, ChartArea, TimeframeType } from "@/types/asset";
 import { getAssetHistory } from "@/services/mockDataService";
 
 // סוגי נתונים לניתוח טכני

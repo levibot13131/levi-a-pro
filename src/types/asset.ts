@@ -1,3 +1,4 @@
+
 export interface Asset {
   id: string;
   name: string;
@@ -6,6 +7,8 @@ export interface Asset {
   marketCap: number;
   volume24h: number;
   change24h: number;
+  imageUrl?: string;
+  type?: 'crypto' | 'stock' | 'forex' | 'commodity';
 }
 
 export interface AssetHistoricalData {
@@ -18,10 +21,15 @@ export interface AssetHistoricalData {
   volumeData?: VolumePoint[];
 }
 
+export interface PricePoint {
+  timestamp: number;
+  price: number;
+}
+
 export interface VolumePoint {
   timestamp: number;
   volume: number;
-  abnormal?: boolean; // Add abnormal property
+  abnormal?: boolean;
 }
 
 export interface ChartArea {
@@ -29,4 +37,110 @@ export interface ChartArea {
   endTimestamp: number;
   minPrice: number;
   maxPrice: number;
+}
+
+// טיפוסים למערכת איתותי מסחר
+export interface TradeSignal {
+  id: string;
+  assetId: string;
+  type: 'buy' | 'sell';
+  price: number;
+  timestamp: number;
+  strength: 'weak' | 'medium' | 'strong';
+  strategy: string;
+  timeframe: string;
+  targetPrice?: number;
+  stopLoss?: number;
+  riskRewardRatio?: number;
+  notes?: string;
+}
+
+// טיפוסים לניתוחי שוק
+export interface MarketAnalysis {
+  id: string;
+  title: string;
+  summary: string;
+  type: 'technical' | 'fundamental' | 'sentiment';
+  assetId?: string;
+  marketSector?: string;
+  publishedAt: string;
+  author: string;
+  content: string;
+  keyPoints: string[];
+  conclusion: string;
+  sentiment: 'bullish' | 'bearish' | 'neutral';
+}
+
+// טיפוסים לבוטים של מסחר
+export interface TradingBot {
+  id: string;
+  name: string;
+  description: string;
+  strategy: string;
+  performance: {
+    totalReturn: number;
+    winRate: number;
+    averageProfit: number;
+    averageLoss: number;
+    sharpeRatio: number;
+    maxDrawdown: number;
+  };
+  supportedAssets: string[];
+  monthlyReturns: { month: string; return: number }[];
+  riskLevel: 'low' | 'medium' | 'high';
+  creatorInfo: string;
+  imageUrl: string;
+}
+
+// טיפוסים ליומן מסחר
+export interface TradeJournalEntry {
+  id: string;
+  date: string;
+  assetId: string;
+  assetName: string;
+  direction: 'long' | 'short';
+  entryPrice: number;
+  exitPrice?: number;
+  stopLoss: number;
+  targetPrice?: number;
+  positionSize: number;
+  risk: number;
+  outcome?: 'win' | 'loss' | 'breakeven' | 'open';
+  profit?: number;
+  profitPercentage?: number;
+  notes?: string;
+  tags?: string[];
+  screenshot?: string;
+  strategy: string;
+}
+
+// טיפוסים לחדשות שוק
+export interface NewsItem {
+  id: string;
+  title: string;
+  summary: string;
+  source: string;
+  url: string;
+  publishedAt: string;
+  imageUrl?: string;
+  category: 'crypto' | 'stocks' | 'forex' | 'economy' | 'regulation';
+  relatedAssets?: string[];
+  sentiment?: 'positive' | 'negative' | 'neutral';
+}
+
+// טיפוסים לפוסטים חברתיים
+export interface SocialPost {
+  id: string;
+  author: string;
+  authorHandle: string;
+  authorAvatar?: string;
+  platform: 'twitter' | 'reddit' | 'telegram' | 'discord';
+  content: string;
+  publishedAt: string;
+  likes: number;
+  comments: number;
+  shares: number;
+  sentiment?: 'positive' | 'negative' | 'neutral';
+  relatedAssets?: string[];
+  url?: string;
 }
