@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import EmptySignalsState from './webhook/EmptySignalsState';
 import WebhookGuide from './webhook/WebhookGuide';
 import WebhookUrlDisplay from './webhook/WebhookUrlDisplay';
+import TelegramGuide from './webhook/TelegramGuide';
 import TradingViewConnectButton from './tradingview/TradingViewConnectButton';
 import { useTradingViewConnection } from '@/hooks/use-tradingview-connection';
 
@@ -25,6 +26,7 @@ const TradingViewWebhookHandler: React.FC = () => {
   const { signals, isLoading, clearSignals, simulateSignal } = useWebhookSignals();
   const { isConnected } = useTradingViewConnection();
   const [tvConnectionChanged, setTvConnectionChanged] = useState(false);
+  const [showTelegramGuide, setShowTelegramGuide] = useState(false);
   
   const renderSignalIcon = (action: 'buy' | 'sell' | 'info') => {
     switch (action) {
@@ -84,7 +86,24 @@ const TradingViewWebhookHandler: React.FC = () => {
             <EmptySignalsState />
             <Separator />
             {isConnected ? (
-              <WebhookGuide />
+              <div>
+                <WebhookGuide />
+                <div className="mt-4 flex justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowTelegramGuide(!showTelegramGuide)}
+                  >
+                    {showTelegramGuide ? 'הסתר מדריך טלגרם' : 'הצג מדריך טלגרם מפורט'}
+                  </Button>
+                </div>
+                {showTelegramGuide && (
+                  <>
+                    <Separator className="my-4" />
+                    <TelegramGuide />
+                  </>
+                )}
+              </div>
             ) : (
               <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-md text-right">
                 <h3 className="font-medium mb-2">חיבור לחשבון TradingView</h3>
@@ -180,7 +199,14 @@ const TradingViewWebhookHandler: React.FC = () => {
                 }
               </p>
               {isConnected && <WebhookUrlDisplay />}
-              <div className="flex justify-end mt-2">
+              <div className="flex justify-between mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowTelegramGuide(!showTelegramGuide)}
+                >
+                  {showTelegramGuide ? 'הסתר מדריך טלגרם' : 'מדריך טלגרם מפורט'}
+                </Button>
                 <Button variant="outline" size="sm" className="gap-1">
                   <ExternalLink className="h-4 w-4" />
                   למדריך המלא

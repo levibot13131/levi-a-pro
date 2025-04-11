@@ -2,6 +2,7 @@
 import { isTradingViewConnected } from './tradingViewAuthService';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
+import { sendTelegramMessage, parseTelegramConfig } from './telegramService';
 
 export type AlertDestination = {
   id: string;
@@ -39,15 +40,9 @@ export const getAlertDestinations = (): AlertDestination[] => {
   const defaultDestinations: AlertDestination[] = [
     {
       id: uuidv4(),
-      name: 'וואטסאפ אישי',
-      type: 'whatsapp',
-      active: true
-    },
-    {
-      id: uuidv4(),
-      name: 'טלגרם - קבוצת איתותים',
+      name: '{"botToken":"","chatId":""}',
       type: 'telegram',
-      active: true
+      active: false
     }
   ];
   
@@ -79,16 +74,23 @@ export const addAlertDestination = (destination: Omit<AlertDestination, 'id'>): 
 };
 
 // עדכון יעד התראה
-export const updateAlertDestination = (id: string, updates: Partial<AlertDestination>): void => {
+export const updateAlertDestination = (type: AlertDestination['type'], updates: Partial<AlertDestination>): void => {
   const destinations = getAlertDestinations();
-  const index = destinations.findIndex(d => d.id === id);
+  const index = destinations.findIndex(d => d.type === type);
   
   if (index !== -1) {
     destinations[index] = { ...destinations[index], ...updates };
     saveAlertDestinations(destinations);
     
     toast.success('יעד התראות עודכן', {
-      description: `יעד ${destinations[index].name} עודכן בהצלחה`
+      description: `יעד ${getDestinationTypeName(type)} עודכן בהצלחה`
+    });
+  } else {
+    // אם היעד לא קיים, נוסיף אותו
+    addAlertDestination({
+      name: updates.name || type,
+      type,
+      active: updates.active || false
     });
   }
 };
@@ -169,27 +171,44 @@ const simulateSendAlerts = async (
   alert: TradingViewAlert,
   destinations: AlertDestination[]
 ): Promise<number> => {
-  // כאן היה קוד אמיתי שמתחבר לשרת ושולח התראות
+  let successCount = 0;
   
-  // סימולציה של זמן תגובה
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // מציג התראה על שליחת ההודעה בוואטסאפ
-  const whatsappDestinations = destinations.filter(d => d.type === 'whatsapp');
-  if (whatsappDestinations.length > 0) {
-    toast.success('התראה נשלחה לוואטסאפ', {
-      description: `איתות ${alert.action === 'buy' ? 'קנייה' : alert.action === 'sell' ? 'מכירה' : 'מידע'} עבור ${alert.symbol} נשלח לוואטסאפ שלך`
-    });
+  // יצירת הודעה מפורמטת
+  const formatAlertMessage = (alert: TradingViewAlert) => {
+    const actionEmoji = alert.action === 'buy' ? '🟢' : alert.action === 'sell' ? '🔴' : 'ℹ️';
+    const actionText = alert.action === 'buy' ? 'קנייה' : alert.action === 'sell' ? 'מכירה' : 'מידע';
+    
+    return `${actionEmoji} *${actionText}: ${alert.symbol}*\n`
+      + `💰 מחיר: $${alert.price.toLocaleString()}\n`
+      + `📊 טווח זמן: ${alert.timeframe}\n`
+      + (alert.indicators.length > 0 ? `📈 אינדיקטורים: ${alert.indicators.join(', ')}\n` : '')
+      + `📝 הודעה: ${alert.message}\n`
+      + (alert.details ? `🔍 פרטים: ${alert.details}\n` : '')
+      + `⏱️ זמן: ${new Date(alert.timestamp).toLocaleString('he-IL')}`;
+  };
+
+  // שליחה לכל היעדים
+  for (const destination of destinations) {
+    try {
+      if (destination.type === 'telegram' && destination.active) {
+        // שליחה לטלגרם
+        const config = parseTelegramConfig(destination.name);
+        if (config) {
+          const message = formatAlertMessage(alert);
+          const success = await sendTelegramMessage(config, message);
+          if (success) {
+            successCount++;
+            toast.success('התראה נשלחה לטלגרם', {
+              description: `איתות ${alert.action === 'buy' ? 'קנייה' : alert.action === 'sell' ? 'מכירה' : 'מידע'} עבור ${alert.symbol} נשלח לטלגרם שלך`
+            });
+          }
+        }
+      }
+      // במקרה שנרצה להוסיף יעדים נוספים בעתיד
+    } catch (error) {
+      console.error(`Error sending to ${destination.type}:`, error);
+    }
   }
   
-  // מציג התראה על שליחת ההודעה בטלגרם
-  const telegramDestinations = destinations.filter(d => d.type === 'telegram');
-  if (telegramDestinations.length > 0) {
-    toast.success('התראה נשלחה לטלגרם', {
-      description: `איתות ${alert.action === 'buy' ? 'קנייה' : alert.action === 'sell' ? 'מכירה' : 'מידע'} עבור ${alert.symbol} נשלח לערוץ הטלגרם שלך`
-    });
-  }
-  
-  // החזרת מספר היעדים שההתראה נשלחה אליהם
-  return destinations.length;
+  return successCount;
 };
