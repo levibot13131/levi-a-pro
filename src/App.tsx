@@ -5,6 +5,8 @@ import { Toaster } from 'sonner';
 import MainNavigation from './components/MainNavigation';
 import TradingSignals from './pages/TradingSignals';
 import AssetTracker from './pages/AssetTracker';
+import RiskManagement from './pages/RiskManagement';
+import TechnicalAnalysis from './pages/TechnicalAnalysis';
 import { useEffect } from 'react';
 import { initializeAssets } from './services/realTimeAssetService';
 
@@ -32,6 +34,8 @@ function App() {
           <Route path="/" element={<TradingSignals />} />
           <Route path="/trading-signals" element={<TradingSignals />} />
           <Route path="/asset-tracker" element={<AssetTracker />} />
+          <Route path="/risk-management" element={<RiskManagement />} />
+          <Route path="/technical-analysis" element={<TechnicalAnalysis />} />
         </Routes>
       </div>
     </QueryClientProvider>
