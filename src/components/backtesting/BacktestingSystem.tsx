@@ -4,13 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Container } from '@/components/ui/container';
 import { toast } from 'sonner';
-import { History, BellRing, BarChart, BarChart4 } from 'lucide-react';
+import { History, BellRing, BarChart, BarChart4, Smartphone } from 'lucide-react';
 import BacktestingForm from './BacktestingForm';
 import BacktestResults from './BacktestResults';
 import RealTimeAlerts from './RealTimeAlerts';
 import ComprehensiveAnalysis from './ComprehensiveAnalysis';
 import { BacktestSettings, BacktestResults as BacktestResultsType } from '@/services/backtesting/types';
 import { runBacktest } from '@/services/backtesting';
+import WhatsappIntegrationPanel from '../whatsapp/WhatsappIntegrationPanel';
 
 const BacktestingSystem: React.FC = () => {
   const [activeTab, setActiveTab] = useState('backtest');
@@ -46,7 +47,7 @@ const BacktestingSystem: React.FC = () => {
       </h1>
       
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="backtest" className="text-xs md:text-sm">
             <History className="h-4 w-4 mr-1 hidden md:inline" />
             בדיקת עבר
@@ -62,6 +63,10 @@ const BacktestingSystem: React.FC = () => {
           <TabsTrigger value="analysis" className="text-xs md:text-sm">
             <BarChart4 className="h-4 w-4 mr-1 hidden md:inline" />
             ניתוח מעמיק
+          </TabsTrigger>
+          <TabsTrigger value="whatsapp" className="text-xs md:text-sm">
+            <Smartphone className="h-4 w-4 mr-1 hidden md:inline" />
+            חיבור וואטסאפ
           </TabsTrigger>
         </TabsList>
 
@@ -101,6 +106,12 @@ const BacktestingSystem: React.FC = () => {
             <ComprehensiveAnalysis
               assetId={selectedAsset}
             />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="whatsapp">
+          <div className="grid grid-cols-1 gap-6">
+            <WhatsappIntegrationPanel />
           </div>
         </TabsContent>
       </Tabs>
