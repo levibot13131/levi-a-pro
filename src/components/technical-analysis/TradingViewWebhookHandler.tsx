@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -18,9 +18,13 @@ import { Badge } from '@/components/ui/badge';
 import EmptySignalsState from './webhook/EmptySignalsState';
 import WebhookGuide from './webhook/WebhookGuide';
 import WebhookUrlDisplay from './webhook/WebhookUrlDisplay';
+import TradingViewConnectButton from './tradingview/TradingViewConnectButton';
+import { useTradingViewConnection } from '@/hooks/use-tradingview-connection';
 
 const TradingViewWebhookHandler: React.FC = () => {
   const { signals, isLoading, clearSignals, simulateSignal } = useWebhookSignals();
+  const { isConnected } = useTradingViewConnection();
+  const [tvConnectionChanged, setTvConnectionChanged] = useState(false);
   
   const renderSignalIcon = (action: 'buy' | 'sell' | 'info') => {
     switch (action) {
@@ -38,24 +42,32 @@ const TradingViewWebhookHandler: React.FC = () => {
       <CardHeader className="pb-3">
         <div className="flex justify-between items-center">
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1"
-              onClick={() => simulateSignal('buy')}
-            >
-              <ArrowUp className="h-3 w-3 text-green-500" />
-              סימולציית קנייה
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 gap-1"
-              onClick={() => simulateSignal('sell')}
-            >
-              <ArrowDown className="h-3 w-3 text-red-500" />
-              סימולציית מכירה
-            </Button>
+            {isConnected ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1"
+                  onClick={() => simulateSignal('buy')}
+                >
+                  <ArrowUp className="h-3 w-3 text-green-500" />
+                  סימולציית קנייה
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1"
+                  onClick={() => simulateSignal('sell')}
+                >
+                  <ArrowDown className="h-3 w-3 text-red-500" />
+                  סימולציית מכירה
+                </Button>
+              </>
+            ) : (
+              <TradingViewConnectButton 
+                onConnectChange={(connected) => setTvConnectionChanged(connected)} 
+              />
+            )}
           </div>
           <CardTitle className="text-right flex items-center gap-2">
             <Bell className="h-5 w-5" />
@@ -71,8 +83,21 @@ const TradingViewWebhookHandler: React.FC = () => {
           <div className="space-y-6">
             <EmptySignalsState />
             <Separator />
-            <WebhookGuide />
-            <WebhookUrlDisplay />
+            {isConnected ? (
+              <WebhookGuide />
+            ) : (
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-md text-right">
+                <h3 className="font-medium mb-2">חיבור לחשבון TradingView</h3>
+                <p className="text-sm mb-3">
+                  כדי לקבל התראות בזמן אמת מהמערכת, עליך להתחבר לחשבון TradingView שלך.
+                  לאחר החיבור, תוכל לקבל ולהגדיר התראות מותאמות אישית.
+                </p>
+                <TradingViewConnectButton 
+                  onConnectChange={(connected) => setTvConnectionChanged(connected)} 
+                />
+              </div>
+            )}
+            {isConnected && <WebhookUrlDisplay />}
           </div>
         ) : (
           <div className="space-y-4">
@@ -149,9 +174,12 @@ const TradingViewWebhookHandler: React.FC = () => {
             <div className="space-y-2">
               <h3 className="text-lg font-semibold text-right">הגדרת Webhook ב-TradingView</h3>
               <p className="text-sm text-right">
-                נצח את הלינק למטה ב-Alert בטריידינגויו כדי לקבל איתותים בזמן אמת
+                {isConnected 
+                  ? "העתק את הלינק למטה ב-Alert בטריידינגויו כדי לקבל איתותים בזמן אמת"
+                  : "התחבר לחשבון TradingView שלך כדי לקבל כתובת webhook ייחודית"
+                }
               </p>
-              <WebhookUrlDisplay />
+              {isConnected && <WebhookUrlDisplay />}
               <div className="flex justify-end mt-2">
                 <Button variant="outline" size="sm" className="gap-1">
                   <ExternalLink className="h-4 w-4" />

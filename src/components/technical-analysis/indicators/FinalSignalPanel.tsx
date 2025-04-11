@@ -70,13 +70,6 @@ const FinalSignalPanel = ({ finalSignal }: FinalSignalProps) => {
                       ? 'bg-red-100'
                       : 'bg-blue-100'
                 }`}
-                indicatorClassName={
-                  finalSignal.signal === 'buy' 
-                    ? 'bg-green-500' 
-                    : finalSignal.signal === 'sell'
-                      ? 'bg-red-500'
-                      : 'bg-blue-500'
-                }
               />
               <span className="ml-2 font-bold">{finalSignal.strength}/10</span>
             </div>
@@ -97,7 +90,6 @@ const FinalSignalPanel = ({ finalSignal }: FinalSignalProps) => {
               <Progress 
                 value={finalSignal.confidence} 
                 className="h-2 bg-blue-100"
-                indicatorClassName="bg-blue-500"
               />
               <span className="ml-2 font-bold">{finalSignal.confidence}%</span>
             </div>
