@@ -28,6 +28,7 @@ const TelegramIntegration: React.FC = () => {
       return;
     }
     
+    console.log('Connecting to Telegram with:', { botToken: botToken.substring(0, 5) + '...', chatId });
     await configureTelegram(botToken, chatId);
   };
   
@@ -40,11 +41,23 @@ const TelegramIntegration: React.FC = () => {
     
     setIsSendingTest(true);
     try {
+      console.log('Sending formatted test alert with config:', {
+        hasToken: !!config.botToken,
+        hasChatId: !!config.chatId,
+        configType: typeof config
+      });
+      
       const parsedConfig = parseTelegramConfig(JSON.stringify(config));
       if (!parsedConfig) {
         toast.error('תצורת טלגרם לא תקינה');
+        console.error('Failed to parse Telegram config:', config);
         return;
       }
+      
+      console.log('Parsed config successfully:', {
+        hasToken: !!parsedConfig.botToken,
+        hasChatId: !!parsedConfig.chatId
+      });
       
       const success = await sendFormattedTestAlert(parsedConfig);
       if (success) {
@@ -55,6 +68,51 @@ const TelegramIntegration: React.FC = () => {
     } catch (error) {
       console.error('Error sending formatted test:', error);
       toast.error('שגיאה בשליחת הודעה מעוצבת');
+    } finally {
+      setIsSendingTest(false);
+    }
+  };
+
+  // Test direct API call to Telegram
+  const handleDirectTest = async () => {
+    if (!isConnected || !config) {
+      toast.error('טלגרם לא מחובר. אנא חבר תחילה.');
+      return;
+    }
+    
+    setIsSendingTest(true);
+    try {
+      const { botToken, chatId } = config;
+      console.log('Sending direct API test to Telegram:', {
+        hasToken: !!botToken,
+        hasChatId: !!chatId
+      });
+      
+      const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: '🧪 *בדיקת API ישיר*\nזוהי בדיקה ישירה של הAPI של טלגרם.',
+          parse_mode: 'Markdown'
+        })
+      });
+      
+      const data = await response.json();
+      console.log('Direct API response:', data);
+      
+      if (data.ok) {
+        toast.success('בדיקת API ישיר הצליחה');
+      } else {
+        console.error('Telegram API error:', data);
+        toast.error(`שגיאת API: ${data.description || 'שגיאה לא ידועה'}`);
+      }
+    } catch (error) {
+      console.error('Error in direct API test:', error);
+      toast.error('שגיאה בבדיקת API ישיר');
     } finally {
       setIsSendingTest(false);
     }
@@ -97,6 +155,16 @@ const TelegramIntegration: React.FC = () => {
               >
                 <MessageSquare className="mr-2 h-4 w-4" />
                 {isSendingTest ? 'שולח הודעה...' : 'שלח הודעת בדיקה מעוצבת'}
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={handleDirectTest}
+                disabled={isSendingTest}
+              >
+                <Send className="mr-2 h-4 w-4" />
+                בדיקת API ישיר
               </Button>
               
               <Button 

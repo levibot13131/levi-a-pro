@@ -2,7 +2,7 @@
 import { toast } from 'sonner';
 
 // תצורת טלגרם
-interface TelegramConfig {
+export interface TelegramConfig {
   botToken: string;
   chatId: string;
 }
@@ -26,6 +26,8 @@ export async function sendTelegramMessage(
     // In production, we'd use an actual API call. Here's the implementation:
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
     
+    console.log('Sending request to Telegram API:', url);
+    
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -39,6 +41,7 @@ export async function sendTelegramMessage(
     });
     
     const data = await response.json();
+    console.log('Telegram API response:', data);
     
     // Check if the request was successful
     if (data.ok) {
@@ -60,6 +63,7 @@ export async function sendTelegramMessage(
 // פרסור הגדרות טלגרם מפורמט JSON
 export function parseTelegramConfig(configString: string): TelegramConfig | null {
   try {
+    console.log('Parsing Telegram config string:', configString);
     const config = JSON.parse(configString);
     
     // Validate the config
@@ -78,6 +82,11 @@ export function parseTelegramConfig(configString: string): TelegramConfig | null
 // Test Telegram connection with a simple message
 export async function testTelegramConnection(config: TelegramConfig): Promise<boolean> {
   try {
+    console.log('Testing Telegram connection with config:', { 
+      hasToken: !!config.botToken, 
+      hasChatId: !!config.chatId 
+    });
+    
     const testMessage = 
       "🧪 *בדיקת חיבור*\n\n" +
       "מערכת האיתותים מחוברת בהצלחה לטלגרם.\n" +
@@ -93,6 +102,11 @@ export async function testTelegramConnection(config: TelegramConfig): Promise<bo
 // Create a test alert message to verify formatting
 export async function sendFormattedTestAlert(config: TelegramConfig): Promise<boolean> {
   try {
+    console.log('Sending formatted test alert with config:', { 
+      hasToken: !!config.botToken, 
+      hasChatId: !!config.chatId 
+    });
+    
     // Create a test alert with proper formatting
     const testMessage = 
       "🟢 *קנייה: BTC/USD*\n" +

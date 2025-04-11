@@ -2,6 +2,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
 import { AlertDestination, updateAlertDestination, getAlertDestinations, sendAlert } from '@/services/tradingView/tradingViewAlertService';
+import { testTelegramConnection } from '@/services/tradingView/telegramService';
 
 interface TelegramConfig {
   botToken: string;
@@ -16,21 +17,36 @@ export function useTelegramIntegration() {
   // טעינת ההגדרות הקיימות
   useEffect(() => {
     const loadSettings = () => {
-      const destinations = getAlertDestinations();
-      const telegramSettings = destinations.find(d => d.type === 'telegram');
-      
-      if (telegramSettings?.active) {
-        setIsConnected(true);
+      try {
+        console.log('Loading Telegram settings');
+        const destinations = getAlertDestinations();
+        const telegramSettings = destinations.find(d => d.type === 'telegram');
         
-        // נשמר מידע נוסף ב-name בפורמט JSON
-        try {
-          if (telegramSettings.name.includes('{')) {
-            const configData = JSON.parse(telegramSettings.name);
-            setConfig(configData);
+        console.log('Found Telegram settings:', telegramSettings);
+        
+        if (telegramSettings?.active) {
+          setIsConnected(true);
+          
+          // נשמר מידע נוסף ב-name בפורמט JSON
+          try {
+            if (telegramSettings.name.includes('{')) {
+              const configData = JSON.parse(telegramSettings.name);
+              console.log('Parsed Telegram config:', { 
+                hasToken: !!configData.botToken, 
+                hasChatId: !!configData.chatId 
+              });
+              setConfig(configData);
+            } else {
+              console.warn('Telegram config does not contain JSON data');
+            }
+          } catch (error) {
+            console.error('Error parsing telegram config:', error);
           }
-        } catch (error) {
-          console.error('Error parsing telegram config:', error);
+        } else {
+          console.log('No active Telegram settings found');
         }
+      } catch (error) {
+        console.error('Error loading Telegram settings:', error);
       }
     };
     
@@ -45,11 +61,26 @@ export function useTelegramIntegration() {
     }
     
     setIsConfiguring(true);
+    console.log('Configuring Telegram with:', { botToken: botToken.substring(0, 5) + '...', chatId });
     
     try {
+      // Test the connection before saving
+      const configTest = { botToken, chatId };
+      const testResult = await testTelegramConnection(configTest);
+      
+      if (!testResult) {
+        console.error('Test connection to Telegram failed');
+        toast.error('בדיקת החיבור לטלגרם נכשלה', {
+          description: 'בדוק את ה-Token וה-Chat ID שלך'
+        });
+        return false;
+      }
+      
       // שמירת הגדרות בשם בפורמט JSON
       const configData = { botToken, chatId };
       const configString = JSON.stringify(configData);
+      
+      console.log('Saving Telegram config');
       
       // עדכון הגדרות טלגרם
       updateAlertDestination('telegram', {
@@ -77,6 +108,8 @@ export function useTelegramIntegration() {
   // ניתוק טלגרם
   const disconnectTelegram = useCallback(() => {
     try {
+      console.log('Disconnecting Telegram');
+      
       updateAlertDestination('telegram', {
         active: false
       });
@@ -102,6 +135,11 @@ export function useTelegramIntegration() {
     }
     
     try {
+      console.log('Sending test message with config:', { 
+        hasToken: !!config.botToken, 
+        hasChatId: !!config.chatId 
+      });
+      
       // שליחת התראת בדיקה לטלגרם
       const sent = await sendAlert({
         symbol: "TEST",
@@ -118,6 +156,7 @@ export function useTelegramIntegration() {
         toast.success('הודעת בדיקה נשלחה לטלגרם');
         return true;
       } else {
+        console.error('Failed to send test message');
         toast.error('שליחת הודעת הבדיקה נכשלה');
         return false;
       }
