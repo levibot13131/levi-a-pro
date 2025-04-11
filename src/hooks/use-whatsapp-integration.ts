@@ -1,33 +1,48 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
-import { updateAlertDestination, getAlertDestinations, sendAlert } from '@/services/tradingView/tradingViewAlertService';
+import { 
+  updateAlertDestination, 
+  getAlertDestinations, 
+  AlertDestination,
+  TradingViewAlert,
+  sendAlert
+} from '@/services/tradingView/tradingViewAlertService';
+
+export type WhatsAppSettings = {
+  isConnected: boolean;
+  webhookUrl: string;
+  destination?: AlertDestination;
+};
 
 export function useWhatsappIntegration() {
-  const [isConnected, setIsConnected] = useState(false);
-  const [webhookUrl, setWebhookUrl] = useState('');
+  const [settings, setSettings] = useState<WhatsAppSettings>({
+    isConnected: false,
+    webhookUrl: '',
+  });
   const [isConfiguring, setIsConfiguring] = useState(false);
   
-  // טעינת ההגדרות הקיימות
+  // Load existing WhatsApp settings
   useEffect(() => {
-    const loadSettings = () => {
-      const destinations = getAlertDestinations();
-      const whatsappSettings = destinations.find(d => d.type === 'whatsapp');
-      
-      if (whatsappSettings) {
-        setIsConnected(whatsappSettings.active);
-        // Initialize webhook URL from whatsappSettings.name if available
-        if (whatsappSettings.name && whatsappSettings.name.includes('http')) {
-          setWebhookUrl(whatsappSettings.name);
-        }
-      }
-    };
-    
-    loadSettings();
+    loadWhatsAppSettings();
   }, []);
   
-  // הגדרת וואטסאפ
-  const configureWhatsapp = useCallback(async (url: string) => {
+  // Load WhatsApp configuration from storage
+  const loadWhatsAppSettings = useCallback(() => {
+    const destinations = getAlertDestinations();
+    const whatsappSettings = destinations.find(d => d.type === 'whatsapp');
+    
+    if (whatsappSettings) {
+      setSettings({
+        isConnected: whatsappSettings.active,
+        webhookUrl: whatsappSettings.name,
+        destination: whatsappSettings
+      });
+    }
+  }, []);
+  
+  // Configure WhatsApp integration
+  const configureWhatsapp = useCallback(async (url: string): Promise<boolean> => {
     if (!url) {
       toast.error('אנא הזן כתובת Webhook תקינה');
       return false;
@@ -36,14 +51,23 @@ export function useWhatsappIntegration() {
     setIsConfiguring(true);
     
     try {
-      // עדכון הגדרות וואטסאפ
+      // Update WhatsApp destination
       updateAlertDestination('whatsapp', {
         name: url,
         active: true
       });
       
-      setIsConnected(true);
-      setWebhookUrl(url);
+      // Update local state
+      setSettings({
+        isConnected: true,
+        webhookUrl: url,
+        destination: {
+          id: '', // Will be updated on the next load
+          type: 'whatsapp',
+          name: url,
+          active: true
+        }
+      });
       
       toast.success('וואטסאפ חובר בהצלחה', {
         description: 'התראות ישלחו לוואטסאפ שלך'
@@ -59,28 +83,37 @@ export function useWhatsappIntegration() {
     }
   }, []);
   
-  // ניתוק וואטסאפ
-  const disconnectWhatsapp = useCallback(() => {
-    updateAlertDestination('whatsapp', {
-      active: false
-    });
-    
-    setIsConnected(false);
-    toast.info('וואטסאפ נותק');
-    
-    return true;
+  // Disconnect WhatsApp integration
+  const disconnectWhatsapp = useCallback((): boolean => {
+    try {
+      updateAlertDestination('whatsapp', {
+        active: false
+      });
+      
+      setSettings(prevSettings => ({
+        ...prevSettings,
+        isConnected: false
+      }));
+      
+      toast.info('וואטסאפ נותק');
+      return true;
+    } catch (error) {
+      console.error('Error disconnecting WhatsApp:', error);
+      toast.error('שגיאה בניתוק וואטסאפ');
+      return false;
+    }
   }, []);
   
-  // שליחת הודעת בדיקה
-  const sendTestMessage = useCallback(async () => {
-    if (!isConnected || !webhookUrl) {
+  // Send test message through WhatsApp
+  const sendTestMessage = useCallback(async (): Promise<boolean> => {
+    if (!settings.isConnected || !settings.webhookUrl) {
       toast.error('וואטסאפ לא מחובר. אנא חבר תחילה.');
       return false;
     }
     
     try {
-      // במקום להשתמש בפונקציה לא קיימת, נשתמש בפונקציה sendAlert לשליחת הודעת בדיקה
-      const sent = await sendAlert({
+      // Create a test alert
+      const testAlert: TradingViewAlert = {
         symbol: "TEST",
         message: "זוהי הודעת בדיקה מהמערכת לוואטסאפ",
         indicators: ["Test"],
@@ -89,7 +122,9 @@ export function useWhatsappIntegration() {
         price: 50000,
         action: 'info',
         details: "בדיקת חיבור לוואטסאפ"
-      });
+      };
+      
+      const sent = await sendAlert(testAlert);
       
       if (sent) {
         toast.success('הודעת בדיקה נשלחה לוואטסאפ');
@@ -103,11 +138,11 @@ export function useWhatsappIntegration() {
       toast.error('שגיאה בשליחת הודעת בדיקה');
       return false;
     }
-  }, [isConnected, webhookUrl]);
+  }, [settings.isConnected, settings.webhookUrl]);
   
   return {
-    isConnected,
-    webhookUrl,
+    isConnected: settings.isConnected,
+    webhookUrl: settings.webhookUrl,
     isConfiguring,
     configureWhatsapp,
     disconnectWhatsapp,
