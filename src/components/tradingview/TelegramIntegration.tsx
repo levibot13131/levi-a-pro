@@ -24,6 +24,7 @@ const TelegramIntegration: React.FC = () => {
 
   const handleConnect = async () => {
     if (!botToken.trim() || !chatId.trim()) {
+      toast.error('אנא הזן את כל הפרטים הנדרשים');
       return;
     }
     
