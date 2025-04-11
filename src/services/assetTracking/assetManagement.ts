@@ -1,4 +1,3 @@
-
 import { MAX_ASSETS_PER_MARKET, TrackedAsset, TRACKED_ASSETS_KEY } from './types';
 import { getTrackedAssets, saveTrackedAssets } from './storage';
 import { getAssetById } from '@/services/realTimeAssetService';
@@ -132,3 +131,24 @@ export const setAssetPriority = (
   
   return true;
 };
+
+// Update tracked asset
+export const updateTrackedAsset = (
+  assetId: string,
+  updates: Partial<TrackedAsset>
+): boolean => {
+  const trackedAssets = getTrackedAssets();
+  const assetIndex = trackedAssets.findIndex(a => a.id === assetId);
+  
+  if (assetIndex === -1) {
+    toast.error('הנכס לא נמצא במעקב שלך');
+    return false;
+  }
+  
+  trackedAssets[assetIndex] = { ...trackedAssets[assetIndex], ...updates };
+  saveTrackedAssets(trackedAssets);
+  return true;
+};
+
+// Export getTrackedAssets for use in other modules
+export { getTrackedAssets } from './storage';
