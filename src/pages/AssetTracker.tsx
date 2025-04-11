@@ -6,11 +6,13 @@ import {
   getFilteredTrackedAssets,
   startAssetTracking,
   stopAssetTracking,
-  isTrackingActive,
-  toggleAssetPin,
-  toggleAssetAlerts,
-  setAssetPriority
+  isTrackingActive
 } from '@/services/assetTracking';
+import { 
+  toggleAssetPin, 
+  toggleAssetAlerts, 
+  setAssetPriority
+} from '@/services/assetTracking/assetManagement';
 import TrackedAssetList from '@/components/asset-tracker/TrackedAssetList';
 import AssetSearchDialog from '@/components/asset-tracker/AssetSearchDialog';
 import { useTradingViewConnection } from '@/hooks/use-tradingview-connection';
@@ -63,21 +65,6 @@ const AssetTracker = () => {
     }
   };
   
-  const handleTogglePin = (assetId: string) => {
-    toggleAssetPin(assetId);
-    refetch();
-  };
-  
-  const handleToggleAlerts = (assetId: string) => {
-    toggleAssetAlerts(assetId);
-    refetch();
-  };
-  
-  const handleSetPriority = (assetId: string, priority: 'high' | 'medium' | 'low') => {
-    setAssetPriority(assetId, priority);
-    refetch();
-  };
-  
   const cryptoCount = trackedAssets.filter(a => a.type === 'crypto').length;
   const stocksCount = trackedAssets.filter(a => a.type === 'stocks').length;
   const forexCount = trackedAssets.filter(a => a.type === 'forex').length;
@@ -111,47 +98,42 @@ const AssetTracker = () => {
         />
         
         <TabsContent value="dashboard">
-          <DashboardContent 
-            assets={trackedAssets}
-            onTogglePin={handleTogglePin}
-            onToggleAlerts={handleToggleAlerts}
-            onSetPriority={handleSetPriority}
-          />
+          <DashboardContent />
         </TabsContent>
         
         <TabsContent value="crypto">
           <TrackedAssetList 
             assets={trackedAssets.filter(a => a.type === 'crypto')}
-            onTogglePin={handleTogglePin}
-            onToggleAlerts={handleToggleAlerts}
-            onSetPriority={handleSetPriority}
+            onTogglePin={toggleAssetPin}
+            onToggleAlerts={toggleAssetAlerts}
+            onSetPriority={setAssetPriority}
           />
         </TabsContent>
         
         <TabsContent value="stocks">
           <TrackedAssetList 
             assets={trackedAssets.filter(a => a.type === 'stocks')}
-            onTogglePin={handleTogglePin}
-            onToggleAlerts={handleToggleAlerts}
-            onSetPriority={handleSetPriority}
+            onTogglePin={toggleAssetPin}
+            onToggleAlerts={toggleAssetAlerts}
+            onSetPriority={setAssetPriority}
           />
         </TabsContent>
         
         <TabsContent value="forex">
           <TrackedAssetList 
             assets={trackedAssets.filter(a => a.type === 'forex')}
-            onTogglePin={handleTogglePin}
-            onToggleAlerts={handleToggleAlerts}
-            onSetPriority={handleSetPriority}
+            onTogglePin={toggleAssetPin}
+            onToggleAlerts={toggleAssetAlerts}
+            onSetPriority={setAssetPriority}
           />
         </TabsContent>
         
         <TabsContent value="commodities">
           <TrackedAssetList 
             assets={trackedAssets.filter(a => a.type === 'commodities')}
-            onTogglePin={handleTogglePin}
-            onToggleAlerts={handleToggleAlerts}
-            onSetPriority={handleSetPriority}
+            onTogglePin={toggleAssetPin}
+            onToggleAlerts={toggleAssetAlerts}
+            onSetPriority={setAssetPriority}
           />
         </TabsContent>
       </Tabs>

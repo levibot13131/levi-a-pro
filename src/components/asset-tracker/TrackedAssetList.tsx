@@ -23,6 +23,7 @@ interface TrackedAssetListProps {
   onTogglePin: (assetId: string) => void;
   onToggleAlerts: (assetId: string) => void;
   onSetPriority: (assetId: string, priority: 'high' | 'medium' | 'low') => void;
+  onRowAction?: (assetId: string) => void;
   compact?: boolean;
 }
 
@@ -31,6 +32,7 @@ const TrackedAssetList: React.FC<TrackedAssetListProps> = ({
   onTogglePin, 
   onToggleAlerts, 
   onSetPriority,
+  onRowAction,
   compact = false
 }) => {
   const renderActions = (asset: TrackedAsset) => (
@@ -82,6 +84,7 @@ const TrackedAssetList: React.FC<TrackedAssetListProps> = ({
     <AssetListTable 
       assets={assets}
       onTogglePin={onTogglePin}
+      onRowAction={onRowAction}
       renderActions={renderActions}
       compact={compact}
     />
