@@ -123,10 +123,10 @@ export function useWhatsappIntegration() {
       sampleAlert.message = "זוהי הודעת בדיקה מהמערכת לוואטסאפ";
       sampleAlert.details = "בדיקת חיבור לוואטסאפ";
       
-      // Ensure indicators is an array
+      // Ensure indicators is always an array
       sampleAlert.indicators = Array.isArray(sampleAlert.indicators) 
         ? sampleAlert.indicators 
-        : [sampleAlert.indicators.toString()];
+        : (sampleAlert.indicators ? [sampleAlert.indicators] : []);
       
       const sent = await sendAlert(sampleAlert);
       

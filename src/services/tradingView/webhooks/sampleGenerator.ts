@@ -88,9 +88,7 @@ export const createSampleAlert = (type: 'buy' | 'sell' | 'info' = 'info') => {
     action: type,
     indicators: Array.isArray(data.indicators) 
       ? data.indicators 
-      : data.indicators 
-        ? [data.indicators.toString()] 
-        : [],
+      : (data.indicators ? [String(data.indicators)] : []),
     timeframe: data.timeframe || '1d',
     timestamp: Date.now(),
     price: parseFloat(data.price?.toString() || '0'),
