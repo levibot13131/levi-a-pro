@@ -8,7 +8,7 @@ export * from './backtesting/mockDataGenerator';
 export * from './backtesting/patterns';
 export * from './whaleTrackerService';
 
-// Re-export from marketInformation directory services instead of the main file
+// Import directly from the marketInformation directory services 
 // to avoid circular dependency and type conflicts
 import {
   getInformationSources,

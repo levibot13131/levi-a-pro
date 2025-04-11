@@ -31,26 +31,17 @@ const InformationSources = () => {
   
   const { data: sources = [], isLoading: sourcesLoading, refetch: refetchSources } = useQuery<FinancialDataSource[]>({
     queryKey: ['informationSources'],
-    queryFn: async () => {
-      const result = await getInformationSources();
-      return result as unknown as FinancialDataSource[];
-    },
+    queryFn: getInformationSources,
   });
   
   const { data: influencers = [], isLoading: influencersLoading, refetch: refetchInfluencers } = useQuery<MarketInfluencer[]>({
     queryKey: ['marketInfluencers'],
-    queryFn: async () => {
-      const result = await getMarketInfluencers();
-      return result as unknown as MarketInfluencer[];
-    },
+    queryFn: getMarketInfluencers,
   });
   
   const { data: events = [], isLoading: eventsLoading, refetch: refetchEvents } = useQuery<MarketEvent[]>({
     queryKey: ['marketEvents'],
-    queryFn: async () => {
-      const result = await getUpcomingMarketEvents(90);
-      return result as unknown as MarketEvent[];
-    },
+    queryFn: () => getUpcomingMarketEvents(90),
   });
   
   const filteredSources = sources.filter(source => {
