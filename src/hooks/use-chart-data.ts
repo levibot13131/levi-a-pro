@@ -34,9 +34,21 @@ export function useChartData(symbol: string, timeframe: string) {
     }
   }, [symbol, timeframe, fetchChartData, isConnected]);
   
+  // Initial data load
   useEffect(() => {
     loadChartData();
   }, [loadChartData]);
+
+  // Set up automatic refresh every 10 seconds
+  useEffect(() => {
+    if (!isConnected) return;
+    
+    const interval = setInterval(() => {
+      loadChartData();
+    }, 10000); // Refresh every 10 seconds
+    
+    return () => clearInterval(interval);
+  }, [isConnected, loadChartData]);
 
   const getPercentChange = useCallback(() => {
     if (!chartData || !chartData.data || chartData.data.length < 2) return null;

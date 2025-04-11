@@ -37,7 +37,7 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({
     <div className="h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
         {chartType === 'line' ? (
-          <AreaChart data={chartData.data} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+          <AreaChart data={chartData.data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
             <defs>
               <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor={isPositiveChange ? "#10b981" : "#ef4444"} stopOpacity={0.8}/>
@@ -50,16 +50,34 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({
               tickFormatter={formatDate} 
               tick={{ fontSize: 12 }}
               stroke="#888888"
+              allowDataOverflow={true}
+              minTickGap={30}
             />
             <YAxis 
               domain={['auto', 'auto']} 
               tickFormatter={formatPrice}
               tick={{ fontSize: 12 }}
-              width={60}
+              width={80}
               stroke="#888888"
+              orientation="right"
+              yAxisId="price"
             />
+            {showVolume && (
+              <YAxis 
+                dataKey="volume" 
+                orientation="left"
+                tick={{ fontSize: 12 }}
+                width={80}
+                stroke="#888888"
+                yAxisId="volume"
+              />
+            )}
             <Tooltip 
-              formatter={(value: number) => [formatPrice(value), 'מחיר']}
+              formatter={(value: number, name: string) => {
+                if (name === 'price') return [formatPrice(value), 'מחיר'];
+                if (name === 'volume') return [value.toLocaleString(), 'נפח'];
+                return [value, name];
+              }}
               labelFormatter={formatDate}
               contentStyle={{ textAlign: 'right', direction: 'rtl' }}
             />
@@ -70,29 +88,47 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({
               fillOpacity={1}
               fill="url(#colorPrice)"
               strokeWidth={2}
+              yAxisId="price"
             />
             {showVolume && (
-              <Bar dataKey="volume" fill="#8884d8" opacity={0.5} />
+              <Bar dataKey="volume" fill="#8884d8" opacity={0.5} yAxisId="volume" />
             )}
           </AreaChart>
         ) : chartType === 'bar' ? (
-          <BarChart data={chartData.data} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+          <BarChart data={chartData.data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#888888" opacity={0.2} />
             <XAxis 
               dataKey="timestamp" 
               tickFormatter={formatDate} 
               tick={{ fontSize: 12 }}
               stroke="#888888"
+              minTickGap={30}
             />
             <YAxis 
               domain={['auto', 'auto']} 
               tickFormatter={formatPrice}
               tick={{ fontSize: 12 }}
-              width={60}
+              width={80}
               stroke="#888888"
+              orientation="right"
+              yAxisId="price"
             />
+            {showVolume && (
+              <YAxis 
+                dataKey="volume" 
+                orientation="left"
+                tick={{ fontSize: 12 }}
+                width={80}
+                stroke="#888888"
+                yAxisId="volume"
+              />
+            )}
             <Tooltip 
-              formatter={(value: number) => [formatPrice(value), 'מחיר']}
+              formatter={(value: number, name: string) => {
+                if (name === 'price') return [formatPrice(value), 'מחיר'];
+                if (name === 'volume') return [value.toLocaleString(), 'נפח'];
+                return [value, name];
+              }}
               labelFormatter={formatDate}
               contentStyle={{ textAlign: 'right', direction: 'rtl' }}
             />
@@ -100,29 +136,47 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({
               dataKey="price" 
               fill={isPositiveChange ? "#10b981" : "#ef4444"} 
               radius={[4, 4, 0, 0]}
+              yAxisId="price"
             />
             {showVolume && (
-              <Bar dataKey="volume" fill="#8884d8" opacity={0.5} />
+              <Bar dataKey="volume" fill="#8884d8" opacity={0.5} yAxisId="volume" />
             )}
           </BarChart>
         ) : (
-          <LineChart data={chartData.data} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+          <LineChart data={chartData.data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#888888" opacity={0.2} />
             <XAxis 
               dataKey="timestamp" 
               tickFormatter={formatDate} 
               tick={{ fontSize: 12 }}
               stroke="#888888"
+              minTickGap={30}
             />
             <YAxis 
               domain={['auto', 'auto']} 
               tickFormatter={formatPrice}
               tick={{ fontSize: 12 }}
-              width={60}
-              stroke="#888888"
+              width={80}
+              stroke="#888888" 
+              orientation="right"
+              yAxisId="price"
             />
+            {showVolume && (
+              <YAxis 
+                dataKey="volume" 
+                orientation="left"
+                tick={{ fontSize: 12 }}
+                width={80}
+                stroke="#888888"
+                yAxisId="volume"
+              />
+            )}
             <Tooltip 
-              formatter={(value: number) => [formatPrice(value), 'מחיר']}
+              formatter={(value: number, name: string) => {
+                if (name === 'price') return [formatPrice(value), 'מחיר'];
+                if (name === 'volume') return [value.toLocaleString(), 'נפח'];
+                return [value, name];
+              }}
               labelFormatter={formatDate}
               contentStyle={{ textAlign: 'right', direction: 'rtl' }}
             />
@@ -132,9 +186,10 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({
               stroke={isPositiveChange ? "#10b981" : "#ef4444"} 
               dot={false}
               strokeWidth={2}
+              yAxisId="price"
             />
             {showVolume && (
-              <Bar dataKey="volume" fill="#8884d8" opacity={0.5} />
+              <Bar dataKey="volume" fill="#8884d8" opacity={0.5} yAxisId="volume" />
             )}
           </LineChart>
         )}
