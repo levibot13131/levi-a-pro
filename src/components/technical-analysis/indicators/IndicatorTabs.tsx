@@ -14,6 +14,31 @@ interface IndicatorTabsProps {
   autoScanEnabled: boolean;
 }
 
+// Define types for the MultiTimeframeAnalysis component
+interface TimeframeData {
+  timeframe: string;
+  signal: 'buy' | 'sell' | 'neutral';
+  strength: number;
+  keyIndicators: string[];
+}
+
+interface FinalSignalData {
+  signal: 'buy' | 'sell' | 'neutral';
+  strength: number;
+  confidence: number;
+  description: string;
+}
+
+// Define types for the AutoScanResults component
+interface ScanResult {
+  symbol: string;
+  name: string;
+  timeframe: string;
+  sentiment: 'buy' | 'sell' | 'neutral';
+  strength: number;
+  reason: string;
+}
+
 const IndicatorTabs = ({ 
   analysisData, 
   selectedAsset,
@@ -22,7 +47,7 @@ const IndicatorTabs = ({
   const [activeScanTab, setActiveScanTab] = useState<string>("indicators");
   
   // Get multi-timeframe data
-  const getMultiTimeframeAnalysis = () => {
+  const getMultiTimeframeAnalysis = (): TimeframeData[] => {
     // In a real app, this would be from an API
     return [
       {
@@ -59,7 +84,7 @@ const IndicatorTabs = ({
   };
 
   // Get auto scan results
-  const getAutoScanResults = () => {
+  const getAutoScanResults = (): ScanResult[] => {
     // In a real app, this would be from an API
     return [
       { 
@@ -106,7 +131,7 @@ const IndicatorTabs = ({
   };
 
   // Calculate final signal
-  const getFinalSignal = () => {
+  const getFinalSignal = (): FinalSignalData => {
     // In a real app, this calculation would be more complex
     const multiTimeframe = getMultiTimeframeAnalysis();
     

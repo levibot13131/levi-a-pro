@@ -5,7 +5,7 @@ import { FinalSignalPanel } from './';
 
 interface TimeframeData {
   timeframe: string;
-  signal: string;
+  signal: 'buy' | 'sell' | 'neutral';
   strength: number;
   keyIndicators: string[];
 }
