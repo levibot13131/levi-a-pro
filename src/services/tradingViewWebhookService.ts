@@ -1,72 +1,98 @@
 
-import { toast } from 'sonner';
-import { v4 as uuidv4 } from 'uuid';
 import { WebhookSignal } from '@/types/webhookSignal';
-import { simulateWebhook, testWebhookFlow } from './tradingView/webhooks/processor';
+import { v4 as uuidv4 } from 'uuid';
+import { testWebhookFlow, simulateWebhook } from './tradingView/webhooks/processor';
+import { toast } from 'sonner';
 
-// Local storage key for webhook signals
-const WEBHOOK_SIGNALS_KEY = 'tradingview-webhook-signals';
-
-// Store for event subscribers
-type WebhookCallback = () => void;
-const subscribers: WebhookCallback[] = [];
+// מאגר האיתותים
+let storedSignals: WebhookSignal[] = [];
+// רשימת המנויים לשינויים
+const subscribers: (() => void)[] = [];
 
 /**
- * Get stored webhook signals from local storage
+ * קבלת האיתותים השמורים
  */
 export const getStoredWebhookSignals = (): WebhookSignal[] => {
-  try {
-    const storedSignals = localStorage.getItem(WEBHOOK_SIGNALS_KEY);
-    if (storedSignals) {
-      return JSON.parse(storedSignals);
-    }
-  } catch (error) {
-    console.error('Error getting stored webhook signals:', error);
-  }
-  return [];
+  return [...storedSignals];
 };
 
 /**
- * Store webhook signal
+ * הוספת איתות חדש למאגר
  */
-export const storeWebhookSignal = (signal: WebhookSignal): void => {
-  try {
-    const signals = getStoredWebhookSignals();
-    signals.unshift(signal);
-    
-    // Limit to 50 signals
-    const limitedSignals = signals.slice(0, 50);
-    
-    localStorage.setItem(WEBHOOK_SIGNALS_KEY, JSON.stringify(limitedSignals));
-    
-    // Notify subscribers
-    notifySignalSubscribers();
-  } catch (error) {
-    console.error('Error storing webhook signal:', error);
-  }
+export const addWebhookSignal = (signal: Omit<WebhookSignal, 'id'>): WebhookSignal => {
+  const newSignal: WebhookSignal = {
+    id: uuidv4(),
+    ...signal
+  };
+  
+  storedSignals = [newSignal, ...storedSignals].slice(0, 100); // שמירת מקסימום 100 איתותים
+  notifySubscribers();
+  
+  return newSignal;
 };
 
 /**
- * Clear stored webhook signals
+ * ניקוי כל האיתותים השמורים
  */
 export const clearStoredWebhookSignals = (): void => {
+  storedSignals = [];
+  notifySubscribers();
+};
+
+/**
+ * סימולציית איתות מטריידינגוויו
+ */
+export const simulateWebhookSignal = async (type: 'buy' | 'sell' | 'info' = 'info'): Promise<boolean> => {
   try {
-    localStorage.removeItem(WEBHOOK_SIGNALS_KEY);
-    notifySignalSubscribers();
-    toast.success('האיתותים נוקו בהצלחה');
+    // הוספת האיתות למאגר המקומי
+    const timestamp = Date.now();
+    const symbol = type === 'buy' ? 'BTC/USD' : type === 'sell' ? 'ETH/USD' : 'XRP/USD';
+    
+    // מוסיף את האיתות למאגר המקומי (נראה בממשק)
+    addWebhookSignal({
+      symbol,
+      timestamp,
+      message: type === 'buy' 
+        ? 'זוהה איתות קנייה חזק' 
+        : type === 'sell' 
+          ? 'איתות מכירה זוהה במחיר הנוכחי' 
+          : 'הודעת מידע: מחיר הגיע לרמה מהותית',
+      action: type,
+      source: 'WebhookTester',
+      details: `סימולציית איתות ${type} במערכת, ${new Date().toLocaleString('he-IL')}`
+    });
+    
+    toast.success(`סימולציית איתות ${type} הצליחה`, {
+      description: 'האיתות הוצג במערכת ונשמר במאגר'
+    });
+    
+    return true;
   } catch (error) {
-    console.error('Error clearing webhook signals:', error);
-    toast.error('שגיאה בניקוי האיתותים');
+    console.error('Error simulating webhook signal:', error);
+    toast.error('שגיאה בסימולציית האיתות');
+    return false;
   }
 };
 
 /**
- * Subscribe to webhook signal updates
+ * בדיקת זרימת webhook מלאה
  */
-export const subscribeToWebhookSignals = (callback: WebhookCallback): (() => void) => {
+export const testWebhookSignalFlow = async (type: 'buy' | 'sell' | 'info' = 'info'): Promise<boolean> => {
+  try {
+    // השתמש בפונקציה הקיימת לבדיקת הזרימה המלאה
+    return await testWebhookFlow(type);
+  } catch (error) {
+    console.error('Error testing webhook flow:', error);
+    toast.error('שגיאה בבדיקת זרימת הווהבוק');
+    return false;
+  }
+};
+
+/**
+ * רישום למנוי לשינויים באיתותים
+ */
+export const subscribeToWebhookSignals = (callback: () => void): () => void => {
   subscribers.push(callback);
-  
-  // Return unsubscribe function
   return () => {
     const index = subscribers.indexOf(callback);
     if (index > -1) {
@@ -76,51 +102,38 @@ export const subscribeToWebhookSignals = (callback: WebhookCallback): (() => voi
 };
 
 /**
- * Notify all subscribers
+ * הודעה לכל המנויים על שינוי באיתותים
  */
-const notifySignalSubscribers = (): void => {
+const notifySubscribers = (): void => {
   subscribers.forEach(callback => callback());
 };
 
 /**
- * Simulate a webhook signal for testing
+ * העברת webhook למערכת העיבוד
  */
-export const simulateWebhookSignal = async (type: 'buy' | 'sell' | 'info' = 'info'): Promise<boolean> => {
+export const processIncomingWebhook = async (data: any): Promise<boolean> => {
+  const timestamp = Date.now();
   try {
-    // Simulate webhook to test the flow
-    const result = await simulateWebhook(type);
+    // מוסיף את האיתות הגולמי למאגר המקומי (נראה בממשק)
+    const action = data.action || data.signal?.toLowerCase().includes('buy') 
+      ? 'buy' 
+      : data.signal?.toLowerCase().includes('sell') 
+        ? 'sell' 
+        : 'info';
     
-    // Create a simulated webhook signal for UI display
-    const signal: WebhookSignal = {
-      id: uuidv4(),
-      timestamp: Date.now(),
-      symbol: type === 'buy' ? 'BTC/USD' : type === 'sell' ? 'ETH/USD' : 'XRP/USD',
-      message: type === 'buy' ? 'איתות קנייה לדוגמה' : type === 'sell' ? 'איתות מכירה לדוגמה' : 'עדכון שוק לדוגמה',
-      action: type,
-      source: 'סימולציית Webhook',
-      details: 'איתות לדוגמה שנוצר בלחיצת כפתור'
-    };
+    addWebhookSignal({
+      symbol: data.symbol || 'Unknown',
+      timestamp,
+      message: data.message || data.signal || `איתות ${action} התקבל`,
+      action,
+      source: 'TradingView',
+      details: data.details || `מחיר: ${data.price || data.close || 'N/A'}`
+    });
     
-    // Store the signal for UI display
-    storeWebhookSignal(signal);
-    
-    toast.success(`איתות ${type} לדוגמה נוצר בהצלחה`);
-    return result;
+    // מעביר את הנתונים לפונקציית העיבוד של המערכת
+    return simulateWebhook({ body: data });
   } catch (error) {
-    console.error('Error simulating webhook signal:', error);
-    toast.error('שגיאה ביצירת איתות לדוגמה');
-    return false;
-  }
-};
-
-/**
- * Test the webhook flow with real implementation
- */
-export const testWebhookSignalFlow = async (type: 'buy' | 'sell' | 'info' = 'info'): Promise<boolean> => {
-  try {
-    return await testWebhookFlow(type);
-  } catch (error) {
-    console.error('Error testing webhook signal flow:', error);
+    console.error('Error processing incoming webhook:', error);
     return false;
   }
 };

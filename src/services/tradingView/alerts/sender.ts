@@ -127,9 +127,27 @@ const sendWhatsAppMessage = async (webhookUrl: string, message: string): Promise
         return false;
       }
       
-      const data = await response.json();
-      console.log('📊 WhatsApp webhook response:', data);
+      // בדיקה אם התגובה היא JSON תקין
+      // אם לא, נחשיב את התגובה כהצלחה אם הסטטוס קוד הוא 200
+      let responseData: any;
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          responseData = await response.json();
+        } else {
+          // אם התגובה אינה JSON, נחשיב אותה כהצלחה אם הסטטוס תקין
+          const textResponse = await response.text();
+          console.log('📊 WhatsApp webhook response (text):', textResponse);
+          // בהנחה שאם הגענו לכאן והסטטוס הוא 200, התגובה היא הצלחה
+          return true;
+        }
+      } catch (error) {
+        // אם יש שגיאה בפרסור JSON, אבל הסטטוס הוא 200, נחשיב את הבקשה כהצלחה
+        console.warn('⚠️ Failed to parse response as JSON, but status is OK:', error);
+        return response.ok;
+      }
       
+      console.log('📊 WhatsApp webhook response:', responseData);
       return true;
     } catch (error) {
       console.error('❌ Error calling WhatsApp webhook:', error);

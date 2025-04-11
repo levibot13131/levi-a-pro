@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ArrowUp, ArrowDown, Info, RefreshCw, AlertTriangle, CheckCircle2, Terminal } from 'lucide-react';
-import { simulateWebhookSignal, testWebhookSignalFlow } from '@/services/tradingViewWebhookService';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { getAlertDestinations } from '@/services/tradingView/tradingViewAlertService';
+import { simulateWebhookSignal, testWebhookSignalFlow } from '@/services/tradingViewWebhookService';
 
 const WebhookTester: React.FC = () => {
   const [isTesting, setIsTesting] = useState(false);
