@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { MessageSquare, CheckCircle, AlertTriangle, Trash } from 'lucide-react';
+import { MessageSquare, CheckCircle, AlertTriangle, Trash, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
   getAlertDestinations, 
@@ -102,7 +102,7 @@ const WhatsAppIntegration: React.FC = () => {
           </Badge>
           <div className="flex flex-col items-end">
             <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-green-600" />
+              <Send className="h-5 w-5 text-green-600" />
               אינטגרציית וואטסאפ
             </CardTitle>
             <CardDescription className="text-right">
@@ -175,7 +175,7 @@ const WhatsAppIntegration: React.FC = () => {
                     <>טוען...</>
                   ) : (
                     <>
-                      <MessageSquare className="h-4 w-4 mr-2" />
+                      <Send className="h-4 w-4 mr-2" />
                       חבר וואטסאפ
                     </>
                   )}
