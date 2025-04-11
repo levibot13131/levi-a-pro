@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import {
@@ -6,7 +5,7 @@ import {
   LineChart,
   BarChart2,
   History,
-  Robot,
+  Bot,
   Shield,
   Bell,
   Newspaper,
@@ -18,18 +17,18 @@ import {
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const MainNavigation: React.FC = () => {
   const location = useLocation();
-  const { isMobile, isMenuOpen, setIsMenuOpen } = useMobile();
+  const { isMobile, isMenuOpen, setIsMenuOpen } = useIsMobile();
 
   const navLinks = [
     { path: '/', name: 'לוח מחוונים', icon: <Home className="h-5 w-5" /> },
     { path: '/technical-analysis', name: 'ניתוח טכני', icon: <LineChart className="h-5 w-5" /> },
     { path: '/comprehensive-analysis', name: 'ניתוח מקיף', icon: <BarChart2 className="h-5 w-5" /> },
     { path: '/backtesting', name: 'בדיקות אחורה', icon: <History className="h-5 w-5" /> },
-    { path: '/trading-bots', name: 'בוטים למסחר', icon: <Robot className="h-5 w-5" /> },
+    { path: '/trading-bots', name: 'בוטים למסחר', icon: <Bot className="h-5 w-5" /> },
     { path: '/risk-management', name: 'ניהול סיכונים', icon: <Shield className="h-5 w-5" /> },
     { path: '/trading-signals', name: 'איתותי מסחר', icon: <Bell className="h-5 w-5" /> },
     { path: '/market-news', name: 'חדשות שוק', icon: <Newspaper className="h-5 w-5" /> },

@@ -1,3 +1,4 @@
+
 import { Asset } from '@/types/asset';
 import { toast } from 'sonner';
 
@@ -59,7 +60,7 @@ export const initializeAssets = () => {
 };
 
 // Update assets in real-time (simulated)
-let updateInterval: number | null = null;
+let updateInterval: ReturnType<typeof setInterval> | null = null;
 
 export const startRealTimeUpdates = () => {
   if (updateInterval) return;
