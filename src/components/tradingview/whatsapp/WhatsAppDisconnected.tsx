@@ -2,58 +2,74 @@
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Send } from 'lucide-react';
+import { Send, Webhook } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface WhatsAppDisconnectedProps {
-  onConnect: (phoneNumber: string) => void;
+  webhookUrl: string;
+  isConfiguring: boolean;
+  onConnect: () => void;
+  onWebhookUrlChange: (url: string) => void;
 }
 
-const WhatsAppDisconnected: React.FC<WhatsAppDisconnectedProps> = ({ onConnect }) => {
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleConnect = async () => {
-    if (!phoneNumber || phoneNumber.length < 10) {
-      return;
-    }
-    
-    setIsSubmitting(true);
-    await onConnect(phoneNumber);
-    setIsSubmitting(false);
-    setPhoneNumber("");
-  };
-  
+const WhatsAppDisconnected: React.FC<WhatsAppDisconnectedProps> = ({ 
+  webhookUrl, 
+  isConfiguring, 
+  onConnect, 
+  onWebhookUrlChange 
+}) => {
   return (
     <div className="space-y-4">
-      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-md text-right">
-        <h3 className="font-semibold mb-2">
-          חבר את חשבון הוואטסאפ שלך
-        </h3>
-        <p className="text-sm mb-4">
-          הזן את מספר הטלפון שלך כולל קידומת מדינה (לדוגמה: 972501234567)
-        </p>
-        
-        <div className="flex gap-2">
-          <Button 
-            onClick={handleConnect}
-            disabled={isSubmitting || !phoneNumber}
-          >
-            {isSubmitting ? (
-              <>טוען...</>
-            ) : (
-              <>
-                <Send className="h-4 w-4 mr-2" />
-                חבר וואטסאפ
-              </>
-            )}
-          </Button>
+      <Alert className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-900/50 dark:text-blue-400">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>לא מחובר לוואטסאפ</AlertTitle>
+        <AlertDescription>
+          חבר את וואטסאפ שלך כדי לקבל התראות
+        </AlertDescription>
+      </Alert>
+      
+      <div className="space-y-3">
+        <div>
+          <label htmlFor="webhook-url" className="text-sm font-medium block mb-1 text-right">
+            Webhook URL
+          </label>
           <Input
+            id="webhook-url"
+            placeholder="https://hooks.pipedream.com/your-unique-webhook-id"
+            value={webhookUrl}
+            onChange={(e) => onWebhookUrlChange(e.target.value)}
             dir="ltr"
-            placeholder="972501234567"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            className="text-right"
+            className="font-mono text-sm"
           />
+          <p className="text-xs text-muted-foreground mt-1 text-right">
+            הזן את כתובת ה-Webhook של Pipedream שלך
+          </p>
+        </div>
+        
+        <Button 
+          className="w-full" 
+          onClick={onConnect} 
+          disabled={isConfiguring || !webhookUrl.trim()}
+        >
+          {isConfiguring ? 'מתחבר...' : 'חבר לוואטסאפ'}
+        </Button>
+        
+        <div className="text-center mt-4">
+          <Button 
+            variant="link" 
+            className="text-xs gap-1"
+            asChild
+          >
+            <a 
+              href="https://pipedream.com/apps/whatsapp" 
+              target="_blank" 
+              rel="noopener noreferrer"
+            >
+              <Webhook className="h-3 w-3" />
+              למדריך התחברות ל-Pipedream
+            </a>
+          </Button>
         </div>
       </div>
       

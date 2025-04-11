@@ -6,7 +6,8 @@ import {
   getAlertDestinations, 
   AlertDestination,
   TradingViewAlert,
-  sendAlert
+  sendAlert,
+  createSampleAlert
 } from '@/services/tradingView/tradingViewAlertService';
 
 export type WhatsAppSettings = {
@@ -37,6 +38,11 @@ export function useWhatsappIntegration() {
         isConnected: whatsappSettings.active,
         webhookUrl: whatsappSettings.name,
         destination: whatsappSettings
+      });
+    } else {
+      setSettings({
+        isConnected: false,
+        webhookUrl: '',
       });
     }
   }, []);
@@ -112,19 +118,17 @@ export function useWhatsappIntegration() {
     }
     
     try {
-      // Create a test alert
-      const testAlert: TradingViewAlert = {
-        symbol: "TEST",
-        message: "זוהי הודעת בדיקה מהמערכת לוואטסאפ",
-        indicators: ["Test"],
-        timeframe: "1d",
-        timestamp: Date.now(),
-        price: 50000,
-        action: 'info',
-        details: "בדיקת חיבור לוואטסאפ"
-      };
+      // Create test alert with properly formatted indicators
+      const sampleAlert = createSampleAlert('info');
+      sampleAlert.message = "זוהי הודעת בדיקה מהמערכת לוואטסאפ";
+      sampleAlert.details = "בדיקת חיבור לוואטסאפ";
       
-      const sent = await sendAlert(testAlert);
+      // Ensure indicators is an array
+      sampleAlert.indicators = Array.isArray(sampleAlert.indicators) 
+        ? sampleAlert.indicators 
+        : [sampleAlert.indicators.toString()];
+      
+      const sent = await sendAlert(sampleAlert);
       
       if (sent) {
         toast.success('הודעת בדיקה נשלחה לוואטסאפ');

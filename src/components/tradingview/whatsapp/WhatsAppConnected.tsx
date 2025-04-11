@@ -3,7 +3,9 @@ import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Trash } from 'lucide-react';
+import { Trash, Send } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircle2 } from "lucide-react";
 
 interface WhatsAppConnectedProps {
   destination: {
@@ -12,20 +14,41 @@ interface WhatsAppConnectedProps {
   };
   onDisconnect: () => void;
   onToggleActive: (active: boolean) => void;
+  onSendTest: () => Promise<boolean>;
 }
 
 const WhatsAppConnected: React.FC<WhatsAppConnectedProps> = ({ 
   destination, 
   onDisconnect, 
-  onToggleActive 
+  onToggleActive,
+  onSendTest 
 }) => {
+  const [isSending, setIsSending] = React.useState(false);
+  
+  const handleSendTest = async () => {
+    setIsSending(true);
+    try {
+      await onSendTest();
+    } finally {
+      setIsSending(false);
+    }
+  };
+  
   return (
     <div className="space-y-4">
+      <Alert variant="default" className="bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200 dark:border-green-900/50">
+        <CheckCircle2 className="h-4 w-4" />
+        <AlertTitle>מחובר לוואטסאפ</AlertTitle>
+        <AlertDescription>
+          התראות יישלחו אוטומטית לוואטסאפ
+        </AlertDescription>
+      </Alert>
+      
       <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-md">
         <h3 className="font-semibold text-right mb-2">
           וואטסאפ מחובר
         </h3>
-        <p className="text-sm text-right">
+        <p className="text-sm text-right font-mono break-all">
           {destination.name}
         </p>
         <div className="flex items-center justify-between mt-3">
@@ -50,6 +73,24 @@ const WhatsAppConnected: React.FC<WhatsAppConnectedProps> = ({
             </Label>
           </div>
         </div>
+      </div>
+      
+      <div className="flex flex-col gap-2">
+        <Button 
+          variant="outline" 
+          className="w-full" 
+          onClick={handleSendTest}
+          disabled={isSending}
+        >
+          {isSending ? (
+            "שולח הודעת בדיקה..."
+          ) : (
+            <>
+              <Send className="h-4 w-4 mr-2" />
+              שלח הודעת בדיקה
+            </>
+          )}
+        </Button>
       </div>
       
       <div className="text-right">

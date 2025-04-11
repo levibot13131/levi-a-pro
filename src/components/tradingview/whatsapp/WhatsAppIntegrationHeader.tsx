@@ -2,7 +2,7 @@
 import React from 'react';
 import { CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, AlertTriangle, Send } from 'lucide-react';
+import { CheckCircle, AlertTriangle, MessageSquare } from 'lucide-react';
 
 interface WhatsAppIntegrationHeaderProps {
   isConnected: boolean;
@@ -27,7 +27,7 @@ const WhatsAppIntegrationHeader: React.FC<WhatsAppIntegrationHeaderProps> = ({ i
       </Badge>
       <div className="flex flex-col items-end">
         <CardTitle className="flex items-center gap-2">
-          <Send className="h-5 w-5 text-green-600" />
+          <MessageSquare className="h-5 w-5 text-green-500" />
           אינטגרציית וואטסאפ
         </CardTitle>
         <CardDescription className="text-right">
