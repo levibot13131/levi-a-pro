@@ -6,7 +6,7 @@ import { Brain, LineChart, ShieldCheck } from 'lucide-react';
 import ComprehensiveTab from './tabs/ComprehensiveTab';
 import RecommendationTab from './tabs/RecommendationTab';
 import StrategyTab from './tabs/StrategyTab';
-import { formatPrice } from '@/utils/formatUtils';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface UserStrategy {
   description: string;
@@ -32,6 +32,7 @@ interface AnalysisSectionProps {
     reasoning: string[] 
   };
   generateTradePlan: () => any;
+  isLoading?: boolean;
 }
 
 const AnalysisSection: React.FC<AnalysisSectionProps> = ({
@@ -44,11 +45,27 @@ const AnalysisSection: React.FC<AnalysisSectionProps> = ({
   selectedAsset,
   assetHistory,
   userStrategy,
+  formatPrice,
   calculateOverallRecommendation,
-  generateTradePlan
+  generateTradePlan,
+  isLoading = false
 }) => {
-  const recommendation = calculateOverallRecommendation();
-  const tradePlan = generateTradePlan();
+  // Calculate only if not loading
+  const recommendation = isLoading ? { signal: 'neutral' as const, strength: 0, reasoning: [] } : calculateOverallRecommendation();
+  const tradePlan = isLoading ? null : generateTradePlan();
+
+  if (isLoading) {
+    return (
+      <div className="mb-6">
+        <Skeleton className="h-[400px] w-full mb-2" />
+        <div className="grid grid-cols-3 gap-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-6">

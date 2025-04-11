@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ActivitySquare, BarChart3, Landmark, TrendingUp } from 'lucide-react';
+import { ActivitySquare, BarChart3, Landmark, TrendingUp, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
@@ -272,8 +271,5 @@ const ComprehensiveTab: React.FC<ComprehensiveTabProps> = ({
     </div>
   );
 };
-
-// Fix calendar import issue
-import { Calendar } from 'lucide-react';
 
 export default ComprehensiveTab;

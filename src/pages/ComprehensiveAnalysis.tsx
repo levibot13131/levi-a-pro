@@ -9,6 +9,7 @@ import AssetSelectorSection from '@/components/comprehensive-analysis/AssetSelec
 import PriceChartSection from '@/components/comprehensive-analysis/PriceChartSection';
 import AnalysisSection from '@/components/comprehensive-analysis/AnalysisSection';
 import { calculateOverallRecommendation, generateTradePlan } from '@/components/comprehensive-analysis/utils/analysisCalculations';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const timeframeOptions = [
   { value: '5m', label: '5 דקות' },
@@ -51,7 +52,7 @@ const ComprehensiveAnalysis = () => {
   });
   
   // Fetch asset data
-  const { data: assets } = useQuery({
+  const { data: assets, isLoading: assetsLoading } = useQuery({
     queryKey: ['assets'],
     queryFn: getAssets,
   });
@@ -82,17 +83,22 @@ const ComprehensiveAnalysis = () => {
     queryFn: () => getWhaleMovements(selectedAssetId, 7),
   });
   
-  const { data: whaleBehavior } = useQuery({
+  const { data: whaleBehavior, isLoading: whaleBehaviorLoading } = useQuery({
     queryKey: ['whaleBehaviorPatterns', selectedAssetId],
     queryFn: () => getWhaleBehaviorPatterns(selectedAssetId),
   });
   
-  const { data: newsItems } = useQuery({
+  const { data: newsItems, isLoading: newsLoading } = useQuery({
     queryKey: ['news', selectedAssetId],
     queryFn: () => getNewsByAssetId(selectedAssetId),
   });
   
   const selectedAsset = assets?.find(asset => asset.id === selectedAssetId);
+  
+  // Overall loading state
+  const isLoading = assetsLoading || historyLoading || analysisLoading || 
+                    wyckoffLoading || smcLoading || whaleLoading || 
+                    whaleBehaviorLoading || newsLoading;
   
   // Format price for display
   const formatPrice = (price: number) => {
@@ -129,6 +135,7 @@ const ComprehensiveAnalysis = () => {
     <div className="container mx-auto py-6 px-4 md:px-6">
       <h1 className="text-3xl font-bold mb-6 text-right">ניתוח שוק מקיף</h1>
       
+      {/* Render asset selector even during loading */}
       <AssetSelectorSection 
         assets={assets}
         selectedAssetId={selectedAssetId}
@@ -139,7 +146,10 @@ const ComprehensiveAnalysis = () => {
         selectedAsset={selectedAsset}
       />
       
-      {selectedAsset && (
+      {/* Show loading state or chart */}
+      {isLoading && !selectedAsset ? (
+        <Skeleton className="h-[300px] mb-6" />
+      ) : selectedAsset && (
         <PriceChartSection 
           selectedAsset={selectedAsset}
           historyLoading={historyLoading}
@@ -151,6 +161,7 @@ const ComprehensiveAnalysis = () => {
         />
       )}
       
+      {/* Analysis section with loading state */}
       <AnalysisSection 
         technicalAnalysis={technicalAnalysis}
         wyckoffPatterns={wyckoffPatterns}
@@ -164,6 +175,7 @@ const ComprehensiveAnalysis = () => {
         formatPrice={formatPrice}
         calculateOverallRecommendation={calculateRecommendationWrapper}
         generateTradePlan={generateTradePlanWrapper}
+        isLoading={isLoading}
       />
     </div>
   );
