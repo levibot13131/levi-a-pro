@@ -1,43 +1,15 @@
-
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { 
-  Card, 
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription
-} from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  Play, 
-  Pause, 
-  Search, 
-  PlusCircle, 
-  RefreshCw, 
-  SlidersHorizontal,
-  Rocket,
-  BarChart4,
-  Bell
-} from 'lucide-react';
-import { 
-  getTrackedAssets, 
-  getFilteredTrackedAssets, 
-  startAssetTracking, 
+  initializeTrackedAssets, 
+  getFilteredTrackedAssets,
+  startAssetTracking,
   stopAssetTracking,
   isTrackingActive,
-  initializeTrackedAssets,
-  toggleAssetPin,
-  toggleAssetAlerts,
-  setAssetPriority
-} from '@/services/assetTrackingService';
-import { useTradingViewConnection } from '@/hooks/use-tradingview-connection';
-import TradingViewConnectButton from '@/components/technical-analysis/tradingview/TradingViewConnectButton';
+  TrackedAsset
+} from '@/services/assetTracking';
 import TrackedAssetList from '@/components/asset-tracker/TrackedAssetList';
-import SocialMonitoring from '@/components/asset-tracker/SocialMonitoring';
 import AssetSearchDialog from '@/components/asset-tracker/AssetSearchDialog';
+import SocialMonitoring from '@/components/asset-tracker/SocialMonitoring';
 
 const AssetTracker = () => {
   const [activeMarket, setActiveMarket] = useState<string>('all');
@@ -45,7 +17,6 @@ const AssetTracker = () => {
   const [signalFilter, setSignalFilter] = useState<string>('all');
   const [trackingActive, setTrackingActive] = useState<boolean>(false);
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
-  const { isConnected } = useTradingViewConnection();
   
   // Fetch tracked assets
   const { data: trackedAssets = [], refetch } = useQuery({
