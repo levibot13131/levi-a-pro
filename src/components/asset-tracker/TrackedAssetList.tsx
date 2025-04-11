@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Table, 
@@ -29,7 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { TrackedAsset } from '@/services/assetTrackingService';
+import { TrackedAsset } from '@/services/assetTracking/types';
 import { Card } from '@/components/ui/card';
 
 interface TrackedAssetListProps {

@@ -1,3 +1,4 @@
+
 import { TrackedAsset } from './types';
 import { getTrackedAssets, saveTrackedAssets } from './storage';
 import { toast } from 'sonner';

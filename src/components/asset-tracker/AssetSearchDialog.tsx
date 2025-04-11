@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Search, Plus, Check, AlertTriangle } from 'lucide-react';
 import { getAllAssets } from '@/services/realTimeAssetService';
 import { Asset } from '@/types/asset';
-import { addTrackedAsset, getTrackedAssets } from '@/services/assetTrackingService';
+import { addTrackedAsset, getTrackedAssets } from '@/services/assetTracking/assetManagement';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 

@@ -2,33 +2,28 @@
 import { TrackedAsset } from './types';
 import { getTrackedAssets } from './storage';
 
-// Get filtered tracked assets
+// Get all tracked assets with sorting and filtering
 export const getFilteredTrackedAssets = (
-  market?: string,
+  marketFilter?: string,
   priorityFilter?: 'high' | 'medium' | 'low',
-  signalFilter?: 'buy' | 'sell' | 'neutral' | 'bullish' | 'bearish'
+  signalFilter?: 'buy' | 'sell' | 'bullish' | 'bearish'
 ): TrackedAsset[] => {
   let assets = getTrackedAssets();
   
-  // Sort: pinned first, then by priority, then by name
-  assets.sort((a, b) => {
+  // Apply sorting by pinned status first
+  assets = assets.sort((a, b) => {
+    // Pinned assets come first
     if (a.isPinned && !b.isPinned) return -1;
     if (!a.isPinned && b.isPinned) return 1;
     
-    const priorityOrder = { high: 0, medium: 1, low: 2 };
-    const aPriority = priorityOrder[a.priority] || 1;
-    const bPriority = priorityOrder[b.priority] || 1;
-    
-    if (aPriority !== bPriority) {
-      return aPriority - bPriority;
-    }
-    
-    return a.name.localeCompare(b.name);
+    // Then sort by priority
+    const priorityRank = { high: 0, medium: 1, low: 2 };
+    return priorityRank[a.priority] - priorityRank[b.priority];
   });
   
   // Apply market filter
-  if (market && market !== 'all') {
-    assets = assets.filter(asset => asset.type === market);
+  if (marketFilter) {
+    assets = assets.filter(asset => asset.type === marketFilter);
   }
   
   // Apply priority filter
@@ -38,9 +33,9 @@ export const getFilteredTrackedAssets = (
   
   // Apply signal filter
   if (signalFilter) {
-    if (['buy', 'sell', 'neutral'].includes(signalFilter)) {
+    if (signalFilter === 'buy' || signalFilter === 'sell') {
       assets = assets.filter(asset => asset.technicalSignal === signalFilter);
-    } else {
+    } else if (signalFilter === 'bullish' || signalFilter === 'bearish') {
       assets = assets.filter(asset => asset.sentimentSignal === signalFilter);
     }
   }
