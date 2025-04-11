@@ -5,7 +5,7 @@ export const calculateOverallRecommendation = (
   smcPatterns: any,
   whaleMovements: any,
   newsItems: any
-) => {
+): { signal: 'buy' | 'sell' | 'neutral'; strength: number; reasoning: string[] } => {
   if (!technicalAnalysis || !wyckoffPatterns || !smcPatterns || !whaleMovements) {
     return { signal: 'neutral', strength: 5, reasoning: [] };
   }
