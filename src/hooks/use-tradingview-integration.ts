@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTradingViewConnection } from './use-tradingview-connection';
 import { 
   initializeTradingViewSync, 
@@ -19,6 +19,7 @@ export function useTradingViewIntegration() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [realTimeUpdateInterval, setRealTimeUpdateInterval] = useState<NodeJS.Timeout | null>(null);
+  const syncInProgress = useRef(false);
   
   useEffect(() => {
     // Check initial sync status
@@ -60,15 +61,25 @@ export function useTradingViewIntegration() {
     }
     
     const interval = setInterval(async () => {
-      if (!isSyncing && isConnected) {
+      if (syncInProgress.current) {
+        console.log('Previous sync still in progress, skipping...');
+        return;
+      }
+      
+      if (isConnected) {
         console.log('Auto-sync triggered');
-        await manualSync(false);
+        syncInProgress.current = true;
+        try {
+          await manualSync(false);
+        } finally {
+          syncInProgress.current = false;
+        }
       }
     }, 30000); // Update every 30 seconds
     
     setRealTimeUpdateInterval(interval);
     console.log('Real-time TradingView updates started');
-  }, [isConnected, isSyncing]);
+  }, [isConnected]);
   
   const stopRealTimeUpdates = useCallback(() => {
     if (realTimeUpdateInterval) {
@@ -83,6 +94,15 @@ export function useTradingViewIntegration() {
       if (showToast) {
         toast.error("לא ניתן לסנכרן", {
           description: "אינך מחובר ל-TradingView"
+        });
+      }
+      return false;
+    }
+    
+    if (isSyncing) {
+      if (showToast) {
+        toast.info("סנכרון כבר מתבצע", {
+          description: "יש סנכרון פעיל, אנא המתן לסיומו"
         });
       }
       return false;

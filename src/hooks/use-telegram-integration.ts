@@ -1,8 +1,18 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
-import { AlertDestination, updateAlertDestination, getAlertDestinations, sendAlert } from '@/services/tradingView/tradingViewAlertService';
-import { testTelegramConnection } from '@/services/tradingView/telegramService';
+import { 
+  AlertDestination, 
+  updateAlertDestination, 
+  getAlertDestinations, 
+  sendAlert,
+  createSampleAlert 
+} from '@/services/tradingView/tradingViewAlertService';
+import { 
+  testTelegramConnection, 
+  parseTelegramConfig, 
+  sendFormattedTestAlert 
+} from '@/services/tradingView/telegramService';
 
 interface TelegramConfig {
   botToken: string;
@@ -13,6 +23,7 @@ export function useTelegramIntegration() {
   const [isConnected, setIsConnected] = useState(false);
   const [config, setConfig] = useState<TelegramConfig | null>(null);
   const [isConfiguring, setIsConfiguring] = useState(false);
+  const [lastTestTime, setLastTestTime] = useState<Date | null>(null);
   
   // טעינת ההגדרות הקיימות
   useEffect(() => {
@@ -33,11 +44,13 @@ export function useTelegramIntegration() {
               const configData = JSON.parse(telegramSettings.name);
               console.log('Parsed Telegram config:', { 
                 hasToken: !!configData.botToken, 
-                hasChatId: !!configData.chatId 
+                hasChatId: !!configData.chatId,
+                tokenLength: configData.botToken?.length || 0,
+                chatIdLength: configData.chatId?.length || 0
               });
               setConfig(configData);
             } else {
-              console.warn('Telegram config does not contain JSON data');
+              console.warn('Telegram config does not contain JSON data:', telegramSettings.name);
             }
           } catch (error) {
             console.error('Error parsing telegram config:', error);
@@ -61,7 +74,12 @@ export function useTelegramIntegration() {
     }
     
     setIsConfiguring(true);
-    console.log('Configuring Telegram with:', { botToken: botToken.substring(0, 5) + '...', chatId });
+    console.log('Configuring Telegram with:', { 
+      botToken: botToken.substring(0, 5) + '...', 
+      botTokenLength: botToken.length,
+      chatId: chatId.substring(0, 5) + '...',
+      chatIdLength: chatId.length
+    });
     
     try {
       // Test the connection before saving
@@ -90,6 +108,7 @@ export function useTelegramIntegration() {
       
       setIsConnected(true);
       setConfig(configData);
+      setLastTestTime(new Date());
       
       toast.success('הטלגרם חובר בהצלחה', {
         description: 'התראות ישלחו לטלגרם שלך'
@@ -115,7 +134,7 @@ export function useTelegramIntegration() {
       });
       
       setIsConnected(false);
-      setConfig(null);
+      setLastTestTime(null);
       
       toast.info('הטלגרם נותק');
       
@@ -137,22 +156,22 @@ export function useTelegramIntegration() {
     try {
       console.log('Sending test message with config:', { 
         hasToken: !!config.botToken, 
-        hasChatId: !!config.chatId 
+        tokenLength: config.botToken?.length || 0,
+        hasChatId: !!config.chatId,
+        chatIdLength: config.chatId?.length || 0
       });
+      
+      // יצירת התראת בדיקה
+      const sampleAlert = createSampleAlert('info');
+      sampleAlert.message = "זוהי הודעת בדיקה מהמערכת לטלגרם";
+      sampleAlert.details = "בדיקת חיבור ושליחת הודעות";
+      sampleAlert.timestamp = Date.now();
       
       // שליחת התראת בדיקה לטלגרם
-      const sent = await sendAlert({
-        symbol: "TEST",
-        message: "זוהי הודעת בדיקה מהמערכת",
-        indicators: ["Test"],
-        timeframe: "1d",
-        timestamp: Date.now(),
-        price: 50000,
-        action: 'info',
-        details: "בדיקת חיבור לטלגרם"
-      });
+      const sent = await sendAlert(sampleAlert);
       
       if (sent) {
+        setLastTestTime(new Date());
         toast.success('הודעת בדיקה נשלחה לטלגרם');
         return true;
       } else {
@@ -167,12 +186,39 @@ export function useTelegramIntegration() {
     }
   }, [isConnected, config]);
   
+  // שליחת הודעת בדיקה מפורמטת
+  const sendFormattedTest = useCallback(async () => {
+    if (!isConnected || !config) {
+      toast.error('טלגרם לא מחובר. אנא חבר תחילה.');
+      return false;
+    }
+    
+    try {
+      const sent = await sendFormattedTestAlert(config);
+      
+      if (sent) {
+        setLastTestTime(new Date());
+        toast.success('הודעת בדיקה מפורמטת נשלחה לטלגרם');
+        return true;
+      } else {
+        toast.error('שליחת הודעה מפורמטת נכשלה');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error sending formatted test message:', error);
+      toast.error('שגיאה בשליחת הודעה מפורמטת');
+      return false;
+    }
+  }, [isConnected, config]);
+  
   return {
     isConnected,
     config,
     isConfiguring,
+    lastTestTime,
     configureTelegram,
     disconnectTelegram,
-    sendTestMessage
+    sendTestMessage,
+    sendFormattedTest
   };
 }

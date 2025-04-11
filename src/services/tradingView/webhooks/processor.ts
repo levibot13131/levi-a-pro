@@ -37,6 +37,11 @@ export const processWebhookData = async (data: WebhookData): Promise<boolean> =>
           console.log('Added default price: 0');
         }
         
+        if (!data.message && data.signal) {
+          data.message = data.signal;
+          console.log('Using signal as message');
+        }
+        
         // בדיקה חוזרת אחרי התיקונים
         if (!validateWebhookData(data)) {
           toast.error('הווהבוק לא תקין גם אחרי תיקונים', {
@@ -67,13 +72,22 @@ export const processWebhookData = async (data: WebhookData): Promise<boolean> =>
     
     console.log('🔍 Successfully parsed webhook into alert:', JSON.stringify(alert, null, 2));
     
+    // Get alert type in Hebrew
+    const alertTypeHebrew = alert.action === 'buy' ? 'קנייה' : 
+                          alert.action === 'sell' ? 'מכירה' : 'מידע';
+    
+    // Send notification about received webhook before attempting to send
+    toast.info(`התקבלה התראת ${alertTypeHebrew}`, {
+      description: `עבור ${alert.symbol} - שולח ליעדים מוגדרים...`
+    });
+    
     // Send the alert
     const success = await sendAlert(alert);
     
     if (success) {
       console.log('✅ Successfully processed webhook data and sent alert');
       toast.success('התראה נשלחה בהצלחה', {
-        description: `התראת ${alert.action === 'buy' ? 'קנייה' : alert.action === 'sell' ? 'מכירה' : 'מידע'} נשלחה ליעדים המוגדרים`
+        description: `התראת ${alertTypeHebrew} נשלחה ליעדים המוגדרים`
       });
     } else {
       console.error('❌ Failed to send alert');

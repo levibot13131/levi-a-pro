@@ -8,12 +8,30 @@ import { useTradingViewIntegration } from '@/hooks/use-tradingview-integration';
 import { CheckCircle2, AlertTriangle, RefreshCw, Zap, ZapOff } from 'lucide-react';
 import TradingViewConnectButton from '@/components/technical-analysis/tradingview/TradingViewConnectButton';
 
-const TradingViewConnectionStatus: React.FC = () => {
+interface TradingViewConnectionStatusProps {
+  syncEnabled?: boolean;
+  toggleAutoSync?: () => void;
+}
+
+const TradingViewConnectionStatus: React.FC<TradingViewConnectionStatusProps> = ({ 
+  syncEnabled: propsSyncEnabled,
+  toggleAutoSync: propsToggleAutoSync
+}) => {
   const { isConnected, credentials } = useTradingViewConnection();
-  const { syncEnabled, isSyncing, lastSyncTime, manualSync, toggleAutoSync } = useTradingViewIntegration();
+  const { 
+    syncEnabled: hookSyncEnabled, 
+    isSyncing, 
+    lastSyncTime, 
+    manualSync, 
+    toggleAutoSync: hookToggleAutoSync 
+  } = useTradingViewIntegration();
+  
+  // Use props values if provided, otherwise use hook values
+  const syncEnabled = propsSyncEnabled !== undefined ? propsSyncEnabled : hookSyncEnabled;
+  const toggleAutoSync = propsToggleAutoSync || hookToggleAutoSync;
   
   const handleManualSync = async () => {
-    await manualSync();
+    await manualSync(true);
   };
   
   return (

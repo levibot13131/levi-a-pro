@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Container } from '../components/ui/container';
 import { useTradingViewPage } from '../hooks/use-tradingview-page';
 import IntegrationHeader from '../components/tradingview/integration/IntegrationHeader';
 import IntegrationStatusSection from '../components/tradingview/integration/IntegrationStatusSection';
 import IntegrationTabsContainer from '../components/tradingview/integration/IntegrationTabsContainer';
-import { useEffect } from 'react';
+import { toast } from 'sonner';
+import { initializeTradingViewServices } from '../services/tradingView/startup';
 
 const TradingViewIntegration: React.FC = () => {
   const {
@@ -20,6 +21,20 @@ const TradingViewIntegration: React.FC = () => {
     handleManualRefresh,
     toggleAutoSync
   } = useTradingViewPage();
+  
+  // Initialize all TradingView services when the page loads
+  useEffect(() => {
+    const initServices = async () => {
+      const success = initializeTradingViewServices();
+      if (!success) {
+        toast.error('שגיאה באתחול שירותי TradingView', {
+          description: 'ייתכן שחלק מהפונקציות לא יעבדו כראוי'
+        });
+      }
+    };
+    
+    initServices();
+  }, []);
   
   // רענון מצב ההתחברות בטעינת הדף
   useEffect(() => {
@@ -48,6 +63,7 @@ const TradingViewIntegration: React.FC = () => {
         refreshTimer={refreshTimer}
         lastSyncTime={lastSyncTime}
         formatLastSyncTime={formatLastSyncTime}
+        toggleAutoSync={toggleAutoSync}
       />
       
       <IntegrationTabsContainer

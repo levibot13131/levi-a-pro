@@ -9,6 +9,7 @@ interface IntegrationStatusSectionProps {
   refreshTimer: number;
   lastSyncTime: Date | null;
   formatLastSyncTime: () => string;
+  toggleAutoSync: () => void;
 }
 
 const IntegrationStatusSection: React.FC<IntegrationStatusSectionProps> = ({
@@ -16,12 +17,16 @@ const IntegrationStatusSection: React.FC<IntegrationStatusSectionProps> = ({
   syncEnabled,
   refreshTimer,
   lastSyncTime,
-  formatLastSyncTime
+  formatLastSyncTime,
+  toggleAutoSync
 }) => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
       <div className="lg:col-span-3">
-        <TradingViewConnectionStatus />
+        <TradingViewConnectionStatus 
+          syncEnabled={syncEnabled}
+          toggleAutoSync={toggleAutoSync}
+        />
         
         <SyncStatusDisplay 
           isConnected={isConnected}
