@@ -1,12 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChartHorizontal, Filter, Scan } from 'lucide-react';
+import { BarChartHorizontal, Filter, Scan, RefreshCw } from 'lucide-react';
 import { RsiChart } from './';
 import { IndicatorCard } from './';
 import { ConclusionPanel } from './';
 import { MultiTimeframeAnalysis } from './';
 import { AutoScanResults } from './';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface IndicatorTabsProps {
   analysisData: any;
@@ -20,6 +22,8 @@ interface TimeframeData {
   signal: 'buy' | 'sell' | 'neutral';
   strength: number;
   keyIndicators: string[];
+  details?: string;
+  lastUpdated?: number;
 }
 
 interface FinalSignalData {
@@ -45,6 +49,16 @@ const IndicatorTabs = ({
   autoScanEnabled
 }: IndicatorTabsProps) => {
   const [activeScanTab, setActiveScanTab] = useState<string>("indicators");
+  const [multiTimeframeData, setMultiTimeframeData] = useState<TimeframeData[]>([]);
+  const [autoScanResults, setAutoScanResults] = useState<ScanResult[]>([]);
+  const [finalSignal, setFinalSignal] = useState<FinalSignalData>({
+    signal: 'neutral',
+    strength: 5,
+    confidence: 50,
+    description: "ממתין לניתוח נתונים..."
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<number>(Date.now());
   
   // Get multi-timeframe data
   const getMultiTimeframeAnalysis = (): TimeframeData[] => {
@@ -54,31 +68,41 @@ const IndicatorTabs = ({
         timeframe: '1w',
         signal: 'buy',
         strength: 8,
-        keyIndicators: ['מומנטום חיובי', 'תמיכה במחזור חדש', 'אקומולציה מוסדית']
+        keyIndicators: ['מומנטום חיובי', 'תמיכה במחזור חדש', 'אקומולציה מוסדית'],
+        details: 'המחיר נמצא מעל ממוצע נע 50 שבועי ו-200 שבועי. תנועת המחיר מראה מומנטום חיובי עם עליה בנפח המסחר.',
+        lastUpdated: Date.now()
       },
       {
         timeframe: '1d',
         signal: 'buy',
         strength: 7,
-        keyIndicators: ['RSI מתכנס', 'פריצת התנגדות', 'תבנית דגל']
+        keyIndicators: ['RSI מתכנס', 'פריצת התנגדות', 'תבנית דגל'],
+        details: 'RSI (יומי) עלה מעל 60, מצביע על מומנטום חיובי. פריצת התנגדות משמעותית ב-$45,200 עם נפח גבוה.',
+        lastUpdated: Date.now() - 3600000 // שעה אחת לפני
       },
       {
         timeframe: '4h',
         signal: 'neutral',
         strength: 5,
-        keyIndicators: ['התבססות בטווח', 'ממתין לפריצה', 'נפח ממוצע']
+        keyIndicators: ['התבססות בטווח', 'ממתין לפריצה', 'נפח ממוצע'],
+        details: 'המחיר מתבסס בטווח צר בין $44,800-$45,300. נפח מסחר נמוך יחסית מצביע על התכנסות לפני תנועה משמעותית.',
+        lastUpdated: Date.now() - 1800000 // חצי שעה לפני
       },
       {
         timeframe: '1h',
         signal: 'buy',
         strength: 6,
-        keyIndicators: ['אתות קנייה MACD', 'תמיכה בולינגר', 'מומנטום קצר']
+        keyIndicators: ['אתות קנייה MACD', 'תמיכה בולינגר', 'מומנטום קצר'],
+        details: 'MACD חצה את קו האפס כלפי מעלה. המחיר נתמך על ידי רצועת בולינגר התחתונה ב-$44,700.',
+        lastUpdated: Date.now() - 600000 // 10 דקות לפני
       },
       {
         timeframe: '15m',
         signal: 'sell',
         strength: 4,
-        keyIndicators: ['קנייתר יתר RSI', 'התנגדות קצרת טווח', 'היחלשות מומנטום']
+        keyIndicators: ['קנייתר יתר RSI', 'התנגדות קצרת טווח', 'היחלשות מומנטום'],
+        details: 'RSI בטווח קצר (15 דקות) מראה סימני קניית יתר (מעל 70). התנגדות קצרת טווח ב-$45,350. תיקון טכני קצר צפוי.',
+        lastUpdated: Date.now() - 120000 // 2 דקות לפני
       }
     ];
   };
@@ -131,10 +155,7 @@ const IndicatorTabs = ({
   };
 
   // Calculate final signal
-  const getFinalSignal = (): FinalSignalData => {
-    // In a real app, this calculation would be more complex
-    const multiTimeframe = getMultiTimeframeAnalysis();
-    
+  const calculateFinalSignal = (multiTimeframe: TimeframeData[]): FinalSignalData => {
     // Weights by timeframe (longer timeframes have higher weights)
     const weights = {
       '1w': 0.3,
@@ -185,26 +206,93 @@ const IndicatorTabs = ({
     }
   };
 
-  const multiTimeframeData = getMultiTimeframeAnalysis();
-  const autoScanResults = getAutoScanResults();
-  const finalSignal = getFinalSignal();
+  // Fetch data on initial load and when tab changes
+  useEffect(() => {
+    const fetchData = () => {
+      setIsLoading(true);
+      
+      // Simulate API delay
+      setTimeout(() => {
+        const newMultiTimeframeData = getMultiTimeframeAnalysis();
+        setMultiTimeframeData(newMultiTimeframeData);
+        setAutoScanResults(getAutoScanResults());
+        setFinalSignal(calculateFinalSignal(newMultiTimeframeData));
+        setLastUpdated(Date.now());
+        setIsLoading(false);
+      }, 1000);
+    };
+    
+    fetchData();
+    
+    // Set an interval to refresh data
+    const intervalId = setInterval(() => {
+      if (autoScanEnabled) {
+        fetchData();
+      }
+    }, 60000); // refresh every minute if auto scan enabled
+    
+    return () => clearInterval(intervalId);
+  }, [activeScanTab, autoScanEnabled]);
+
+  const refreshData = () => {
+    toast.info("מעדכן נתונים...");
+    setIsLoading(true);
+    
+    // Simulate API delay
+    setTimeout(() => {
+      const newMultiTimeframeData = getMultiTimeframeAnalysis();
+      setMultiTimeframeData(newMultiTimeframeData);
+      setAutoScanResults(getAutoScanResults());
+      setFinalSignal(calculateFinalSignal(newMultiTimeframeData));
+      setLastUpdated(Date.now());
+      setIsLoading(false);
+      toast.success("הנתונים עודכנו בהצלחה");
+    }, 1500);
+  };
+
+  const getLastUpdatedText = () => {
+    const timeDiff = Date.now() - lastUpdated;
+    if (timeDiff < 60000) {
+      return "לפני פחות מדקה";
+    } else if (timeDiff < 3600000) {
+      return `לפני ${Math.floor(timeDiff / 60000)} דקות`;
+    } else {
+      return `לפני ${Math.floor(timeDiff / 3600000)} שעות`;
+    }
+  };
 
   return (
     <Tabs defaultValue="indicators" value={activeScanTab} onValueChange={setActiveScanTab}>
-      <TabsList className="grid grid-cols-3 mb-4">
-        <TabsTrigger value="indicators" className="flex items-center gap-1">
-          <BarChartHorizontal className="h-4 w-4" />
-          אינדיקטורים
-        </TabsTrigger>
-        <TabsTrigger value="multiTimeframe" className="flex items-center gap-1">
-          <Filter className="h-4 w-4" />
-          רב-טווחי
-        </TabsTrigger>
-        <TabsTrigger value="autoScan" className="flex items-center gap-1">
-          <Scan className="h-4 w-4" />
-          סריקה שבועית
-        </TabsTrigger>
-      </TabsList>
+      <div className="flex justify-between items-center mb-4">
+        <TabsList className="grid grid-cols-3">
+          <TabsTrigger value="indicators" className="flex items-center gap-1">
+            <BarChartHorizontal className="h-4 w-4" />
+            אינדיקטורים
+          </TabsTrigger>
+          <TabsTrigger value="multiTimeframe" className="flex items-center gap-1">
+            <Filter className="h-4 w-4" />
+            רב-טווחי
+          </TabsTrigger>
+          <TabsTrigger value="autoScan" className="flex items-center gap-1">
+            <Scan className="h-4 w-4" />
+            סריקה שבועית
+          </TabsTrigger>
+        </TabsList>
+        
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={refreshData}
+            disabled={isLoading}
+            className="flex items-center gap-1"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            רענן
+          </Button>
+          <span className="text-xs text-muted-foreground">עודכן: {getLastUpdatedText()}</span>
+        </div>
+      </div>
 
       <TabsContent value="indicators">
         <div>
@@ -232,17 +320,29 @@ const IndicatorTabs = ({
       </TabsContent>
 
       <TabsContent value="multiTimeframe">
-        <MultiTimeframeAnalysis 
-          multiTimeframeData={multiTimeframeData}
-          finalSignal={finalSignal}
-        />
+        {isLoading ? (
+          <div className="flex justify-center items-center h-32">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <MultiTimeframeAnalysis 
+            multiTimeframeData={multiTimeframeData}
+            finalSignal={finalSignal}
+          />
+        )}
       </TabsContent>
 
       <TabsContent value="autoScan">
-        <AutoScanResults 
-          autoScanResults={autoScanResults}
-          autoScanEnabled={autoScanEnabled}
-        />
+        {isLoading ? (
+          <div className="flex justify-center items-center h-32">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <AutoScanResults 
+            autoScanResults={autoScanResults}
+            autoScanEnabled={autoScanEnabled}
+          />
+        )}
       </TabsContent>
     </Tabs>
   );
