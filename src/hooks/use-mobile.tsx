@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 
-interface MobileHookReturn {
+export interface MobileHookReturn {
   isMobile: boolean;
   isMenuOpen: boolean;
   setIsMenuOpen: (open: boolean) => void;
