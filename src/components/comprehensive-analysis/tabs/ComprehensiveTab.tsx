@@ -168,13 +168,13 @@ const ComprehensiveTab: React.FC<ComprehensiveTabProps> = ({
                       <div key={movement.id} className="border rounded-lg p-2 text-right text-sm">
                         <div className="flex justify-between items-start">
                           <Badge 
-                            variant={movement.impact.significance === 'very-high' ? 'destructive' :
-                                   movement.impact.significance === 'high' ? 'destructive' : 'outline'}
-                            className={movement.impact.significance === 'very-high' ? 'bg-red-500' :
-                                     movement.impact.significance === 'high' ? 'bg-orange-500' : 'bg-yellow-500'}
+                            variant={movement.impact?.significance === 'very-high' ? 'destructive' :
+                                   movement.impact?.significance === 'high' ? 'destructive' : 'outline'}
+                            className={movement.impact?.significance === 'very-high' ? 'bg-red-500' :
+                                     movement.impact?.significance === 'high' ? 'bg-orange-500' : 'bg-yellow-500'}
                           >
-                            {movement.impact.significance === 'very-high' ? 'משמעותי מאוד' :
-                             movement.impact.significance === 'high' ? 'משמעותי' : 'בינוני'}
+                            {movement.impact?.significance === 'very-high' ? 'משמעותי מאוד' :
+                             movement.impact?.significance === 'high' ? 'משמעותי' : 'בינוני'}
                           </Badge>
                           <div>
                             {movement.transactionType === 'buy' ? 'קנייה' : 
@@ -195,8 +195,8 @@ const ComprehensiveTab: React.FC<ComprehensiveTabProps> = ({
                     <div className="mt-4">
                       <h3 className="font-semibold mb-2">דפוסים זוהו</h3>
                       <Badge 
-                        variant={whaleBehavior[0].priceImpact.includes('+') ? 'default' : 'destructive'}
-                        className={whaleBehavior[0].priceImpact.includes('+') ? 'bg-green-500' : 'bg-red-500'}
+                        variant={whaleBehavior[0].priceImpact?.includes('+') ? 'default' : 'destructive'}
+                        className={whaleBehavior[0].priceImpact?.includes('+') ? 'bg-green-500' : 'bg-red-500'}
                       >
                         {whaleBehavior[0].pattern}
                       </Badge>

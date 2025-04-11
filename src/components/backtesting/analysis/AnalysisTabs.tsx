@@ -75,6 +75,39 @@ interface AnalysisTabsProps {
 }
 
 const AnalysisTabs: React.FC<AnalysisTabsProps> = ({ analysis }) => {
+  // Fallback for null/undefined analysis data
+  const safeAnalysis = analysis || {
+    historical: {
+      keyEvents: [],
+      trends: [],
+      cyclicalPatterns: []
+    },
+    current: {
+      marketCondition: '',
+      sentimentAnalysis: {
+        overall: '',
+        social: '',
+        news: '',
+        fearGreedIndex: 0
+      },
+      keyLevels: [],
+      technicalIndicators: []
+    },
+    future: {
+      shortTerm: {
+        prediction: '',
+        confidence: 0,
+        keyLevels: [],
+        significantEvents: []
+      },
+      longTerm: {
+        trend: '',
+        keyFactors: [],
+        scenarios: []
+      }
+    }
+  };
+
   return (
     <Tabs defaultValue="current">
       <TabsList className="grid w-full grid-cols-3">
@@ -94,25 +127,25 @@ const AnalysisTabs: React.FC<AnalysisTabsProps> = ({ analysis }) => {
       
       <TabsContent value="historical" className="text-right">
         <HistoricalAnalysisTab 
-          keyEvents={analysis.historical.keyEvents}
-          trends={analysis.historical.trends}
-          cyclicalPatterns={analysis.historical.cyclicalPatterns}
+          keyEvents={safeAnalysis.historical.keyEvents}
+          trends={safeAnalysis.historical.trends}
+          cyclicalPatterns={safeAnalysis.historical.cyclicalPatterns}
         />
       </TabsContent>
       
       <TabsContent value="current" className="text-right">
         <CurrentAnalysisTab 
-          marketCondition={analysis.current}
-          sentimentAnalysis={analysis.current.sentimentAnalysis}
-          keyLevels={analysis.current.keyLevels}
-          technicalIndicators={analysis.current.technicalIndicators}
+          marketCondition={safeAnalysis.current}
+          sentimentAnalysis={safeAnalysis.current.sentimentAnalysis}
+          keyLevels={safeAnalysis.current.keyLevels}
+          technicalIndicators={safeAnalysis.current.technicalIndicators}
         />
       </TabsContent>
       
       <TabsContent value="future" className="text-right">
         <FutureAnalysisTab 
-          shortTerm={analysis.future.shortTerm}
-          longTerm={analysis.future.longTerm}
+          shortTerm={safeAnalysis.future.shortTerm}
+          longTerm={safeAnalysis.future.longTerm}
         />
       </TabsContent>
     </Tabs>

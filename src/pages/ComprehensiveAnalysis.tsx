@@ -111,6 +111,10 @@ const ComprehensiveAnalysis = () => {
 
   // Calculate overall recommendation
   const calculateRecommendationWrapper = () => {
+    if (isLoading || !technicalAnalysis || !wyckoffPatterns || !smcPatterns || !whaleMovements || !newsItems) {
+      return { signal: 'neutral' as const, strength: 0, reasoning: [] };
+    }
+    
     return calculateOverallRecommendation(
       technicalAnalysis,
       wyckoffPatterns,
@@ -122,6 +126,10 @@ const ComprehensiveAnalysis = () => {
 
   // Generate trade plan
   const generateTradePlanWrapper = () => {
+    if (isLoading || !selectedAsset || !technicalAnalysis || !smcPatterns || !assetHistory || !userStrategy) {
+      return null;
+    }
+    
     return generateTradePlan(
       selectedAsset,
       technicalAnalysis,
