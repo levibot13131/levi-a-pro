@@ -98,7 +98,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   const isPositiveChange = percentChange && parseFloat(percentChange) >= 0;
   
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-2">

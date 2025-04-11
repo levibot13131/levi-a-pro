@@ -5,7 +5,7 @@ import {
   ZoomIn, 
   ZoomOut, 
   RefreshCw, 
-  Monitor, 
+  Maximize, 
   CandlestickChart, 
   BarChart, 
   LineChart, 
@@ -48,103 +48,110 @@ const ChartToolbar: React.FC<ChartToolbarProps> = ({
   setShowIndicators
 }) => {
   return (
-    <div className="flex flex-wrap justify-between gap-2 mb-4 p-2 bg-background/70 backdrop-blur-sm rounded-md border border-border/50 w-full">
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onRefresh}
-          disabled={isRefreshing}
-          className="flex items-center"
-        >
-          <RefreshCw className={`h-4 w-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
-          רענן
-        </Button>
-        
-        <Select
-          value={selectedTimeframe}
-          onValueChange={onTimeframeChange}
-        >
-          <SelectTrigger className="h-9 w-[110px]">
-            <Calendar className="h-4 w-4 mr-1" />
-            <SelectValue placeholder="טווח זמן" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1m">1 דקה</SelectItem>
-            <SelectItem value="5m">5 דקות</SelectItem>
-            <SelectItem value="15m">15 דקות</SelectItem>
-            <SelectItem value="30m">30 דקות</SelectItem>
-            <SelectItem value="1h">שעה</SelectItem>
-            <SelectItem value="4h">4 שעות</SelectItem>
-            <SelectItem value="1D">יום</SelectItem>
-            <SelectItem value="1W">שבוע</SelectItem>
-            <SelectItem value="1M">חודש</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex gap-1 border rounded-md p-0.5 bg-background">
-          <Button
-            variant={chartType === 'candle' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => onChartTypeChange('candle')}
-            className="w-10 h-9 p-0"
-            title="גרף נרות"
-          >
-            <CandlestickChart className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={chartType === 'line' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => onChartTypeChange('line')}
-            className="w-10 h-9 p-0"
-            title="גרף קו"
-          >
-            <LineChart className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={chartType === 'bar' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => onChartTypeChange('bar')}
-            className="w-10 h-9 p-0"
-            title="גרף עמודות"
-          >
-            <BarChart className="h-4 w-4" />
-          </Button>
+    <div className="w-full bg-card/80 backdrop-blur-sm border border-border/40 rounded-md p-2 mb-3">
+      <div className="flex flex-wrap justify-between items-center gap-2">
+        {/* Right-side controls */}
+        <div className="flex items-center gap-2 order-1 md:order-2">
+          {/* Chart type selector */}
+          <div className="flex rounded-md border overflow-hidden">
+            <Button
+              variant={chartType === 'candle' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onChartTypeChange('candle')}
+              className="h-8 px-2 rounded-none"
+              title="גרף נרות"
+            >
+              <CandlestickChart className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={chartType === 'line' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onChartTypeChange('line')}
+              className="h-8 px-2 rounded-none"
+              title="גרף קו"
+            >
+              <LineChart className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={chartType === 'bar' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => onChartTypeChange('bar')}
+              className="h-8 px-2 rounded-none"
+              title="גרף עמודות"
+            >
+              <BarChart className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {/* Volume and indicators toggles */}
+          <div className="flex rounded-md border overflow-hidden">
+            <Button
+              variant={showVolume ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setShowVolume(!showVolume)}
+              className="h-8 px-2 rounded-none"
+              title={showVolume ? 'הסתר נפח' : 'הצג נפח'}
+            >
+              <Volume2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={showIndicators ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setShowIndicators(!showIndicators)}
+              className="h-8 px-2 rounded-none"
+              title={showIndicators ? 'הסתר אינדיקטורים' : 'הצג אינדיקטורים'}
+            >
+              {showIndicators ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </Button>
+          </div>
+          
+          {/* Zoom controls */}
+          <div className="flex rounded-md border overflow-hidden">
+            <Button variant="ghost" size="sm" className="h-8 px-2 rounded-none" title="הגדל">
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" className="h-8 px-2 rounded-none" title="הקטן">
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="sm" className="h-8 px-2 rounded-none" title="מסך מלא">
+              <Maximize className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
         
-        <div className="flex gap-1 border rounded-md p-0.5 bg-background">
+        {/* Left-side controls */}
+        <div className="flex items-center gap-2 order-2 md:order-1">
           <Button
-            variant={showVolume ? 'default' : 'ghost'}
+            variant="outline"
             size="sm"
-            onClick={() => setShowVolume(!showVolume)}
-            className="w-10 h-9 p-0"
-            title={showVolume ? 'הסתר נפח' : 'הצג נפח'}
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            className="h-8"
           >
-            <Volume2 className="h-4 w-4" />
+            <RefreshCw className={`h-4 w-4 mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+            רענן
           </Button>
-          <Button
-            variant={showIndicators ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setShowIndicators(!showIndicators)}
-            className="w-10 h-9 p-0"
-            title={showIndicators ? 'הסתר אינדיקטורים' : 'הצג אינדיקטורים'}
+          
+          <Select
+            value={selectedTimeframe}
+            onValueChange={onTimeframeChange}
           >
-            {showIndicators ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </Button>
-        </div>
-        
-        <div className="flex gap-1 border rounded-md p-0.5 bg-background">
-          <Button variant="ghost" size="sm" className="w-10 h-9 p-0" title="הגדל">
-            <ZoomIn className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" className="w-10 h-9 p-0" title="הקטן">
-            <ZoomOut className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" className="w-10 h-9 p-0" title="מסך מלא">
-            <Monitor className="h-4 w-4" />
-          </Button>
+            <SelectTrigger className="h-8 w-[110px]">
+              <Calendar className="h-4 w-4 mr-1" />
+              <SelectValue placeholder="טווח זמן" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1m">1 דקה</SelectItem>
+              <SelectItem value="5m">5 דקות</SelectItem>
+              <SelectItem value="15m">15 דקות</SelectItem>
+              <SelectItem value="30m">30 דקות</SelectItem>
+              <SelectItem value="1h">שעה</SelectItem>
+              <SelectItem value="4h">4 שעות</SelectItem>
+              <SelectItem value="1D">יום</SelectItem>
+              <SelectItem value="1W">שבוע</SelectItem>
+              <SelectItem value="1M">חודש</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>
