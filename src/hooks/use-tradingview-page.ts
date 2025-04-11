@@ -1,64 +1,66 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { useTradingViewConnection } from './use-tradingview-connection';
 import { useTradingViewIntegration } from './use-tradingview-integration';
-import { toast } from 'sonner';
 
 export function useTradingViewPage() {
-  const { isConnected } = useTradingViewConnection();
-  const { 
-    syncEnabled, 
-    isSyncing, 
-    lastSyncTime, 
-    manualSync
+  const {
+    isConnected,
+    syncEnabled,
+    isSyncing,
+    lastSyncTime,
+    manualSync,
+    toggleAutoSync
   } = useTradingViewIntegration();
   
-  const [refreshTimer, setRefreshTimer] = useState<number>(0);
-  const [activeTab, setActiveTab] = useState<string>('charts');
+  // טיימר לתצוגה של הזמן שעבר מאז העדכון האחרון
+  const [refreshTimer, setRefreshTimer] = useState(0);
+  const [activeTab, setActiveTab] = useState("charts");
   
+  // עדכון טיימר כל שניה
   useEffect(() => {
-    if (syncEnabled) {
-      const timer = setInterval(() => {
-        if (lastSyncTime) {
-          const seconds = Math.floor((new Date().getTime() - lastSyncTime.getTime()) / 1000);
-          setRefreshTimer(seconds);
-        }
-      }, 1000);
-      
-      return () => clearInterval(timer);
-    }
-  }, [syncEnabled, lastSyncTime]);
+    const interval = setInterval(() => {
+      if (lastSyncTime) {
+        const seconds = Math.floor((Date.now() - lastSyncTime.getTime()) / 1000);
+        setRefreshTimer(seconds);
+      }
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [lastSyncTime]);
   
+  // פורמט להצגת זמן העדכון האחרון
   const formatLastSyncTime = useCallback(() => {
-    if (!lastSyncTime) return 'אף פעם';
+    if (!lastSyncTime) return "לא היה סנכרון";
     
-    if (refreshTimer < 60) {
-      return `לפני ${refreshTimer} שניות`;
-    }
-    
-    if (refreshTimer < 3600) {
-      const minutes = Math.floor(refreshTimer / 60);
-      return `לפני ${minutes} דקות`;
-    }
-    
-    return lastSyncTime.toLocaleTimeString('he-IL', { 
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }, [lastSyncTime, refreshTimer]);
-  
-  const handleManualRefresh = async () => {
-    if (isSyncing) return;
-    
-    const success = await manualSync();
-    if (success) {
-      if (activeTab === 'charts') {
-        toast.success("גרפים עודכנו בהצלחה");
-      } else if (activeTab === 'news') {
-        toast.success("חדשות עודכנו בהצלחה");
+    try {
+      const rtf = new Intl.RelativeTimeFormat('he', { numeric: 'auto' });
+      const seconds = Math.floor((Date.now() - lastSyncTime.getTime()) / 1000);
+      
+      if (seconds < 60) {
+        return rtf.format(-seconds, 'second');
+      } else if (seconds < 3600) {
+        return rtf.format(-Math.floor(seconds / 60), 'minute');
+      } else {
+        return rtf.format(-Math.floor(seconds / 3600), 'hour');
+      }
+    } catch (error) {
+      // פתרון חלופי אם אין תמיכה ב-RelativeTimeFormat
+      const minutes = Math.floor((Date.now() - lastSyncTime.getTime()) / 60000);
+      if (minutes < 1) {
+        return "לפני פחות מדקה";
+      } else if (minutes < 60) {
+        return `לפני ${minutes} דקות`;
+      } else {
+        const hours = Math.floor(minutes / 60);
+        return `לפני ${hours} שעות`;
       }
     }
-  };
+  }, [lastSyncTime]);
+  
+  // פונקציה לסנכרון ידני
+  const handleManualRefresh = useCallback(async () => {
+    await manualSync(true);
+  }, [manualSync]);
   
   return {
     isConnected,
@@ -69,6 +71,7 @@ export function useTradingViewPage() {
     activeTab,
     setActiveTab,
     formatLastSyncTime,
-    handleManualRefresh
+    handleManualRefresh,
+    toggleAutoSync
   };
 }

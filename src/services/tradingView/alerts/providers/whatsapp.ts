@@ -6,6 +6,12 @@ import { toast } from 'sonner';
  */
 export const sendWhatsAppMessage = async (webhookUrl: string, message: string): Promise<boolean> => {
   try {
+    if (!webhookUrl || webhookUrl.trim() === '') {
+      console.error('❌ Missing WhatsApp webhook URL');
+      toast.error('כתובת ה-webhook של וואטסאפ חסרה');
+      return false;
+    }
+    
     console.log(`📱 Sending WhatsApp message to webhook: ${webhookUrl}`);
     console.log(`📝 Message content: ${message}`);
     
@@ -89,6 +95,12 @@ export const sendWhatsAppMessage = async (webhookUrl: string, message: string): 
  */
 export const testWhatsAppConnection = async (webhookUrl: string): Promise<boolean> => {
   try {
+    if (!webhookUrl || webhookUrl.trim() === '') {
+      console.error('❌ Missing WhatsApp webhook URL for testing');
+      toast.error('כתובת ה-webhook של וואטסאפ חסרה');
+      return false;
+    }
+    
     console.log(`🧪 Testing WhatsApp webhook connection: ${webhookUrl}`);
     
     const testMessage = 
