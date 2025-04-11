@@ -1,7 +1,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { toast } from 'sonner';
-import { updateAlertDestination, getAlertDestinations, testAlertDestination } from '@/services/tradingView/tradingViewAlertService';
+import { updateAlertDestination, getAlertDestinations, sendAlert } from '@/services/tradingView/tradingViewAlertService';
 
 export function useWhatsappIntegration() {
   const [isConnected, setIsConnected] = useState(false);
@@ -15,8 +15,11 @@ export function useWhatsappIntegration() {
       const whatsappSettings = destinations.find(d => d.type === 'whatsapp');
       
       if (whatsappSettings) {
-        setIsConnected(whatsappSettings.enabled);
-        setWebhookUrl(whatsappSettings.webhookUrl || '');
+        setIsConnected(whatsappSettings.active);
+        // Initialize webhook URL from whatsappSettings.name if available
+        if (whatsappSettings.name && whatsappSettings.name.includes('http')) {
+          setWebhookUrl(whatsappSettings.name);
+        }
       }
     };
     
@@ -34,24 +37,19 @@ export function useWhatsappIntegration() {
     
     try {
       // עדכון הגדרות וואטסאפ
-      const updated = updateAlertDestination('whatsapp', {
-        webhookUrl: url,
-        enabled: true
+      updateAlertDestination('whatsapp', {
+        name: url,
+        active: true
       });
       
-      if (updated) {
-        setIsConnected(true);
-        setWebhookUrl(url);
-        
-        toast.success('וואטסאפ חובר בהצלחה', {
-          description: 'התראות ישלחו לוואטסאפ שלך'
-        });
-        
-        return true;
-      } else {
-        toast.error('שגיאה בעדכון הגדרות וואטסאפ');
-        return false;
-      }
+      setIsConnected(true);
+      setWebhookUrl(url);
+      
+      toast.success('וואטסאפ חובר בהצלחה', {
+        description: 'התראות ישלחו לוואטסאפ שלך'
+      });
+      
+      return true;
     } catch (error) {
       console.error('Error configuring WhatsApp:', error);
       toast.error('שגיאה בהגדרת וואטסאפ');
@@ -64,7 +62,7 @@ export function useWhatsappIntegration() {
   // ניתוק וואטסאפ
   const disconnectWhatsapp = useCallback(() => {
     updateAlertDestination('whatsapp', {
-      enabled: false
+      active: false
     });
     
     setIsConnected(false);
@@ -81,7 +79,17 @@ export function useWhatsappIntegration() {
     }
     
     try {
-      const sent = await testAlertDestination('whatsapp');
+      // במקום להשתמש בפונקציה לא קיימת, נשתמש בפונקציה sendAlert לשליחת הודעת בדיקה
+      const sent = await sendAlert({
+        symbol: "TEST",
+        message: "זוהי הודעת בדיקה מהמערכת לוואטסאפ",
+        indicators: ["Test"],
+        timeframe: "1d",
+        timestamp: Date.now(),
+        price: 50000,
+        action: 'info',
+        details: "בדיקת חיבור לוואטסאפ"
+      });
       
       if (sent) {
         toast.success('הודעת בדיקה נשלחה לוואטסאפ');

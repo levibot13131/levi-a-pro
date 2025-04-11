@@ -1,122 +1,68 @@
 
 import React from 'react';
-import { AlertCircle, BrandTelegram, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardContent } from '@/components/ui/card';
+import { MessageSquare } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const TelegramGuide: React.FC = () => {
   return (
-    <div className="space-y-3">
-      <h3 className="font-semibold text-lg text-right flex items-center gap-2">
-        <AlertCircle className="h-5 w-5 text-amber-500" />
-        מדריך להתחברות עם בוט טלגרם
-      </h3>
-      
-      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-md border border-blue-100 dark:border-blue-800">
-        <h4 className="font-medium text-right mb-3 flex items-center gap-2 text-blue-800 dark:text-blue-300">
-          <BrandTelegram className="h-5 w-5" />
-          שלבים להקמת בוט טלגרם והתחברות למערכת
-        </h4>
+    <Card>
+      <CardContent className="space-y-4 text-right">
+        <div className="flex items-center justify-between mb-4">
+          <MessageSquare className="h-5 w-5 text-blue-500" />
+          <h3 className="text-lg font-bold">מדריך מפורט להתחברות לטלגרם</h3>
+        </div>
         
-        <ol className="list-decimal list-inside rtl space-y-4 text-right text-sm">
-          <li className="font-medium">פתח את טלגרם וחפש את @BotFather</li>
-          <div className="mr-6 bg-white dark:bg-gray-800 p-3 rounded-md text-xs">
-            <p>זהו בוט רשמי של טלגרם שמאפשר לך ליצור בוטים משלך.</p>
-            <p className="mt-1">פתח צ'אט עם @BotFather והתחל שיחה.</p>
-          </div>
-          
-          <Separator className="my-1" />
-          
-          <li className="font-medium">התחל צ'אט ושלח את הפקודה /newbot</li>
-          <div className="mr-6 bg-white dark:bg-gray-800 p-3 rounded-md text-xs">
-            <p>BotFather יבקש ממך לבחור:</p>
-            <ul className="list-disc list-inside mt-1 space-y-1">
-              <li>שם לבוט שלך (שם תצוגה)</li>
-              <li>שם משתמש לבוט (חייב להסתיים ב-bot, למשל: trading_signals_bot)</li>
-            </ul>
-          </div>
-          
-          <Separator className="my-1" />
-          
-          <li className="font-medium">שמור את הטוקן של הבוט</li>
-          <div className="mr-6 bg-white dark:bg-gray-800 p-3 rounded-md text-xs">
-            <p>לאחר יצירת הבוט, תקבל הודעה עם טוקן שנראה בערך כך:</p>
-            <pre className="bg-gray-100 dark:bg-gray-700 p-1 mt-1 rounded text-[10px] overflow-x-auto">
-              123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ
-            </pre>
-            <p className="mt-1 font-bold">שמור את הטוקן הזה! הוא יידרש לחיבור למערכת.</p>
-          </div>
-          
-          <Separator className="my-1" />
-          
-          <li className="font-medium">הוסף את הבוט לקבוצה או התחל שיחה פרטית</li>
-          <div className="mr-6 bg-white dark:bg-gray-800 p-3 rounded-md text-xs">
-            <p>יש לך שתי אפשרויות:</p>
-            <ul className="list-disc list-inside mt-1 space-y-1">
-              <li>התחל שיחה פרטית עם הבוט (לקבלת התראות פרטיות)</li>
-              <li>הוסף את הבוט לקבוצה (לשיתוף התראות עם משתמשים נוספים)</li>
-            </ul>
-          </div>
-          
-          <Separator className="my-1" />
-          
-          <li className="font-medium">קבל את מזהה הצ'אט (Chat ID)</li>
-          <div className="mr-6 bg-white dark:bg-gray-800 p-3 rounded-md text-xs">
-            <p>שלח הודעה כלשהי בצ'אט שבו נמצא הבוט, ואז גש לכתובת הבאה בדפדפן:</p>
-            <pre className="bg-gray-100 dark:bg-gray-700 p-1 mt-1 rounded text-[10px] overflow-x-auto">
-              https://api.telegram.org/bot[YOUR-BOT-TOKEN]/getUpdates
-            </pre>
-            <p className="mt-1">החלף את [YOUR-BOT-TOKEN] בטוקן שקיבלת בשלב 3.</p>
-            <p className="mt-1">בתוצאה שתקבל חפש את השדה "chat" ובתוכו "id". זהו ה-Chat ID שלך.</p>
-            <p className="mt-1">לדוגמה:</p>
-            <ul className="list-disc list-inside mt-1 space-y-1">
-              <li>צ'אט פרטי: מספר כמו "123456789"</li>
-              <li>קבוצה: מספר שלילי כמו "-1001234567890"</li>
-            </ul>
-          </div>
-          
-          <Separator className="my-1" />
-          
-          <li className="font-medium">הזן את הנתונים במערכת</li>
-          <div className="mr-6 bg-white dark:bg-gray-800 p-3 rounded-md text-xs">
-            <p>כעת, הזן במערכת את:</p>
-            <ul className="list-disc list-inside mt-1 space-y-1">
-              <li>Bot Token - הטוקן שקיבלת מ-BotFather</li>
-              <li>Chat ID - מזהה הצ'אט שמצאת בשלב הקודם</li>
-            </ul>
-            <p className="mt-1">לחץ על "חבר לטלגרם" כדי להשלים את התהליך.</p>
-          </div>
-          
-          <Separator className="my-1" />
-          
-          <li className="font-medium">בדוק את החיבור</li>
-          <div className="mr-6 bg-white dark:bg-gray-800 p-3 rounded-md text-xs">
-            <p>לאחר החיבור, לחץ על "שלח הודעת בדיקה" כדי לוודא שהכל עובד כראוי.</p>
-            <p className="mt-1">אם ההודעה התקבלה בטלגרם - החיבור הושלם בהצלחה!</p>
-          </div>
-        </ol>
-      </div>
-      
-      <div className="flex justify-center mt-4 gap-2">
-        <a 
-          href="https://core.telegram.org/bots" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          תיעוד רשמי של טלגרם
-        </a>
-        <a 
-          href="https://t.me/botfather" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="text-sm text-blue-600 dark:text-blue-400 hover:underline flex items-center"
-        >
-          פתח את BotFather
-          <ChevronRight className="h-4 w-4" />
-        </a>
-      </div>
-    </div>
+        <Alert className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-900/50 dark:text-blue-400">
+          <AlertTitle className="mb-2">יצירת בוט טלגרם</AlertTitle>
+          <AlertDescription>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>פתח את הטלגרם וחפש את "BotFather" (@BotFather)</li>
+              <li>שלח לו את הפקודה "/newbot"</li>
+              <li>מלא אחר ההוראות כדי לתת שם לבוט שלך</li>
+              <li>לאחר השלמת התהליך, תקבל הודעה עם ה-API Token של הבוט שלך (לדוגמה: 1234567890:ABCDefGhIJKlmNoPQRsTUVwxyZ)</li>
+              <li>שמור את ה-API Token במקום בטוח, תצטרך אותו בהמשך</li>
+            </ol>
+          </AlertDescription>
+        </Alert>
+        
+        <Alert className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-900/50 dark:text-blue-400">
+          <AlertTitle className="mb-2">מציאת Chat ID</AlertTitle>
+          <AlertDescription>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>אם זה עבור צ'אט פרטי:
+                <ul className="list-disc list-inside mr-6 mt-1">
+                  <li>פנה לבוט @userinfobot בטלגרם</li>
+                  <li>שלח לו הודעה כלשהי</li>
+                  <li>הוא יחזיר לך את ה-ID שלך, לדוגמה: 123456789</li>
+                </ul>
+              </li>
+              <li>אם זה עבור קבוצה:
+                <ul className="list-disc list-inside mr-6 mt-1">
+                  <li>הוסף את הבוט שיצרת לקבוצה</li>
+                  <li>שלח הודעה כלשהי בקבוצה</li>
+                  <li>פתח בדפדפן: https://api.telegram.org/bot[YOUR_API_TOKEN]/getUpdates</li>
+                  <li>חפש את ה-chat.id שמתחיל ב"-" (לדוגמה: -1001234567890)</li>
+                </ul>
+              </li>
+            </ol>
+          </AlertDescription>
+        </Alert>
+        
+        <Alert className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-900/50 dark:text-blue-400">
+          <AlertTitle className="mb-2">הגדרת האינטגרציה</AlertTitle>
+          <AlertDescription>
+            <ol className="list-decimal list-inside space-y-1">
+              <li>הזן את ה-Bot Token שקיבלת מ-BotFather בשדה הראשון</li>
+              <li>הזן את ה-Chat ID שלך בשדה השני</li>
+              <li>לחץ על "חבר לטלגרם" כדי להפעיל את האינטגרציה</li>
+              <li>לחץ על "שלח הודעת בדיקה" כדי לוודא שהכל עובד כראוי</li>
+              <li>ההתראות יישלחו אוטומטית לטלגרם כאשר מתקבלים איתותים</li>
+            </ol>
+          </AlertDescription>
+        </Alert>
+      </CardContent>
+    </Card>
   );
 };
 

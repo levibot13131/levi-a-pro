@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { BrandTelegram, Link, Check, AlertCircle } from 'lucide-react';
+import { MessageSquare, Link, Check, AlertCircle } from 'lucide-react';
 import { useTelegramIntegration } from '@/hooks/use-telegram-integration';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -31,13 +31,13 @@ const TelegramIntegration: React.FC = () => {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between">
           <span>התחברות לטלגרם</span>
-          <BrandTelegram className="h-5 w-5 text-blue-500" />
+          <MessageSquare className="h-5 w-5 text-blue-500" />
         </CardTitle>
       </CardHeader>
       <CardContent>
         {isConnected ? (
           <div className="space-y-4">
-            <Alert variant="success" className="bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200 dark:border-green-900/50">
+            <Alert variant="default" className="bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-400 border-green-200 dark:border-green-900/50">
               <Check className="h-4 w-4" />
               <AlertTitle>מחובר לטלגרם</AlertTitle>
               <AlertDescription>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -50,6 +49,7 @@ https://api.callmebot.com/whatsapp.php?phone={phone}&apikey={APIKEY}&text=
     toast.success('ההוראות הועתקו ללוח');
   };
 
+  
   return (
     <Card>
       <CardHeader>

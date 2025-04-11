@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { WhatsappLogo, CheckCircle, AlertTriangle, Trash } from 'lucide-react';
+import { MessageSquare, CheckCircle, AlertTriangle, Trash } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
   getAlertDestinations, 
@@ -44,7 +44,7 @@ const WhatsAppIntegration: React.FC = () => {
     setTimeout(() => {
       if (whatsappDestination) {
         // עדכון יעד קיים
-        updateAlertDestination(whatsappDestination.id, {
+        updateAlertDestination('whatsapp', {
           name: `וואטסאפ - ${phoneNumber}`,
           active: true
         });
@@ -68,7 +68,7 @@ const WhatsAppIntegration: React.FC = () => {
   
   const toggleWhatsAppActive = (active: boolean) => {
     if (whatsappDestination) {
-      updateAlertDestination(whatsappDestination.id, { active });
+      updateAlertDestination('whatsapp', { active });
       
       toast.success(active 
         ? "התראות וואטסאפ הופעלו" 
@@ -103,7 +103,7 @@ const WhatsAppIntegration: React.FC = () => {
           </Badge>
           <div className="flex flex-col items-end">
             <CardTitle className="flex items-center gap-2">
-              <WhatsappLogo className="h-5 w-5 text-green-600" />
+              <MessageSquare className="h-5 w-5 text-green-600" />
               אינטגרציית וואטסאפ
             </CardTitle>
             <CardDescription className="text-right">
