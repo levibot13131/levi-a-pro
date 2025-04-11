@@ -85,10 +85,10 @@ const notifySignalSubscribers = (): void => {
 /**
  * Simulate a webhook signal for testing
  */
-export const simulateWebhookSignal = async (type: 'buy' | 'sell' | 'info' = 'info'): Promise<void> => {
+export const simulateWebhookSignal = async (type: 'buy' | 'sell' | 'info' = 'info'): Promise<boolean> => {
   try {
     // Simulate webhook to test the flow
-    await simulateWebhook(type);
+    const result = await simulateWebhook(type);
     
     // Create a simulated webhook signal for UI display
     const signal: WebhookSignal = {
@@ -105,9 +105,11 @@ export const simulateWebhookSignal = async (type: 'buy' | 'sell' | 'info' = 'inf
     storeWebhookSignal(signal);
     
     toast.success(`איתות ${type} לדוגמה נוצר בהצלחה`);
+    return result;
   } catch (error) {
     console.error('Error simulating webhook signal:', error);
     toast.error('שגיאה ביצירת איתות לדוגמה');
+    return false;
   }
 };
 

@@ -58,7 +58,7 @@ const WebhookTester: React.FC = () => {
           
           <div className="flex gap-2">
             <Badge 
-              variant={hasTelegram ? "success" : "destructive"}
+              variant={hasTelegram ? "default" : "destructive"}
               className={`${hasTelegram ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-red-100 text-red-800 hover:bg-red-200'}`}
             >
               {hasTelegram ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
@@ -66,7 +66,7 @@ const WebhookTester: React.FC = () => {
             </Badge>
             
             <Badge 
-              variant={hasWhatsApp ? "success" : "destructive"}
+              variant={hasWhatsApp ? "default" : "destructive"}
               className={`${hasWhatsApp ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-red-100 text-red-800 hover:bg-red-200'}`}
             >
               {hasWhatsApp ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}

@@ -7,6 +7,8 @@ import { sendTelegramMessage, parseTelegramConfig } from '../telegramService';
 
 // Format alert message with detailed technical analysis
 export const formatAlertMessage = (alert: TradingViewAlert): string => {
+  console.log('Formatting alert message:', JSON.stringify(alert, null, 2));
+  
   // Choose appropriate emojis based on action and strategy
   const actionEmoji = alert.action === 'buy' ? '🟢' : alert.action === 'sell' ? '🔴' : 'ℹ️';
   const actionText = alert.action === 'buy' ? 'קנייה' : alert.action === 'sell' ? 'מכירה' : 'מידע';
@@ -21,6 +23,18 @@ export const formatAlertMessage = (alert: TradingViewAlert): string => {
         maximumFractionDigits: 2
       })
     : String(alert.price);
+  
+  // Format timestamp
+  const dateOptions: Intl.DateTimeFormatOptions = {
+    year: 'numeric', 
+    month: '2-digit', 
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  };
+  
+  const formattedDate = new Date(alert.timestamp).toLocaleString('he-IL', dateOptions);
   
   // Build the main message with markdown formatting for Telegram
   let message = `${actionEmoji} *${actionText}: ${alert.symbol}*\n`
@@ -51,16 +65,7 @@ export const formatAlertMessage = (alert: TradingViewAlert): string => {
   }
   
   // Add timestamp in readable format
-  const date = new Date(alert.timestamp);
-  const timeStr = date.toLocaleString('he-IL', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-  
-  message += `⏱️ זמן: ${timeStr}`;
+  message += `⏱️ זמן: ${formattedDate}`;
   
   console.log('Formatted alert message:', message);
   return message;
@@ -72,28 +77,28 @@ const getStrategyInfo = (alert: TradingViewAlert): { emoji: string; text: string
     return { emoji: '📊', text: '' };
   }
   
-  switch (alert.strategy.toLowerCase()) {
-    case 'wyckoff':
-      return {
-        emoji: '🧠',
-        text: 'וייקוף - זיהוי מבני מחיר של צבירה/חלוקה'
-      };
-    case 'magic_triangle':
-    case 'triangle':
-      return {
-        emoji: '🔺',
-        text: 'משולש הקסם - זיהוי נקודות מפנה לפי דפוסי מחיר'
-      };
-    case 'quarters':
-      return {
-        emoji: '🔄',
-        text: 'שיטת הרבעים - זיהוי תיקונים ורמות פיבונאצ׳י'
-      };
-    default:
-      return {
-        emoji: '📊',
-        text: alert.strategy
-      };
+  const strategy = alert.strategy.toLowerCase();
+  
+  if (strategy.includes('wyckoff')) {
+    return {
+      emoji: '🧠',
+      text: 'וייקוף - זיהוי מבני מחיר של צבירה/חלוקה'
+    };
+  } else if (strategy.includes('magic') || strategy.includes('triangle')) {
+    return {
+      emoji: '🔺',
+      text: 'משולש הקסם - זיהוי נקודות מפנה לפי דפוסי מחיר'
+    };
+  } else if (strategy.includes('quarters')) {
+    return {
+      emoji: '🔄',
+      text: 'שיטת הרבעים - זיהוי תיקונים ורמות פיבונאצ׳י'
+    };
+  } else {
+    return {
+      emoji: '📊',
+      text: alert.strategy
+    };
   }
 };
 
@@ -117,6 +122,11 @@ const sendWhatsAppMessage = async (webhookUrl: string, message: string): Promise
         })
       });
       
+      if (!response.ok) {
+        console.error('❌ WhatsApp webhook error:', response.status, response.statusText);
+        return false;
+      }
+      
       const data = await response.json();
       console.log('📊 WhatsApp webhook response:', data);
       
@@ -137,7 +147,7 @@ export const sendAlertToDestinations = async (
   destinations: AlertDestination[]
 ): Promise<number> => {
   let successCount = 0;
-  console.log(`🔔 Sending alert to ${destinations.length} destinations:`, alert);
+  console.log(`🔔 Sending alert to ${destinations.length} destinations:`, JSON.stringify(alert, null, 2));
   
   const formattedMessage = formatAlertMessage(alert);
 

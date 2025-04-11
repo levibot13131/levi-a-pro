@@ -7,7 +7,7 @@ import { toast } from 'sonner';
  * Validate webhook data from TradingView
  */
 export const validateWebhookData = (data: any): boolean => {
-  console.log('Validating webhook data:', data);
+  console.log('Validating webhook data:', JSON.stringify(data, null, 2));
   
   // Check if data exists
   if (!data) {
@@ -24,6 +24,14 @@ export const validateWebhookData = (data: any): boolean => {
   // Further validation as needed
   const hasAction = !!data.action || !!data.signal;
   const hasPrice = !!data.price || !!data.close;
+  
+  if (!hasAction) {
+    console.warn('Webhook validation warning: Missing action/signal field');
+  }
+  
+  if (!hasPrice) {
+    console.warn('Webhook validation warning: Missing price/close field');
+  }
   
   console.log('Webhook validation results:', { 
     hasSymbol: !!data.symbol, 
@@ -49,15 +57,23 @@ export const parseActionType = (data: WebhookData): 'buy' | 'sell' | 'info' => {
   if (data.signal && typeof data.signal === 'string') {
     const signalText = data.signal.toLowerCase();
     if (signalText.includes('buy') || 
+        signalText.includes('long') || 
+        signalText.includes('קנייה') || 
+        signalText.includes('לונג') ||
         signalText.includes('bullish') || 
-        signalText.includes('long') ||
-        signalText.includes('breakout')) {
+        signalText.includes('עולה') ||
+        signalText.includes('breakout') ||
+        signalText.includes('פריצה')) {
       console.log('Determined action type from signal text: buy');
       return 'buy';
     } else if (signalText.includes('sell') || 
+              signalText.includes('short') || 
+              signalText.includes('מכירה') || 
+              signalText.includes('שורט') ||
               signalText.includes('bearish') || 
-              signalText.includes('short') ||
-              signalText.includes('breakdown')) {
+              signalText.includes('יורד') ||
+              signalText.includes('breakdown') ||
+              signalText.includes('שבירה')) {
       console.log('Determined action type from signal text: sell');
       return 'sell';
     }
@@ -78,17 +94,26 @@ export const parseStrategy = (data: WebhookData): { strategy: string, message: s
   // Try to determine strategy from signal text
   if (data.signal && typeof data.signal === 'string') {
     const signalText = data.signal.toLowerCase();
-    if (signalText.includes('triangle') || signalText.includes('magic')) {
+    
+    console.log('Analyzing signal text for strategy:', signalText);
+    
+    if (signalText.includes('triangle') || 
+        signalText.includes('magic') || 
+        signalText.includes('משולש')) {
       strategy = 'magic_triangle';
-      message = `משולש הקסם: ${data.signal}`;
+      message = message || `משולש הקסם: ${data.signal}`;
       console.log('Determined strategy from signal: magic_triangle');
-    } else if (signalText.includes('wyckoff')) {
+    } else if (signalText.includes('wyckoff') || 
+               signalText.includes('וייקוף')) {
       strategy = 'Wyckoff';
-      message = `וייקוף: ${data.signal}`;
+      message = message || `וייקוף: ${data.signal}`;
       console.log('Determined strategy from signal: Wyckoff');
-    } else if (signalText.includes('quarters') || signalText.includes('fibonacci')) {
+    } else if (signalText.includes('quarters') || 
+               signalText.includes('fibonacci') || 
+               signalText.includes('רבעים') || 
+               signalText.includes('פיבונאצ\'י')) {
       strategy = 'quarters';
-      message = `שיטת הרבעים: ${data.signal}`;
+      message = message || `שיטת הרבעים: ${data.signal}`;
       console.log('Determined strategy from signal: quarters');
     }
   }
@@ -96,22 +121,18 @@ export const parseStrategy = (data: WebhookData): { strategy: string, message: s
   // Explicitly handle strategy_name if provided
   if (data.strategy_name) {
     console.log(`Found explicit strategy_name: ${data.strategy_name}`);
-    switch (data.strategy_name.toLowerCase()) {
-      case 'wyckoff':
-      case 'wyckoff pattern':
-        strategy = 'Wyckoff';
-        break;
-      case 'magic triangle':
-      case 'magic_triangle':
-        strategy = 'magic_triangle';
-        break;
-      case 'quarters':
-      case 'quarters strategy':
-        strategy = 'quarters';
-        break;
-      default:
-        // If none of the known strategies, use the provided name
-        strategy = data.strategy_name;
+    
+    const strategyName = data.strategy_name.toLowerCase();
+    
+    if (strategyName.includes('wyckoff')) {
+      strategy = 'Wyckoff';
+    } else if (strategyName.includes('magic') || strategyName.includes('triangle') || strategyName.includes('משולש')) {
+      strategy = 'magic_triangle';
+    } else if (strategyName.includes('quarters') || strategyName.includes('רבעים')) {
+      strategy = 'quarters';
+    } else {
+      // If none of the known strategies, use the provided name
+      strategy = data.strategy_name;
     }
   }
   
@@ -121,6 +142,7 @@ export const parseStrategy = (data: WebhookData): { strategy: string, message: s
     console.log(`Using provided strategy: ${strategy}`);
   }
   
+  console.log('Parsed strategy result:', { strategy, message });
   return { strategy, message };
 };
 
@@ -129,15 +151,17 @@ export const parseStrategy = (data: WebhookData): { strategy: string, message: s
  */
 export const parseWebhookData = (data: WebhookData): TradingViewAlert | null => {
   try {
-    console.log('Parsing webhook data:', data);
+    console.log('Parsing webhook data into alert:', JSON.stringify(data, null, 2));
     
     // Validate data first
     if (!validateWebhookData(data)) {
+      console.error('❌ Webhook validation failed during parsing');
       return null;
     }
     
     // Parse action type
     const action = parseActionType(data);
+    console.log(`Parsed action type: ${action}`);
     
     // Parse price data
     const price = parseFloat(String(data.price || data.close || '0'));
@@ -145,12 +169,15 @@ export const parseWebhookData = (data: WebhookData): TradingViewAlert | null => 
       console.error('Invalid price data in webhook:', data.price);
       return null;
     }
+    console.log(`Parsed price: ${price}`);
     
     // Parse strategy and message
     const { strategy, message } = parseStrategy(data);
+    console.log(`Parsed strategy: ${strategy}, message: ${message}`);
     
     // Parse timestamp
     const timestamp = data.time ? new Date(data.time).getTime() : Date.now();
+    console.log(`Parsed timestamp: ${new Date(timestamp).toISOString()}`);
     
     // Parse details
     let details = data.details || '';
@@ -161,9 +188,21 @@ export const parseWebhookData = (data: WebhookData): TradingViewAlert | null => 
     }
     
     // Parse indicators
-    const indicators = data.indicators ? 
-      (Array.isArray(data.indicators) ? data.indicators : [data.indicators]) : 
-      strategy ? [strategy] : [];
+    let indicators: string[] = [];
+    if (data.indicators) {
+      if (Array.isArray(data.indicators)) {
+        indicators = data.indicators;
+      } else if (typeof data.indicators === 'string') {
+        // Split if it's a comma-separated string
+        indicators = data.indicators.split(',').map(i => i.trim());
+      } else {
+        indicators = [String(data.indicators)];
+      }
+    } else if (strategy) {
+      indicators = [strategy];
+    }
+    
+    console.log(`Parsed indicators: ${indicators.join(', ')}`);
     
     // Create alert object
     const alert: TradingViewAlert = {
@@ -180,11 +219,11 @@ export const parseWebhookData = (data: WebhookData): TradingViewAlert | null => 
     };
     
     // Add bar_close to details if available
-    if (data.bar_close) {
+    if (data.bar_close && !details.includes('סגירת נר')) {
       alert.details = `${alert.details ? alert.details + '\n' : ''}סגירת נר: ${data.bar_close}`;
     }
     
-    console.log('Parsed webhook data into alert:', alert);
+    console.log('Successfully parsed webhook data into alert:', JSON.stringify(alert, null, 2));
     return alert;
   } catch (error) {
     console.error('Error parsing webhook data:', error);

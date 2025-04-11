@@ -7,6 +7,7 @@ import { WebhookData } from "./types";
 export const generateSampleWebhookData = (type: 'buy' | 'sell' | 'info' = 'info'): WebhookData => {
   const now = new Date();
   const timeStr = now.toISOString();
+  console.log(`Generating ${type} sample webhook data at ${timeStr}`);
   
   // Select symbol based on type
   const symbol = type === 'buy' ? 'BTC/USD' : type === 'sell' ? 'ETH/USD' : 'XRP/USD';
@@ -29,6 +30,7 @@ export const generateSampleWebhookData = (type: 'buy' | 'sell' | 'info' = 'info'
   
   // Format price
   const formattedPrice = price.toFixed(2);
+  console.log(`Generated price for ${symbol}: ${formattedPrice}`);
   
   // Generate strategy based on type
   let strategy = '';
@@ -67,7 +69,7 @@ export const generateSampleWebhookData = (type: 'buy' | 'sell' | 'info' = 'info'
     chartUrl: `https://www.tradingview.com/chart/?symbol=${symbol.replace('/', '')}`
   };
   
-  console.log('Generated sample webhook data:', data);
+  console.log('Generated sample webhook data:', JSON.stringify(data, null, 2));
   return data;
 };
 
@@ -77,6 +79,7 @@ export const generateSampleWebhookData = (type: 'buy' | 'sell' | 'info' = 'info'
 export const createSampleAlert = (type: 'buy' | 'sell' | 'info' = 'info') => {
   // Generate sample webhook data
   const data = generateSampleWebhookData(type);
+  console.log(`Creating sample ${type} alert from webhook data`);
   
   // Create an alert based on the sample data (will be processed by the webhook parser)
   return {
@@ -99,6 +102,7 @@ export const createSampleAlert = (type: 'buy' | 'sell' | 'info' = 'info') => {
 export const simulateWebhookRequest = (type: 'buy' | 'sell' | 'info' = 'info'): any => {
   // Generate sample webhook data
   const data = generateSampleWebhookData(type);
+  console.log(`Simulating ${type} webhook request with generated data`);
   
   // Create a simulated request object
   return {

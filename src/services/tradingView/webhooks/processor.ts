@@ -10,17 +10,25 @@ import { generateSampleWebhookData, simulateWebhookRequest } from './sampleGener
  * Process incoming webhook data from TradingView
  */
 export const processWebhookData = async (data: WebhookData): Promise<boolean> => {
+  console.log('📥 Processing webhook data:', JSON.stringify(data, null, 2));
+  
   try {
-    console.log('📥 Processing webhook data:', data);
-    
     // Validate the webhook data
     if (!validateWebhookData(data)) {
-      console.error('❌ Webhook validation failed');
+      console.error('❌ Webhook validation failed', {
+        symbol: data.symbol,
+        hasAction: !!data.action,
+        hasSignal: !!data.signal,
+        hasPrice: !!data.price || !!data.close
+      });
+      
       toast.error('הווהבוק לא תקין', {
         description: 'חסרים שדות חובה או נתונים לא תקינים'
       });
       return false;
     }
+    
+    console.log('✅ Webhook data validated successfully');
     
     // Parse the webhook data into an alert
     const alert = parseWebhookData(data);
@@ -33,7 +41,7 @@ export const processWebhookData = async (data: WebhookData): Promise<boolean> =>
       return false;
     }
     
-    console.log('🔍 Parsed webhook into alert:', alert);
+    console.log('🔍 Successfully parsed webhook into alert:', JSON.stringify(alert, null, 2));
     
     // Send the alert
     const success = await sendAlert(alert);
@@ -64,9 +72,13 @@ export const processWebhookData = async (data: WebhookData): Promise<boolean> =>
  * Handle webhook request from TradingView
  */
 export const handleTradingViewWebhook = async (req: any): Promise<boolean> => {
+  console.log('📥 Received webhook request from TradingView', {
+    headers: req.headers,
+    hasBody: !!req.body,
+    bodyType: typeof req.body
+  });
+  
   try {
-    console.log('📥 Received webhook request from TradingView');
-    
     let data = req.body;
     
     // If the request body is a string, try to parse it as JSON
@@ -83,7 +95,7 @@ export const handleTradingViewWebhook = async (req: any): Promise<boolean> => {
       }
     }
     
-    console.log('📊 Received webhook payload:', data);
+    console.log('📊 Received webhook payload:', JSON.stringify(data, null, 2));
     
     // Process the webhook data
     return await processWebhookData(data);
@@ -100,21 +112,23 @@ export const handleTradingViewWebhook = async (req: any): Promise<boolean> => {
  * Test the webhook flow with sample data
  */
 export const testWebhookFlow = async (type: 'buy' | 'sell' | 'info' = 'info'): Promise<boolean> => {
+  console.log(`🧪 Testing webhook flow with ${type} signal...`);
+  
   try {
-    console.log(`🧪 Testing webhook flow with ${type} signal...`);
-    
     // Generate sample webhook data
     const sampleData = generateSampleWebhookData(type);
-    console.log('📤 Generated sample webhook data:', sampleData);
+    console.log('📤 Generated sample webhook data:', JSON.stringify(sampleData, null, 2));
     
     // Process the sample data
     const success = await processWebhookData(sampleData);
     
     if (success) {
+      console.log('✅ Webhook test successful - alert was processed and sent');
       toast.success(`בדיקת Webhook הצליחה`, {
         description: `הודעת ${type === 'buy' ? 'קנייה' : type === 'sell' ? 'מכירה' : 'מידע'} נשלחה בהצלחה`,
       });
     } else {
+      console.error('❌ Webhook test failed - could not process or send alert');
       toast.error(`בדיקת Webhook נכשלה`, {
         description: 'לא הצלחנו לשלוח את ההודעה, בדוק את הלוגים לפרטים נוספים'
       });
@@ -134,21 +148,23 @@ export const testWebhookFlow = async (type: 'buy' | 'sell' | 'info' = 'info'): P
  * Simulate a webhook request from TradingView
  */
 export const simulateWebhook = async (type: 'buy' | 'sell' | 'info' = 'info'): Promise<boolean> => {
+  console.log(`🔄 Simulating ${type} webhook request from TradingView...`);
+  
   try {
-    console.log(`🔄 Simulating ${type} webhook request from TradingView...`);
-    
     // Simulate a webhook request
     const req = simulateWebhookRequest(type);
-    console.log('📤 Simulated webhook request:', req);
+    console.log('📤 Simulated webhook request:', JSON.stringify(req, null, 2));
     
     // Handle the simulated request
     const success = await handleTradingViewWebhook(req);
     
     if (success) {
+      console.log('✅ Webhook simulation successful');
       toast.success(`סימולציית Webhook הצליחה`, {
         description: `הודעת ${type === 'buy' ? 'קנייה' : type === 'sell' ? 'מכירה' : 'מידע'} נשלחה בהצלחה`,
       });
     } else {
+      console.error('❌ Webhook simulation failed');
       toast.error(`סימולציית Webhook נכשלה`, {
         description: 'לא הצלחנו לשלוח את ההודעה, בדוק את הלוגים לפרטים נוספים'
       });
