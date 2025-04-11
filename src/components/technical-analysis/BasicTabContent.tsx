@@ -2,7 +2,7 @@
 import React from 'react';
 import { Asset } from '@/types/asset';
 import PriceVolumeChart from './PriceVolumeChart';
-import TechnicalIndicators from './TechnicalIndicators';
+import { TechnicalIndicators } from './indicators';
 import AdvancedAnalysisMethods from './AdvancedAnalysisMethods';
 import AlertSettings from './AlertSettings';
 
