@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bell, BellRing, Activity, CheckCircle2, AlertTriangle, Play, Pause } from 'lucide-react';
-import { useStoredSignals, startRealTimeAnalysis } from '@/services/backtesting/realTimeAnalysis';
+import { Bell, BellRing, Activity, CheckCircle2, AlertTriangle, Play, Pause, Trash2 } from 'lucide-react';
+import { useStoredSignals, startRealTimeAnalysis, clearStoredSignals } from '@/services/backtesting/realTimeAnalysis';
 import { TradeSignal } from '@/types/asset';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -25,7 +25,7 @@ const RealTimeAlerts: React.FC<RealTimeAlertsProps> = ({ assetIds, settings }) =
     // Refetch signals periodically
     const interval = setInterval(() => {
       refetch();
-    }, 10000);
+    }, 5000);
     
     return () => {
       clearInterval(interval);
@@ -54,6 +54,12 @@ const RealTimeAlerts: React.FC<RealTimeAlertsProps> = ({ assetIds, settings }) =
     }
   };
   
+  const handleClearSignals = () => {
+    clearStoredSignals();
+    toast.info("כל ההתראות נמחקו");
+    refetch();
+  };
+  
   const formatSignalTime = (timestamp: number) => {
     return format(new Date(timestamp), 'dd/MM/yyyy HH:mm');
   };
@@ -80,23 +86,35 @@ const RealTimeAlerts: React.FC<RealTimeAlertsProps> = ({ assetIds, settings }) =
     <Card className="w-full">
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center">
-          <Button 
-            variant={isActive ? "destructive" : "default"}
-            onClick={toggleRealTimeAlerts}
-            className="gap-2"
-          >
-            {isActive ? (
-              <>
-                <Pause className="h-4 w-4" />
-                הפסק התראות
-              </>
-            ) : (
-              <>
-                <Play className="h-4 w-4" />
-                הפעל התראות בזמן אמת
-              </>
+          <div className="flex gap-2">
+            <Button 
+              variant={isActive ? "destructive" : "default"}
+              onClick={toggleRealTimeAlerts}
+              className="gap-2"
+            >
+              {isActive ? (
+                <>
+                  <Pause className="h-4 w-4" />
+                  הפסק התראות
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4" />
+                  הפעל התראות בזמן אמת
+                </>
+              )}
+            </Button>
+            {signals.length > 0 && (
+              <Button
+                variant="outline"
+                onClick={handleClearSignals}
+                className="gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                נקה התראות
+              </Button>
             )}
-          </Button>
+          </div>
           <div>
             <CardTitle className="text-right">התראות ואיתותים בזמן אמת</CardTitle>
             <CardDescription className="text-right">

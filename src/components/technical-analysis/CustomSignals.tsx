@@ -6,8 +6,9 @@ import SignalCard from './SignalCard';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import EmptyState from '@/components/common/EmptyState';
 import { Button } from '@/components/ui/button';
-import { Send, BarChart, AlertTriangle } from 'lucide-react';
+import { Send, BarChart, AlertTriangle, Play } from 'lucide-react';
 import { toast } from 'sonner';
+import { useStoredSignals, startRealTimeAnalysis } from '@/services/backtesting/realTimeAnalysis';
 import {
   Dialog,
   DialogContent,
@@ -23,11 +24,14 @@ interface CustomSignalsProps {
 }
 
 const CustomSignals: React.FC<CustomSignalsProps> = ({ assetId }) => {
-  // שליפת איתותים ספציפיים לנכס זה
-  const { data: signals, isLoading: signalsLoading } = useQuery({
+  // שליפת איתותים ספציפיים לנכס זה - משלב איתותים מהמערכת המדומה וגם מהמערכת בזמן אמת
+  const { data: mockSignals, isLoading: mockSignalsLoading } = useQuery({
     queryKey: ['assetTradeSignals', assetId],
     queryFn: () => getTradeSignals(assetId),
   });
+  
+  // שליפת איתותים בזמן אמת מהמערכת החדשה
+  const { data: realTimeSignals = [], isLoading: realTimeSignalsLoading } = useStoredSignals(assetId);
   
   // פונקציה לשליחת איתות לערוצי התקשורת (טלגרם/וואטסאפ)
   const sendSignal = (signalId: string) => {
@@ -37,22 +41,58 @@ const CustomSignals: React.FC<CustomSignalsProps> = ({ assetId }) => {
     });
   };
   
-  if (signalsLoading) {
+  // הפעלת ניתוח בזמן אמת עבור נכס זה
+  const startAnalysisForAsset = () => {
+    startRealTimeAnalysis([assetId], { strategy: 'KSEM' });
+    toast.success("ניתוח בזמן אמת הופעל עבור נכס זה", {
+      description: "המערכת תתחיל לשלוח התראות בזמן אמת"
+    });
+  };
+  
+  // שילוב האיתותים
+  const allSignals = React.useMemo(() => {
+    const combined = [...(mockSignals || []), ...realTimeSignals];
+    // מיון לפי זמן יצירה (מהחדש לישן)
+    return combined.sort((a, b) => b.timestamp - a.timestamp);
+  }, [mockSignals, realTimeSignals]);
+  
+  const isLoading = mockSignalsLoading || realTimeSignalsLoading;
+  
+  if (isLoading) {
     return <LoadingSpinner className="h-64" />;
   }
   
-  if (!signals || signals.length === 0) {
-    return <EmptyState 
-      icon={<AlertTriangle className="h-10 w-10 text-yellow-500" />}
-      message="לא נמצאו איתותים עבור נכס זה" 
-    />;
+  if (!allSignals || allSignals.length === 0) {
+    return (
+      <EmptyState 
+        icon={<AlertTriangle className="h-10 w-10 text-yellow-500" />}
+        message="לא נמצאו איתותים עבור נכס זה" 
+        action={
+          <Button onClick={startAnalysisForAsset} className="mt-2">
+            <Play className="h-4 w-4 mr-2" />
+            הפעל ניתוח בזמן אמת
+          </Button>
+        }
+      />
+    );
   }
   
   return (
     <div className="space-y-4">
-      <h3 className="font-bold text-xl text-right">איתותים מותאמים לשיטת KSEM</h3>
+      <div className="flex justify-between items-center">
+        <Button 
+          size="sm" 
+          onClick={startAnalysisForAsset}
+          className="flex items-center gap-2"
+        >
+          <Play className="h-4 w-4" />
+          עקוב אחר נכס זה בזמן אמת
+        </Button>
+        <h3 className="font-bold text-xl text-right">איתותים מותאמים לשיטת KSEM</h3>
+      </div>
+      
       <div className="grid grid-cols-1 gap-4">
-        {signals.map((signal) => (
+        {allSignals.map((signal) => (
           <div key={signal.id} className="relative">
             <SignalCard signal={signal} />
             <div className="absolute bottom-4 left-4 flex gap-2">

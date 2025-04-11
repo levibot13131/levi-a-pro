@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { TradeSignal, MarketAnalysis, Asset } from '@/types/asset';
 import { getTradeSignals, getMarketAnalyses } from '@/services/mockTradingService';
@@ -9,18 +9,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowUpCircle, ArrowDownCircle, TrendingUp, TrendingDown, BarChart4, Landmark, BarChartHorizontal, Calendar, User, Lightbulb, Target, ShieldAlert } from 'lucide-react';
+import { ArrowUpCircle, ArrowDownCircle, TrendingUp, TrendingDown, BarChart4, Landmark, BarChartHorizontal, Calendar, User, Lightbulb, Target, ShieldAlert, Play, Activity } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { useStoredSignals, startRealTimeAnalysis, generateSignalAnalysis } from '@/services/backtesting/realTimeAnalysis';
+import { toast } from 'sonner';
 
 const TradingSignals = () => {
   const [selectedAssetId, setSelectedAssetId] = useState<string>('all');
   const [selectedAnalysisType, setSelectedAnalysisType] = useState<string>('all');
+  const [realTimeActive, setRealTimeActive] = useState<boolean>(false);
+  const [alertInstance, setAlertInstance] = useState<{ stop: () => void } | null>(null);
   
   // שליפת נתונים
-  const { data: signals, isLoading: signalsLoading } = useQuery({
+  const { data: mockSignals, isLoading: mockSignalsLoading } = useQuery({
     queryKey: ['tradeSignals', selectedAssetId],
     queryFn: () => getTradeSignals(selectedAssetId !== 'all' ? selectedAssetId : undefined),
   });
+  
+  // שליפת איתותים בזמן אמת
+  const { data: realTimeSignals = [], refetch: refetchRealTimeSignals } = useStoredSignals(
+    selectedAssetId !== 'all' ? selectedAssetId : undefined
+  );
   
   const { data: analyses, isLoading: analysesLoading } = useQuery({
     queryKey: ['marketAnalyses', selectedAssetId, selectedAnalysisType],
@@ -34,6 +43,54 @@ const TradingSignals = () => {
     queryKey: ['assets'],
     queryFn: getAssets,
   });
+  
+  // שילוב של האיתותים המדומים והאיתותים בזמן אמת
+  const allSignals: TradeSignal[] = React.useMemo(() => {
+    const combined = [...(mockSignals || []), ...realTimeSignals];
+    // מיון לפי זמן (מהחדש לישן)
+    return combined.sort((a, b) => b.timestamp - a.timestamp);
+  }, [mockSignals, realTimeSignals]);
+  
+  const signalsLoading = mockSignalsLoading;
+  
+  // רענון תקופתי של איתותים בזמן אמת
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refetchRealTimeSignals();
+    }, 5000);
+    
+    return () => {
+      clearInterval(interval);
+      if (alertInstance) {
+        alertInstance.stop();
+      }
+    };
+  }, [refetchRealTimeSignals, alertInstance]);
+  
+  // פונקציה להפעלת/כיבוי ניתוח בזמן אמת
+  const toggleRealTimeAnalysis = () => {
+    if (realTimeActive && alertInstance) {
+      alertInstance.stop();
+      setAlertInstance(null);
+      setRealTimeActive(false);
+      toast.info("ניתוח בזמן אמת הופסק");
+    } else {
+      // הפעלת ניתוח בזמן אמת עבור כל הנכסים או הנכס הנבחר
+      const assetsList = selectedAssetId !== 'all' 
+        ? [selectedAssetId] 
+        : assets?.slice(0, 5).map(a => a.id) || []; // מגביל ל-5 נכסים למניעת עומס
+      
+      const instance = startRealTimeAnalysis(assetsList, {
+        strategy: 'אסטרטגיה משולבת',
+      });
+      
+      setAlertInstance(instance);
+      setRealTimeActive(true);
+      toast.success("ניתוח בזמן אמת הופעל", {
+        description: `המערכת תתחיל לשלוח התראות בזמן אמת עבור ${assetsList.length} נכסים`
+      });
+    }
+  };
   
   // עיצוב לפי סוג עסקה
   const getSignalTypeStyles = (type: 'buy' | 'sell') => {
@@ -119,9 +176,68 @@ const TradingSignals = () => {
     }
   };
   
+  // ניתוח הסיגנלים הקיימים
+  const signalAnalysis = React.useMemo(() => {
+    if (!allSignals || allSignals.length === 0) return null;
+    return generateSignalAnalysis(selectedAssetId !== 'all' ? selectedAssetId : undefined);
+  }, [allSignals, selectedAssetId]);
+  
   return (
     <div className="container mx-auto py-6 px-4 md:px-6">
-      <h1 className="text-3xl font-bold mb-6 text-right">איתותי מסחר וניתוח שוק</h1>
+      <div className="flex justify-between items-center mb-6">
+        <Button 
+          onClick={toggleRealTimeAnalysis}
+          variant={realTimeActive ? "destructive" : "default"}
+          className="flex items-center gap-2"
+        >
+          {realTimeActive ? (
+            <>הפסק ניתוח בזמן אמת</>
+          ) : (
+            <>
+              <Play className="h-4 w-4" />
+              הפעל ניתוח בזמן אמת
+            </>
+          )}
+        </Button>
+        <h1 className="text-3xl font-bold text-right">איתותי מסחר וניתוח שוק</h1>
+      </div>
+      
+      {/* סיכום הניתוח */}
+      {signalAnalysis && (
+        <Card className="mb-6 border-2 border-primary/50">
+          <CardContent className="pt-4">
+            <div className="flex justify-between items-start">
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-3">
+                  <div className="text-center px-3 py-2 bg-muted rounded-md">
+                    <p className="text-lg font-bold">{signalAnalysis.buySignals}</p>
+                    <p className="text-xs text-green-600">קנייה</p>
+                  </div>
+                  <div className="text-center px-3 py-2 bg-muted rounded-md">
+                    <p className="text-lg font-bold">{signalAnalysis.sellSignals}</p>
+                    <p className="text-xs text-red-600">מכירה</p>
+                  </div>
+                  <div className="text-center px-3 py-2 bg-muted rounded-md">
+                    <p className="text-lg font-bold">{signalAnalysis.recentSignals}</p>
+                    <p className="text-xs">24 שעות</p>
+                  </div>
+                </div>
+                {realTimeActive && (
+                  <div className="flex items-center gap-1 text-green-600">
+                    <Activity className="h-3 w-3 animate-pulse" />
+                    <span className="text-sm">ניתוח בזמן אמת פעיל</span>
+                  </div>
+                )}
+              </div>
+              <div className="text-right">
+                <h3 className="font-bold text-lg">סיכום איתותים ({signalAnalysis.totalSignals})</h3>
+                <p className="text-sm mt-1">{signalAnalysis.summary}</p>
+                <p className="font-medium text-primary mt-2">{signalAnalysis.recommendation}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
       
       <Tabs defaultValue="signals" className="space-y-4">
         <TabsList className="grid w-full md:w-[400px] grid-cols-2">
@@ -156,10 +272,11 @@ const TradingSignals = () => {
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
             </div>
-          ) : signals && signals.length > 0 ? (
+          ) : allSignals && allSignals.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {signals.map(signal => {
+              {allSignals.map(signal => {
                 const styles = getSignalTypeStyles(signal.type);
+                const isRealTimeSignal = realTimeSignals.some(s => s.id === signal.id);
                 
                 return (
                   <Card key={signal.id} className={`${styles.bgColor} border-2 ${signal.type === 'buy' ? 'border-green-200' : 'border-red-200'}`}>
@@ -169,6 +286,12 @@ const TradingSignals = () => {
                         <div className="flex flex-wrap gap-2 mb-1">
                           {styles.badge}
                           {getSignalStrengthBadge(signal.strength)}
+                          {isRealTimeSignal && (
+                            <Badge variant="outline" className="border-primary flex items-center gap-1">
+                              <Activity className="h-3 w-3" />
+                              זמן אמת
+                            </Badge>
+                          )}
                         </div>
                         <CardTitle>{getAssetName(signal.assetId)}</CardTitle>
                         <CardDescription>
@@ -228,7 +351,13 @@ const TradingSignals = () => {
               <CardContent className="py-10 text-center">
                 <Target className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
                 <p className="text-lg font-medium">אין איתותי מסחר זמינים</p>
-                <p className="text-muted-foreground">נסה להחליף את הפילטר או לבדוק שוב מאוחר יותר</p>
+                <p className="text-muted-foreground">נסה להחליף את הפילטר או להפעיל ניתוח בזמן אמת</p>
+                {!realTimeActive && (
+                  <Button className="mt-4" onClick={toggleRealTimeAnalysis}>
+                    <Play className="h-4 w-4 mr-2" />
+                    הפעל ניתוח בזמן אמת
+                  </Button>
+                )}
               </CardContent>
             </Card>
           )}

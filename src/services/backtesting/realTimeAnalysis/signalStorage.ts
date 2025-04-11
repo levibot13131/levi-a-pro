@@ -3,6 +3,29 @@ import { TradeSignal } from '@/types/asset';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
 
+// Event emitter for real-time updates
+const listeners: Array<() => void> = [];
+
+/**
+ * Subscribe to signal updates
+ */
+export const subscribeToSignals = (callback: () => void) => {
+  listeners.push(callback);
+  return () => {
+    const index = listeners.indexOf(callback);
+    if (index > -1) {
+      listeners.splice(index, 1);
+    }
+  };
+};
+
+/**
+ * Notify all listeners of signal updates
+ */
+const notifyListeners = () => {
+  listeners.forEach(callback => callback());
+};
+
 /**
  * Process a new trading signal
  */
@@ -24,6 +47,9 @@ export const processSignal = (signal: TradeSignal) => {
     }
   );
   
+  // Notify all listeners that new data is available
+  notifyListeners();
+  
   // Trigger any webhook notifications here if configured
   // This would be implemented in a real application
 };
@@ -36,6 +62,14 @@ export const getStoredSignals = (): TradeSignal[] => {
 };
 
 /**
+ * Clear all stored signals
+ */
+export const clearStoredSignals = () => {
+  localStorage.removeItem('tradingSignals');
+  notifyListeners();
+};
+
+/**
  * Hook to access stored signals
  */
 export const useStoredSignals = (assetId?: string) => {
@@ -45,6 +79,6 @@ export const useStoredSignals = (assetId?: string) => {
       const signals = getStoredSignals();
       return assetId ? signals.filter(s => s.assetId === assetId) : signals;
     },
-    refetchInterval: 10000, // Refresh every 10 seconds
+    refetchInterval: 5000, // Refresh every 5 seconds
   });
 };

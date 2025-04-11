@@ -1,75 +1,86 @@
 
+import { Asset, TradeSignal } from '@/types/asset';
+import { getStoredSignals } from './signalStorage';
+
 /**
- * Generate historical, present, and future analysis for an asset
+ * Generate analysis from stored trading signals
+ * @returns Analysis summary
  */
-export const generateComprehensiveAnalysis = async (assetId: string, timeframe: string) => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
+export const generateSignalAnalysis = (assetId?: string) => {
+  const signals = getStoredSignals();
+  const relevantSignals = assetId ? signals.filter(s => s.assetId === assetId) : signals;
   
-  // This would connect to a real analysis API in production
+  if (!relevantSignals.length) {
+    return {
+      totalSignals: 0,
+      buySignals: 0,
+      sellSignals: 0,
+      strongSignals: 0,
+      recentSignals: 0,
+      summary: "אין מספיק איתותים לניתוח",
+      recommendation: "המתן לאיתותים נוספים"
+    };
+  }
+  
+  // Count different signal types
+  const buySignals = relevantSignals.filter(s => s.type === 'buy').length;
+  const sellSignals = relevantSignals.filter(s => s.type === 'sell').length;
+  const strongSignals = relevantSignals.filter(s => s.strength === 'strong').length;
+  
+  // Count recent signals (last 24 hours)
+  const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+  const recentSignals = relevantSignals.filter(s => s.timestamp > oneDayAgo).length;
+  
+  // Get most common strategy
+  const strategies = relevantSignals.map(s => s.strategy);
+  const strategyCount: Record<string, number> = {};
+  strategies.forEach(s => {
+    strategyCount[s] = (strategyCount[s] || 0) + 1;
+  });
+  const mostCommonStrategy = Object.entries(strategyCount)
+    .sort((a, b) => b[1] - a[1])
+    .map(entry => entry[0])[0];
+  
+  // Calculate buy/sell ratio
+  const buyToSellRatio = sellSignals > 0 ? buySignals / sellSignals : buySignals;
+  
+  // Generate summary
+  let summary = '';
+  let recommendation = '';
+  
+  if (buySignals > sellSignals * 2) {
+    summary = "מגמה חיובית מובהקת עם עודף איתותי קנייה";
+    recommendation = "שקול פוזיציות קנייה עם ניהול סיכונים הולם";
+  } else if (sellSignals > buySignals * 2) {
+    summary = "מגמה שלילית מובהקת עם עודף איתותי מכירה";
+    recommendation = "שקול פוזיציות מכירה או יציאה מפוזיציות קיימות";
+  } else if (buySignals > sellSignals) {
+    summary = "נטייה חיובית קלה עם יותר איתותי קנייה מאשר מכירה";
+    recommendation = "המתן לאישור נוסף לפני הכניסה לעסקאות";
+  } else if (sellSignals > buySignals) {
+    summary = "נטייה שלילית קלה עם יותר איתותי מכירה מאשר קנייה";
+    recommendation = "נקוט משנה זהירות בפוזיציות קנייה";
+  } else {
+    summary = "שיווי משקל בין איתותי קנייה ומכירה";
+    recommendation = "המתן להתבהרות המגמה";
+  }
+  
+  // Add strength analysis
+  if (strongSignals > relevantSignals.length * 0.6) {
+    summary += "; רוב האיתותים חזקים, מה שמעיד על בהירות בתנאי השוק";
+  } else if (strongSignals < relevantSignals.length * 0.3) {
+    summary += "; רוב האיתותים חלשים, מה שמעיד על חוסר ודאות בשוק";
+  }
+  
   return {
-    historical: {
-      keyEvents: [
-        { date: '2023-01-15', event: 'פריצת אזור התנגדות משמעותי', impact: 'חיובי' },
-        { date: '2023-03-22', event: 'הודעת ריבית פדרל ריזרב', impact: 'שלילי' },
-        { date: '2023-07-05', event: 'התכנסות לאחר ירידות חדות', impact: 'חיובי' },
-        { date: '2023-11-18', event: 'שבירת תמיכה ארוכת טווח', impact: 'שלילי' },
-      ],
-      trends: [
-        { period: '6 חודשים אחרונים', direction: 'עולה', strength: 7.5 },
-        { period: 'שנה אחרונה', direction: 'עולה', strength: 6.2 },
-        { period: '5 שנים אחרונות', direction: 'עולה', strength: 8.8 },
-      ],
-      cyclicalPatterns: [
-        { name: 'מחזור שנתי', description: 'עלייה בחודשי Q4, ירידה בתחילת Q1' },
-        { name: 'מחזור 4 שנתי', description: 'מחזורי שוק שור/דוב כל 3-4 שנים' },
-      ]
-    },
-    current: {
-      marketCondition: Math.random() > 0.6 ? 'bull' : Math.random() > 0.5 ? 'bear' : 'sideways',
-      keyLevels: [
-        { type: 'support', price: 25000, strength: 'strong' },
-        { type: 'resistance', price: 31500, strength: 'medium' },
-        { type: 'support', price: 22800, strength: 'weak' },
-      ],
-      technicalIndicators: [
-        { name: 'RSI', value: 58, interpretation: 'נייטרלי עם נטייה חיובית' },
-        { name: 'MACD', value: 'חיובי', interpretation: 'מגמה עולה' },
-        { name: 'Bollinger Bands', value: '68% עליון', interpretation: 'התקרבות להתנגדות' },
-      ],
-      sentimentAnalysis: {
-        overall: Math.random() > 0.6 ? 'חיובי' : Math.random() > 0.5 ? 'שלילי' : 'נייטרלי',
-        social: Math.random() > 0.7 ? 'חיובי מאוד' : 'מעורב',
-        news: Math.random() > 0.6 ? 'חיובי' : 'נייטרלי',
-        fearGreedIndex: Math.floor(Math.random() * 100),
-      }
-    },
-    future: {
-      shortTerm: {
-        prediction: Math.random() > 0.6 ? 'עלייה' : Math.random() > 0.5 ? 'ירידה' : 'דשדוש',
-        confidence: Math.floor(Math.random() * 30) + 50,
-        keyLevels: [
-          { scenario: 'חיובי', target: 34500, probability: Math.floor(Math.random() * 30) + 40 },
-          { scenario: 'שלילי', target: 26800, probability: Math.floor(Math.random() * 30) + 30 },
-        ],
-        significantEvents: [
-          { date: '2024-05-10', event: 'פרסום נתוני אינפלציה', potentialImpact: 'גבוה' },
-          { date: '2024-05-22', event: 'החלטת ריבית', potentialImpact: 'גבוה מאוד' },
-        ]
-      },
-      longTerm: {
-        trend: Math.random() > 0.7 ? 'חיובי' : 'מעורב',
-        keyFactors: [
-          'רגולציה בשווקים הגלובליים',
-          'אימוץ מוסדי',
-          'התפתחויות טכנולוגיות',
-        ],
-        scenarios: [
-          { description: 'אימוץ נרחב ורגולציה תומכת', priceTarget: 58000, timeframe: '2-3 שנים', probability: 45 },
-          { description: 'המשך מגמה נוכחית עם תנודתיות', priceTarget: 38000, timeframe: '1-2 שנים', probability: 35 },
-          { description: 'החמרה רגולטורית וירידת עניין', priceTarget: 18000, timeframe: '1-2 שנים', probability: 20 },
-        ]
-      }
-    }
+    totalSignals: relevantSignals.length,
+    buySignals,
+    sellSignals,
+    strongSignals,
+    recentSignals,
+    buyToSellRatio: buyToSellRatio.toFixed(2),
+    mostCommonStrategy,
+    summary,
+    recommendation
   };
 };
