@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { Container } from '../components/ui/container';
-import { useTradingViewIntegration } from '../hooks/use-tradingview-integration';
+import { useTradingViewPage } from '../hooks/use-tradingview-page';
 import IntegrationHeader from '../components/tradingview/integration/IntegrationHeader';
 import IntegrationStatusSection from '../components/tradingview/integration/IntegrationStatusSection';
 import IntegrationTabsContainer from '../components/tradingview/integration/IntegrationTabsContainer';
+import { useEffect } from 'react';
 
 const TradingViewIntegration: React.FC = () => {
   const {
@@ -12,46 +13,25 @@ const TradingViewIntegration: React.FC = () => {
     syncEnabled,
     isSyncing,
     lastSyncTime,
-    manualSync,
+    refreshTimer,
+    activeTab,
+    setActiveTab,
+    formatLastSyncTime,
+    handleManualRefresh,
     toggleAutoSync
-  } = useTradingViewIntegration();
+  } = useTradingViewPage();
   
-  // טיימר לתצוגה של הזמן שעבר מאז העדכון האחרון
-  const [refreshTimer, setRefreshTimer] = React.useState(0);
-  const [activeTab, setActiveTab] = React.useState("charts");
-  
-  // עדכון טיימר כל שניה
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      if (lastSyncTime) {
-        const seconds = Math.floor((Date.now() - lastSyncTime.getTime()) / 1000);
-        setRefreshTimer(seconds);
-      }
-    }, 1000);
+  // רענון מצב ההתחברות בטעינת הדף
+  useEffect(() => {
+    console.log(`TradingViewIntegration page loaded - connection status: ${isConnected ? 'Connected' : 'Not connected'}`);
+    console.log(`Sync status: ${syncEnabled ? 'Enabled' : 'Disabled'}, Last sync: ${lastSyncTime?.toLocaleString() || 'Never'}`);
     
-    return () => clearInterval(interval);
-  }, [lastSyncTime]);
-  
-  // פורמט להצגת זמן העדכון האחרון
-  const formatLastSyncTime = () => {
-    if (!lastSyncTime) return "לא היה סנכרון";
-    
-    const rtf = new Intl.RelativeTimeFormat('he', { numeric: 'auto' });
-    const seconds = Math.floor((Date.now() - lastSyncTime.getTime()) / 1000);
-    
-    if (seconds < 60) {
-      return rtf.format(-seconds, 'second');
-    } else if (seconds < 3600) {
-      return rtf.format(-Math.floor(seconds / 60), 'minute');
-    } else {
-      return rtf.format(-Math.floor(seconds / 3600), 'hour');
+    // נבצע סנכרון ראשוני אם מחוברים
+    if (isConnected && !isSyncing && !lastSyncTime) {
+      console.log('Performing initial sync on page load');
+      handleManualRefresh();
     }
-  };
-  
-  // פונקציה לסנכרון ידני
-  const handleManualRefresh = async () => {
-    await manualSync(true);
-  };
+  }, [isConnected, isSyncing, lastSyncTime, handleManualRefresh, syncEnabled]);
   
   return (
     <Container className="py-6">

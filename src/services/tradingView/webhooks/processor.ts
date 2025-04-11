@@ -22,10 +22,34 @@ export const processWebhookData = async (data: WebhookData): Promise<boolean> =>
         hasPrice: !!data.price || !!data.close
       });
       
-      toast.error('הווהבוק לא תקין', {
-        description: 'חסרים שדות חובה או נתונים לא תקינים'
-      });
-      return false;
+      // אם יש סימבול, ננסה להשלים את השדות החסרים
+      if (data.symbol) {
+        console.log('Attempting to fix incomplete webhook data');
+        
+        // השלמת שדות חסרים עם ערכי ברירת מחדל
+        if (!data.action && !data.signal) {
+          data.action = 'info';
+          console.log('Added default action: info');
+        }
+        
+        if (!data.price && !data.close) {
+          data.price = 0;
+          console.log('Added default price: 0');
+        }
+        
+        // בדיקה חוזרת אחרי התיקונים
+        if (!validateWebhookData(data)) {
+          toast.error('הווהבוק לא תקין גם אחרי תיקונים', {
+            description: 'חסרים שדות חובה או נתונים לא תקינים'
+          });
+          return false;
+        }
+      } else {
+        toast.error('הווהבוק לא תקין', {
+          description: 'חסרים שדות חובה או נתונים לא תקינים'
+        });
+        return false;
+      }
     }
     
     console.log('✅ Webhook data validated successfully');
@@ -88,11 +112,28 @@ export const handleTradingViewWebhook = async (req: any): Promise<boolean> => {
         data = JSON.parse(data);
       } catch (e) {
         console.error('❌ Failed to parse webhook data as JSON:', e);
-        toast.error('פורמט הווהבוק לא תקין', {
-          description: 'הנתונים שהתקבלו אינם JSON תקין'
-        });
-        return false;
+        
+        // אם לא ניתן לפרסר כ-JSON, אולי זה איתות פשוט
+        console.log('Trying to handle as simple alert text');
+        data = {
+          symbol: 'Unknown',
+          message: data,
+          action: 'info',
+          price: 0,
+          timestamp: Date.now()
+        };
+        
+        toast.info('התקבל איתות בפורמט טקסט פשוט');
       }
+    }
+    
+    // אם התקבל אובייקט ריק, נחזיר שגיאה
+    if (!data || Object.keys(data).length === 0) {
+      console.error('❌ Empty webhook payload');
+      toast.error('תוכן הווהבוק ריק', {
+        description: 'לא התקבלו נתונים בקריאת הווהבוק'
+      });
+      return false;
     }
     
     console.log('📊 Received webhook payload:', JSON.stringify(data, null, 2));

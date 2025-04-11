@@ -22,16 +22,28 @@ export function useTradingViewIntegration() {
   
   useEffect(() => {
     // Check initial sync status
-    setSyncEnabled(isSyncActive());
+    const syncStatus = isSyncActive();
+    setSyncEnabled(syncStatus);
+    console.log(`Initial sync status: ${syncStatus ? 'Active' : 'Inactive'}`);
     
-    if (isConnected && !isSyncActive()) {
-      const initialized = initializeTradingViewSync();
-      setSyncEnabled(initialized);
-      if (initialized) {
-        setLastSyncTime(new Date());
+    if (isConnected) {
+      if (!syncStatus) {
+        console.log('Connected but sync not active, initializing...');
+        const initialized = initializeTradingViewSync();
+        setSyncEnabled(initialized);
+        if (initialized) {
+          setLastSyncTime(new Date());
+          startRealTimeUpdates();
+          console.log('Sync initialized successfully');
+        } else {
+          console.log('Failed to initialize sync');
+        }
+      } else {
+        console.log('Connected and sync already active');
         startRealTimeUpdates();
       }
-    } else if (!isConnected && isSyncActive()) {
+    } else if (!isConnected && syncStatus) {
+      console.log('Not connected but sync active, stopping sync');
       stopTradingViewSync();
       setSyncEnabled(false);
       stopRealTimeUpdates();
@@ -49,6 +61,7 @@ export function useTradingViewIntegration() {
     
     const interval = setInterval(async () => {
       if (!isSyncing && isConnected) {
+        console.log('Auto-sync triggered');
         await manualSync(false);
       }
     }, 30000); // Update every 30 seconds
@@ -66,9 +79,17 @@ export function useTradingViewIntegration() {
   }, [realTimeUpdateInterval]);
   
   const manualSync = async (showToast: boolean = true) => {
-    if (!isConnected) return false;
+    if (!isConnected) {
+      if (showToast) {
+        toast.error("לא ניתן לסנכרן", {
+          description: "אינך מחובר ל-TradingView"
+        });
+      }
+      return false;
+    }
     
     setIsSyncing(true);
+    console.log('Manual sync started');
     try {
       const success = await syncWithTradingView();
       if (success) {
@@ -78,10 +99,12 @@ export function useTradingViewIntegration() {
             description: "נתונים מעודכנים התקבלו מ-TradingView"
           });
         }
+        console.log('Sync completed successfully');
       } else if (showToast) {
         toast.error("הסנכרון נכשל", {
           description: "לא הצלחנו לקבל נתונים מעודכנים מ-TradingView"
         });
+        console.log('Sync failed');
       }
       return success;
     } catch (error) {
@@ -103,6 +126,7 @@ export function useTradingViewIntegration() {
       stopRealTimeUpdates();
       setSyncEnabled(false);
       toast.info("סנכרון אוטומטי הופסק");
+      console.log('Auto-sync disabled');
     } else if (isConnected) {
       const initialized = initializeTradingViewSync();
       setSyncEnabled(initialized);
@@ -112,7 +136,18 @@ export function useTradingViewIntegration() {
         toast.success("סנכרון אוטומטי הופעל", {
           description: "נתונים יעודכנו כל 30 שניות"
         });
+        console.log('Auto-sync enabled');
+      } else {
+        toast.error("לא ניתן להפעיל סנכרון אוטומטי", {
+          description: "אירעה שגיאה בהפעלת הסנכרון האוטומטי"
+        });
+        console.log('Failed to initialize auto-sync');
       }
+    } else {
+      toast.error("לא ניתן להפעיל סנכרון אוטומטי", {
+        description: "אינך מחובר ל-TradingView"
+      });
+      console.log('Cannot enable auto-sync, not connected');
     }
   }, [syncEnabled, isConnected, startRealTimeUpdates, stopRealTimeUpdates]);
   
