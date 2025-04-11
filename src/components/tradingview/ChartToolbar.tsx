@@ -48,8 +48,8 @@ const ChartToolbar: React.FC<ChartToolbarProps> = ({
   setShowIndicators
 }) => {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 mb-4 bg-background/80 backdrop-blur-sm p-2 rounded-md">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-wrap justify-between gap-2 mb-4 p-2 bg-background/70 backdrop-blur-sm rounded-md border border-border/50 w-full">
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -83,10 +83,10 @@ const ChartToolbar: React.FC<ChartToolbarProps> = ({
         </Select>
       </div>
       
-      <div className="flex items-center gap-2">
-        <div className="flex gap-1">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex gap-1 border rounded-md p-0.5 bg-background">
           <Button
-            variant={chartType === 'candle' ? 'default' : 'outline'}
+            variant={chartType === 'candle' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => onChartTypeChange('candle')}
             className="w-10 h-9 p-0"
@@ -95,7 +95,7 @@ const ChartToolbar: React.FC<ChartToolbarProps> = ({
             <CandlestickChart className="h-4 w-4" />
           </Button>
           <Button
-            variant={chartType === 'line' ? 'default' : 'outline'}
+            variant={chartType === 'line' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => onChartTypeChange('line')}
             className="w-10 h-9 p-0"
@@ -104,7 +104,7 @@ const ChartToolbar: React.FC<ChartToolbarProps> = ({
             <LineChart className="h-4 w-4" />
           </Button>
           <Button
-            variant={chartType === 'bar' ? 'default' : 'outline'}
+            variant={chartType === 'bar' ? 'default' : 'ghost'}
             size="sm"
             onClick={() => onChartTypeChange('bar')}
             className="w-10 h-9 p-0"
@@ -114,35 +114,35 @@ const ChartToolbar: React.FC<ChartToolbarProps> = ({
           </Button>
         </div>
         
-        <div className="flex gap-1">
+        <div className="flex gap-1 border rounded-md p-0.5 bg-background">
           <Button
-            variant="outline"
+            variant={showVolume ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setShowVolume(!showVolume)}
-            className={`w-10 h-9 p-0 ${showVolume ? 'bg-gray-100 dark:bg-gray-800' : ''}`}
+            className="w-10 h-9 p-0"
             title={showVolume ? 'הסתר נפח' : 'הצג נפח'}
           >
             <Volume2 className="h-4 w-4" />
           </Button>
           <Button
-            variant="outline"
+            variant={showIndicators ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setShowIndicators(!showIndicators)}
-            className={`w-10 h-9 p-0 ${showIndicators ? 'bg-gray-100 dark:bg-gray-800' : ''}`}
+            className="w-10 h-9 p-0"
             title={showIndicators ? 'הסתר אינדיקטורים' : 'הצג אינדיקטורים'}
           >
             {showIndicators ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </Button>
         </div>
         
-        <div className="flex gap-1">
-          <Button variant="outline" size="sm" className="w-10 h-9 p-0" title="הגדל">
+        <div className="flex gap-1 border rounded-md p-0.5 bg-background">
+          <Button variant="ghost" size="sm" className="w-10 h-9 p-0" title="הגדל">
             <ZoomIn className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" className="w-10 h-9 p-0" title="הקטן">
+          <Button variant="ghost" size="sm" className="w-10 h-9 p-0" title="הקטן">
             <ZoomOut className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" className="w-10 h-9 p-0" title="מסך מלא">
+          <Button variant="ghost" size="sm" className="w-10 h-9 p-0" title="מסך מלא">
             <Monitor className="h-4 w-4" />
           </Button>
         </div>

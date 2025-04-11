@@ -114,6 +114,8 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
           </div>
           <CardTitle className="text-right">{symbol}</CardTitle>
         </div>
+      </CardHeader>
+      <CardContent>
         <ChartToolbar 
           onRefresh={handleRefresh}
           onTimeframeChange={handleTimeframeChange}
@@ -126,46 +128,48 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
           showIndicators={showIndicators}
           setShowIndicators={setShowIndicators}
         />
-      </CardHeader>
-      <CardContent>
+        
         {isLoading ? (
           <div className="space-y-2">
-            <Skeleton className="h-[200px] w-full" />
+            <Skeleton className="h-[300px] w-full rounded-lg" />
             <div className="flex justify-center items-center">
               <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground" />
-              <span className="ml-2 text-sm text-muted-foreground">טוען נתוני מחיר בזמן אמת...</span>
+              <span className="mr-2 text-sm text-muted-foreground">טוען נתוני מחיר בזמן אמת...</span>
             </div>
           </div>
         ) : error ? (
-          <div className="h-[200px] flex items-center justify-center">
+          <div className="h-[300px] flex items-center justify-center rounded-lg bg-muted/20">
             <p className="text-red-500">{error}</p>
           </div>
         ) : chartData && chartData.data && chartData.data.length > 0 ? (
-          <div className="h-[200px]">
+          <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               {chartType === 'line' ? (
-                <AreaChart data={chartData.data}>
+                <AreaChart data={chartData.data} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
                   <defs>
                     <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={isPositiveChange ? "#10b981" : "#ef4444"} stopOpacity={0.8}/>
                       <stop offset="95%" stopColor={isPositiveChange ? "#10b981" : "#ef4444"} stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#888888" opacity={0.2} />
                   <XAxis 
                     dataKey="timestamp" 
                     tickFormatter={formatDate} 
                     tick={{ fontSize: 12 }}
+                    stroke="#888888"
                   />
                   <YAxis 
                     domain={['auto', 'auto']} 
                     tickFormatter={formatPrice}
                     tick={{ fontSize: 12 }}
                     width={60}
+                    stroke="#888888"
                   />
                   <Tooltip 
                     formatter={(value: number) => [formatPrice(value), 'מחיר']}
                     labelFormatter={formatDate}
+                    contentStyle={{ textAlign: 'right', direction: 'rtl' }}
                   />
                   <Area 
                     type="monotone" 
@@ -173,54 +177,62 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
                     stroke={isPositiveChange ? "#10b981" : "#ef4444"} 
                     fillOpacity={1}
                     fill="url(#colorPrice)"
+                    strokeWidth={2}
                   />
                   {showVolume && (
                     <Bar dataKey="volume" fill="#8884d8" opacity={0.5} />
                   )}
                 </AreaChart>
               ) : chartType === 'bar' ? (
-                <BarChart data={chartData.data}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                <BarChart data={chartData.data} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#888888" opacity={0.2} />
                   <XAxis 
                     dataKey="timestamp" 
                     tickFormatter={formatDate} 
                     tick={{ fontSize: 12 }}
+                    stroke="#888888"
                   />
                   <YAxis 
                     domain={['auto', 'auto']} 
                     tickFormatter={formatPrice}
                     tick={{ fontSize: 12 }}
                     width={60}
+                    stroke="#888888"
                   />
                   <Tooltip 
                     formatter={(value: number) => [formatPrice(value), 'מחיר']}
                     labelFormatter={formatDate}
+                    contentStyle={{ textAlign: 'right', direction: 'rtl' }}
                   />
                   <Bar 
                     dataKey="price" 
                     fill={isPositiveChange ? "#10b981" : "#ef4444"} 
+                    radius={[4, 4, 0, 0]}
                   />
                   {showVolume && (
                     <Bar dataKey="volume" fill="#8884d8" opacity={0.5} />
                   )}
                 </BarChart>
               ) : (
-                <LineChart data={chartData.data}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                <LineChart data={chartData.data} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#888888" opacity={0.2} />
                   <XAxis 
                     dataKey="timestamp" 
                     tickFormatter={formatDate} 
                     tick={{ fontSize: 12 }}
+                    stroke="#888888"
                   />
                   <YAxis 
                     domain={['auto', 'auto']} 
                     tickFormatter={formatPrice}
                     tick={{ fontSize: 12 }}
                     width={60}
+                    stroke="#888888"
                   />
                   <Tooltip 
                     formatter={(value: number) => [formatPrice(value), 'מחיר']}
                     labelFormatter={formatDate}
+                    contentStyle={{ textAlign: 'right', direction: 'rtl' }}
                   />
                   <Line 
                     type="monotone" 
@@ -237,32 +249,53 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="h-[200px] flex items-center justify-center">
+          <div className="h-[300px] flex items-center justify-center rounded-lg bg-muted/20">
             <p className="text-muted-foreground">אין נתונים זמינים</p>
           </div>
         )}
         
-        {chartData && (
-          <div className="mt-4 text-right text-sm">
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">מחיר נוכחי:</span>
-              <span className="font-medium">
-                {chartData.data && chartData.data.length > 0 
-                  ? formatPrice(chartData.data[chartData.data.length - 1].price) 
-                  : 'לא זמין'}
-              </span>
+        {chartData && chartData.data && chartData.data.length > 0 && (
+          <div className="mt-4 grid grid-cols-2 gap-4 text-right text-sm">
+            <div className="p-3 rounded-lg bg-muted/10">
+              <div className="flex justify-between items-center">
+                <span className="font-medium">
+                  {chartData.data && chartData.data.length > 0 
+                    ? formatPrice(chartData.data[chartData.data.length - 1].price) 
+                    : 'לא זמין'}
+                </span>
+                <span className="text-muted-foreground">מחיר נוכחי</span>
+              </div>
             </div>
-            <div className="flex justify-between items-center mt-1">
-              <span className="text-muted-foreground">מקור:</span>
-              <span>TradingView</span>
+            
+            <div className="p-3 rounded-lg bg-muted/10">
+              <div className="flex justify-between items-center">
+                <span>
+                  {chartData.lastUpdate 
+                    ? new Date(chartData.lastUpdate).toLocaleTimeString('he-IL') 
+                    : 'לא זמין'}
+                </span>
+                <span className="text-muted-foreground">עדכון אחרון</span>
+              </div>
             </div>
-            <div className="flex justify-between items-center mt-1">
-              <span className="text-muted-foreground">עדכון אחרון:</span>
-              <span>
-                {chartData.lastUpdate 
-                  ? new Date(chartData.lastUpdate).toLocaleTimeString('he-IL') 
-                  : 'לא זמין'}
-              </span>
+            
+            <div className="p-3 rounded-lg bg-muted/10">
+              <div className="flex justify-between items-center">
+                <span 
+                  className={`font-medium ${
+                    isPositiveChange ? 'text-green-500' : 'text-red-500'
+                  }`}
+                >
+                  {isPositiveChange ? '+' : ''}{percentChange}%
+                </span>
+                <span className="text-muted-foreground">שינוי</span>
+              </div>
+            </div>
+            
+            <div className="p-3 rounded-lg bg-muted/10">
+              <div className="flex justify-between items-center">
+                <span>TradingView</span>
+                <span className="text-muted-foreground">מקור</span>
+              </div>
             </div>
           </div>
         )}

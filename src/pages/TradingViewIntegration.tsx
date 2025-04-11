@@ -109,7 +109,7 @@ const TradingViewIntegration: React.FC = () => {
               <span>עדכון אחרון: {formatLastSyncTime()}</span>
               <Badge 
                 variant="outline" 
-                className="ml-2"
+                className="mr-2"
               >
                 {refreshTimer < 30 ? 'נתונים עדכניים' : 'עדכון בקרוב'}
               </Badge>

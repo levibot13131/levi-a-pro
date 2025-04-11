@@ -94,7 +94,7 @@ export const getChartData = async (symbol: string, timeframe: string = '1D'): Pr
     await new Promise(resolve => setTimeout(resolve, 800));
     
     // Generate sample price data
-    const dataPoints = 30;
+    const dataPoints = 50; // Increased data points for better charts
     let startPrice = 0;
     let volatility = 0;
     
@@ -104,6 +104,15 @@ export const getChartData = async (symbol: string, timeframe: string = '1D'): Pr
     } else if (symbol === 'ETHUSD') {
       startPrice = 3200;
       volatility = 100;
+    } else if (symbol === 'SOLUSD') {
+      startPrice = 140;
+      volatility = 5;
+    } else if (symbol === 'AVAXUSD') {
+      startPrice = 35;
+      volatility = 2;
+    } else if (symbol === 'ADAUSD') {
+      startPrice = 0.45;
+      volatility = 0.02;
     } else {
       startPrice = 100;
       volatility = 10;
@@ -111,20 +120,39 @@ export const getChartData = async (symbol: string, timeframe: string = '1D'): Pr
     
     const timeInterval = getTimeIntervalByTimeframe(timeframe);
     
+    // Create more realistic price movements
+    let currentPrice = startPrice;
+    let trend = Math.random() > 0.5 ? 1 : -1;
+    let trendStrength = Math.random() * 0.7 + 0.3; // 0.3-1.0
+    let trendDuration = Math.floor(Math.random() * 10) + 5;
+    
     const priceData = Array.from({ length: dataPoints }, (_, i) => {
-      const randomChange = (Math.random() - 0.5) * volatility;
-      const price = startPrice + randomChange * (i / dataPoints);
-      const volume = Math.floor(Math.random() * 1000000) + 500000;
+      // Occasionally change trend
+      if (i % trendDuration === 0) {
+        trend = Math.random() > 0.4 ? 1 : -1;
+        trendStrength = Math.random() * 0.7 + 0.3;
+        trendDuration = Math.floor(Math.random() * 10) + 5;
+      }
       
-      // For candlestick chart data
-      const open = price - (Math.random() * 100);
-      const close = price;
-      const high = close + (Math.random() * 50);
-      const low = open - (Math.random() * 50);
+      // Calculate price movement with trend bias
+      const randomChange = ((Math.random() - 0.5) + (trendStrength * trend * 0.2)) * volatility;
+      currentPrice = Math.max(currentPrice + randomChange, startPrice * 0.7); // Prevent prices going too low
+      
+      // Generate volume based on price movement (higher on significant moves)
+      const volumeBase = Math.floor(Math.random() * 1000000) + 500000;
+      const volumeMultiplier = 1 + Math.abs(randomChange / volatility) * 5;
+      const volume = Math.floor(volumeBase * volumeMultiplier);
+      
+      // Calculate OHLC data realistically
+      const open = currentPrice - (randomChange * 0.7);
+      const close = currentPrice;
+      const move = Math.abs(randomChange);
+      const high = Math.max(open, close) + (move * Math.random() * 0.5);
+      const low = Math.min(open, close) - (move * Math.random() * 0.5);
       
       return {
         timestamp: now - (dataPoints - i) * timeInterval,
-        price,
+        price: currentPrice,
         volume,
         open,
         high,
@@ -187,7 +215,7 @@ export const getTradingViewNews = async (limit: number = 10): Promise<TradingVie
     // For now, we'll simulate with mock data
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Generate some mock news
+    // Generate some mock news with improved data
     const mockNews: TradingViewNewsItem[] = [
       {
         id: 'tv-news-1',
@@ -248,6 +276,30 @@ export const getTradingViewNews = async (limit: number = 10): Promise<TradingVie
         relatedSymbols: ['OIL', 'USO', 'XOM'],
         sentiment: 'negative',
         category: 'סחורות'
+      },
+      {
+        id: 'tv-news-6',
+        title: 'סולנה מתרסקת: ירידה של 15% ב-24 שעות',
+        description: 'מטבע הקריפטו סולנה חווה ירידה חדה בעקבות כשל טכני ברשת',
+        summary: 'מטבע הקריפטו סולנה חווה ירידה חדה בעקבות כשל טכני ברשת',
+        source: 'TradingView',
+        url: 'https://www.tradingview.com/news/6',
+        publishDate: now - 3 * 60 * 60 * 1000, // 3 hours ago
+        relatedSymbols: ['SOL', 'BTC', 'ETH'],
+        sentiment: 'negative',
+        category: 'קריפטו'
+      },
+      {
+        id: 'tv-news-7',
+        title: 'אווקס מציג עליות חדות לאחר שיתוף פעולה חדש',
+        description: 'מחיר האווקס זינק ב-20% בעקבות הודעה על שיתוף פעולה עם חברת תשלומים גדולה',
+        summary: 'מחיר האווקס זינק ב-20% בעקבות הודעה על שיתוף פעולה עם חברת תשלומים גדולה',
+        source: 'TradingView',
+        url: 'https://www.tradingview.com/news/7',
+        publishDate: now - 5 * 60 * 60 * 1000, // 5 hours ago
+        relatedSymbols: ['AVAX', 'BTC', 'ETH'],
+        sentiment: 'positive',
+        category: 'קריפטו'
       }
     ];
     
