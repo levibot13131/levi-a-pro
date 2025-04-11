@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '../hooks/use-mobile';
 import {
   Home,
   Layout,
