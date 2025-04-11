@@ -1,7 +1,6 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getUpcomingMarketEvents } from '@/services/marketInformationService';
+import { getUpcomingMarketEvents } from '@/services/marketInformation/eventsService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Newspaper, Users, Calendar } from 'lucide-react';
@@ -18,7 +17,10 @@ const MarketInformation: React.FC = () => {
   // Fetch upcoming market events
   const { data: events, isLoading: eventsLoading } = useQuery({
     queryKey: ['marketEvents', selectedTimeRange],
-    queryFn: () => getUpcomingMarketEvents(parseInt(selectedTimeRange)),
+    queryFn: async () => {
+      const result = await getUpcomingMarketEvents(parseInt(selectedTimeRange));
+      return result as MarketEvent[];
+    },
   });
 
   const handleSetReminder = (eventId: string, reminder: boolean) => {

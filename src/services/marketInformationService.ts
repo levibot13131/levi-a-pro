@@ -7,7 +7,6 @@ export type {
   FinancialDataSource,
   MarketInfluencer,
   MarketEvent 
-} from './marketInformation';
+} from '@/types/marketInformation';
 
-// Re-export from old file structure for backward compatibility
-export * from './marketInformation';
+// Old types are kept for backward compatibility but not re-exported to avoid conflicts

@@ -8,8 +8,8 @@ export * from './backtesting/mockDataGenerator';
 export * from './backtesting/patterns';
 export * from './whaleTrackerService';
 
-// Re-export from marketInformationService but exclude timeRangeOptions to avoid conflict
-// and properly re-export the types
+// Re-export from marketInformation directory services instead of the main file
+// to avoid circular dependency and type conflicts
 import {
   getInformationSources,
   getMarketInfluencers,
@@ -18,7 +18,7 @@ import {
   toggleInfluencerFollow,
   setEventReminder,
   addCustomEvent
-} from './marketInformationService';
+} from './marketInformation/index';
 
 export {
   getInformationSources,
@@ -30,5 +30,5 @@ export {
   addCustomEvent
 };
 
-// Re-export the types with proper type annotations
-export type { FinancialDataSource, MarketInfluencer, MarketEvent } from './marketInformationService';
+// Re-export the types directly from the types module
+export type { FinancialDataSource, MarketInfluencer, MarketEvent } from '@/types/marketInformation';

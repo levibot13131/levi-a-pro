@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -8,15 +7,17 @@ import {
   toggleSourceFocus,
   toggleInfluencerFollow,
   setEventReminder,
+} from '@/services/marketInformation/index';
+
+import type {
   FinancialDataSource,
   MarketInfluencer,
   MarketEvent
-} from '@/services/marketInformationService';
+} from '@/types/marketInformation';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Newspaper, Users } from 'lucide-react';
 
-// Import our new components
 import SearchBar from '@/components/information-sources/SearchBar';
 import SourcesTab from '@/components/information-sources/SourcesTab';
 import InfluencersTab from '@/components/information-sources/InfluencersTab';
@@ -28,49 +29,56 @@ const InformationSources = () => {
   const [influencerFilter, setInfluencerFilter] = useState<string>('all');
   const [eventFilter, setEventFilter] = useState<string>('all');
   
-  // Fetch data with proper type annotations
-  const { data: sources, isLoading: sourcesLoading, refetch: refetchSources } = useQuery<FinancialDataSource[]>({
+  const { data: sources = [], isLoading: sourcesLoading, refetch: refetchSources } = useQuery<FinancialDataSource[]>({
     queryKey: ['informationSources'],
-    queryFn: getInformationSources,
+    queryFn: async () => {
+      const result = await getInformationSources();
+      return result as unknown as FinancialDataSource[];
+    },
   });
   
-  const { data: influencers, isLoading: influencersLoading, refetch: refetchInfluencers } = useQuery<MarketInfluencer[]>({
+  const { data: influencers = [], isLoading: influencersLoading, refetch: refetchInfluencers } = useQuery<MarketInfluencer[]>({
     queryKey: ['marketInfluencers'],
-    queryFn: getMarketInfluencers,
+    queryFn: async () => {
+      const result = await getMarketInfluencers();
+      return result as unknown as MarketInfluencer[];
+    },
   });
   
-  const { data: events, isLoading: eventsLoading, refetch: refetchEvents } = useQuery<MarketEvent[]>({
+  const { data: events = [], isLoading: eventsLoading, refetch: refetchEvents } = useQuery<MarketEvent[]>({
     queryKey: ['marketEvents'],
-    queryFn: () => getUpcomingMarketEvents(90),
+    queryFn: async () => {
+      const result = await getUpcomingMarketEvents(90);
+      return result as unknown as MarketEvent[];
+    },
   });
   
-  // Filter functions with proper type checks
-  const filteredSources = sources ? sources.filter(source => {
+  const filteredSources = sources.filter(source => {
     const matchesSearch = source.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        source.description.toLowerCase().includes(searchTerm.toLowerCase());
+                         (source.description && source.description.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = sourceCategory === 'all' || source.category === sourceCategory;
     return matchesSearch && matchesCategory;
-  }) : [];
+  });
   
-  const filteredInfluencers = influencers ? influencers.filter(influencer => {
+  const filteredInfluencers = influencers.filter(influencer => {
     const matchesSearch = influencer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        influencer.description.toLowerCase().includes(searchTerm.toLowerCase());
+                         (influencer.description && influencer.description.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesFilter = influencerFilter === 'all' || 
                         (influencerFilter === 'following' && influencer.followStatus === 'following') ||
-                        (influencerFilter === 'specialty' && influencer.specialty.some(s => s.toLowerCase().includes(searchTerm.toLowerCase())));
+                        (influencerFilter === 'specialty' && influencer.specialty && 
+                         influencer.specialty.some(s => s.toLowerCase().includes(searchTerm.toLowerCase())));
     return matchesSearch && matchesFilter;
-  }) : [];
+  });
   
-  const filteredEvents = events ? events.filter(event => {
+  const filteredEvents = events.filter(event => {
     const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        event.description.toLowerCase().includes(searchTerm.toLowerCase());
+                         (event.description && event.description.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesFilter = eventFilter === 'all' || 
                         (eventFilter === 'reminder' && event.reminder) ||
                         (eventFilter === 'critical' && event.importance === 'critical');
     return matchesSearch && matchesFilter;
-  }) : [];
+  });
   
-  // Helper functions
   const handleToggleSource = async (sourceId: string, focused: boolean) => {
     await toggleSourceFocus(sourceId, focused);
     refetchSources();
@@ -119,7 +127,6 @@ const InformationSources = () => {
           </TabsTrigger>
         </TabsList>
         
-        {/* Sources Tab */}
         <TabsContent value="sources">
           <SourcesTab 
             sources={filteredSources}
@@ -130,7 +137,6 @@ const InformationSources = () => {
           />
         </TabsContent>
         
-        {/* Influencers Tab */}
         <TabsContent value="influencers">
           <InfluencersTab 
             influencers={filteredInfluencers}
@@ -141,7 +147,6 @@ const InformationSources = () => {
           />
         </TabsContent>
         
-        {/* Events Tab */}
         <TabsContent value="events">
           <EventsTab 
             events={filteredEvents}
