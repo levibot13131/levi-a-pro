@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Card,
@@ -176,7 +175,7 @@ const WhatsAppIntegration: React.FC = () => {
                     <>טוען...</>
                   ) : (
                     <>
-                      <WhatsappLogo className="h-4 w-4 mr-2" />
+                      <MessageSquare className="h-4 w-4 mr-2" />
                       חבר וואטסאפ
                     </>
                   )}
