@@ -73,6 +73,11 @@ const WhatsAppIntegration: React.FC = () => {
       sampleAlert.message = "זוהי הודעת בדיקה מהמערכת";
       sampleAlert.details = "בדיקת חיבור לוואטסאפ";
       
+      // Ensure indicators is an array
+      sampleAlert.indicators = Array.isArray(sampleAlert.indicators) 
+        ? sampleAlert.indicators 
+        : [sampleAlert.indicators.toString()];
+      
       const sent = await sendAlert(sampleAlert);
       
       if (sent) {
