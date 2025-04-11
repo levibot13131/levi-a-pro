@@ -1,46 +1,42 @@
 
-import React, { Suspense } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
 import MainNavigation from './components/MainNavigation';
-import Dashboard from './pages/Dashboard';
-import TechnicalAnalysis from './pages/TechnicalAnalysis';
-import ComprehensiveAnalysis from './pages/ComprehensiveAnalysis';
-import Backtesting from './pages/Backtesting';
-import TradingBots from './pages/TradingBots';
-import RiskManagement from './pages/RiskManagement';
 import TradingSignals from './pages/TradingSignals';
-import MarketNews from './pages/MarketNews';
-import InformationSources from './pages/InformationSources';
-import MarketData from './pages/MarketData';
-import NotFound from './pages/NotFound';
-import { ThemeProvider } from './components/ui/theme-provider';
-import { Toaster } from '@/components/ui/sonner';
+import AssetTracker from './pages/AssetTracker';
+import { useEffect } from 'react';
+import { initializeAssets } from './services/realTimeAssetService';
 
-import './App.css';
+// Create a React Query client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false
+    }
+  }
+});
 
 function App() {
+  // Initialize asset data on app load
+  useEffect(() => {
+    initializeAssets();
+  }, []);
+
   return (
-    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-      <MainNavigation />
-      <main className="mdm-main">
-        <Suspense fallback={<div>Loading...</div>}>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <div dir="rtl">
+          <Toaster position="top-center" closeButton />
+          <MainNavigation />
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/technical-analysis" element={<TechnicalAnalysis />} />
-            <Route path="/comprehensive-analysis" element={<ComprehensiveAnalysis />} />
-            <Route path="/backtesting" element={<Backtesting />} />
-            <Route path="/trading-bots" element={<TradingBots />} />
-            <Route path="/risk-management" element={<RiskManagement />} />
+            <Route path="/" element={<TradingSignals />} />
             <Route path="/trading-signals" element={<TradingSignals />} />
-            <Route path="/market-news" element={<MarketNews />} />
-            <Route path="/information-sources" element={<InformationSources />} />
-            <Route path="/market-data" element={<MarketData />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path="/asset-tracker" element={<AssetTracker />} />
           </Routes>
-        </Suspense>
-        <Toaster position="top-right" />
-      </main>
-    </ThemeProvider>
+        </div>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }
 

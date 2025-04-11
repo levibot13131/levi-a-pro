@@ -1,4 +1,3 @@
-
 import { generateSignalAnalysis } from './analysisGenerator';
 
 /**
@@ -46,4 +45,19 @@ export const generateComprehensiveAnalysis = (assetId: string, timeframe: string
       }
     }
   };
+};
+
+export const analyzeMarketConditions = () => {
+  // Mock implementation
+  return {
+    volatility: 'medium',
+    trend: 'up',
+    strength: 7,
+    support: 0,
+    resistance: 0
+  };
+};
+
+export const analyzeAssetCorrelations = () => {
+  return [];
 };

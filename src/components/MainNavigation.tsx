@@ -1,80 +1,57 @@
 
 import React from 'react';
-import { useLocation, Link } from 'react-router-dom';
-import {
-  Home,
-  LineChart,
-  BarChart2,
-  History,
-  Bot,
-  Shield,
-  Bell,
-  Newspaper,
-  Database,
-  Globe,
-  Menu,
-  X,
-} from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Rocket, BarChart4, Activity, LineChart, Target } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { useIsMobile } from '@/hooks/use-mobile';
-
-const MainNavigation: React.FC = () => {
+const MainNavigation = () => {
   const location = useLocation();
-  const { isMobile, isMenuOpen, setIsMenuOpen } = useIsMobile();
 
-  const navLinks = [
-    { path: '/', name: 'לוח מחוונים', icon: <Home className="h-5 w-5" /> },
-    { path: '/technical-analysis', name: 'ניתוח טכני', icon: <LineChart className="h-5 w-5" /> },
-    { path: '/comprehensive-analysis', name: 'ניתוח מקיף', icon: <BarChart2 className="h-5 w-5" /> },
-    { path: '/backtesting', name: 'בדיקות אחורה', icon: <History className="h-5 w-5" /> },
-    { path: '/trading-bots', name: 'בוטים למסחר', icon: <Bot className="h-5 w-5" /> },
-    { path: '/risk-management', name: 'ניהול סיכונים', icon: <Shield className="h-5 w-5" /> },
-    { path: '/trading-signals', name: 'איתותי מסחר', icon: <Bell className="h-5 w-5" /> },
-    { path: '/market-news', name: 'חדשות שוק', icon: <Newspaper className="h-5 w-5" /> },
-    { path: '/information-sources', name: 'מקורות מידע', icon: <Database className="h-5 w-5" /> },
-    { path: '/market-data', name: 'נתוני שוק', icon: <Globe className="h-5 w-5" /> },
-  ];
+  const isActive = (path: string) => {
+    return location.pathname === path ? 'bg-primary/10 text-primary' : 'text-muted-foreground';
+  };
 
   return (
-    <div className="mdm-navbar">
-      {isMobile && (
-        <button
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="mdm-mobile-menu-button"
-        >
-          {isMenuOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <Menu className="h-6 w-6" />
-          )}
-        </button>
-      )}
-
-      <nav
-        className={cn(
-          'mdm-navbar-nav',
-          isMobile && (isMenuOpen ? 'block' : 'hidden')
-        )}
-      >
-        <div className="mdm-navbar-items">
-          {navLinks.map((link) => (
-            <Link key={link.path} to={link.path}>
-              <Button
-                variant={location.pathname === link.path ? 'default' : 'ghost'}
-                className={cn(
-                  'mdm-navbar-button',
-                  location.pathname === link.path ? 'mdm-navbar-button-active' : ''
-                )}
-              >
-                {link.icon}
-                <span className="mdm-navbar-button-text">{link.name}</span>
-              </Button>
-            </Link>
-          ))}
+    <div className="border-b">
+      <div className="container flex h-16 items-center px-4 mx-auto">
+        <div className="ml-auto flex gap-6 md:gap-10">
+          <Link to="/" className="flex items-center space-x-2">
+            <Rocket className="h-6 w-6" />
+            <span className="font-bold">AI-KSEM</span>
+          </Link>
         </div>
-      </nav>
+        <div className="flex items-center space-x-4 mr-auto">
+          <nav className="flex items-center space-x-6">
+            <Link
+              to="/trading-signals"
+              className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive('/trading-signals')}`}
+            >
+              <Target className="h-4 w-4" />
+              <span>איתותי מסחר</span>
+            </Link>
+            <Link
+              to="/asset-tracker"
+              className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive('/asset-tracker')}`}
+            >
+              <BarChart4 className="h-4 w-4" />
+              <span>מעקב נכסים</span>
+            </Link>
+            <Link
+              to="/risk-management"
+              className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive('/risk-management')}`}
+            >
+              <Activity className="h-4 w-4" />
+              <span>ניהול סיכונים</span>
+            </Link>
+            <Link
+              to="/technical-analysis"
+              className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive('/technical-analysis')}`}
+            >
+              <LineChart className="h-4 w-4" />
+              <span>ניתוח טכני</span>
+            </Link>
+          </nav>
+        </div>
+      </div>
     </div>
   );
 };
