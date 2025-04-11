@@ -1,61 +1,100 @@
-
+import { TrackedAsset } from './types';
+import { getTrackedAssets, saveTrackedAssets } from './storage';
 import { toast } from 'sonner';
-import { initializeTrackedAssets } from './initialization';
-import { syncTrackedAssets } from './realTimeSync';
-import { analyzeSentimentForTrackedAssets } from './sentimentAnalysis';
 
-// Tracking intervals
-let trackingInterval: ReturnType<typeof setInterval> | null = null;
-let sentimentInterval: ReturnType<typeof setInterval> | null = null;
-
-// Start real-time tracking system
-export const startAssetTracking = () => {
-  // Initialize if not already done
-  initializeTrackedAssets();
-  
-  // Set up real-time tracking interval
-  if (!trackingInterval) {
-    trackingInterval = setInterval(() => {
-      syncTrackedAssets();
-    }, 5000);
-  }
-  
-  // Set up sentiment analysis interval (less frequent)
-  if (!sentimentInterval) {
-    sentimentInterval = setInterval(() => {
-      analyzeSentimentForTrackedAssets();
-    }, 60000 * 5); // Every 5 minutes
-  }
-  
-  toast.success('מערכת מעקב נכסים הופעלה בהצלחה');
+// Initialize the tracking system
+export const initializeTrackingSystem = () => {
+  console.log('Tracking system initialized');
+  // Implementation details would be added here
 };
 
-// Stop asset tracking
-export const stopAssetTracking = () => {
-  if (trackingInterval) {
-    clearInterval(trackingInterval);
-    trackingInterval = null;
-  }
+// Search tracked assets
+export const searchTrackedAssets = (
+  query: string,
+  market?: string
+): TrackedAsset[] => {
+  const assets = getTrackedAssets();
   
-  if (sentimentInterval) {
-    clearInterval(sentimentInterval);
-    sentimentInterval = null;
-  }
+  if (!query && !market) return assets;
   
-  toast.info('מערכת מעקב נכסים הופסקה');
+  const normalizedQuery = query.toLowerCase().trim();
+  
+  return assets.filter(asset => {
+    // Apply market filter if provided
+    if (market && market !== 'all' && asset.type !== market) {
+      return false;
+    }
+    
+    // If no query, just apply market filter
+    if (!normalizedQuery) return true;
+    
+    // Search by name, symbol or notes
+    return (
+      asset.name.toLowerCase().includes(normalizedQuery) ||
+      asset.symbol.toLowerCase().includes(normalizedQuery) ||
+      (asset.notes && asset.notes.toLowerCase().includes(normalizedQuery))
+    );
+  });
 };
 
-// Check if tracking is active
-export const isTrackingActive = (): boolean => {
-  return trackingInterval !== null;
+// Toggle pin status for an asset
+export const togglePinAsset = (assetId: string): void => {
+  const assets = getTrackedAssets();
+  const assetIndex = assets.findIndex(a => a.id === assetId);
+  
+  if (assetIndex !== -1) {
+    assets[assetIndex].isPinned = !assets[assetIndex].isPinned;
+    saveTrackedAssets(assets);
+    
+    toast.success(
+      assets[assetIndex].isPinned 
+        ? `${assets[assetIndex].name} נעוץ בראש הרשימה` 
+        : `${assets[assetIndex].name} שוחרר מנעיצה`
+    );
+  }
 };
 
-// For simulating WhatsApp integration (would be replaced with actual API in production)
-export const simulateWhatsAppNotification = (message: string) => {
-  toast.success('התראה נשלחה לוואטסאפ', {
-    description: message,
-    duration: 5000
+// Bulk update tracked assets
+export const bulkUpdateTrackedAssets = (
+  assetIds: string[],
+  updates: Partial<TrackedAsset>
+): void => {
+  const assets = getTrackedAssets();
+  let updatedCount = 0;
+  
+  const updatedAssets = assets.map(asset => {
+    if (assetIds.includes(asset.id)) {
+      updatedCount++;
+      return { ...asset, ...updates };
+    }
+    return asset;
   });
   
-  console.log('WhatsApp notification:', message);
+  saveTrackedAssets(updatedAssets);
+  
+  if (updatedCount > 0) {
+    toast.success(`עודכנו ${updatedCount} נכסים`);
+  }
+};
+
+// Get asset statistics
+export const getAssetTrackingStats = () => {
+  const assets = getTrackedAssets();
+  
+  return {
+    total: assets.length,
+    byMarket: {
+      crypto: assets.filter(a => a.type === 'crypto').length,
+      stocks: assets.filter(a => a.type === 'stocks').length,
+      forex: assets.filter(a => a.type === 'forex').length,
+      commodities: assets.filter(a => a.type === 'commodities').length,
+    },
+    byPriority: {
+      high: assets.filter(a => a.priority === 'high').length,
+      medium: assets.filter(a => a.priority === 'medium').length,
+      low: assets.filter(a => a.priority === 'low').length,
+    },
+    withAlerts: assets.filter(a => a.alertsEnabled).length,
+    pinned: assets.filter(a => a.isPinned).length
+  };
 };
