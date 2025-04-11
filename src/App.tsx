@@ -1,25 +1,26 @@
+
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
 
-import Index from '@/pages';
-import AssetTracker from '@/pages/AssetTracker';
-import TechnicalAnalysis from '@/pages/TechnicalAnalysis';
-import Backtesting from '@/pages/Backtesting';
-import RiskManagement from '@/pages/RiskManagement';
-import MarketData from '@/pages/MarketData';
-import ComprehensiveAnalysis from '@/pages/ComprehensiveAnalysis';
-import Dashboard from '@/pages/Dashboard';
-import SocialMonitoring from '@/pages/SocialMonitoring';
-import InformationSources from '@/pages/InformationSources';
-import TradingSignals from '@/pages/TradingSignals';
-import TradingBots from '@/pages/TradingBots';
-import MarketNews from '@/pages/MarketNews';
-import FundamentalData from '@/pages/FundamentalData';
-import NotFound from '@/pages/NotFound';
-import MainNavigation from '@/components/MainNavigation';
-import TradingViewIntegration from '@/pages/TradingViewIntegration';
+import Index from './pages/Index';
+import AssetTracker from './pages/AssetTracker';
+import TechnicalAnalysis from './pages/TechnicalAnalysis';
+import Backtesting from './pages/Backtesting';
+import RiskManagement from './pages/RiskManagement';
+import MarketData from './pages/MarketData';
+import ComprehensiveAnalysis from './pages/ComprehensiveAnalysis';
+import Dashboard from './pages/Dashboard';
+import SocialMonitoring from './pages/SocialMonitoring';
+import InformationSources from './pages/InformationSources';
+import TradingSignals from './pages/TradingSignals';
+import TradingBots from './pages/TradingBots';
+import MarketNews from './pages/MarketNews';
+import FundamentalData from './pages/FundamentalData';
+import NotFound from './pages/NotFound';
+import MainNavigation from './components/MainNavigation';
+import TradingViewIntegration from './pages/TradingViewIntegration';
 
 const queryClient = new QueryClient();
 

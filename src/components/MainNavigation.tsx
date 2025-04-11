@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { useMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Home,
   Layout,
@@ -37,7 +38,7 @@ const navLinkClass = (isActive: boolean) =>
   ${isActive ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`;
 
 const MainNavigation: React.FC = () => {
-  const isMobile = useMobile();
+  const { isMobile, isMenuOpen, setIsMenuOpen } = useIsMobile();
   const navigate = useNavigate();
   const location = useLocation();
   const [showSidebar, setShowSidebar] = useState(false);
