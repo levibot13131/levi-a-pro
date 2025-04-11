@@ -7,4 +7,4 @@ export type {
   FinancialDataSource,
   MarketInfluencer,
   MarketEvent 
-} from '@/types/marketInformation';
+} from './marketInformation';

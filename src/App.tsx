@@ -7,6 +7,10 @@ import TradingSignals from './pages/TradingSignals';
 import AssetTracker from './pages/AssetTracker';
 import RiskManagement from './pages/RiskManagement';
 import TechnicalAnalysis from './pages/TechnicalAnalysis';
+import ComprehensiveAnalysis from './pages/ComprehensiveAnalysis';
+import TradingBots from './pages/TradingBots';
+import SocialMonitoring from './pages/SocialMonitoring';
+import FundamentalData from './pages/FundamentalData';
 import { useEffect } from 'react';
 import { initializeAssets } from './services/realTimeAssetService';
 
@@ -36,6 +40,10 @@ function App() {
           <Route path="/asset-tracker" element={<AssetTracker />} />
           <Route path="/risk-management" element={<RiskManagement />} />
           <Route path="/technical-analysis" element={<TechnicalAnalysis />} />
+          <Route path="/comprehensive-analysis" element={<ComprehensiveAnalysis />} />
+          <Route path="/trading-bots" element={<TradingBots />} />
+          <Route path="/social-monitoring" element={<SocialMonitoring />} />
+          <Route path="/fundamental-data" element={<FundamentalData />} />
         </Routes>
       </div>
     </QueryClientProvider>

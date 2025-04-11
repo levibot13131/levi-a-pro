@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Rocket, BarChart4, Activity, LineChart, Target } from 'lucide-react';
+import { Rocket, BarChart4, Activity, LineChart, Target, Brain, MessageSquare, Users, Newspaper } from 'lucide-react';
 
 const MainNavigation = () => {
   const location = useLocation();
@@ -48,6 +48,34 @@ const MainNavigation = () => {
             >
               <LineChart className="h-4 w-4" />
               <span>ניתוח טכני</span>
+            </Link>
+            <Link
+              to="/comprehensive-analysis"
+              className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive('/comprehensive-analysis')}`}
+            >
+              <Brain className="h-4 w-4" />
+              <span>ניתוח מקיף</span>
+            </Link>
+            <Link
+              to="/trading-bots"
+              className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive('/trading-bots')}`}
+            >
+              <Target className="h-4 w-4" />
+              <span>בוטים למסחר</span>
+            </Link>
+            <Link
+              to="/social-monitoring"
+              className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive('/social-monitoring')}`}
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span>רשתות חברתיות</span>
+            </Link>
+            <Link
+              to="/fundamental-data"
+              className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive('/fundamental-data')}`}
+            >
+              <Newspaper className="h-4 w-4" />
+              <span>מידע פונדמנטלי</span>
             </Link>
           </nav>
         </div>
