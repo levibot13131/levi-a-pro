@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Container } from '../components/ui/container';
 import TradingViewConnectionStatus from '../components/tradingview/TradingViewConnectionStatus';
@@ -17,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { sendAlert, createSampleAlert } from '@/services/tradingView/tradingViewAlertService';
 import { testAllIntegrations } from '@/services/tradingView/testIntegrations';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const TradingViewIntegration: React.FC = () => {
   const {
@@ -31,7 +31,6 @@ const TradingViewIntegration: React.FC = () => {
     handleManualRefresh
   } = useTradingViewPage();
   
-  // פונקציה לשליחת התראת בדיקה
   const sendTestAlert = () => {
     const sampleAlert = createSampleAlert('info');
     sampleAlert.message = "זוהי הודעת בדיקה מהמערכת";
@@ -44,7 +43,6 @@ const TradingViewIntegration: React.FC = () => {
     });
   };
   
-  // פונקציה לבדיקת כל האינטגרציות
   const verifyAllIntegrations = async () => {
     toast.info("בודק את כל החיבורים...");
     await testAllIntegrations();
