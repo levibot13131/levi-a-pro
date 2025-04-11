@@ -1,8 +1,9 @@
 
 import { WebhookSignal } from '@/types/webhookSignal';
 import { v4 as uuidv4 } from 'uuid';
-import { testWebhookFlow, simulateWebhook as webhookProcessor } from './tradingView/webhooks/processor';
+import { testWebhookFlow, simulateWebhook } from './tradingView/webhooks/processor';
 import { toast } from 'sonner';
+import { processWebhookData } from './tradingView/webhooks/processor';
 
 // מאגר האיתותים
 let storedSignals: WebhookSignal[] = [];
@@ -131,8 +132,7 @@ export const processIncomingWebhook = async (data: any): Promise<boolean> => {
     });
     
     // מעביר את הנתונים לפונקציית העיבוד של המערכת
-    // FIX: מעבירים את סוג האיתות במקום אובייקט שלא מתאים לפרמטר של הפונקציה
-    return webhookProcessor(action);
+    return await processWebhookData(data);
   } catch (error) {
     console.error('Error processing incoming webhook:', error);
     return false;
