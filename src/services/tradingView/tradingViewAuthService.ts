@@ -7,7 +7,8 @@ const TV_AUTH_KEY = 'tradingview_auth_credentials';
 // פרטי חיבור TradingView
 export interface TradingViewCredentials {
   username: string;
-  apiKey: string;
+  password?: string; // הוספנו סיסמה
+  apiKey?: string;  // עשינו אופציונלי
   isConnected: boolean;
   lastConnected?: number;
 }
@@ -53,16 +54,15 @@ export const validateTradingViewCredentials = async (
   credentials: Omit<TradingViewCredentials, 'isConnected' | 'lastConnected'>
 ): Promise<boolean> => {
   try {
-    // בשלב זה, ללא API אמיתי, נניח שהאימות תמיד מצליח
-    // בסביבת ייצור אמיתית, כאן יהיה קוד שמבצע אימות מול API של TradingView
+    // בסביבת פיתוח - נאפשר התחברות עם שם משתמש וסיסמה או שם משתמש ו-API Key
     
     // סימולציה של בדיקת API
     return new Promise(resolve => {
       setTimeout(() => {
-        // האם המשתמש והמפתח לא ריקים
-        const valid = 
-          credentials.username?.trim().length > 3 &&
-          credentials.apiKey?.trim().length > 5;
+        // בדיקה אם קיימים פרטי חיבור תקינים
+        const valid = credentials.username?.trim().length > 3 && 
+                     (credentials.password?.trim().length > 3 || 
+                      credentials.apiKey?.trim().length > 3);
           
         if (valid) {
           saveTradingViewCredentials(credentials);

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -7,7 +6,7 @@ import TradingViewWebhookHandler from '@/components/technical-analysis/TradingVi
 import CustomSignals from '@/components/technical-analysis/CustomSignals';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { BellRing, Link, Brain, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { BellRing, Link, Brain, CheckCircle2, AlertTriangle, Info } from 'lucide-react';
 import TradingViewConnectButton from './tradingview/TradingViewConnectButton';
 import { useTradingViewConnection } from '@/hooks/use-tradingview-connection';
 
@@ -72,6 +71,17 @@ const SmartTabContent: React.FC<SmartTabContentProps> = ({ assetId }) => {
             </CardHeader>
             <CardContent className="text-right">
               <div className="space-y-4">
+                <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md mb-3 flex items-start">
+                  <Info className="h-5 w-5 text-blue-500 mr-2 mt-0.5" />
+                  <div>
+                    <h3 className="font-medium">מצב סימולציה</h3>
+                    <p className="text-sm">
+                      בסביבת פיתוח, החיבור ל-TradingView פועל במצב סימולציה ומאפשר לך לבדוק את הפונקציונליות של המערכת.
+                      הסיסמה אינה נשמרת בשום מקום ומשמשת להדגמה בלבד.
+                    </p>
+                  </div>
+                </div>
+                
                 {isConnected ? (
                   <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-md">
                     <div className="flex justify-between items-center mb-3">
@@ -97,7 +107,7 @@ const SmartTabContent: React.FC<SmartTabContentProps> = ({ assetId }) => {
                       </div>
                     </div>
                     <p className="text-sm">
-                      החיבור לחשבון TradingView שלך פעיל. כעת תוכל להגדיר התראות ולקבל איתותים בזמן אמת.
+                      החיבור לחשבון TradingView שלך פעיל במצב סימולציה. כעת תוכל להגדיר התראות ולקבל איתותים לדוגמה בזמן אמת.
                     </p>
                   </div>
                 ) : (
