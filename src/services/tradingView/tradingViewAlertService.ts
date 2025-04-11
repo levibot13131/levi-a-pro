@@ -3,6 +3,6 @@
 export * from './alerts/types';
 export * from './alerts/destinations';
 export * from './alerts/sender';
-export * from './webhookHandler';
+export * from './webhooks';
 
 // This file serves as a central access point for all alert-related functionality
