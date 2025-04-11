@@ -1,3 +1,4 @@
+
 import { toast } from 'sonner';
 import { getAllAssets, getAssetById } from '@/services/realTimeAssetService';
 import { getTradingViewCredentials } from '@/services/tradingView/tradingViewAuthService';
@@ -8,7 +9,7 @@ export interface TrackedAsset {
   id: string;
   name: string;
   symbol: string;
-  type: 'crypto' | 'stock' | 'forex' | 'commodity';
+  type: 'crypto' | 'stocks' | 'forex' | 'commodities';
   price: number;
   change24h: number;
   priority: 'high' | 'medium' | 'low';

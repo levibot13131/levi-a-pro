@@ -47,7 +47,7 @@ const AssetInfoCard = ({ asset, formatPrice }: AssetInfoCardProps) => {
               <Badge variant="outline">
                 {asset.type === 'crypto' 
                   ? 'קריפטו' 
-                  : asset.type === 'stock' 
+                  : asset.type === 'stocks' 
                     ? 'מניה' 
                     : 'מט"ח'}
               </Badge>
@@ -131,7 +131,7 @@ const AssetInfoCard = ({ asset, formatPrice }: AssetInfoCardProps) => {
                       <p className="text-sm">
                         {asset.type === 'crypto' 
                           ? 'שווי שוק (Market Cap)'
-                          : asset.type === 'stock'
+                          : asset.type === 'stocks'
                             ? 'הון שוק (Market Cap)'
                             : 'נפח מסחר יומי כולל'
                         }

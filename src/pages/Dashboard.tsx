@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Asset, AssetHistoricalData, TimeframeType } from '@/types/asset';
@@ -232,7 +231,7 @@ const Dashboard = () => {
                           <span className="text-gray-500">סוג:</span>
                           <span>
                             {asset.type === 'crypto' ? 'קריפטו' : 
-                             asset.type === 'stock' ? 'מניה' : 'מט"ח'}
+                             asset.type === 'stocks' ? 'מניה' : 'מט"ח'}
                           </span>
                         </div>
                         <div className="flex justify-between">

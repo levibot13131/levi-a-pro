@@ -1,3 +1,4 @@
+
 import { Asset, AssetHistoricalData, PricePoint, VolumePoint, TimeframeType } from "@/types/asset";
 
 // נתונים סטטיים לדוגמה
@@ -28,7 +29,7 @@ const MOCK_ASSETS: Asset[] = [
     id: "apple",
     symbol: "AAPL",
     name: "Apple Inc.",
-    type: "stock",
+    type: "stocks",
     price: 175.52,
     change24h: 0.87,
     volume24h: 65700000,
@@ -39,7 +40,7 @@ const MOCK_ASSETS: Asset[] = [
     id: "microsoft",
     symbol: "MSFT",
     name: "Microsoft Corporation",
-    type: "stock",
+    type: "stocks",
     price: 406.32,
     change24h: 1.12,
     volume24h: 34500000,
