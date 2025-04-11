@@ -1,4 +1,6 @@
 
+import { calculateOverallRecommendation } from './recommendationCalculator';
+
 export const generateTradePlan = (
   selectedAsset: any, 
   technicalAnalysis: any, 
@@ -14,9 +16,6 @@ export const generateTradePlan = (
   riskManagement?: string[];
 } => {
   if (!selectedAsset || !technicalAnalysis) return null;
-  
-  // Import the function through a relative import to avoid circular dependencies
-  const { calculateOverallRecommendation } = require('./recommendationCalculator');
   
   const currentPrice = assetHistory?.data[assetHistory.data.length - 1]?.price || selectedAsset.price;
   const recommendation = calculateOverallRecommendation(
