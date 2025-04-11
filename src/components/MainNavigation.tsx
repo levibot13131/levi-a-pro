@@ -1,86 +1,145 @@
+import React, { useState } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useMobile } from '@/hooks/use-mobile';
+import {
+  Home,
+  Layout,
+  Eye,
+  LineChart,
+  Database,
+  History,
+  ShieldAlert,
+  BarChart3,
+  PieChart,
+  Users,
+  FileText,
+  BellRing,
+  Bot,
+  Newspaper,
+  Link2,
+  Menu
+} from 'lucide-react';
 
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Rocket, BarChart4, Activity, LineChart, Target, Brain, MessageSquare, Users, Newspaper } from 'lucide-react';
+const sidebarStyles = `
+  fixed top-0 left-0 h-full w-72 bg-secondary border-r z-50
+  transform transition-transform duration-300 ease-in-out
+  md:translate-x-0
+`;
 
-const MainNavigation = () => {
+const backdropStyles = `
+  fixed top-0 left-0 w-full h-full bg-gray-900 opacity-50 z-40
+  md:hidden
+`;
+
+const navLinkClass = (isActive: boolean) =>
+  `flex items-center px-6 py-2 text-sm font-medium rounded-md
+  transition-colors hover:bg-accent hover:text-accent-foreground
+  ${isActive ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`;
+
+const MainNavigation: React.FC = () => {
+  const isMobile = useMobile();
+  const navigate = useNavigate();
   const location = useLocation();
+  const [showSidebar, setShowSidebar] = useState(false);
 
-  const isActive = (path: string) => {
-    return location.pathname === path ? 'bg-primary/10 text-primary' : 'text-muted-foreground';
+  const toggleSidebar = () => {
+    setShowSidebar(!showSidebar);
+  };
+
+  const closeSidebar = () => {
+    setShowSidebar(false);
+  };
+
+  const handleNavLinkClick = () => {
+    if (isMobile) {
+      closeSidebar();
+    }
   };
 
   return (
-    <div className="border-b">
-      <div className="container flex h-16 items-center px-4 mx-auto">
-        <div className="ml-auto flex gap-6 md:gap-10">
-          <Link to="/" className="flex items-center space-x-2">
-            <Rocket className="h-6 w-6" />
-            <span className="font-bold">AI-KSEM</span>
-          </Link>
+    <>
+      <header className="fixed top-0 left-0 w-full h-16 bg-background border-b z-50 flex items-center justify-between px-6">
+        <button onClick={toggleSidebar} className="md:hidden">
+          <Menu className="h-6 w-6" />
+        </button>
+        <h1 className="text-lg font-semibold">KSem AI Assistant</h1>
+        <div>
+          {/* Add any additional header content here */}
         </div>
-        <div className="flex items-center space-x-4 mr-auto">
-          <nav className="flex items-center space-x-6">
-            <Link
-              to="/trading-signals"
-              className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive('/trading-signals')}`}
-            >
-              <Target className="h-4 w-4" />
-              <span>איתותי מסחר</span>
-            </Link>
-            <Link
-              to="/asset-tracker"
-              className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive('/asset-tracker')}`}
-            >
-              <BarChart4 className="h-4 w-4" />
-              <span>מעקב נכסים</span>
-            </Link>
-            <Link
-              to="/risk-management"
-              className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive('/risk-management')}`}
-            >
-              <Activity className="h-4 w-4" />
-              <span>ניהול סיכונים</span>
-            </Link>
-            <Link
-              to="/technical-analysis"
-              className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive('/technical-analysis')}`}
-            >
-              <LineChart className="h-4 w-4" />
-              <span>ניתוח טכני</span>
-            </Link>
-            <Link
-              to="/comprehensive-analysis"
-              className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive('/comprehensive-analysis')}`}
-            >
-              <Brain className="h-4 w-4" />
-              <span>ניתוח מקיף</span>
-            </Link>
-            <Link
-              to="/trading-bots"
-              className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive('/trading-bots')}`}
-            >
-              <Target className="h-4 w-4" />
-              <span>בוטים למסחר</span>
-            </Link>
-            <Link
-              to="/social-monitoring"
-              className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive('/social-monitoring')}`}
-            >
-              <MessageSquare className="h-4 w-4" />
-              <span>רשתות חברתיות</span>
-            </Link>
-            <Link
-              to="/fundamental-data"
-              className={`text-sm font-medium transition-colors hover:text-primary flex items-center gap-1 ${isActive('/fundamental-data')}`}
-            >
-              <Newspaper className="h-4 w-4" />
-              <span>מידע פונדמנטלי</span>
-            </Link>
-          </nav>
+      </header>
+      
+      <aside className={`${sidebarStyles} ${showSidebar ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
+        <div className="h-16 flex items-center px-6 border-b">
+          <h2 className="text-lg font-semibold">KSem AI Assistant</h2>
         </div>
-      </div>
-    </div>
+        <div className="py-4 space-y-1 pl-6 pr-2">
+          <NavLink to="/" className={({ isActive }) => navLinkClass(isActive)} onClick={handleNavLinkClick}>
+            <Home className="h-5 w-5 mr-3" />
+            <span>בית</span>
+          </NavLink>
+          <NavLink to="/dashboard" className={({ isActive }) => navLinkClass(isActive)} onClick={handleNavLinkClick}>
+            <Layout className="h-5 w-5 mr-3" />
+            <span>דשבורד</span>
+          </NavLink>
+          <NavLink to="/asset-tracker" className={({ isActive }) => navLinkClass(isActive)} onClick={handleNavLinkClick}>
+            <Eye className="h-5 w-5 mr-3" />
+            <span>מעקב נכסים</span>
+          </NavLink>
+          <NavLink to="/technical-analysis" className={({ isActive }) => navLinkClass(isActive)} onClick={handleNavLinkClick}>
+            <LineChart className="h-5 w-5 mr-3" />
+            <span>ניתוח טכני</span>
+          </NavLink>
+          <NavLink to="/tradingview-integration" className={({ isActive }) => navLinkClass(isActive)} onClick={handleNavLinkClick}>
+            <Link2 className="h-5 w-5 mr-3" />
+            <span>TradingView</span>
+          </NavLink>
+          <NavLink to="/fundamental-data" className={({ isActive }) => navLinkClass(isActive)} onClick={handleNavLinkClick}>
+            <Database className="h-5 w-5 mr-3" />
+            <span>מידע פונדמנטלי</span>
+          </NavLink>
+          <NavLink to="/backtesting" className={({ isActive }) => navLinkClass(isActive)} onClick={handleNavLinkClick}>
+            <History className="h-5 w-5 mr-3" />
+            <span>בקטסטינג</span>
+          </NavLink>
+          <NavLink to="/risk-management" className={({ isActive }) => navLinkClass(isActive)} onClick={handleNavLinkClick}>
+            <ShieldAlert className="h-5 w-5 mr-3" />
+            <span>ניהול סיכונים</span>
+          </NavLink>
+          <NavLink to="/market-data" className={({ isActive }) => navLinkClass(isActive)} onClick={handleNavLinkClick}>
+            <BarChart3 className="h-5 w-5 mr-3" />
+            <span>נתוני שוק</span>
+          </NavLink>
+          <NavLink to="/comprehensive-analysis" className={({ isActive }) => navLinkClass(isActive)} onClick={handleNavLinkClick}>
+            <PieChart className="h-5 w-5 mr-3" />
+            <span>ניתוח מקיף</span>
+          </NavLink>
+          <NavLink to="/social-monitoring" className={({ isActive }) => navLinkClass(isActive)} onClick={handleNavLinkClick}>
+            <Users className="h-5 w-5 mr-3" />
+            <span>ניטור חברתי</span>
+          </NavLink>
+          <NavLink to="/information-sources" className={({ isActive }) => navLinkClass(isActive)} onClick={handleNavLinkClick}>
+            <FileText className="h-5 w-5 mr-3" />
+            <span>מקורות מידע</span>
+          </NavLink>
+          <NavLink to="/trading-signals" className={({ isActive }) => navLinkClass(isActive)} onClick={handleNavLinkClick}>
+            <BellRing className="h-5 w-5 mr-3" />
+            <span>איתותי מסחר</span>
+          </NavLink>
+          <NavLink to="/trading-bots" className={({ isActive }) => navLinkClass(isActive)} onClick={handleNavLinkClick}>
+            <Bot className="h-5 w-5 mr-3" />
+            <span>בוטים למסחר</span>
+          </NavLink>
+          <NavLink to="/market-news" className={({ isActive }) => navLinkClass(isActive)} onClick={handleNavLinkClick}>
+            <Newspaper className="h-5 w-5 mr-3" />
+            <span>חדשות שוק</span>
+          </NavLink>
+        </div>
+      </aside>
+      
+      {showSidebar && isMobile && (
+        <div className={backdropStyles} onClick={closeSidebar}></div>
+      )}
+    </>
   );
 };
 
