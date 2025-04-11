@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { useTradingViewIntegration } from '../../hooks/use-tradingview-integration';
 import { TradingViewChartData } from '../../services/tradingView/tradingViewIntegrationService';
 import { Skeleton } from '../ui/skeleton';
 import { RefreshCw } from 'lucide-react';
+import ChartToolbar from './ChartToolbar';
 
 interface TradingViewChartProps {
   symbol: string;
@@ -19,11 +20,16 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   const [chartData, setChartData] = useState<TradingViewChartData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTimeframe, setSelectedTimeframe] = useState<string>(timeframe);
+  const [chartType, setChartType] = useState<'candle' | 'line' | 'bar'>('line');
+  const [showVolume, setShowVolume] = useState<boolean>(false);
+  const [showIndicators, setShowIndicators] = useState<boolean>(true);
+  
   const { fetchChartData, isConnected } = useTradingViewIntegration();
   
   useEffect(() => {
     loadChartData();
-  }, [symbol, timeframe]);
+  }, [symbol, selectedTimeframe]);
   
   const loadChartData = async () => {
     if (!isConnected) {
@@ -34,7 +40,7 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
     
     setIsLoading(true);
     try {
-      const data = await fetchChartData(symbol, timeframe);
+      const data = await fetchChartData(symbol, selectedTimeframe);
       if (data) {
         setChartData(data);
         setError(null);
@@ -47,6 +53,18 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  const handleRefresh = () => {
+    loadChartData();
+  };
+  
+  const handleTimeframeChange = (newTimeframe: string) => {
+    setSelectedTimeframe(newTimeframe);
+  };
+  
+  const handleChartTypeChange = (type: 'candle' | 'line' | 'bar') => {
+    setChartType(type);
   };
   
   const formatDate = (timestamp: number) => {
@@ -96,6 +114,18 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
           </div>
           <CardTitle className="text-right">{symbol}</CardTitle>
         </div>
+        <ChartToolbar 
+          onRefresh={handleRefresh}
+          onTimeframeChange={handleTimeframeChange}
+          onChartTypeChange={handleChartTypeChange}
+          isRefreshing={isLoading}
+          selectedTimeframe={selectedTimeframe}
+          chartType={chartType}
+          showVolume={showVolume}
+          setShowVolume={setShowVolume}
+          showIndicators={showIndicators}
+          setShowIndicators={setShowIndicators}
+        />
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -113,31 +143,97 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
         ) : chartData && chartData.data && chartData.data.length > 0 ? (
           <div className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData.data}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="timestamp" 
-                  tickFormatter={formatDate} 
-                  tick={{ fontSize: 12 }}
-                />
-                <YAxis 
-                  domain={['auto', 'auto']} 
-                  tickFormatter={formatPrice}
-                  tick={{ fontSize: 12 }}
-                  width={60}
-                />
-                <Tooltip 
-                  formatter={(value: number) => [formatPrice(value), 'מחיר']}
-                  labelFormatter={formatDate}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="price" 
-                  stroke={isPositiveChange ? "#10b981" : "#ef4444"} 
-                  dot={false}
-                  strokeWidth={2}
-                />
-              </LineChart>
+              {chartType === 'line' ? (
+                <AreaChart data={chartData.data}>
+                  <defs>
+                    <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={isPositiveChange ? "#10b981" : "#ef4444"} stopOpacity={0.8}/>
+                      <stop offset="95%" stopColor={isPositiveChange ? "#10b981" : "#ef4444"} stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="timestamp" 
+                    tickFormatter={formatDate} 
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis 
+                    domain={['auto', 'auto']} 
+                    tickFormatter={formatPrice}
+                    tick={{ fontSize: 12 }}
+                    width={60}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [formatPrice(value), 'מחיר']}
+                    labelFormatter={formatDate}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="price" 
+                    stroke={isPositiveChange ? "#10b981" : "#ef4444"} 
+                    fillOpacity={1}
+                    fill="url(#colorPrice)"
+                  />
+                  {showVolume && (
+                    <Bar dataKey="volume" fill="#8884d8" opacity={0.5} />
+                  )}
+                </AreaChart>
+              ) : chartType === 'bar' ? (
+                <BarChart data={chartData.data}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="timestamp" 
+                    tickFormatter={formatDate} 
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis 
+                    domain={['auto', 'auto']} 
+                    tickFormatter={formatPrice}
+                    tick={{ fontSize: 12 }}
+                    width={60}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [formatPrice(value), 'מחיר']}
+                    labelFormatter={formatDate}
+                  />
+                  <Bar 
+                    dataKey="price" 
+                    fill={isPositiveChange ? "#10b981" : "#ef4444"} 
+                  />
+                  {showVolume && (
+                    <Bar dataKey="volume" fill="#8884d8" opacity={0.5} />
+                  )}
+                </BarChart>
+              ) : (
+                <LineChart data={chartData.data}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="timestamp" 
+                    tickFormatter={formatDate} 
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis 
+                    domain={['auto', 'auto']} 
+                    tickFormatter={formatPrice}
+                    tick={{ fontSize: 12 }}
+                    width={60}
+                  />
+                  <Tooltip 
+                    formatter={(value: number) => [formatPrice(value), 'מחיר']}
+                    labelFormatter={formatDate}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="price" 
+                    stroke={isPositiveChange ? "#10b981" : "#ef4444"} 
+                    dot={false}
+                    strokeWidth={2}
+                  />
+                  {showVolume && (
+                    <Bar dataKey="volume" fill="#8884d8" opacity={0.5} />
+                  )}
+                </LineChart>
+              )}
             </ResponsiveContainer>
           </div>
         ) : (

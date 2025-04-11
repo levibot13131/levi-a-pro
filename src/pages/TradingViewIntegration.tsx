@@ -1,12 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { Link2, ChartLine, Newspaper, Bell, Settings, RefreshCw, Clock } from 'lucide-react';
+import { Link2, ChartLine, Newspaper, Bell, Settings, RefreshCw, Clock, Bot } from 'lucide-react';
 import TradingViewConnectionStatus from '../components/tradingview/TradingViewConnectionStatus';
 import TradingViewChart from '../components/tradingview/TradingViewChart';
 import TradingViewNews from '../components/tradingview/TradingViewNews';
+import TradingViewBot from '../components/tradingview/TradingViewBot';
 import TradingViewWebhookHandler from '../components/technical-analysis/TradingViewWebhookHandler';
 import { useTradingViewConnection } from '../hooks/use-tradingview-connection';
 import { useTradingViewIntegration } from '../hooks/use-tradingview-integration';
@@ -117,7 +119,7 @@ const TradingViewIntegration: React.FC = () => {
       </div>
       
       <Tabs defaultValue="charts" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="charts" className="flex items-center gap-1">
             <ChartLine className="h-4 w-4" />
             גרפים בזמן אמת
@@ -125,6 +127,10 @@ const TradingViewIntegration: React.FC = () => {
           <TabsTrigger value="news" className="flex items-center gap-1">
             <Newspaper className="h-4 w-4" />
             חדשות
+          </TabsTrigger>
+          <TabsTrigger value="bot" className="flex items-center gap-1">
+            <Bot className="h-4 w-4" />
+            בוט מסחר
           </TabsTrigger>
           <TabsTrigger value="alerts" className="flex items-center gap-1">
             <Bell className="h-4 w-4" />
@@ -154,6 +160,19 @@ const TradingViewIntegration: React.FC = () => {
         
         <TabsContent value="news">
           <TradingViewNews limit={10} refreshKey={lastSyncTime?.getTime()} />
+        </TabsContent>
+        
+        <TabsContent value="bot">
+          <Card className="mb-6">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-right">בוט מסחר אוטומטי</CardTitle>
+              <CardDescription className="text-right">
+                ניתוח מחירים וקבלת איתותים בזמן אמת
+              </CardDescription>
+            </CardHeader>
+          </Card>
+          
+          <TradingViewBot />
         </TabsContent>
         
         <TabsContent value="alerts">

@@ -8,10 +8,14 @@ export interface TradingViewChartData {
   timeframe: string;
   indicators: string[];
   lastUpdate: number;
-  lastUpdated?: number;
   data: {
     timestamp: number;
     price: number;
+    volume?: number;
+    open?: number;
+    high?: number;
+    low?: number;
+    close?: number;
   }[];
 }
 
@@ -24,7 +28,6 @@ export interface TradingViewNewsItem {
   source: string;
   url: string;
   publishDate: number;
-  publishTime?: number;
   relatedSymbols: string[];
   sentiment?: 'positive' | 'negative' | 'neutral';
   category?: string;
@@ -55,9 +58,8 @@ export const syncWithTradingView = async (): Promise<boolean> => {
     // Update last sync timestamp
     lastSyncTimestamp = Date.now();
     
-    toast.success('הנתונים סונכרנו בהצלחה מ-TradingView', {
-      description: `המידע עודכן בהצלחה ב-${new Date().toLocaleTimeString('he-IL')}`
-    });
+    // Clear cache to force refresh
+    cachedChartData = {};
     
     return true;
   } catch (error) {
@@ -92,16 +94,42 @@ export const getChartData = async (symbol: string, timeframe: string = '1D'): Pr
     await new Promise(resolve => setTimeout(resolve, 800));
     
     // Generate sample price data
-    const dataPoints = 20;
-    const startPrice = symbol === 'BTCUSD' ? 68000 : 3200;
-    const volatility = symbol === 'BTCUSD' ? 1000 : 100;
-    const timeInterval = 3600 * 1000; // 1 hour in milliseconds
+    const dataPoints = 30;
+    let startPrice = 0;
+    let volatility = 0;
+    
+    if (symbol === 'BTCUSD') {
+      startPrice = 68000;
+      volatility = 1000;
+    } else if (symbol === 'ETHUSD') {
+      startPrice = 3200;
+      volatility = 100;
+    } else {
+      startPrice = 100;
+      volatility = 10;
+    }
+    
+    const timeInterval = getTimeIntervalByTimeframe(timeframe);
     
     const priceData = Array.from({ length: dataPoints }, (_, i) => {
       const randomChange = (Math.random() - 0.5) * volatility;
+      const price = startPrice + randomChange * (i / dataPoints);
+      const volume = Math.floor(Math.random() * 1000000) + 500000;
+      
+      // For candlestick chart data
+      const open = price - (Math.random() * 100);
+      const close = price;
+      const high = close + (Math.random() * 50);
+      const low = open - (Math.random() * 50);
+      
       return {
         timestamp: now - (dataPoints - i) * timeInterval,
-        price: startPrice + randomChange * (i / dataPoints)
+        price,
+        volume,
+        open,
+        high,
+        low,
+        close
       };
     });
     
@@ -110,7 +138,6 @@ export const getChartData = async (symbol: string, timeframe: string = '1D'): Pr
       timeframe,
       indicators: ['EMA(50)', 'EMA(200)', 'RSI', 'MACD'],
       lastUpdate: now,
-      lastUpdated: now,
       data: priceData
     };
     
@@ -121,6 +148,21 @@ export const getChartData = async (symbol: string, timeframe: string = '1D'): Pr
   } catch (error) {
     console.error(`Error fetching chart data for ${symbol}:`, error);
     return null;
+  }
+};
+
+const getTimeIntervalByTimeframe = (timeframe: string): number => {
+  switch (timeframe) {
+    case '1m': return 60 * 1000; // 1 minute
+    case '5m': return 5 * 60 * 1000; // 5 minutes
+    case '15m': return 15 * 60 * 1000; // 15 minutes
+    case '30m': return 30 * 60 * 1000; // 30 minutes
+    case '1h': return 60 * 60 * 1000; // 1 hour
+    case '4h': return 4 * 60 * 60 * 1000; // 4 hours
+    case '1D': return 24 * 60 * 60 * 1000; // 1 day
+    case '1W': return 7 * 24 * 60 * 60 * 1000; // 1 week
+    case '1M': return 30 * 24 * 60 * 60 * 1000; // 1 month (approximate)
+    default: return 24 * 60 * 60 * 1000; // Default to 1 day
   }
 };
 
@@ -155,7 +197,6 @@ export const getTradingViewNews = async (limit: number = 10): Promise<TradingVie
         source: 'TradingView',
         url: 'https://www.tradingview.com/news/1',
         publishDate: now - 2 * 60 * 60 * 1000, // 2 hours ago
-        publishTime: now - 2 * 60 * 60 * 1000, // 2 hours ago
         relatedSymbols: ['BTC', 'ETH', 'COIN'],
         sentiment: 'positive',
         category: 'קריפטו'
@@ -168,7 +209,6 @@ export const getTradingViewNews = async (limit: number = 10): Promise<TradingVie
         source: 'TradingView',
         url: 'https://www.tradingview.com/news/2',
         publishDate: now - 1 * 24 * 60 * 60 * 1000, // 1 day ago
-        publishTime: now - 1 * 24 * 60 * 60 * 1000, // 1 day ago
         relatedSymbols: ['SPY', 'QQQ', 'TLT'],
         sentiment: 'neutral',
         category: 'מניות'
@@ -181,10 +221,33 @@ export const getTradingViewNews = async (limit: number = 10): Promise<TradingVie
         source: 'TradingView',
         url: 'https://www.tradingview.com/news/3',
         publishDate: now - 12 * 60 * 60 * 1000, // 12 hours ago
-        publishTime: now - 12 * 60 * 60 * 1000, // 12 hours ago
         relatedSymbols: ['AAPL', 'MSFT', 'GOOGL'],
         sentiment: 'negative',
         category: 'מניות'
+      },
+      {
+        id: 'tv-news-4',
+        title: 'אתריום עולה בעקבות עדכון רשת משמעותי',
+        description: 'מחיר האתריום זינק ב-10% לאחר השלמת עדכון רשת מוצלח',
+        summary: 'מחיר האתריום זינק ב-10% לאחר השלמת עדכון רשת מוצלח',
+        source: 'TradingView',
+        url: 'https://www.tradingview.com/news/4',
+        publishDate: now - 6 * 60 * 60 * 1000, // 6 hours ago
+        relatedSymbols: ['ETH', 'BTC', 'SOL'],
+        sentiment: 'positive',
+        category: 'קריפטו'
+      },
+      {
+        id: 'tv-news-5',
+        title: 'מחיר הנפט יורד בעקבות חששות מהאטה כלכלית',
+        description: 'מחירי הנפט ירדו בשיעור חד בעקבות חששות מהאטה בביקושים העולמיים',
+        summary: 'מחירי הנפט ירדו בשיעור חד בעקבות חששות מהאטה בביקושים העולמיים',
+        source: 'TradingView',
+        url: 'https://www.tradingview.com/news/5',
+        publishDate: now - 8 * 60 * 60 * 1000, // 8 hours ago
+        relatedSymbols: ['OIL', 'USO', 'XOM'],
+        sentiment: 'negative',
+        category: 'סחורות'
       }
     ];
     

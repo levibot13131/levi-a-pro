@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
 import { useTradingViewConnection } from './use-tradingview-connection';
 import { 
   initializeTradingViewSync, 
@@ -20,6 +21,9 @@ export function useTradingViewIntegration() {
   const [realTimeUpdateInterval, setRealTimeUpdateInterval] = useState<NodeJS.Timeout | null>(null);
   
   useEffect(() => {
+    // Check initial sync status
+    setSyncEnabled(isSyncActive());
+    
     if (isConnected && !isSyncActive()) {
       const initialized = initializeTradingViewSync();
       setSyncEnabled(initialized);
@@ -34,12 +38,11 @@ export function useTradingViewIntegration() {
     }
     
     return () => {
-      stopTradingViewSync();
       stopRealTimeUpdates();
     };
   }, [isConnected]);
 
-  const startRealTimeUpdates = () => {
+  const startRealTimeUpdates = useCallback(() => {
     if (realTimeUpdateInterval) {
       clearInterval(realTimeUpdateInterval);
     }
@@ -48,19 +51,19 @@ export function useTradingViewIntegration() {
       if (!isSyncing && isConnected) {
         await manualSync(false);
       }
-    }, 30000);
+    }, 30000); // Update every 30 seconds
     
     setRealTimeUpdateInterval(interval);
     console.log('Real-time TradingView updates started');
-  };
+  }, [isConnected, isSyncing]);
   
-  const stopRealTimeUpdates = () => {
+  const stopRealTimeUpdates = useCallback(() => {
     if (realTimeUpdateInterval) {
       clearInterval(realTimeUpdateInterval);
       setRealTimeUpdateInterval(null);
       console.log('Real-time TradingView updates stopped');
     }
-  };
+  }, [realTimeUpdateInterval]);
   
   const manualSync = async (showToast: boolean = true) => {
     if (!isConnected) return false;
@@ -94,7 +97,7 @@ export function useTradingViewIntegration() {
     }
   };
   
-  const toggleAutoSync = () => {
+  const toggleAutoSync = useCallback(() => {
     if (syncEnabled) {
       stopTradingViewSync();
       stopRealTimeUpdates();
@@ -111,25 +114,25 @@ export function useTradingViewIntegration() {
         });
       }
     }
-  };
+  }, [syncEnabled, isConnected, startRealTimeUpdates, stopRealTimeUpdates]);
   
-  const fetchChartData = async (symbol: string, timeframe: string = '1D') => {
+  const fetchChartData = useCallback(async (symbol: string, timeframe: string = '1D'): Promise<TradingViewChartData | null> => {
     try {
       return await getChartData(symbol, timeframe);
     } catch (error) {
       console.error("Error fetching chart data:", error);
       return null;
     }
-  };
+  }, []);
   
-  const fetchNews = async (limit: number = 10) => {
+  const fetchNews = useCallback(async (limit: number = 10): Promise<TradingViewNewsItem[]> => {
     try {
       return await getTradingViewNews(limit);
     } catch (error) {
       console.error("Error fetching news:", error);
       return [];
     }
-  };
+  }, []);
   
   return {
     isConnected,
