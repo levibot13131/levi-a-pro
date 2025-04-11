@@ -1,16 +1,16 @@
 
 import React, { useState } from 'react';
-import { Container } from '@/components/ui/container';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Container } from '@/components/ui/container';
+import { toast } from 'sonner';
+import { History, BellRing, BarChart, BarChart4 } from 'lucide-react';
 import BacktestingForm from './BacktestingForm';
 import BacktestResults from './BacktestResults';
 import RealTimeAlerts from './RealTimeAlerts';
 import ComprehensiveAnalysis from './ComprehensiveAnalysis';
 import { BacktestSettings, BacktestResults as BacktestResultsType } from '@/services/backtesting/types';
 import { runBacktest } from '@/services/backtesting';
-import { toast } from 'sonner';
-import { History, BellRing, BarChart, BarChart4 } from 'lucide-react';
 
 const BacktestingSystem: React.FC = () => {
   const [activeTab, setActiveTab] = useState('backtest');
@@ -73,6 +73,7 @@ const BacktestingSystem: React.FC = () => {
             <CardContent>
               <BacktestingForm 
                 onRunBacktest={handleRunBacktest}
+                isLoading={isRunning}
               />
             </CardContent>
           </Card>
@@ -90,7 +91,7 @@ const BacktestingSystem: React.FC = () => {
           <div className="grid grid-cols-1 gap-6">
             <RealTimeAlerts
               assetIds={settings?.assetIds || [selectedAsset]}
-              settings={settings || { strategy: 'A.A', riskPerTrade: 1, initialCapital: 10000 }}
+              settings={settings || { strategy: 'A.A', riskPerTrade: 1, initialCapital: 10000, assetIds: [], timeframe: '1d', startDate: '', endDate: '', entryType: 'market', stopLossType: 'fixed', takeProfitType: 'fixed', riskRewardRatio: 2, trailingStop: false, maxOpenTrades: 1 }}
             />
           </div>
         </TabsContent>
