@@ -1,6 +1,7 @@
 
 import { toast } from 'sonner';
-import { TradingViewAlert, AlertDestination, getAlertDestinations } from './types';
+import { TradingViewAlert, AlertDestination } from './types';
+import { getAlertDestinations } from './destinations';
 import { isTradingViewConnected } from '../tradingViewAuthService';
 import { sendTelegramMessage, parseTelegramConfig } from '../telegramService';
 
