@@ -74,7 +74,7 @@ const TradingViewNews: React.FC<TradingViewNewsProps> = ({
   };
   
   const getCategoryColor = (category: string) => {
-    switch (category.toLowerCase()) {
+    switch (category?.toLowerCase()) {
       case 'crypto':
       case 'קריפטו':
         return 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-300';
@@ -96,7 +96,7 @@ const TradingViewNews: React.FC<TradingViewNewsProps> = ({
   };
   
   // Get unique categories from news
-  const categories = ['all', ...new Set(newsItems.map(item => item.category))];
+  const categories = ['all', ...new Set(newsItems.filter(item => item.category).map(item => item.category as string))];
   
   // Filter news by category
   const filteredNews = activeCategory === 'all' 
@@ -144,12 +144,14 @@ const TradingViewNews: React.FC<TradingViewNewsProps> = ({
                   {filteredNews.map((news, index) => (
                     <div key={index} className="border-b pb-4 last:border-b-0 last:pb-0">
                       <div className="flex justify-between items-start mb-2">
-                        <Badge className={getCategoryColor(news.category)}>
-                          {news.category}
-                        </Badge>
+                        {news.category && (
+                          <Badge className={getCategoryColor(news.category)}>
+                            {news.category}
+                          </Badge>
+                        )}
                         <h3 className="text-right font-medium text-base">{news.title}</h3>
                       </div>
-                      <p className="text-right text-sm text-muted-foreground mb-2">{news.summary}</p>
+                      <p className="text-right text-sm text-muted-foreground mb-2">{news.summary || news.description}</p>
                       <div className="flex justify-between items-center text-xs">
                         <a 
                           href={news.url} 
@@ -159,7 +161,7 @@ const TradingViewNews: React.FC<TradingViewNewsProps> = ({
                         >
                           קרא עוד <ExternalLink className="h-3 w-3 ml-1" />
                         </a>
-                        <span className="text-muted-foreground">{formatDate(news.publishTime)}</span>
+                        <span className="text-muted-foreground">{formatDate(news.publishDate)}</span>
                       </div>
                     </div>
                   ))}

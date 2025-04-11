@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useTradingViewConnection } from './use-tradingview-connection';
 import { 
@@ -20,7 +19,6 @@ export function useTradingViewIntegration() {
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
   const [realTimeUpdateInterval, setRealTimeUpdateInterval] = useState<NodeJS.Timeout | null>(null);
   
-  // Initialize or stop sync based on connection status
   useEffect(() => {
     if (isConnected && !isSyncActive()) {
       const initialized = initializeTradingViewSync();
@@ -36,30 +34,26 @@ export function useTradingViewIntegration() {
     }
     
     return () => {
-      // Clean up on unmount
       stopTradingViewSync();
       stopRealTimeUpdates();
     };
   }, [isConnected]);
 
-  // Start real-time updates
   const startRealTimeUpdates = () => {
     if (realTimeUpdateInterval) {
       clearInterval(realTimeUpdateInterval);
     }
     
-    // Set up interval to sync data every 30 seconds
     const interval = setInterval(async () => {
       if (!isSyncing && isConnected) {
         await manualSync(false);
       }
-    }, 30000); // 30 seconds
+    }, 30000);
     
     setRealTimeUpdateInterval(interval);
     console.log('Real-time TradingView updates started');
   };
   
-  // Stop real-time updates
   const stopRealTimeUpdates = () => {
     if (realTimeUpdateInterval) {
       clearInterval(realTimeUpdateInterval);
@@ -68,7 +62,6 @@ export function useTradingViewIntegration() {
     }
   };
   
-  // Manual sync function
   const manualSync = async (showToast: boolean = true) => {
     if (!isConnected) return false;
     
@@ -101,7 +94,6 @@ export function useTradingViewIntegration() {
     }
   };
   
-  // Toggle auto-sync
   const toggleAutoSync = () => {
     if (syncEnabled) {
       stopTradingViewSync();
@@ -121,7 +113,6 @@ export function useTradingViewIntegration() {
     }
   };
   
-  // Fetch chart data
   const fetchChartData = async (symbol: string, timeframe: string = '1D') => {
     try {
       return await getChartData(symbol, timeframe);
@@ -131,7 +122,6 @@ export function useTradingViewIntegration() {
     }
   };
   
-  // Fetch news
   const fetchNews = async (limit: number = 10) => {
     try {
       return await getTradingViewNews(limit);

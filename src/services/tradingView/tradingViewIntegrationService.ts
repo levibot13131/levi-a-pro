@@ -8,6 +8,11 @@ export interface TradingViewChartData {
   timeframe: string;
   indicators: string[];
   lastUpdate: number;
+  lastUpdated?: number;
+  data: {
+    timestamp: number;
+    price: number;
+  }[];
 }
 
 // Types for TradingView news item
@@ -15,11 +20,14 @@ export interface TradingViewNewsItem {
   id: string;
   title: string;
   description: string;
+  summary?: string;
   source: string;
   url: string;
   publishDate: number;
+  publishTime?: number;
   relatedSymbols: string[];
   sentiment?: 'positive' | 'negative' | 'neutral';
+  category?: string;
 }
 
 // Store for chart data and news
@@ -83,11 +91,27 @@ export const getChartData = async (symbol: string, timeframe: string = '1D'): Pr
     // For now, we'll simulate with mock data
     await new Promise(resolve => setTimeout(resolve, 800));
     
+    // Generate sample price data
+    const dataPoints = 20;
+    const startPrice = symbol === 'BTCUSD' ? 68000 : 3200;
+    const volatility = symbol === 'BTCUSD' ? 1000 : 100;
+    const timeInterval = 3600 * 1000; // 1 hour in milliseconds
+    
+    const priceData = Array.from({ length: dataPoints }, (_, i) => {
+      const randomChange = (Math.random() - 0.5) * volatility;
+      return {
+        timestamp: now - (dataPoints - i) * timeInterval,
+        price: startPrice + randomChange * (i / dataPoints)
+      };
+    });
+    
     const mockData: TradingViewChartData = {
       symbol,
       timeframe,
       indicators: ['EMA(50)', 'EMA(200)', 'RSI', 'MACD'],
-      lastUpdate: now
+      lastUpdate: now,
+      lastUpdated: now,
+      data: priceData
     };
     
     // Cache the data
@@ -127,31 +151,40 @@ export const getTradingViewNews = async (limit: number = 10): Promise<TradingVie
         id: 'tv-news-1',
         title: 'ביטקוין שובר שיא חדש מעל $73,000',
         description: 'המטבע הדיגיטלי המוביל שבר שיא כל הזמנים חדש לאחר אישור ה-ETF',
+        summary: 'המטבע הדיגיטלי המוביל שבר שיא כל הזמנים חדש לאחר אישור ה-ETF',
         source: 'TradingView',
         url: 'https://www.tradingview.com/news/1',
         publishDate: now - 2 * 60 * 60 * 1000, // 2 hours ago
+        publishTime: now - 2 * 60 * 60 * 1000, // 2 hours ago
         relatedSymbols: ['BTC', 'ETH', 'COIN'],
-        sentiment: 'positive'
+        sentiment: 'positive',
+        category: 'קריפטו'
       },
       {
         id: 'tv-news-2',
         title: 'הפד שומר על ריבית ללא שינוי',
         description: 'הבנק המרכזי האמריקאי הותיר את הריבית ללא שינוי בישיבה האחרונה',
+        summary: 'הבנק המרכזי האמריקאי הותיר את הריבית ללא שינוי בישיבה האחרונה',
         source: 'TradingView',
         url: 'https://www.tradingview.com/news/2',
         publishDate: now - 1 * 24 * 60 * 60 * 1000, // 1 day ago
+        publishTime: now - 1 * 24 * 60 * 60 * 1000, // 1 day ago
         relatedSymbols: ['SPY', 'QQQ', 'TLT'],
-        sentiment: 'neutral'
+        sentiment: 'neutral',
+        category: 'מניות'
       },
       {
         id: 'tv-news-3',
         title: 'מניות הטכנולוגיה מתקנות בחדות',
         description: 'מניות חברות הטכנולוגיה חוות ירידות חדות בעקבות דוחות מאכזבים',
+        summary: 'מניות חברות הטכנולוגיה חוות ירידות חדות בעקבות דוחות מאכזבים',
         source: 'TradingView',
         url: 'https://www.tradingview.com/news/3',
         publishDate: now - 12 * 60 * 60 * 1000, // 12 hours ago
+        publishTime: now - 12 * 60 * 60 * 1000, // 12 hours ago
         relatedSymbols: ['AAPL', 'MSFT', 'GOOGL'],
-        sentiment: 'negative'
+        sentiment: 'negative',
+        category: 'מניות'
       }
     ];
     

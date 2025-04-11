@@ -163,8 +163,8 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
             <div className="flex justify-between items-center mt-1">
               <span className="text-muted-foreground">עדכון אחרון:</span>
               <span>
-                {chartData.lastUpdated 
-                  ? new Date(chartData.lastUpdated).toLocaleTimeString('he-IL') 
+                {chartData.lastUpdate 
+                  ? new Date(chartData.lastUpdate).toLocaleTimeString('he-IL') 
                   : 'לא זמין'}
               </span>
             </div>
