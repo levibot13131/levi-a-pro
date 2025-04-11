@@ -4,3 +4,4 @@ export * from './alertSystem';
 export * from './signalGenerator';
 export * from './signalStorage';
 export * from './analysisGenerator';
+export * from './comprehensiveAnalysis';

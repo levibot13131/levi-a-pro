@@ -6,12 +6,14 @@ interface EmptyStateProps {
   icon?: ReactNode;
   message: string;
   className?: string;
+  children?: ReactNode; // Added children prop
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({ 
   icon = <AlertTriangle className="h-10 w-10 text-yellow-500" />,
   message,
-  className = ''
+  className = '',
+  children
 }) => {
   return (
     <div className={`text-center p-10 ${className}`}>
@@ -19,6 +21,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({
         {icon}
       </div>
       <p>{message}</p>
+      {children && <div className="mt-4">{children}</div>}
     </div>
   );
 };
