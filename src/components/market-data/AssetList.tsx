@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Asset } from '@/types/asset';
 import { Badge } from '@/components/ui/badge';
@@ -36,11 +35,9 @@ const AssetList: React.FC<AssetListProps> = ({ assets, isLoading = false, onAsse
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
   const [selectedType, setSelectedType] = useState<string>('all');
   
-  // Filter and sort assets
   useEffect(() => {
     let result = [...assets];
     
-    // Filter by search query
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(asset => 
@@ -49,12 +46,10 @@ const AssetList: React.FC<AssetListProps> = ({ assets, isLoading = false, onAsse
       );
     }
     
-    // Filter by asset type
     if (selectedType !== 'all') {
       result = result.filter(asset => asset.type === selectedType);
     }
     
-    // Sort assets
     result.sort((a, b) => {
       const aValue = a[sortField];
       const bValue = b[sortField];
@@ -63,7 +58,6 @@ const AssetList: React.FC<AssetListProps> = ({ assets, isLoading = false, onAsse
         return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
       }
       
-      // For string values
       const aString = String(aValue).toLowerCase();
       const bString = String(bValue).toLowerCase();
       return sortDirection === 'asc' 
@@ -106,9 +100,9 @@ const AssetList: React.FC<AssetListProps> = ({ assets, isLoading = false, onAsse
             <TabsList>
               <TabsTrigger value="all">הכל</TabsTrigger>
               <TabsTrigger value="crypto">קריפטו</TabsTrigger>
-              <TabsTrigger value="stock">מניות</TabsTrigger>
+              <TabsTrigger value="stocks">מניות</TabsTrigger>
               <TabsTrigger value="forex">מט"ח</TabsTrigger>
-              <TabsTrigger value="commodity">סחורות</TabsTrigger>
+              <TabsTrigger value="commodities">סחורות</TabsTrigger>
             </TabsList>
           </Tabs>
         </div>

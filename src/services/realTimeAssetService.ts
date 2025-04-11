@@ -1,4 +1,3 @@
-
 import { Asset } from '@/types/asset';
 import { toast } from 'sonner';
 
@@ -41,7 +40,7 @@ const generateMockAssets = (market: string, count: number = 50): Asset[] => {
       marketCap: price * (1_000_000 + Math.random() * 10_000_000),
       volume24h: price * (500_000 + Math.random() * 2_000_000),
       change24h,
-      type: market as 'crypto' | 'stock' | 'forex' | 'commodity',
+      type: market as 'crypto' | 'stocks' | 'forex' | 'commodities',
       imageUrl: `/assets/${market}/${prefix.toLowerCase()}.png`
     });
   }

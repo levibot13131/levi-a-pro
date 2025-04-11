@@ -1,7 +1,4 @@
 
-// This file was previously missing but is referenced from index.ts
-// Adding a basic implementation to avoid build errors
-
 import { TradeSignal } from "@/types/asset";
 
 export interface SignalAnalysisResult {
@@ -13,10 +10,15 @@ export interface SignalAnalysisResult {
   topAssets: string[];
   marketSentiment: 'bullish' | 'bearish' | 'neutral';
   signalStrength: number;
+  // Add missing properties
+  summary: string;
+  recommendation: string;
+  buyToSellRatio?: string;
+  mostCommonStrategy?: string;
 }
 
 export const generateSignalAnalysis = (assetId?: string): SignalAnalysisResult => {
-  // This is a mock implementation
+  // This is a mock implementation with all required properties
   return {
     totalSignals: 0,
     buySignals: 0,
@@ -25,6 +27,8 @@ export const generateSignalAnalysis = (assetId?: string): SignalAnalysisResult =
     recentSignals: 0,
     topAssets: [],
     marketSentiment: 'neutral',
-    signalStrength: 5
+    signalStrength: 5,
+    summary: 'אין מספיק נתונים לניתוח מקיף', // No sufficient data for comprehensive analysis
+    recommendation: 'המתן לנתונים נוספים' // Wait for more data
   };
 };

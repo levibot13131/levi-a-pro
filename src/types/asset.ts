@@ -6,8 +6,8 @@ export interface Asset {
   marketCap: number;
   volume24h: number;
   change24h: number;
+  type: 'crypto' | 'stocks' | 'forex' | 'commodities';
   imageUrl?: string;
-  type?: 'crypto' | 'stock' | 'forex' | 'commodity';
 }
 
 export type TimeframeType = '1m' | '3m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w' | '1M' | '1y' | 'all';
