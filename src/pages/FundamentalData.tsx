@@ -11,7 +11,7 @@ import {
   FinancialDataSource, 
   MarketInfluencer, 
   MarketEvent 
-} from '@/services/marketInformationService';
+} from '@/types/marketInformation';
 
 const FundamentalData = () => {
   const [selectedAssetId, setSelectedAssetId] = useState<string>('bitcoin');
@@ -39,112 +39,119 @@ const FundamentalData = () => {
     nextHalving: '2024-04-15'
   };
   
-  // Mock financial data sources
+  // Mock financial data sources that match the correct type
   const financialDataSources: FinancialDataSource[] = [
     {
       id: 'source1',
       name: 'Glassnode',
-      url: 'https://glassnode.com',
-      category: 'on-chain',
-      dataPoints: ['פעילות רשת', 'התפלגות ארנקים', 'אוהולד רווח/הפסד'],
       description: 'מספק מידע מקיף על-פי ניתוח שרשרת הבלוקים של ביטקוין ואתריום',
-      reliabilityRating: 95
+      url: 'https://glassnode.com',
+      category: 'data',
+      reliability: 95,
+      accessType: 'paid',
+      languages: ['English', 'Hebrew'],
+      updateFrequency: 'Daily',
+      focused: true
     },
     {
       id: 'source2',
       name: 'CoinMetrics',
-      url: 'https://coinmetrics.io',
-      category: 'on-chain',
-      dataPoints: ['זרימת כספים', 'פעילות מוסדית', 'מדדי בריאות רשת'],
       description: 'מתמחה בניתוח זרימת כספים בין בורסות וארנקים מוסדיים',
-      reliabilityRating: 92
+      url: 'https://coinmetrics.io',
+      category: 'data',
+      reliability: 92,
+      accessType: 'freemium',
+      languages: ['English'],
+      updateFrequency: 'Real-time',
+      focused: false
     },
     {
       id: 'source3',
       name: 'The Block',
+      description: 'אתר חדשות ומחקר מוביל בתחום הקריפטו עם דגש על דיוק ואמינות',
       url: 'https://www.theblockcrypto.com',
       category: 'news',
-      dataPoints: ['חדשות שוק', 'רגולציה', 'דוחות מחקר'],
-      description: 'אתר חדשות ומחקר מוביל בתחום הקריפטו עם דגש על דיוק ואמינות',
-      reliabilityRating: 90
+      reliability: 90,
+      accessType: 'freemium',
+      languages: ['English'],
+      updateFrequency: 'Hourly',
+      focused: true
     },
     {
       id: 'source4',
       name: 'Bank of America',
-      url: 'https://www.bankofamerica.com',
-      category: 'financial',
-      dataPoints: ['דוחות מאקרו', 'תחזיות כלכליות', 'ניתוחי שווקים'],
       description: 'דוחות אנליסטים מהבנק עם דגש על השפעת הקריפטו על שווקים מסורתיים',
-      reliabilityRating: 88
+      url: 'https://www.bankofamerica.com',
+      category: 'analysis',
+      reliability: 88,
+      accessType: 'paid',
+      languages: ['English', 'Spanish'],
+      updateFrequency: 'Weekly',
+      focused: false
     },
     {
       id: 'source5',
       name: 'ארקייה ריסרץ׳',
-      url: 'https://www.arkresearch.io',
-      category: 'research',
-      dataPoints: ['דוחות עומק', 'תחזיות טכנולוגיות', 'הערכות שווי'],
       description: 'מחקרים מקיפים לגבי פוטנציאל הטכנולוגי והעסקי של פרויקטים בתחום',
-      reliabilityRating: 93
+      url: 'https://www.arkresearch.io',
+      category: 'analysis',
+      reliability: 93,
+      accessType: 'paid',
+      languages: ['English', 'Hebrew'],
+      updateFrequency: 'Monthly',
+      focused: true
     }
   ];
   
-  // Mock market events
+  // Mock market events that match the correct type
   const marketEvents: MarketEvent[] = [
     {
       id: 'event1',
       title: 'החלטת ריבית של הפד',
+      description: 'החלטת ריבית של הבנק הפדרלי האמריקאי. צפי להשארת הריבית ללא שינוי על 5.5%.',
       date: '2024-04-30',
       category: 'economic',
-      impact: 'high',
-      description: 'החלטת ריבית של הבנק הפדרלי האמריקאי. צפי להשארת הריבית ללא שינוי על 5.5%.',
-      expectedVolatility: 'medium',
-      assetImpact: {
-        bitcoin: 'medium',
-        ethereum: 'medium',
-        stocks: 'high'
-      }
+      importance: 'high',
+      relatedAssets: ['bitcoin', 'ethereum', 'stocks'],
+      expectedImpact: 'variable',
+      source: 'Federal Reserve',
+      reminder: false
     },
     {
       id: 'event2',
       title: 'הנפקת ETF ביטקוין בגרמניה',
-      date: '2024-04-22',
-      category: 'crypto',
-      impact: 'medium',
       description: 'השקת קרנות ETF מבוססות ביטקוין בבורסה הגרמנית. צפויה להגדיל את החשיפה המוסדית באירופה.',
-      expectedVolatility: 'medium',
-      assetImpact: {
-        bitcoin: 'high',
-        ethereum: 'low',
-        stocks: 'low'
-      }
+      date: '2024-04-22',
+      category: 'regulatory',
+      importance: 'medium',
+      relatedAssets: ['bitcoin'],
+      expectedImpact: 'positive',
+      source: 'German Stock Exchange',
+      reminder: true
     },
     {
       id: 'event3',
       title: 'דוחות רבעוניים אפל',
-      date: '2024-05-02',
-      category: 'financial',
-      impact: 'high',
       description: 'פרסום דוחות הרבעון השני של אפל לשנת 2024. צפי: הכנסות של $96.5 מיליארד.',
-      expectedVolatility: 'high',
-      assetImpact: {
-        bitcoin: 'low',
-        ethereum: 'low',
-        stocks: 'high'
-      }
+      date: '2024-05-02',
+      category: 'earnings',
+      importance: 'high',
+      relatedAssets: ['stocks'],
+      expectedImpact: 'variable',
+      source: 'Apple Inc.',
+      reminder: false
     },
     {
       id: 'event4',
       title: 'עדכון רשת אתריום',
-      date: '2024-06-12',
-      category: 'crypto',
-      impact: 'high',
       description: 'עדכון רשת משמעותי לאתריום שיפחית עמלות וישפר את ביצועי הרשת.',
-      expectedVolatility: 'high',
-      assetImpact: {
-        bitcoin: 'medium',
-        ethereum: 'very high',
-        stocks: 'low'
-      }
+      date: '2024-06-12',
+      category: 'other',
+      importance: 'high',
+      relatedAssets: ['ethereum'],
+      expectedImpact: 'positive',
+      source: 'Ethereum Foundation',
+      reminder: true
     }
   ];
   
@@ -197,37 +204,42 @@ const FundamentalData = () => {
   // Helper functions for styling
   const getCategoryBadge = (category: string) => {
     switch (category) {
-      case 'on-chain':
-        return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">On-Chain</Badge>;
+      case 'data':
+        return <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">נתונים</Badge>;
       case 'news':
         return <Badge className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">חדשות</Badge>;
-      case 'financial':
-        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">פיננסי</Badge>;
-      case 'research':
-        return <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300">מחקר</Badge>;
+      case 'analysis':
+        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">אנליזה</Badge>;
+      case 'social':
+        return <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300">חברתי</Badge>;
       case 'economic':
         return <Badge className="bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-300">כלכלי</Badge>;
-      case 'crypto':
-        return <Badge className="bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-300">קריפטו</Badge>;
+      case 'regulatory':
+        return <Badge className="bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-300">רגולציה</Badge>;
       case 'technology':
         return <Badge className="bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-300">טכנולוגי</Badge>;
       case 'market':
         return <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-300">שוק</Badge>;
+      case 'earnings':
+        return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">דוחות</Badge>;
+      case 'other':
+        return <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300">אחר</Badge>;
       default:
         return <Badge variant="outline">{category}</Badge>;
     }
   };
   
-  const getImpactBadge = (impact: string) => {
-    switch (impact) {
+  const getImportanceBadge = (importance: string) => {
+    switch (importance) {
       case 'high':
+      case 'critical':
         return <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">השפעה גבוהה</Badge>;
       case 'medium':
         return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">השפעה בינונית</Badge>;
       case 'low':
         return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">השפעה נמוכה</Badge>;
       default:
-        return <Badge variant="outline">{impact}</Badge>;
+        return <Badge variant="outline">{importance}</Badge>;
     }
   };
   
@@ -389,10 +401,10 @@ const FundamentalData = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">כל הקטגוריות</SelectItem>
-                <SelectItem value="on-chain">מידע On-Chain</SelectItem>
+                <SelectItem value="data">נתונים</SelectItem>
                 <SelectItem value="news">חדשות</SelectItem>
-                <SelectItem value="financial">פיננסי</SelectItem>
-                <SelectItem value="research">מחקר</SelectItem>
+                <SelectItem value="analysis">אנליזה</SelectItem>
+                <SelectItem value="social">רשתות חברתיות</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -413,20 +425,20 @@ const FundamentalData = () => {
                   <div className="space-y-3">
                     <p className="text-right">{source.description}</p>
                     <div>
-                      <h4 className="font-medium text-right mb-1">סוגי מידע:</h4>
+                      <h4 className="font-medium text-right mb-1">שפות זמינות:</h4>
                       <div className="flex flex-wrap gap-2 justify-end">
-                        {source.dataPoints.map((point, idx) => (
-                          <Badge key={idx} variant="outline">{point}</Badge>
+                        {source.languages.map((language, idx) => (
+                          <Badge key={idx} variant="outline">{language}</Badge>
                         ))}
                       </div>
                     </div>
                     <div className="flex justify-between items-center pt-2">
                       <div className="flex gap-1 items-center">
                         <div className={`h-2 w-2 rounded-full ${
-                          source.reliabilityRating > 90 ? 'bg-green-500' : 
-                          source.reliabilityRating > 80 ? 'bg-yellow-500' : 'bg-red-500'
+                          source.reliability > 90 ? 'bg-green-500' : 
+                          source.reliability > 80 ? 'bg-yellow-500' : 'bg-red-500'
                         }`}></div>
-                        <span className="text-sm">{source.reliabilityRating}/100</span>
+                        <span className="text-sm">{source.reliability}/100</span>
                       </div>
                       <div className="text-sm font-medium text-right">דירוג אמינות:</div>
                     </div>
@@ -445,7 +457,7 @@ const FundamentalData = () => {
                   <div className="flex justify-between items-start">
                     <div className="flex gap-2">
                       {getCategoryBadge(event.category)}
-                      {getImpactBadge(event.impact)}
+                      {getImportanceBadge(event.importance)}
                     </div>
                     <CardTitle className="text-right">{event.title}</CardTitle>
                   </div>
@@ -460,68 +472,37 @@ const FundamentalData = () => {
                     
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <h4 className="font-medium text-right mb-1">תנודתיות צפויה:</h4>
+                        <h4 className="font-medium text-right mb-1">השפעה צפויה:</h4>
                         <div className="text-right">
                           <Badge className={`
-                            ${event.expectedVolatility === 'high' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' : 
-                              event.expectedVolatility === 'medium' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' : 
-                              'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'}
+                            ${event.expectedImpact === 'positive' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 
+                              event.expectedImpact === 'negative' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' : 
+                              'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'}
                           `}>
-                            {event.expectedVolatility === 'high' ? 'גבוהה' : 
-                             event.expectedVolatility === 'medium' ? 'בינונית' : 'נמוכה'}
+                            {event.expectedImpact === 'positive' ? 'חיובית' : 
+                             event.expectedImpact === 'negative' ? 'שלילית' : 
+                             event.expectedImpact === 'neutral' ? 'נייטרלית' : 'משתנה'}
                           </Badge>
                         </div>
                       </div>
                       
                       <div>
-                        <h4 className="font-medium text-right mb-1">השפעה על נכסים:</h4>
+                        <h4 className="font-medium text-right mb-1">נכסים קשורים:</h4>
                         <div className="space-y-1 text-right">
-                          <div className="flex justify-end items-center gap-2">
-                            <Badge className={`
-                              ${event.assetImpact.bitcoin === 'high' || event.assetImpact.bitcoin === 'very high' ? 
-                                'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' : 
-                                event.assetImpact.bitcoin === 'medium' ? 
-                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' : 
-                                'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'}
-                            `}>
-                              {event.assetImpact.bitcoin === 'very high' ? 'גבוהה מאוד' :
-                               event.assetImpact.bitcoin === 'high' ? 'גבוהה' : 
-                               event.assetImpact.bitcoin === 'medium' ? 'בינונית' : 'נמוכה'}
+                          {event.relatedAssets?.map((asset, index) => (
+                            <Badge key={index} variant="outline" className="mr-1">
+                              {asset}
                             </Badge>
-                            <span>ביטקוין:</span>
-                          </div>
-                          
-                          <div className="flex justify-end items-center gap-2">
-                            <Badge className={`
-                              ${event.assetImpact.ethereum === 'high' || event.assetImpact.ethereum === 'very high' ? 
-                                'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' : 
-                                event.assetImpact.ethereum === 'medium' ? 
-                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' : 
-                                'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'}
-                            `}>
-                              {event.assetImpact.ethereum === 'very high' ? 'גבוהה מאוד' :
-                               event.assetImpact.ethereum === 'high' ? 'גבוהה' : 
-                               event.assetImpact.ethereum === 'medium' ? 'בינונית' : 'נמוכה'}
-                            </Badge>
-                            <span>אתריום:</span>
-                          </div>
-                          
-                          <div className="flex justify-end items-center gap-2">
-                            <Badge className={`
-                              ${event.assetImpact.stocks === 'high' || event.assetImpact.stocks === 'very high' ? 
-                                'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300' : 
-                                event.assetImpact.stocks === 'medium' ? 
-                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' : 
-                                'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'}
-                            `}>
-                              {event.assetImpact.stocks === 'very high' ? 'גבוהה מאוד' :
-                               event.assetImpact.stocks === 'high' ? 'גבוהה' : 
-                               event.assetImpact.stocks === 'medium' ? 'בינונית' : 'נמוכה'}
-                            </Badge>
-                            <span>מניות:</span>
-                          </div>
+                          ))}
                         </div>
                       </div>
+                    </div>
+                    
+                    <div className="flex justify-between items-center pt-2">
+                      <Badge variant={event.reminder ? "default" : "outline"}>
+                        {event.reminder ? 'תזכורת מוגדרת' : 'אין תזכורת'}
+                      </Badge>
+                      <div className="text-sm font-medium text-right">מקור: {event.source}</div>
                     </div>
                   </div>
                 </CardContent>
