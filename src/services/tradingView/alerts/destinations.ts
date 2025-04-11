@@ -21,6 +21,12 @@ export const getAlertDestinations = (): AlertDestination[] => {
       name: '{"botToken":"","chatId":""}',
       type: 'telegram',
       active: false
+    },
+    {
+      id: uuidv4(),
+      name: '',
+      type: 'whatsapp',
+      active: false
     }
   ];
   

@@ -7,8 +7,13 @@ import SyncStatusDisplay from '../components/tradingview/integration/SyncStatusD
 import SyncControls from '../components/tradingview/integration/SyncControls';
 import { useTradingViewPage } from '../hooks/use-tradingview-page';
 import TelegramIntegration from '../components/tradingview/TelegramIntegration';
+import WhatsAppIntegration from '../components/tradingview/WhatsAppIntegration';
+import IntegrationGuide from '../components/technical-analysis/integration/IntegrationGuide';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageSquare, Link2, Share2 } from 'lucide-react';
+import { MessageSquare, Link2, Share2, HelpCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { sendAlert } from '@/services/tradingView/tradingViewAlertService';
 
 const TradingViewIntegration: React.FC = () => {
   const {
@@ -23,18 +28,42 @@ const TradingViewIntegration: React.FC = () => {
     handleManualRefresh
   } = useTradingViewPage();
   
+  // פונקציה לשליחת התראת בדיקה
+  const sendTestAlert = () => {
+    sendAlert({
+      symbol: "TEST",
+      message: "זוהי הודעת בדיקה מהמערכת",
+      indicators: ["System Test"],
+      timeframe: "1d",
+      timestamp: Date.now(),
+      price: 50000,
+      action: 'info',
+      details: "בדיקת חיבור ושליחת הודעות"
+    });
+
+    toast.success("הודעת בדיקה נשלחה", {
+      description: "ההודעה נשלחה לכל היעדים המוגדרים"
+    });
+  };
+  
   return (
     <Container className="py-6">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-right">אינטגרציה עם TradingView</h1>
         
-        {isConnected && (
-          <SyncControls 
-            activeTab={activeTab}
-            isSyncing={isSyncing}
-            handleManualRefresh={handleManualRefresh}
-          />
-        )}
+        <div className="flex gap-2">
+          {isConnected && (
+            <SyncControls 
+              activeTab={activeTab}
+              isSyncing={isSyncing}
+              handleManualRefresh={handleManualRefresh}
+            />
+          )}
+          
+          <Button variant="outline" onClick={sendTestAlert}>
+            שלח התראת בדיקה
+          </Button>
+        </div>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -52,14 +81,18 @@ const TradingViewIntegration: React.FC = () => {
       </div>
       
       <Tabs defaultValue="integration" className="space-y-4">
-        <TabsList className="w-full md:w-[400px] grid grid-cols-2">
+        <TabsList className="w-full md:w-[400px] grid grid-cols-3">
           <TabsTrigger value="integration">
             <Link2 className="h-4 w-4 mr-2" />
-            אינטגרציה עם טריידינגויו
+            אינטגרציה
           </TabsTrigger>
           <TabsTrigger value="messages">
             <MessageSquare className="h-4 w-4 mr-2" />
-            התראות והודעות
+            התראות
+          </TabsTrigger>
+          <TabsTrigger value="guide">
+            <HelpCircle className="h-4 w-4 mr-2" />
+            מדריך הקמה
           </TabsTrigger>
         </TabsList>
 
@@ -74,15 +107,12 @@ const TradingViewIntegration: React.FC = () => {
         <TabsContent value="messages">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <TelegramIntegration />
-            
-            <div className="bg-card border rounded-lg p-6 flex flex-col justify-center items-center">
-              <Share2 className="h-12 w-12 text-primary opacity-50 mb-4" />
-              <h3 className="text-lg font-bold mb-2">יעדי התראה נוספים בקרוב</h3>
-              <p className="text-center text-sm text-muted-foreground">
-                בקרוב נוסיף יעדי התראה נוספים כגון אימייל ו-SMS
-              </p>
-            </div>
+            <WhatsAppIntegration />
           </div>
+        </TabsContent>
+        
+        <TabsContent value="guide">
+          <IntegrationGuide />
         </TabsContent>
       </Tabs>
     </Container>
