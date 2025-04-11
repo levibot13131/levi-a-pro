@@ -16,21 +16,34 @@ export const generateComprehensiveAnalysis = (assetId: string, timeframe: string
   // and placeholder data for other aspects that would be in a comprehensive analysis
   return {
     signalAnalysis,
-    historicalAnalysis: {
+    historical: {
+      keyEvents: [],
       trends: [],
-      support: [],
-      resistance: [],
-      summary: "Historical analysis data would be populated here"
+      cyclicalPatterns: []
     },
-    currentAnalysis: {
-      indicators: [],
-      patterns: [],
-      summary: "Current market analysis would be populated here"
+    current: {
+      marketCondition: 'sideways',
+      sentimentAnalysis: {
+        overall: 'ניטרלי',
+        social: 'מעורב',
+        news: 'חיובי',
+        fearGreedIndex: 50
+      },
+      keyLevels: [],
+      technicalIndicators: []
     },
-    futureAnalysis: {
-      projections: [],
-      scenarios: [],
-      summary: "Future projections would be populated here"
+    future: {
+      shortTerm: {
+        prediction: 'דשדוש',
+        confidence: 60,
+        keyLevels: [],
+        significantEvents: []
+      },
+      longTerm: {
+        trend: 'מעורב',
+        keyFactors: [],
+        scenarios: []
+      }
     }
   };
 };

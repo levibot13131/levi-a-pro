@@ -75,35 +75,35 @@ interface AnalysisTabsProps {
 }
 
 const AnalysisTabs: React.FC<AnalysisTabsProps> = ({ analysis }) => {
-  // Fallback for null/undefined analysis data
-  const safeAnalysis = analysis || {
+  // Create a safe version of the analysis with default values for all required properties
+  const safeAnalysis = {
     historical: {
-      keyEvents: [],
-      trends: [],
-      cyclicalPatterns: []
+      keyEvents: analysis.historical?.keyEvents || [],
+      trends: analysis.historical?.trends || [],
+      cyclicalPatterns: analysis.historical?.cyclicalPatterns || []
     },
     current: {
-      marketCondition: '',
+      marketCondition: analysis.current?.marketCondition || '',
       sentimentAnalysis: {
-        overall: '',
-        social: '',
-        news: '',
-        fearGreedIndex: 0
+        overall: analysis.current?.sentimentAnalysis?.overall || '',
+        social: analysis.current?.sentimentAnalysis?.social || '',
+        news: analysis.current?.sentimentAnalysis?.news || '',
+        fearGreedIndex: analysis.current?.sentimentAnalysis?.fearGreedIndex || 0
       },
-      keyLevels: [],
-      technicalIndicators: []
+      keyLevels: analysis.current?.keyLevels || [],
+      technicalIndicators: analysis.current?.technicalIndicators || []
     },
     future: {
       shortTerm: {
-        prediction: '',
-        confidence: 0,
-        keyLevels: [],
-        significantEvents: []
+        prediction: analysis.future?.shortTerm?.prediction || '',
+        confidence: analysis.future?.shortTerm?.confidence || 0,
+        keyLevels: analysis.future?.shortTerm?.keyLevels || [],
+        significantEvents: analysis.future?.shortTerm?.significantEvents || []
       },
       longTerm: {
-        trend: '',
-        keyFactors: [],
-        scenarios: []
+        trend: analysis.future?.longTerm?.trend || '',
+        keyFactors: analysis.future?.longTerm?.keyFactors || [],
+        scenarios: analysis.future?.longTerm?.scenarios || []
       }
     }
   };
