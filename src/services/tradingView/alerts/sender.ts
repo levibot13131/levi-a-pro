@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 import { TradingViewAlert, AlertDestination } from './types';
 import { getAlertDestinations } from './destinations';
