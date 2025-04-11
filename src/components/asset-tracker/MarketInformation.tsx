@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getUpcomingMarketEvents } from '@/services/marketInformation';
+import { getUpcomingMarketEvents } from '@/services/marketInformationService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Newspaper, Users, Calendar } from 'lucide-react';

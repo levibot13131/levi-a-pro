@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageSquare, Twitter, Users, Trending, AlertTriangle } from 'lucide-react';
+import { MessageSquare, Twitter, Users, TrendingUp, AlertTriangle } from 'lucide-react';
 import { getAssets } from '@/services/mockDataService';
 
 const SocialMonitoring = () => {
@@ -18,7 +17,6 @@ const SocialMonitoring = () => {
     queryFn: getAssets,
   });
   
-  // Mock data for social posts
   const socialPosts = [
     {
       id: 'post1',
@@ -97,7 +95,6 @@ const SocialMonitoring = () => {
     }
   ];
   
-  // Mock data for influential figures
   const influencers = [
     {
       id: 'inf1',
@@ -137,7 +134,6 @@ const SocialMonitoring = () => {
     }
   ];
   
-  // Mock data for forums and groups
   const forums = [
     {
       id: 'forum1',
@@ -177,7 +173,6 @@ const SocialMonitoring = () => {
     }
   ];
   
-  // Helper function for sentiment styling
   const getSentimentStyle = (sentiment: string) => {
     switch (sentiment) {
       case 'bullish':
@@ -193,7 +188,6 @@ const SocialMonitoring = () => {
     }
   };
   
-  // Helper function for platform icons
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
       case 'twitter':
@@ -209,7 +203,6 @@ const SocialMonitoring = () => {
     }
   };
   
-  // Format date helper
   const formatDate = (isoDate: string) => {
     const date = new Date(isoDate);
     return date.toLocaleDateString('he-IL') + ' ' + date.toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' });
@@ -252,7 +245,7 @@ const SocialMonitoring = () => {
             פוסטים ואזכורים
           </TabsTrigger>
           <TabsTrigger value="influencers" className="flex items-center gap-1">
-            <Trending className="h-4 w-4" />
+            <TrendingUp className="h-4 w-4" />
             אושיות משפיעות
           </TabsTrigger>
           <TabsTrigger value="forums" className="flex items-center gap-1">

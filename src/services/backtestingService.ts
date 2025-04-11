@@ -10,7 +10,7 @@ export * from './whaleTrackerService';
 
 // Re-export from marketInformationService but exclude timeRangeOptions to avoid conflict
 // and properly re-export the types
-export {
+import {
   getInformationSources,
   getMarketInfluencers,
   getUpcomingMarketEvents,
@@ -19,6 +19,16 @@ export {
   setEventReminder,
   addCustomEvent
 } from './marketInformationService';
+
+export {
+  getInformationSources,
+  getMarketInfluencers,
+  getUpcomingMarketEvents,
+  toggleSourceFocus,
+  toggleInfluencerFollow,
+  setEventReminder,
+  addCustomEvent
+};
 
 // Re-export the types with proper type annotations
 export type { FinancialDataSource, MarketInfluencer, MarketEvent } from './marketInformationService';

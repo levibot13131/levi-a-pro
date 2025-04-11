@@ -1,6 +1,12 @@
 
 import { toast } from 'sonner';
+import { 
+  FinancialDataSource as NewFinancialDataSource,
+  MarketInfluencer as NewMarketInfluencer,
+  MarketEvent as NewMarketEvent
+} from '@/types/marketInformation';
 
+// Legacy type definitions - kept for compatibility
 export interface FinancialDataSource {
   id: string;
   name: string;
@@ -9,6 +15,12 @@ export interface FinancialDataSource {
   dataPoints: string[];
   description: string;
   reliabilityRating: number;
+  // Add missing properties to match NewFinancialDataSource
+  reliability?: number;
+  accessType?: 'free' | 'paid' | 'api' | 'freemium';
+  languages?: string[];
+  updateFrequency?: string;
+  focused?: boolean;
 }
 
 export interface MarketInfluencer {
@@ -19,6 +31,16 @@ export interface MarketInfluencer {
   influence: number;
   recentStatements: string[];
   sentiment: 'bullish' | 'bearish' | 'neutral';
+  // Add missing properties to match NewMarketInfluencer
+  description?: string;
+  platforms?: {
+    type: 'twitter' | 'linkedin' | 'youtube' | 'blog' | 'other';
+    url: string;
+    followers: number;
+  }[];
+  specialty?: string[];
+  reliability?: number;
+  followStatus?: 'following' | 'not-following';
 }
 
 export interface MarketEvent {
@@ -32,6 +54,10 @@ export interface MarketEvent {
   assetImpact: {
     [key: string]: string;
   };
+  // Add missing properties to match NewMarketEvent
+  importance?: 'low' | 'medium' | 'high' | 'critical';
+  source?: string;
+  reminder?: boolean;
 }
 
 // Financial Data Sources
