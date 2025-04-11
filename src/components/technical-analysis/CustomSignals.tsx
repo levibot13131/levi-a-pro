@@ -43,7 +43,7 @@ const CustomSignals: React.FC<CustomSignalsProps> = ({ assetId }) => {
   
   // הפעלת ניתוח בזמן אמת עבור נכס זה
   const startAnalysisForAsset = () => {
-    startRealTimeAnalysis([assetId], { strategy: 'KSEM' });
+    startRealTimeAnalysis([assetId], { strategy: "A.A" });
     toast.success("ניתוח בזמן אמת הופעל עבור נכס זה", {
       description: "המערכת תתחיל לשלוח התראות בזמן אמת"
     });
@@ -67,13 +67,12 @@ const CustomSignals: React.FC<CustomSignalsProps> = ({ assetId }) => {
       <EmptyState 
         icon={<AlertTriangle className="h-10 w-10 text-yellow-500" />}
         message="לא נמצאו איתותים עבור נכס זה" 
-        action={
-          <Button onClick={startAnalysisForAsset} className="mt-2">
-            <Play className="h-4 w-4 mr-2" />
-            הפעל ניתוח בזמן אמת
-          </Button>
-        }
-      />
+      >
+        <Button onClick={startAnalysisForAsset} className="mt-2">
+          <Play className="h-4 w-4 mr-2" />
+          הפעל ניתוח בזמן אמת
+        </Button>
+      </EmptyState>
     );
   }
   

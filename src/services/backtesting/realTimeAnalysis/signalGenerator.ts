@@ -34,6 +34,10 @@ export const generateMockSignal = (assetId: string, strategy?: string): TradeSig
     notes = signalType === 'buy'
       ? 'זוהה שלב Phase C (Spring) במבנה Wyckoff. מומלץ להכנס לפוזיציית קנייה.'
       : 'זוהה שלב Phase E (UPTHRUST) במבנה Wyckoff. מומלץ להכנס לפוזיציית מכירה.';
+  } else if (strategyName === 'אסטרטגיה משולבת') {
+    notes = signalType === 'buy'
+      ? 'התכנסות מספר אינדיקטורים טכניים יחד עם ניתוח מבני המצביע על המשך מגמה עולה.'
+      : 'שילוב של מספר אינדיקטורים טכניים יחד עם ניתוח מבני המצביע על מגמה יורדת.';
   } else {
     notes = signalType === 'buy'
       ? 'זוהתה התכנסות בולינגר בנדס עם פריצה למעלה. נפח מסחר במגמת עלייה.'
