@@ -6,6 +6,9 @@ import IntegrationTabs from '../components/tradingview/integration/IntegrationTa
 import SyncStatusDisplay from '../components/tradingview/integration/SyncStatusDisplay';
 import SyncControls from '../components/tradingview/integration/SyncControls';
 import { useTradingViewPage } from '../hooks/use-tradingview-page';
+import WhatsAppIntegration from '../components/tradingview/WhatsAppIntegration';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MessageSquare, Link2, Share2 } from 'lucide-react';
 
 const TradingViewIntegration: React.FC = () => {
   const {
@@ -48,11 +51,40 @@ const TradingViewIntegration: React.FC = () => {
         </div>
       </div>
       
-      <IntegrationTabs 
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        lastSyncTime={lastSyncTime}
-      />
+      <Tabs defaultValue="integration" className="space-y-4">
+        <TabsList className="w-full md:w-[400px] grid grid-cols-2">
+          <TabsTrigger value="integration">
+            <Link2 className="h-4 w-4 mr-2" />
+            אינטגרציה עם טריידינגויו
+          </TabsTrigger>
+          <TabsTrigger value="messages">
+            <MessageSquare className="h-4 w-4 mr-2" />
+            התראות והודעות
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="integration">
+          <IntegrationTabs 
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            lastSyncTime={lastSyncTime}
+          />
+        </TabsContent>
+
+        <TabsContent value="messages">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <WhatsAppIntegration />
+            
+            <div className="bg-card border rounded-lg p-6 flex flex-col justify-center items-center">
+              <Share2 className="h-12 w-12 text-primary opacity-50 mb-4" />
+              <h3 className="text-lg font-bold mb-2">יעדי התראה נוספים בקרוב</h3>
+              <p className="text-center text-sm text-muted-foreground">
+                בקרוב נוסיף יעדי התראה נוספים כגון טלגרם, אימייל ו-SMS
+              </p>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </Container>
   );
 };

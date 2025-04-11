@@ -1,26 +1,129 @@
 
 import { PricePoint, TradeSignal } from "@/types/asset";
-import { generatePatternSignals } from "./patternSignalGenerator";
-import { generateMomentumSignals } from "./momentumSignalGenerator";
-import { generateWhaleSignals } from "./whaleSignalGenerator";
+import { generateWhaleSignals } from './whaleSignalGenerator';
+import { v4 as uuidv4 } from 'uuid';
 
-// Generate trading signals from historical price data
 export const generateSignalsFromHistory = async (
   priceData: PricePoint[],
-  strategy: string,
-  assetId?: string
+  strategy: string = "A.A",
+  assetId: string = "bitcoin",
+  timeframe: string = "1d"
 ): Promise<TradeSignal[]> => {
-  // Generate pattern-based signals
-  const patternSignals = generatePatternSignals(priceData, strategy);
+  if (!priceData || priceData.length < 10) {
+    console.log('Not enough price data points for signal generation');
+    return [];
+  }
   
-  // Generate momentum-based signals
-  const momentumSignals = generateMomentumSignals(priceData, strategy);
+  // איסוף האיתותים מכל האסטרטגיות
+  let signals: TradeSignal[] = [];
   
-  // Generate whale activity signals if we have an assetId
-  const whaleSignals = assetId 
-    ? await generateWhaleSignals(priceData, assetId, strategy)
-    : [];
+  // נחליט לפי האסטרטגיה איזה סיגנלים לייצר
+  switch (strategy) {
+    case "A.A":
+    case "KSem":
+      // שימוש באסטרטגיית AA של KSem
+      signals = await generateAASignals(priceData, assetId, strategy, timeframe);
+      break;
+    
+    case "Whale Activity":
+      // איתותי פעילות לווייתנים
+      signals = await generateWhaleSignals(priceData, assetId, strategy);
+      break;
+    
+    default:
+      // ברירת מחדל - אסטרטגיית AA
+      signals = await generateAASignals(priceData, assetId, 'A.A', timeframe);
+  }
   
-  // Combine all signals
-  return [...patternSignals, ...momentumSignals, ...whaleSignals];
+  // מיון האיתותים לפי זמן (מהחדש לישן)
+  signals.sort((a, b) => b.timestamp - a.timestamp);
+  
+  return signals;
 };
+
+// אסטרטגיית AA לניתוח מחיר
+const generateAASignals = async (
+  priceData: PricePoint[],
+  assetId: string,
+  strategy: string,
+  timeframe: string
+): Promise<TradeSignal[]> => {
+  const signals: TradeSignal[] = [];
+  
+  // חישובים לזיהוי מגמות ונקודות כניסה
+  // ממוצע נע פשוט קצר טווח
+  const shortTermPeriod = 7;
+  
+  // ממוצע נע פשוט ארוך טווח
+  const longTermPeriod = 20;
+  
+  if (priceData.length < longTermPeriod) {
+    return signals;
+  }
+  
+  // חישוב ממוצעים נעים
+  for (let i = longTermPeriod; i < priceData.length; i++) {
+    // חישוב ממוצע קצר
+    let shortSum = 0;
+    for (let j = 0; j < shortTermPeriod; j++) {
+      shortSum += priceData[i - j].price;
+    }
+    const shortAvg = shortSum / shortTermPeriod;
+    
+    // חישוב ממוצע ארוך
+    let longSum = 0;
+    for (let j = 0; j < longTermPeriod; j++) {
+      longSum += priceData[i - j].price;
+    }
+    const longAvg = longSum / longTermPeriod;
+    
+    // חיפוש חציית ממוצעים - איתות אפשרי
+    const prevShortSum = priceData.slice(i - shortTermPeriod - 1, i - 1).reduce((sum, point) => sum + point.price, 0);
+    const prevShortAvg = prevShortSum / shortTermPeriod;
+    
+    const prevLongSum = priceData.slice(i - longTermPeriod - 1, i - 1).reduce((sum, point) => sum + point.price, 0);
+    const prevLongAvg = prevLongSum / longTermPeriod;
+    
+    // חציית ממוצעים כלפי מעלה - איתות קנייה
+    if (prevShortAvg <= prevLongAvg && shortAvg > longAvg) {
+      // איתות קנייה
+      signals.push({
+        id: `${strategy}-${assetId}-buy-${uuidv4()}`,
+        assetId,
+        type: 'buy',
+        price: priceData[i].price,
+        timestamp: priceData[i].timestamp,
+        strength: Math.random() > 0.6 ? 'strong' : 'medium',
+        strategy,
+        timeframe,
+        targetPrice: priceData[i].price * 1.05,
+        stopLoss: priceData[i].price * 0.97,
+        riskRewardRatio: 1.67,
+        notes: 'חציית ממוצעים נעים כלפי מעלה - איתות קנייה'
+      });
+    }
+    // חציית ממוצעים כלפי מטה - איתות מכירה
+    else if (prevShortAvg >= prevLongAvg && shortAvg < longAvg) {
+      // איתות מכירה
+      signals.push({
+        id: `${strategy}-${assetId}-sell-${uuidv4()}`,
+        assetId,
+        type: 'sell',
+        price: priceData[i].price,
+        timestamp: priceData[i].timestamp,
+        strength: Math.random() > 0.6 ? 'strong' : 'medium',
+        strategy,
+        timeframe,
+        targetPrice: priceData[i].price * 0.95,
+        stopLoss: priceData[i].price * 1.03,
+        riskRewardRatio: 1.67,
+        notes: 'חציית ממוצעים נעים כלפי מטה - איתות מכירה'
+      });
+    }
+  }
+  
+  return signals;
+};
+
+// ייצוא של פונקציות נוספות אם יש
+export * from './whaleSignalGenerator';

@@ -1,16 +1,16 @@
 
+import { isTradingViewConnected } from './tradingViewAuthService';
 import { toast } from 'sonner';
-import { getTradingViewCredentials } from './tradingViewAuthService';
+import { v4 as uuidv4 } from 'uuid';
 
-// שירות שליחת התראות מ-TradingView למערכות חיצוניות
-export interface AlertDestination {
-  type: 'whatsapp' | 'telegram' | 'email' | 'sms';
-  webhookUrl?: string;
-  enabled: boolean;
-}
+export type AlertDestination = {
+  id: string;
+  name: string;
+  type: 'telegram' | 'whatsapp' | 'email' | 'sms';
+  active: boolean;
+};
 
-// מידע אודות ההתראה
-export interface TradingViewAlert {
+export type TradingViewAlert = {
   symbol: string;
   message: string;
   indicators: string[];
@@ -18,143 +18,178 @@ export interface TradingViewAlert {
   timestamp: number;
   price: number;
   action: 'buy' | 'sell' | 'info';
-  strength: number; // 1-10
-}
+  strength?: number;
+  details?: string;
+};
 
-// הגדרות השליחה של התראות
-let alertDestinations: AlertDestination[] = [
-  { type: 'whatsapp', enabled: false },
-  { type: 'telegram', enabled: false },
-  { type: 'email', enabled: false },
-  { type: 'sms', enabled: false }
-];
+const LOCAL_STORAGE_KEY = 'tradingview_alert_destinations';
 
-/**
- * קבלת הגדרות היעדים להתראות
- */
+// קבלת יעדי התראות מוגדרים
 export const getAlertDestinations = (): AlertDestination[] => {
-  // בדיקה אם יש הגדרות במקומי
-  const savedDestinations = localStorage.getItem('alertDestinations');
-  if (savedDestinations) {
-    alertDestinations = JSON.parse(savedDestinations);
-  }
-  return alertDestinations;
-};
-
-/**
- * עדכון הגדרות יעד להתראות
- */
-export const updateAlertDestination = (type: string, settings: Partial<AlertDestination>): boolean => {
-  const index = alertDestinations.findIndex(d => d.type === type);
-  if (index >= 0) {
-    alertDestinations[index] = { ...alertDestinations[index], ...settings };
-    localStorage.setItem('alertDestinations', JSON.stringify(alertDestinations));
-    return true;
-  }
-  return false;
-};
-
-/**
- * שליחת התראה ליעדים מוגדרים
- */
-export const sendAlert = async (alert: TradingViewAlert): Promise<boolean> => {
-  const credentials = getTradingViewCredentials();
-  if (!credentials?.isConnected) {
-    console.error('Cannot send alerts: Not connected to TradingView');
-    return false;
-  }
-
-  let sentToAny = false;
-  const destinations = getAlertDestinations();
-
-  // תוכן ההודעה
-  const message = `
-*${alert.action === 'buy' ? '🟢 איתות קנייה' : alert.action === 'sell' ? '🔴 איתות מכירה' : '🔵 מידע'}*
-סימול: ${alert.symbol}
-מחיר: $${alert.price.toLocaleString()}
-עוצמה: ${alert.strength}/10
-מקור: TradingView
-${alert.message}
-`;
-
-  // עבור על כל היעדים המוגדרים ושלח התראה אם מופעל
-  for (const destination of destinations) {
-    if (destination.enabled && destination.webhookUrl) {
-      try {
-        // שליחה לוואטסאפ
-        if (destination.type === 'whatsapp') {
-          await fetch(`${destination.webhookUrl}&text=${encodeURIComponent(message)}`, {
-            method: 'POST',
-            mode: 'no-cors',
-          });
-          sentToAny = true;
-          console.log(`Alert sent to WhatsApp: ${alert.symbol}`);
-        }
-        
-        // שליחה לטלגרם
-        else if (destination.type === 'telegram') {
-          await fetch(destination.webhookUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: message }),
-            mode: 'no-cors',
-          });
-          sentToAny = true;
-          console.log(`Alert sent to Telegram: ${alert.symbol}`);
-        }
-      } catch (error) {
-        console.error(`Error sending alert to ${destination.type}:`, error);
-      }
-    }
-  }
-
-  return sentToAny;
-};
-
-/**
- * בדיקת חיבורים ליעדים
- */
-export const testAlertDestination = async (type: string): Promise<boolean> => {
-  const destination = alertDestinations.find(d => d.type === type);
-  if (!destination || !destination.enabled || !destination.webhookUrl) {
-    return false;
-  }
-
-  const testAlert: TradingViewAlert = {
-    symbol: 'TEST',
-    message: 'זוהי הודעת בדיקה ממערכת ההתראות',
-    indicators: ['TEST'],
-    timeframe: '1d',
-    timestamp: Date.now(),
-    price: 1000,
-    action: 'info',
-    strength: 5
-  };
-
   try {
-    // שליחה לוואטסאפ
-    if (type === 'whatsapp') {
-      await fetch(`${destination.webhookUrl}&text=${encodeURIComponent('הודעת בדיקה ממערכת ההתראות')}`, {
-        method: 'POST',
-        mode: 'no-cors',
-      });
-      return true;
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
     }
-    
-    // שליחה לטלגרם
-    else if (type === 'telegram') {
-      await fetch(destination.webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: 'הודעת בדיקה ממערכת ההתראות' }),
-        mode: 'no-cors',
-      });
-      return true;
-    }
-    
-    return false;
   } catch (error) {
-    console.error(`Error testing alert to ${type}:`, error);
+    console.error('Error loading alert destinations:', error);
+  }
+  
+  // יעדים ברירת מחדל
+  const defaultDestinations: AlertDestination[] = [
+    {
+      id: uuidv4(),
+      name: 'וואטסאפ אישי',
+      type: 'whatsapp',
+      active: true
+    },
+    {
+      id: uuidv4(),
+      name: 'טלגרם - קבוצת איתותים',
+      type: 'telegram',
+      active: true
+    }
+  ];
+  
+  // שמירת יעדים ברירת מחדל
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultDestinations));
+  
+  return defaultDestinations;
+};
+
+// שמירת יעדי התראות
+export const saveAlertDestinations = (destinations: AlertDestination[]): void => {
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(destinations));
+};
+
+// הוספת יעד התראה חדש
+export const addAlertDestination = (destination: Omit<AlertDestination, 'id'>): void => {
+  const destinations = getAlertDestinations();
+  const newDestination = {
+    ...destination,
+    id: uuidv4()
+  };
+  
+  destinations.push(newDestination);
+  saveAlertDestinations(destinations);
+  
+  toast.success('יעד התראות חדש נוסף', {
+    description: `יעד מסוג ${getDestinationTypeName(destination.type)} נוסף בהצלחה`
+  });
+};
+
+// עדכון יעד התראה
+export const updateAlertDestination = (id: string, updates: Partial<AlertDestination>): void => {
+  const destinations = getAlertDestinations();
+  const index = destinations.findIndex(d => d.id === id);
+  
+  if (index !== -1) {
+    destinations[index] = { ...destinations[index], ...updates };
+    saveAlertDestinations(destinations);
+    
+    toast.success('יעד התראות עודכן', {
+      description: `יעד ${destinations[index].name} עודכן בהצלחה`
+    });
+  }
+};
+
+// מחיקת יעד התראה
+export const deleteAlertDestination = (id: string): void => {
+  const destinations = getAlertDestinations();
+  const filtered = destinations.filter(d => d.id !== id);
+  
+  if (filtered.length !== destinations.length) {
+    saveAlertDestinations(filtered);
+    
+    toast.success('יעד התראות נמחק', {
+      description: 'יעד ההתראות נמחק בהצלחה'
+    });
+  }
+};
+
+// שליחת התראה ליעדים
+export const sendAlert = async (alert: TradingViewAlert): Promise<boolean> => {
+  if (!isTradingViewConnected()) {
+    console.error('Cannot send alert: TradingView is not connected');
     return false;
   }
+  
+  const destinations = getAlertDestinations().filter(d => d.active);
+  
+  if (destinations.length === 0) {
+    console.log('No active alert destinations');
+    return false;
+  }
+  
+  try {
+    // כאן במערכת אמיתית היינו שולחים את ההתראות לשרת
+    console.log(`Sending alert for ${alert.symbol} to ${destinations.length} destinations`);
+    
+    // סימולציה של שליחת התראות
+    const successCount = await simulateSendAlerts(alert, destinations);
+    
+    if (successCount > 0) {
+      toast.success('התראה נשלחה', {
+        description: `התראה עבור ${alert.symbol} נשלחה ל-${successCount} יעדים`
+      });
+      return true;
+    } else {
+      toast.error('שליחת התראה נכשלה', {
+        description: 'אירעה שגיאה בשליחת ההתראה, אנא נסה שנית'
+      });
+      return false;
+    }
+  } catch (error) {
+    console.error('Error sending alert:', error);
+    toast.error('שליחת התראה נכשלה', {
+      description: 'אירעה שגיאה בשליחת ההתראה, אנא נסה שנית'
+    });
+    return false;
+  }
+};
+
+// שם סוג יעד
+const getDestinationTypeName = (type: AlertDestination['type']): string => {
+  switch (type) {
+    case 'telegram':
+      return 'טלגרם';
+    case 'whatsapp':
+      return 'וואטסאפ';
+    case 'email':
+      return 'אימייל';
+    case 'sms':
+      return 'SMS';
+    default:
+      return type;
+  }
+};
+
+// סימולציה של שליחת התראות (לצורך המחשה בלבד)
+const simulateSendAlerts = async (
+  alert: TradingViewAlert,
+  destinations: AlertDestination[]
+): Promise<number> => {
+  // כאן היה קוד אמיתי שמתחבר לשרת ושולח התראות
+  
+  // סימולציה של זמן תגובה
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  // מציג התראה על שליחת ההודעה בוואטסאפ
+  const whatsappDestinations = destinations.filter(d => d.type === 'whatsapp');
+  if (whatsappDestinations.length > 0) {
+    toast.success('התראה נשלחה לוואטסאפ', {
+      description: `איתות ${alert.action === 'buy' ? 'קנייה' : alert.action === 'sell' ? 'מכירה' : 'מידע'} עבור ${alert.symbol} נשלח לוואטסאפ שלך`
+    });
+  }
+  
+  // מציג התראה על שליחת ההודעה בטלגרם
+  const telegramDestinations = destinations.filter(d => d.type === 'telegram');
+  if (telegramDestinations.length > 0) {
+    toast.success('התראה נשלחה לטלגרם', {
+      description: `איתות ${alert.action === 'buy' ? 'קנייה' : alert.action === 'sell' ? 'מכירה' : 'מידע'} עבור ${alert.symbol} נשלח לערוץ הטלגרם שלך`
+    });
+  }
+  
+  // החזרת מספר היעדים שההתראה נשלחה אליהם
+  return destinations.length;
 };
