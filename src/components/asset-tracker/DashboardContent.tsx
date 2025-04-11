@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getTrackedAssets } from '@/services/assetTracking';
@@ -7,8 +6,11 @@ import TrackedAssetList from './TrackedAssetList';
 import MarketInformation from './MarketInformation';
 import SocialMonitoring from './SocialMonitoring';
 import ExternalSources from './ExternalSources';
+import TradingViewBanner from './TradingViewBanner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Globe, Activity, Link } from 'lucide-react';
+import { useTradingViewConnection } from '@/hooks/use-tradingview-connection';
+import { startAssetTracking, stopAssetTracking, isTrackingActive } from '@/services/assetTracking/realTimeSync';
 
 const DashboardContent = () => {
   const { data: assets = [], isLoading, refetch } = useQuery({
@@ -17,6 +19,16 @@ const DashboardContent = () => {
   });
 
   const [selectedAsset, setSelectedAsset] = useState(null);
+  const { isConnected } = useTradingViewConnection();
+  
+  React.useEffect(() => {
+    if (!isTrackingActive()) {
+      startAssetTracking();
+    }
+    
+    return () => {
+    };
+  }, []);
 
   const handleTogglePin = (assetId: string) => {
     toggleAssetPin(assetId);
@@ -44,6 +56,8 @@ const DashboardContent = () => {
 
   return (
     <div className="grid grid-cols-1 gap-6">
+      <TradingViewBanner isConnected={isConnected} />
+      
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <TrackedAssetList 
