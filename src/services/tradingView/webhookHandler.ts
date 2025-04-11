@@ -9,9 +9,28 @@ export const processWebhookData = async (data: any): Promise<boolean> => {
     console.log('Processing webhook data:', data);
     
     // Make sure we have the required fields
-    if (!data.symbol || !data.action) {
-      console.error('Invalid webhook data: missing required fields');
+    if (!data.symbol) {
+      console.error('Invalid webhook data: missing symbol field');
       return false;
+    }
+    
+    // Determine action type based on incoming data
+    let action: 'buy' | 'sell' | 'info' = 'info';
+    if (data.action && (data.action === 'buy' || data.action === 'sell')) {
+      action = data.action;
+    } else if (data.signal && typeof data.signal === 'string') {
+      // Try to determine action from signal text
+      if (data.signal.toLowerCase().includes('buy') || 
+          data.signal.toLowerCase().includes('bullish') || 
+          data.signal.toLowerCase().includes('long') ||
+          data.signal.toLowerCase().includes('breakout')) {
+        action = 'buy';
+      } else if (data.signal.toLowerCase().includes('sell') || 
+                data.signal.toLowerCase().includes('bearish') || 
+                data.signal.toLowerCase().includes('short') ||
+                data.signal.toLowerCase().includes('breakdown')) {
+        action = 'sell';
+      }
     }
     
     // Parse the price data, or use a default if not available
@@ -21,44 +40,75 @@ export const processWebhookData = async (data: any): Promise<boolean> => {
       return false;
     }
     
-    // Create an alert from the webhook data
-    const alert: TradingViewAlert = {
-      symbol: data.symbol,
-      action: data.action === 'buy' || data.action === 'sell' ? data.action : 'info',
-      message: data.message || `איתות ${data.action} עבור ${data.symbol}`,
-      indicators: data.indicators ? 
-        (Array.isArray(data.indicators) ? data.indicators : [data.indicators]) : 
-        [],
-      timeframe: data.timeframe || '1d',
-      timestamp: data.timestamp ? parseInt(data.timestamp) : Date.now(),
-      price: price,
-      details: data.details || '',
-      strategy: data.strategy || '',
-      chartUrl: data.chartUrl || ''
-    };
+    // Determine strategy from signal text
+    let strategy = '';
+    let message = data.message || data.signal || `איתות ${action} עבור ${data.symbol}`;
     
-    // Map specific TradingView strategy indicators to our system
+    if (data.signal && typeof data.signal === 'string') {
+      const signalText = data.signal.toLowerCase();
+      if (signalText.includes('triangle') || signalText.includes('magic')) {
+        strategy = 'magic_triangle';
+        message = `משולש הקסם: ${data.signal}`;
+      } else if (signalText.includes('wyckoff')) {
+        strategy = 'Wyckoff';
+        message = `וייקוף: ${data.signal}`;
+      } else if (signalText.includes('quarters') || signalText.includes('fibonacci')) {
+        strategy = 'quarters';
+        message = `שיטת הרבעים: ${data.signal}`;
+      }
+    }
+    
+    // Explicitly handle strategy_name if provided
     if (data.strategy_name) {
       switch (data.strategy_name.toLowerCase()) {
         case 'wyckoff':
         case 'wyckoff pattern':
-          alert.strategy = 'Wyckoff';
+          strategy = 'Wyckoff';
           break;
         case 'magic triangle':
         case 'magic_triangle':
-          alert.strategy = 'magic_triangle';
+          strategy = 'magic_triangle';
           break;
         case 'quarters':
         case 'quarters strategy':
-          alert.strategy = 'quarters';
+          strategy = 'quarters';
           break;
       }
     }
+    
+    // Create timestamp from TradingView time or use current time
+    const timestamp = data.time ? new Date(data.time).getTime() : Date.now();
+    
+    // Construct details with additional information
+    let details = data.details || '';
+    
+    // Add price information if not already in details
+    if (!details.includes('מחיר') && !details.includes('price')) {
+      details += `${details ? '\n' : ''}מחיר: ${price}`;
+    }
+    
+    // Create an alert from the webhook data
+    const alert: TradingViewAlert = {
+      symbol: data.symbol,
+      action: action,
+      message: message,
+      indicators: data.indicators ? 
+        (Array.isArray(data.indicators) ? data.indicators : [data.indicators]) : 
+        strategy ? [strategy] : [],
+      timeframe: data.timeframe || '1d',
+      timestamp: timestamp,
+      price: price,
+      details: details,
+      strategy: strategy || data.strategy || '',
+      chartUrl: data.chartUrl || `https://www.tradingview.com/chart/?symbol=${data.symbol}`
+    };
     
     // If we get a bar_close field, add it to the details
     if (data.bar_close) {
       alert.details = `${alert.details ? alert.details + '\n' : ''}סגירת נר: ${data.bar_close}`;
     }
+    
+    console.log('Constructed alert:', alert);
     
     // Send the alert
     const success = await sendAlert(alert);
@@ -93,6 +143,8 @@ export const handleTradingViewWebhook = async (req: any): Promise<boolean> => {
         return false;
       }
     }
+    
+    console.log('Received webhook from TradingView:', data);
     
     // Process the webhook data
     return await processWebhookData(data);

@@ -3,16 +3,20 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { MessageSquare, Link, Check, AlertCircle } from 'lucide-react';
+import { MessageSquare, Link, Check, AlertCircle, Send } from 'lucide-react';
 import { useTelegramIntegration } from '@/hooks/use-telegram-integration';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { testTelegramConnection, sendFormattedTestAlert, parseTelegramConfig } from '@/services/tradingView/telegramService';
+import { toast } from 'sonner';
 
 const TelegramIntegration: React.FC = () => {
   const [botToken, setBotToken] = useState('');
   const [chatId, setChatId] = useState('');
+  const [isSendingTest, setIsSendingTest] = useState(false);
   const {
     isConnected,
     isConfiguring,
+    config,
     configureTelegram,
     disconnectTelegram,
     sendTestMessage
@@ -24,6 +28,35 @@ const TelegramIntegration: React.FC = () => {
     }
     
     await configureTelegram(botToken, chatId);
+  };
+  
+  // Send a formatted test alert with all elements
+  const handleSendFormattedTest = async () => {
+    if (!isConnected || !config) {
+      toast.error('טלגרם לא מחובר. אנא חבר תחילה.');
+      return;
+    }
+    
+    setIsSendingTest(true);
+    try {
+      const parsedConfig = parseTelegramConfig(JSON.stringify(config));
+      if (!parsedConfig) {
+        toast.error('תצורת טלגרם לא תקינה');
+        return;
+      }
+      
+      const success = await sendFormattedTestAlert(parsedConfig);
+      if (success) {
+        toast.success('הודעת בדיקה מעוצבת נשלחה בהצלחה');
+      } else {
+        toast.error('שליחת הודעת בדיקה מעוצבת נכשלה');
+      }
+    } catch (error) {
+      console.error('Error sending formatted test:', error);
+      toast.error('שגיאה בשליחת הודעה מעוצבת');
+    } finally {
+      setIsSendingTest(false);
+    }
   };
 
   return (
@@ -41,7 +74,7 @@ const TelegramIntegration: React.FC = () => {
               <Check className="h-4 w-4" />
               <AlertTitle>מחובר לטלגרם</AlertTitle>
               <AlertDescription>
-                התראות יישלחו אוטומטית לטלגרם
+                התראות יישלחו אוטומטית לטלגרם בזמן אמת
               </AlertDescription>
             </Alert>
             
@@ -51,7 +84,18 @@ const TelegramIntegration: React.FC = () => {
                 className="w-full" 
                 onClick={sendTestMessage}
               >
-                שלח הודעת בדיקה
+                <Send className="mr-2 h-4 w-4" />
+                שלח הודעת בדיקה רגילה
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={handleSendFormattedTest}
+                disabled={isSendingTest}
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                {isSendingTest ? 'שולח הודעה...' : 'שלח הודעת בדיקה מעוצבת'}
               </Button>
               
               <Button 
@@ -117,7 +161,7 @@ const TelegramIntegration: React.FC = () => {
                   asChild
                 >
                   <a 
-                    href="https://telegram.dev/bots" 
+                    href="https://core.telegram.org/bots#how-do-i-create-a-bot" 
                     target="_blank" 
                     rel="noopener noreferrer"
                   >

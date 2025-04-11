@@ -1,23 +1,33 @@
 
 import { toast } from 'sonner';
 import { TradingViewAlert, AlertDestination } from './types';
-import { getAlertDestinations } from './destinations';  // Corrected import
+import { getAlertDestinations } from './destinations';
 import { isTradingViewConnected } from '../tradingViewAuthService';
 import { sendTelegramMessage, parseTelegramConfig } from '../telegramService';
 
 // Format alert message with detailed technical analysis
 export const formatAlertMessage = (alert: TradingViewAlert): string => {
+  // Choose appropriate emojis based on action and strategy
   const actionEmoji = alert.action === 'buy' ? '🟢' : alert.action === 'sell' ? '🔴' : 'ℹ️';
   const actionText = alert.action === 'buy' ? 'קנייה' : alert.action === 'sell' ? 'מכירה' : 'מידע';
-  const strategyText = getStrategyText(alert);
   
+  // Get strategy-specific emoji and text
+  const strategyInfo = getStrategyInfo(alert);
+  
+  // Format price with commas and fixed decimal places
+  const formattedPrice = alert.price.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+  
+  // Build the main message with markdown formatting for Telegram
   let message = `${actionEmoji} *${actionText}: ${alert.symbol}*\n`
-    + `💰 מחיר: $${alert.price.toLocaleString()}\n`
+    + `💰 מחיר: $${formattedPrice}\n`
     + `📊 טווח זמן: ${alert.timeframe}\n`;
     
-  // Add strategy specific information
-  if (strategyText) {
-    message += `🔍 *אסטרטגיה:* ${strategyText}\n`;
+  // Add strategy specific information with proper emoji
+  if (strategyInfo.text) {
+    message += `${strategyInfo.emoji} *אסטרטגיה:* ${strategyInfo.text}\n`;
   }
   
   // Add indicators information
@@ -25,39 +35,62 @@ export const formatAlertMessage = (alert: TradingViewAlert): string => {
     message += `📈 אינדיקטורים: ${alert.indicators.join(', ')}\n`;
   }
   
-  // Add the alert message
-  message += `📝 הודעה: ${alert.message}\n`;
+  // Add the alert message with formatting if it's not already included
+  message += `📝 *הודעה:* ${alert.message}\n`;
   
-  // Add details if available
+  // Add details if available (with proper formatting)
   if (alert.details) {
-    message += `🔍 פרטים: ${alert.details}\n`;
+    message += `🔍 *פרטים:* ${alert.details}\n`;
   }
   
-  // Add chart URL if available
+  // Add chart URL if available (as markdown link)
   if (alert.chartUrl) {
     message += `📊 [לצפייה בגרף](${alert.chartUrl})\n`;
   }
   
-  // Add timestamp
-  message += `⏱️ זמן: ${new Date(alert.timestamp).toLocaleString('he-IL')}`;
+  // Add timestamp in readable format
+  const date = new Date(alert.timestamp);
+  const timeStr = date.toLocaleString('he-IL', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+  
+  message += `⏱️ זמן: ${timeStr}`;
   
   return message;
 };
 
-// Get strategy-specific text based on alert data
-const getStrategyText = (alert: TradingViewAlert): string => {
-  if (!alert.strategy) return '';
+// Get strategy-specific information
+const getStrategyInfo = (alert: TradingViewAlert): { emoji: string; text: string } => {
+  if (!alert.strategy) {
+    return { emoji: '📊', text: '' };
+  }
   
   switch (alert.strategy.toLowerCase()) {
     case 'wyckoff':
-      return 'וייקוף - זיהוי מבני מחיר של צבירה/חלוקה';
+      return {
+        emoji: '🧠',
+        text: 'וייקוף - זיהוי מבני מחיר של צבירה/חלוקה'
+      };
     case 'magic_triangle':
     case 'triangle':
-      return 'משולש הקסם - זיהוי נקודות מפנה לפי דפוסי מחיר';
+      return {
+        emoji: '🔺',
+        text: 'משולש הקסם - זיהוי נקודות מפנה לפי דפוסי מחיר'
+      };
     case 'quarters':
-      return 'שיטת הרבעים - זיהוי תיקונים ורמות פיבונאצ׳י';
+      return {
+        emoji: '🔄',
+        text: 'שיטת הרבעים - זיהוי תיקונים ורמות פיבונאצ׳י'
+      };
     default:
-      return alert.strategy;
+      return {
+        emoji: '📊',
+        text: alert.strategy
+      };
   }
 };
 
@@ -94,13 +127,21 @@ export const sendAlertToDestinations = async (
           // Send to Telegram
           const config = parseTelegramConfig(destination.name);
           if (config) {
+            console.log('Sending Telegram alert with config:', config);
             const success = await sendTelegramMessage(config, formattedMessage);
             if (success) {
               successCount++;
-              toast.success('התראה נשלחה לטלגרם', {
-                description: `איתות ${alert.action === 'buy' ? 'קנייה' : alert.action === 'sell' ? 'מכירה' : 'מידע'} עבור ${alert.symbol} נשלח לטלגרם שלך`
+              
+              // Show success notification
+              const actionText = alert.action === 'buy' ? 'קנייה' : alert.action === 'sell' ? 'מכירה' : 'מידע';
+              toast.success(`התראת ${actionText} נשלחה לטלגרם`, {
+                description: `${alert.symbol}: ${alert.message.substring(0, 50)}${alert.message.length > 50 ? '...' : ''}`
               });
+            } else {
+              console.error('Failed to send message to Telegram');
             }
+          } else {
+            console.error('Invalid Telegram config');
           }
         } else if (destination.type === 'whatsapp') {
           // Send to WhatsApp
@@ -109,8 +150,10 @@ export const sendAlertToDestinations = async (
           
           if (success) {
             successCount++;
+            
+            // Show success notification
             toast.success('התראה נשלחה לוואטסאפ', {
-              description: `איתות ${alert.action === 'buy' ? 'קנייה' : alert.action === 'sell' ? 'מכירה' : 'מידע'} עבור ${alert.symbol} נשלח לוואטסאפ שלך`
+              description: `איתות ${alert.action} עבור ${alert.symbol} נשלח לוואטסאפ שלך`
             });
           }
         }
@@ -139,7 +182,7 @@ export const sendAlert = async (alert: TradingViewAlert): Promise<boolean> => {
   }
   
   try {
-    console.log(`Sending alert for ${alert.symbol} to ${destinations.length} destinations`);
+    console.log(`Sending alert for ${alert.symbol} to ${destinations.length} destinations:`, alert);
     
     // שליחת ההתראות ליעדים
     const successCount = await sendAlertToDestinations(alert, destinations);
