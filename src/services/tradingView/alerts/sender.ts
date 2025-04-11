@@ -5,25 +5,66 @@ import { getAlertDestinations } from './destinations';  // Corrected import
 import { isTradingViewConnected } from '../tradingViewAuthService';
 import { sendTelegramMessage, parseTelegramConfig } from '../telegramService';
 
-// Format alert message
+// Format alert message with detailed technical analysis
 export const formatAlertMessage = (alert: TradingViewAlert): string => {
   const actionEmoji = alert.action === 'buy' ? '🟢' : alert.action === 'sell' ? '🔴' : 'ℹ️';
   const actionText = alert.action === 'buy' ? 'קנייה' : alert.action === 'sell' ? 'מכירה' : 'מידע';
+  const strategyText = getStrategyText(alert);
   
-  return `${actionEmoji} *${actionText}: ${alert.symbol}*\n`
+  let message = `${actionEmoji} *${actionText}: ${alert.symbol}*\n`
     + `💰 מחיר: $${alert.price.toLocaleString()}\n`
-    + `📊 טווח זמן: ${alert.timeframe}\n`
-    + (alert.indicators.length > 0 ? `📈 אינדיקטורים: ${alert.indicators.join(', ')}\n` : '')
-    + `📝 הודעה: ${alert.message}\n`
-    + (alert.details ? `🔍 פרטים: ${alert.details}\n` : '')
-    + `⏱️ זמן: ${new Date(alert.timestamp).toLocaleString('he-IL')}`;
+    + `📊 טווח זמן: ${alert.timeframe}\n`;
+    
+  // Add strategy specific information
+  if (strategyText) {
+    message += `🔍 *אסטרטגיה:* ${strategyText}\n`;
+  }
+  
+  // Add indicators information
+  if (alert.indicators && alert.indicators.length > 0) {
+    message += `📈 אינדיקטורים: ${alert.indicators.join(', ')}\n`;
+  }
+  
+  // Add the alert message
+  message += `📝 הודעה: ${alert.message}\n`;
+  
+  // Add details if available
+  if (alert.details) {
+    message += `🔍 פרטים: ${alert.details}\n`;
+  }
+  
+  // Add chart URL if available
+  if (alert.chartUrl) {
+    message += `📊 [לצפייה בגרף](${alert.chartUrl})\n`;
+  }
+  
+  // Add timestamp
+  message += `⏱️ זמן: ${new Date(alert.timestamp).toLocaleString('he-IL')}`;
+  
+  return message;
+};
+
+// Get strategy-specific text based on alert data
+const getStrategyText = (alert: TradingViewAlert): string => {
+  if (!alert.strategy) return '';
+  
+  switch (alert.strategy.toLowerCase()) {
+    case 'wyckoff':
+      return 'וייקוף - זיהוי מבני מחיר של צבירה/חלוקה';
+    case 'magic_triangle':
+    case 'triangle':
+      return 'משולש הקסם - זיהוי נקודות מפנה לפי דפוסי מחיר';
+    case 'quarters':
+      return 'שיטת הרבעים - זיהוי תיקונים ורמות פיבונאצ׳י';
+    default:
+      return alert.strategy;
+  }
 };
 
 // Send message to WhatsApp
 const sendWhatsAppMessage = async (webhookUrl: string, message: string): Promise<boolean> => {
   try {
     // במימוש אמיתי, נשלח בקשה לשרת WhatsApp או לשירות הודעות
-    // כאן נשתמש בסימולציה פשוטה לצורכי הדגמה
     console.log(`Sending WhatsApp message to webhook: ${webhookUrl}`);
     console.log(`Message content: ${message}`);
     
@@ -85,8 +126,6 @@ export const sendAlertToDestinations = async (
 
 // Send alert to all active destinations
 export const sendAlert = async (alert: TradingViewAlert): Promise<boolean> => {
-  // שים לב שהסרנו את הבדיקה אם TradingView מחובר כדי לאפשר שליחת התראות גם ללא חיבור
-  
   // Get active destinations
   const destinations = getAlertDestinations().filter(d => d.active);
   

@@ -1,29 +1,52 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-export type AlertDestination = {
-  id: string;
-  name: string;
-  type: 'telegram' | 'whatsapp' | 'email' | 'sms';
-  active: boolean;
-};
+// Local storage key for alert destinations
+export const LOCAL_STORAGE_KEY = 'tradingview-alert-destinations';
 
-export type TradingViewAlert = {
+// Alert action type (buy, sell, info)
+export type AlertAction = 'buy' | 'sell' | 'info';
+
+// TradingView alert data structure
+export interface TradingViewAlert {
   symbol: string;
   message: string;
   indicators: string[];
   timeframe: string;
   timestamp: number;
   price: number;
-  action: 'buy' | 'sell' | 'info';
-  strength?: number;
+  action: AlertAction;
   details?: string;
-};
+  strength?: number;
+  strategy?: string;
+  chartUrl?: string;
+}
 
-export const LOCAL_STORAGE_KEY = 'tradingview_alert_destinations';
+// Alert destination type
+export type AlertDestinationType = 'telegram' | 'whatsapp' | 'email' | 'sms';
 
-// Helper to get destination type name
-export const getDestinationTypeName = (type: AlertDestination['type']): string => {
+// Alert destination structure
+export interface AlertDestination {
+  id: string;
+  name: string;
+  type: AlertDestinationType;
+  active: boolean;
+}
+
+// Create a new alert destination
+export const createAlertDestination = (
+  name: string,
+  type: AlertDestinationType,
+  active: boolean = false
+): AlertDestination => ({
+  id: uuidv4(),
+  name,
+  type,
+  active
+});
+
+// Get destination type name
+export const getDestinationTypeName = (type: AlertDestinationType): string => {
   switch (type) {
     case 'telegram':
       return 'טלגרם';
@@ -37,3 +60,27 @@ export const getDestinationTypeName = (type: AlertDestination['type']): string =
       return type;
   }
 };
+
+// Create a new TradingView alert
+export const createTradingViewAlert = (
+  symbol: string,
+  action: AlertAction,
+  price: number,
+  timeframe: string = '1d',
+  message: string = '',
+  indicators: string[] = [],
+  details?: string,
+  strategy?: string,
+  chartUrl?: string
+): TradingViewAlert => ({
+  symbol,
+  message,
+  indicators,
+  timeframe,
+  timestamp: Date.now(),
+  price,
+  action,
+  details,
+  strategy,
+  chartUrl
+});
