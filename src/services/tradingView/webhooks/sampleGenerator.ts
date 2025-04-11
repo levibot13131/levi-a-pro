@@ -1,119 +1,111 @@
 
-import { WebhookData } from './types';
-import { v4 as uuidv4 } from 'uuid';
-import { TradingViewAlert } from '../alerts/types';
+import { WebhookData } from "./types";
 
 /**
  * Generate sample webhook data for testing
  */
-export const generateSampleWebhookData = (
-  type: 'buy' | 'sell' | 'info' = 'info',
-  customSymbol?: string
-): WebhookData => {
-  const symbols = ['BTC/USD', 'ETH/USD', 'XRP/USD', 'SOL/USD', 'ADA/USD', 'DOT/USD'];
-  const timeframes = ['1m', '5m', '15m', '1h', '4h', '1d', '1w'];
+export const generateSampleWebhookData = (type: 'buy' | 'sell' | 'info' = 'info'): WebhookData => {
+  const now = new Date();
+  const timeStr = now.toISOString();
   
-  // Select random symbol if not provided
-  const symbol = customSymbol || symbols[Math.floor(Math.random() * symbols.length)];
-  const price = type === 'buy' 
-    ? Math.floor(Math.random() * 5000) + 30000  // Higher price for buy signals
-    : Math.floor(Math.random() * 3000) + 28000; // Lower price for sell signals
+  // Select symbol based on type
+  const symbol = type === 'buy' ? 'BTC/USD' : type === 'sell' ? 'ETH/USD' : 'XRP/USD';
   
-  // Select random timeframe
-  const timeframe = timeframes[Math.floor(Math.random() * timeframes.length)];
+  // Generate price based on symbol
+  let price = 0;
+  switch (symbol) {
+    case 'BTC/USD':
+      price = 47250 + (Math.random() * 1000);
+      break;
+    case 'ETH/USD':
+      price = 2450 + (Math.random() * 100);
+      break;
+    case 'XRP/USD':
+      price = 0.50 + (Math.random() * 0.1);
+      break;
+    default:
+      price = 100 + (Math.random() * 10);
+  }
   
-  // Base webhook data
+  // Format price
+  const formattedPrice = price.toFixed(2);
+  
+  // Generate strategy based on type
+  let strategy = '';
+  let message = '';
+  let details = '';
+  
+  if (type === 'buy') {
+    strategy = 'magic_triangle';
+    message = 'זוהה פריצת משולש הקסם כלפי מעלה';
+    details = 'RSI מעל 60, חציית ממוצעים נעים';
+  } else if (type === 'sell') {
+    strategy = 'Wyckoff';
+    message = 'נמצא דפוס חלוקה של וייקוף במחיר';
+    details = 'נפח יורד, PSY חלש, שבירת תמיכה';
+  } else {
+    strategy = 'quarters';
+    message = 'עדכון מחיר: בדיקת רמת תמיכה';
+    details = 'הגיע לרמת רבע שני במסגרת זמן 4 שעות';
+  }
+  
+  // Create sample webhook data
   const data: WebhookData = {
-    symbol,
-    price,
-    timeframe,
-    time: Date.now(),
+    symbol: symbol,
+    action: type,
+    signal: message,
+    message: message,
+    price: formattedPrice,
+    close: formattedPrice,
+    indicators: ['RSI', 'MA Cross', strategy],
+    timeframe: '1d',
+    time: timeStr,
+    details: details,
+    strategy_name: strategy,
+    strategy: strategy,
+    bar_close: formattedPrice,
+    chartUrl: `https://www.tradingview.com/chart/?symbol=${symbol.replace('/', '')}`
   };
   
-  // Add different properties based on signal type
-  switch (type) {
-    case 'buy':
-      return {
-        ...data,
-        action: 'buy',
-        signal: 'BUY Signal Detected',
-        message: `Buy Signal for ${symbol} at $${price}`,
-        indicators: ['RSI', 'MACD', 'Magic Triangle'],
-        strategy_name: 'magic_triangle',
-        details: 'RSI is oversold, price formed a bullish pattern',
-        chartUrl: `https://www.tradingview.com/chart/?symbol=${symbol.replace('/', '')}`
-      };
-      
-    case 'sell':
-      return {
-        ...data,
-        action: 'sell',
-        signal: 'SELL Signal Detected',
-        message: `Sell Signal for ${symbol} at $${price}`,
-        indicators: ['RSI', 'MACD', 'Wyckoff'],
-        strategy_name: 'Wyckoff',
-        details: 'RSI is overbought, price reached distribution phase',
-        chartUrl: `https://www.tradingview.com/chart/?symbol=${symbol.replace('/', '')}`
-      };
-      
-    default:
-      // Info signal
-      return {
-        ...data,
-        action: 'info',
-        signal: 'Market Update',
-        message: `${symbol} is trading at $${price}`,
-        indicators: ['Quarters', 'Support/Resistance'],
-        strategy_name: 'quarters',
-        details: 'Price is at key support level',
-        chartUrl: `https://www.tradingview.com/chart/?symbol=${symbol.replace('/', '')}`
-      };
-  }
+  console.log('Generated sample webhook data:', data);
+  return data;
 };
 
 /**
- * Create a sample TradingView alert for testing
+ * Create a sample alert for testing
  */
-export const createSampleAlert = (
-  type: 'buy' | 'sell' | 'info' = 'info',
-  customSymbol?: string
-): TradingViewAlert => {
-  const webhookData = generateSampleWebhookData(type, customSymbol);
+export const createSampleAlert = (type: 'buy' | 'sell' | 'info' = 'info') => {
+  // Generate sample webhook data
+  const data = generateSampleWebhookData(type);
   
-  // Default values
-  const symbol = webhookData.symbol || 'BTC/USD';
-  const price = Number(webhookData.price || 30000);
-  const timestamp = webhookData.time ? Number(webhookData.time) : Date.now();
-  const action = webhookData.action || 'info';
-  
-  const alert: TradingViewAlert = {
-    symbol,
-    message: webhookData.message || `${action.toUpperCase()} signal for ${symbol}`,
-    indicators: Array.isArray(webhookData.indicators) 
-      ? webhookData.indicators 
-      : webhookData.indicators 
-        ? [webhookData.indicators] 
-        : ['Sample Indicator'],
-    timeframe: webhookData.timeframe || '1d',
-    timestamp,
-    price,
-    action: action as 'buy' | 'sell' | 'info',
-    details: webhookData.details || `Sample ${action} signal details`,
-    strategy: webhookData.strategy_name || '',
-    chartUrl: webhookData.chartUrl || `https://www.tradingview.com/chart/?symbol=${symbol.replace('/', '')}`
+  // Create an alert based on the sample data (will be processed by the webhook parser)
+  return {
+    symbol: data.symbol,
+    message: data.message || '',
+    action: type,
+    indicators: data.indicators || [],
+    timeframe: data.timeframe || '1d',
+    timestamp: Date.now(),
+    price: parseFloat(data.price?.toString() || '0'),
+    details: data.details || '',
+    strategy: data.strategy || '',
+    chartUrl: data.chartUrl || ''
   };
-  
-  return alert;
 };
 
 /**
  * Simulate a webhook request from TradingView
  */
 export const simulateWebhookRequest = (type: 'buy' | 'sell' | 'info' = 'info'): any => {
+  // Generate sample webhook data
   const data = generateSampleWebhookData(type);
   
-  // Simulate a request object with body property
+  // Create a simulated request object
   return {
-    body: data
+    body: data,
+    headers: {
+      'content-type': 'application/json',
+      'user-agent': 'TradingView'
+    }
   };
 };

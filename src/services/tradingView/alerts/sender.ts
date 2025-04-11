@@ -15,10 +15,12 @@ export const formatAlertMessage = (alert: TradingViewAlert): string => {
   const strategyInfo = getStrategyInfo(alert);
   
   // Format price with commas and fixed decimal places
-  const formattedPrice = alert.price.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
+  const formattedPrice = typeof alert.price === 'number' 
+    ? alert.price.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })
+    : String(alert.price);
   
   // Build the main message with markdown formatting for Telegram
   let message = `${actionEmoji} *${actionText}: ${alert.symbol}*\n`
@@ -60,6 +62,7 @@ export const formatAlertMessage = (alert: TradingViewAlert): string => {
   
   message += `⏱️ זמן: ${timeStr}`;
   
+  console.log('Formatted alert message:', message);
   return message;
 };
 
@@ -97,16 +100,33 @@ const getStrategyInfo = (alert: TradingViewAlert): { emoji: string; text: string
 // Send message to WhatsApp
 const sendWhatsAppMessage = async (webhookUrl: string, message: string): Promise<boolean> => {
   try {
-    // במימוש אמיתי, נשלח בקשה לשרת WhatsApp או לשירות הודעות
-    console.log(`Sending WhatsApp message to webhook: ${webhookUrl}`);
-    console.log(`Message content: ${message}`);
+    console.log(`📱 Sending WhatsApp message to webhook: ${webhookUrl}`);
+    console.log(`📝 Message content: ${message}`);
     
-    // סימולציה של לחיצה על שרת
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    return true;
+    // Here we would typically send a POST request to the WhatsApp webhook
+    // For example using a service like Pipedream or Make.com
+    try {
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message,
+          timestamp: Date.now()
+        })
+      });
+      
+      const data = await response.json();
+      console.log('📊 WhatsApp webhook response:', data);
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Error calling WhatsApp webhook:', error);
+      return false;
+    }
   } catch (error) {
-    console.error('Error sending WhatsApp message:', error);
+    console.error('❌ Error sending WhatsApp message:', error);
     return false;
   }
 };
@@ -117,17 +137,29 @@ export const sendAlertToDestinations = async (
   destinations: AlertDestination[]
 ): Promise<number> => {
   let successCount = 0;
+  console.log(`🔔 Sending alert to ${destinations.length} destinations:`, alert);
+  
   const formattedMessage = formatAlertMessage(alert);
 
   // Send to all destinations
   for (const destination of destinations) {
     try {
       if (destination.active) {
+        console.log(`📤 Sending to ${destination.type} destination:`, {
+          id: destination.id,
+          name: destination.name.substring(0, 20) + '...',
+          active: destination.active
+        });
+        
         if (destination.type === 'telegram') {
           // Send to Telegram
           const config = parseTelegramConfig(destination.name);
           if (config) {
-            console.log('Sending Telegram alert with config:', config);
+            console.log('📱 Sending Telegram alert with config:', { 
+              hasToken: !!config.botToken, 
+              hasChatId: !!config.chatId 
+            });
+            
             const success = await sendTelegramMessage(config, formattedMessage);
             if (success) {
               successCount++;
@@ -137,15 +169,19 @@ export const sendAlertToDestinations = async (
               toast.success(`התראת ${actionText} נשלחה לטלגרם`, {
                 description: `${alert.symbol}: ${alert.message.substring(0, 50)}${alert.message.length > 50 ? '...' : ''}`
               });
+              
+              console.log('✅ Successfully sent alert to Telegram');
             } else {
-              console.error('Failed to send message to Telegram');
+              console.error('❌ Failed to send message to Telegram');
             }
           } else {
-            console.error('Invalid Telegram config');
+            console.error('❌ Invalid Telegram config');
           }
         } else if (destination.type === 'whatsapp') {
           // Send to WhatsApp
           const webhookUrl = destination.name;
+          console.log(`📱 Sending WhatsApp alert to webhook: ${webhookUrl}`);
+          
           const success = await sendWhatsAppMessage(webhookUrl, formattedMessage);
           
           if (success) {
@@ -155,15 +191,22 @@ export const sendAlertToDestinations = async (
             toast.success('התראה נשלחה לוואטסאפ', {
               description: `איתות ${alert.action} עבור ${alert.symbol} נשלח לוואטסאפ שלך`
             });
+            
+            console.log('✅ Successfully sent alert to WhatsApp');
+          } else {
+            console.error('❌ Failed to send message to WhatsApp');
           }
         }
         // ניתן להוסיף בעתיד יעדים נוספים כאן (SMS, Email וכו')
+      } else {
+        console.log(`⏭️ Skipping inactive destination: ${destination.type}`);
       }
     } catch (error) {
-      console.error(`Error sending to ${destination.type}:`, error);
+      console.error(`❌ Error sending to ${destination.type}:`, error);
     }
   }
   
+  console.log(`📊 Alert sending summary: ${successCount}/${destinations.length} successful`);
   return successCount;
 };
 
@@ -173,7 +216,7 @@ export const sendAlert = async (alert: TradingViewAlert): Promise<boolean> => {
   const destinations = getAlertDestinations().filter(d => d.active);
   
   if (destinations.length === 0) {
-    console.log('No active alert destinations');
+    console.log('❗ No active alert destinations');
     // נשלח התראה למשתמש שאין יעדים פעילים
     toast.warning('אין יעדי התראות פעילים', {
       description: 'הגדר לפחות יעד אחד (טלגרם או וואטסאפ) כדי לקבל התראות'
@@ -182,7 +225,7 @@ export const sendAlert = async (alert: TradingViewAlert): Promise<boolean> => {
   }
   
   try {
-    console.log(`Sending alert for ${alert.symbol} to ${destinations.length} destinations:`, alert);
+    console.log(`🔔 Sending alert for ${alert.symbol} to ${destinations.length} destinations:`, alert);
     
     // שליחת ההתראות ליעדים
     const successCount = await sendAlertToDestinations(alert, destinations);
@@ -199,7 +242,7 @@ export const sendAlert = async (alert: TradingViewAlert): Promise<boolean> => {
       return false;
     }
   } catch (error) {
-    console.error('Error sending alert:', error);
+    console.error('❌ Error sending alert:', error);
     toast.error('שגיאה בשליחת התראה', {
       description: 'אירעה שגיאה בשליחת ההתראה, אנא נסה שנית'
     });

@@ -22,6 +22,7 @@ export async function sendTelegramMessage(
     }
     
     console.log(`Preparing to send Telegram message to chat ${chatId}`);
+    console.log(`Message content: ${message}`);
     
     // In production, we'd use an actual API call. Here's the implementation:
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
@@ -45,17 +46,17 @@ export async function sendTelegramMessage(
     
     // Check if the request was successful
     if (data.ok) {
-      console.log('Telegram message sent successfully');
+      console.log('✅ Telegram message sent successfully');
       return true;
     } else {
-      console.error('Telegram API error:', data.description);
+      console.error('❌ Telegram API error:', data.description);
       toast.error('שגיאה בשליחת הודעה לטלגרם', {
         description: data.description || 'בדוק את הטוקן וה-Chat ID'
       });
       return false;
     }
   } catch (error) {
-    console.error('Error sending Telegram message:', error);
+    console.error('❌ Error sending Telegram message:', error);
     return false;
   }
 }
@@ -74,7 +75,7 @@ export function parseTelegramConfig(configString: string): TelegramConfig | null
     
     return config;
   } catch (error) {
-    console.error('Error parsing Telegram config:', error);
+    console.error('❌ Error parsing Telegram config:', error);
     return null;
   }
 }
@@ -94,7 +95,7 @@ export async function testTelegramConnection(config: TelegramConfig): Promise<bo
     
     return await sendTelegramMessage(config, testMessage);
   } catch (error) {
-    console.error('Error testing Telegram connection:', error);
+    console.error('❌ Error testing Telegram connection:', error);
     return false;
   }
 }
@@ -121,7 +122,7 @@ export async function sendFormattedTestAlert(config: TelegramConfig): Promise<bo
     
     return await sendTelegramMessage(config, testMessage);
   } catch (error) {
-    console.error('Error sending formatted test alert:', error);
+    console.error('❌ Error sending formatted test alert:', error);
     return false;
   }
 }

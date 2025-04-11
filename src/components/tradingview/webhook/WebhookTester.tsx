@@ -1,19 +1,33 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUp, ArrowDown, Info, RefreshCw } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ArrowUp, ArrowDown, Info, RefreshCw, AlertTriangle, CheckCircle2, Terminal } from 'lucide-react';
 import { simulateWebhookSignal, testWebhookSignalFlow } from '@/services/tradingViewWebhookService';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { getAlertDestinations } from '@/services/tradingView/tradingViewAlertService';
 
 const WebhookTester: React.FC = () => {
-  const [isTesting, setIsTesting] = React.useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [lastTestResult, setLastTestResult] = useState<{success: boolean, type: string, time: Date} | null>(null);
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
+  
+  // Get current destinations status
+  const destinations = getAlertDestinations();
+  const hasTelegram = destinations.some(d => d.type === 'telegram' && d.active);
+  const hasWhatsApp = destinations.some(d => d.type === 'whatsapp' && d.active);
   
   const handleSimulateSignal = async (type: 'buy' | 'sell' | 'info') => {
     setIsTesting(true);
     try {
-      await simulateWebhookSignal(type);
+      const result = await simulateWebhookSignal(type);
+      setLastTestResult({
+        success: result,
+        type,
+        time: new Date()
+      });
     } finally {
       setIsTesting(false);
     }
@@ -22,7 +36,12 @@ const WebhookTester: React.FC = () => {
   const handleTestWebhookFlow = async (type: 'buy' | 'sell' | 'info') => {
     setIsTesting(true);
     try {
-      await testWebhookSignalFlow(type);
+      const result = await testWebhookSignalFlow(type);
+      setLastTestResult({
+        success: result,
+        type,
+        time: new Date()
+      });
     } finally {
       setIsTesting(false);
     }
@@ -31,10 +50,53 @@ const WebhookTester: React.FC = () => {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="flex justify-between items-center">
-          <span>בדיקת Webhook</span>
-          <RefreshCw className="h-5 w-5 text-primary" />
-        </CardTitle>
+        <div className="flex justify-between items-center mb-2">
+          <CardTitle className="flex items-center gap-2">
+            <span>בדיקת Webhook</span>
+            <RefreshCw className="h-5 w-5 text-primary" />
+          </CardTitle>
+          
+          <div className="flex gap-2">
+            <Badge 
+              variant={hasTelegram ? "success" : "destructive"}
+              className={`${hasTelegram ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-red-100 text-red-800 hover:bg-red-200'}`}
+            >
+              {hasTelegram ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
+              Telegram
+            </Badge>
+            
+            <Badge 
+              variant={hasWhatsApp ? "success" : "destructive"}
+              className={`${hasWhatsApp ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-red-100 text-red-800 hover:bg-red-200'}`}
+            >
+              {hasWhatsApp ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <AlertTriangle className="h-3 w-3 mr-1" />}
+              WhatsApp
+            </Badge>
+          </div>
+        </div>
+        
+        <CardDescription>
+          בדוק את הווהבוק שלך עם דוגמאות איתותים מסוגים שונים
+        </CardDescription>
+        
+        {lastTestResult && (
+          <Alert className={lastTestResult.success ? 
+            "mt-2 bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-900/50" : 
+            "mt-2 bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-900/50"
+          }>
+            <AlertTitle className="flex items-center gap-2">
+              {lastTestResult.success ? 
+                <CheckCircle2 className="h-4 w-4 text-green-500" /> : 
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+              }
+              {lastTestResult.success ? 'הבדיקה הצליחה' : 'הבדיקה נכשלה'}
+            </AlertTitle>
+            <AlertDescription>
+              איתות {lastTestResult.type === 'buy' ? 'קנייה' : 
+                   lastTestResult.type === 'sell' ? 'מכירה' : 'מידע'} נבדק ב-{lastTestResult.time.toLocaleTimeString()}
+            </AlertDescription>
+          </Alert>
+        )}
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="simulate">
@@ -127,6 +189,31 @@ const WebhookTester: React.FC = () => {
             </div>
           </TabsContent>
         </Tabs>
+        
+        <div className="mt-4 flex justify-end">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowDebugInfo(!showDebugInfo)}
+            className="gap-1"
+          >
+            <Terminal className="h-3 w-3" />
+            {showDebugInfo ? 'הסתר מידע טכני' : 'הצג מידע טכני'}
+          </Button>
+        </div>
+        
+        {showDebugInfo && (
+          <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-md border text-xs font-mono">
+            <h4 className="font-medium mb-1">מידע טכני:</h4>
+            <div>
+              <p>יעדים פעילים: {destinations.filter(d => d.active).length}</p>
+              <p>טלגרם: {hasTelegram ? 'מוגדר ✓' : 'לא מוגדר ✗'}</p>
+              <p>וואטסאפ: {hasWhatsApp ? 'מוגדר ✓' : 'לא מוגדר ✗'}</p>
+              <p>סך יעדים: {destinations.length}</p>
+              <p>פתח את קונסול הדפדפן (F12) לצפייה בלוגים מפורטים</p>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

@@ -4,11 +4,44 @@ import { TradingViewAlert, createTradingViewAlert } from '../alerts/types';
 import { toast } from 'sonner';
 
 /**
+ * Validate webhook data from TradingView
+ */
+export const validateWebhookData = (data: any): boolean => {
+  console.log('Validating webhook data:', data);
+  
+  // Check if data exists
+  if (!data) {
+    console.error('Webhook validation failed: No data received');
+    return false;
+  }
+  
+  // Check if symbol exists (required field)
+  if (!data.symbol) {
+    console.error('Webhook validation failed: Missing symbol field');
+    return false;
+  }
+  
+  // Further validation as needed
+  const hasAction = !!data.action || !!data.signal;
+  const hasPrice = !!data.price || !!data.close;
+  
+  console.log('Webhook validation results:', { 
+    hasSymbol: !!data.symbol, 
+    hasAction, 
+    hasPrice,
+    isValid: true // If we got here, it's valid enough to process
+  });
+  
+  return true;
+};
+
+/**
  * Parse action type from webhook data
  */
 export const parseActionType = (data: WebhookData): 'buy' | 'sell' | 'info' => {
   // Check explicit action field
   if (data.action && (data.action === 'buy' || data.action === 'sell')) {
+    console.log(`Found explicit action type: ${data.action}`);
     return data.action;
   } 
   
@@ -19,15 +52,18 @@ export const parseActionType = (data: WebhookData): 'buy' | 'sell' | 'info' => {
         signalText.includes('bullish') || 
         signalText.includes('long') ||
         signalText.includes('breakout')) {
+      console.log('Determined action type from signal text: buy');
       return 'buy';
     } else if (signalText.includes('sell') || 
               signalText.includes('bearish') || 
               signalText.includes('short') ||
               signalText.includes('breakdown')) {
+      console.log('Determined action type from signal text: sell');
       return 'sell';
     }
   }
   
+  console.log('No explicit action found, defaulting to: info');
   // Default to info
   return 'info';
 };
@@ -45,17 +81,21 @@ export const parseStrategy = (data: WebhookData): { strategy: string, message: s
     if (signalText.includes('triangle') || signalText.includes('magic')) {
       strategy = 'magic_triangle';
       message = `משולש הקסם: ${data.signal}`;
+      console.log('Determined strategy from signal: magic_triangle');
     } else if (signalText.includes('wyckoff')) {
       strategy = 'Wyckoff';
       message = `וייקוף: ${data.signal}`;
+      console.log('Determined strategy from signal: Wyckoff');
     } else if (signalText.includes('quarters') || signalText.includes('fibonacci')) {
       strategy = 'quarters';
       message = `שיטת הרבעים: ${data.signal}`;
+      console.log('Determined strategy from signal: quarters');
     }
   }
   
   // Explicitly handle strategy_name if provided
   if (data.strategy_name) {
+    console.log(`Found explicit strategy_name: ${data.strategy_name}`);
     switch (data.strategy_name.toLowerCase()) {
       case 'wyckoff':
       case 'wyckoff pattern':
@@ -69,7 +109,16 @@ export const parseStrategy = (data: WebhookData): { strategy: string, message: s
       case 'quarters strategy':
         strategy = 'quarters';
         break;
+      default:
+        // If none of the known strategies, use the provided name
+        strategy = data.strategy_name;
     }
+  }
+  
+  // If strategy is provided directly, use it if no other strategy found
+  if (!strategy && data.strategy) {
+    strategy = data.strategy;
+    console.log(`Using provided strategy: ${strategy}`);
   }
   
   return { strategy, message };
@@ -82,9 +131,8 @@ export const parseWebhookData = (data: WebhookData): TradingViewAlert | null => 
   try {
     console.log('Parsing webhook data:', data);
     
-    // Validate required fields
-    if (!data.symbol) {
-      console.error('Invalid webhook data: missing symbol field');
+    // Validate data first
+    if (!validateWebhookData(data)) {
       return null;
     }
     
@@ -94,7 +142,7 @@ export const parseWebhookData = (data: WebhookData): TradingViewAlert | null => 
     // Parse price data
     const price = parseFloat(String(data.price || data.close || '0'));
     if (isNaN(price) || price <= 0) {
-      console.error('Invalid price data in webhook');
+      console.error('Invalid price data in webhook:', data.price);
       return null;
     }
     
@@ -136,7 +184,7 @@ export const parseWebhookData = (data: WebhookData): TradingViewAlert | null => 
       alert.details = `${alert.details ? alert.details + '\n' : ''}סגירת נר: ${data.bar_close}`;
     }
     
-    console.log('Parsed alert:', alert);
+    console.log('Parsed webhook data into alert:', alert);
     return alert;
   } catch (error) {
     console.error('Error parsing webhook data:', error);
