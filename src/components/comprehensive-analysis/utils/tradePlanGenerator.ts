@@ -5,7 +5,14 @@ export const generateTradePlan = (
   smcPatterns: any, 
   assetHistory: any, 
   userStrategy: any
-) => {
+): { 
+  action: string;
+  reason: string;
+  actionable?: boolean;
+  levels?: Array<{ name: string; price: number; type: string }>;
+  positionSize?: string;
+  riskManagement?: string[];
+} => {
   if (!selectedAsset || !technicalAnalysis) return null;
   
   // Import the function through a relative import to avoid circular dependencies
