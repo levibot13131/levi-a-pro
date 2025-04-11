@@ -10,7 +10,7 @@ import ComprehensiveAnalysis from './ComprehensiveAnalysis';
 import { BacktestSettings, BacktestResults as BacktestResultsType } from '@/services/backtesting/types';
 import { runBacktest } from '@/services/backtesting';
 import { toast } from 'sonner';
-import { History, BellRing, BarChart, Timeline } from 'lucide-react';
+import { History, BellRing, BarChart, BarChart4 } from 'lucide-react';
 
 const BacktestingSystem: React.FC = () => {
   const [activeTab, setActiveTab] = useState('backtest');
@@ -60,7 +60,7 @@ const BacktestingSystem: React.FC = () => {
             התראות בזמן אמת
           </TabsTrigger>
           <TabsTrigger value="analysis" className="text-xs md:text-sm">
-            <Timeline className="h-4 w-4 mr-1 hidden md:inline" />
+            <BarChart4 className="h-4 w-4 mr-1 hidden md:inline" />
             ניתוח מעמיק
           </TabsTrigger>
         </TabsList>
@@ -73,7 +73,6 @@ const BacktestingSystem: React.FC = () => {
             <CardContent>
               <BacktestingForm 
                 onRunBacktest={handleRunBacktest} 
-                isRunning={isRunning} 
                 existingSettings={settings}
               />
             </CardContent>
@@ -83,8 +82,7 @@ const BacktestingSystem: React.FC = () => {
         <TabsContent value="results">
           {results && (
             <BacktestResults 
-              results={results} 
-              settings={settings!} 
+              results={results}
             />
           )}
         </TabsContent>

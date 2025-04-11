@@ -97,7 +97,7 @@ const ComprehensiveAnalysis: React.FC<ComprehensiveAnalysisProps> = ({ assetId }
                 <div className="space-y-2">
                   {analysis.historical.keyEvents.map((event, index) => (
                     <div key={index} className="flex items-center justify-between border-b pb-2">
-                      <Badge variant={event.impact === 'חיובי' ? 'success' : 'destructive'}>
+                      <Badge variant={event.impact === 'חיובי' ? 'outline' : 'destructive'}>
                         {event.impact}
                       </Badge>
                       <div className="text-right">
