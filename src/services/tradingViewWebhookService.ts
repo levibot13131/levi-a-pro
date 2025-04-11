@@ -1,108 +1,124 @@
 
-import { WebhookSignal } from '@/types/webhookSignal';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
+import { WebhookSignal } from '@/types/webhookSignal';
+import { simulateWebhook, testWebhookFlow } from './tradingView/webhooks/processor';
 
-// Event emitter for real-time updates
-const listeners: Array<() => void> = [];
+// Local storage key for webhook signals
+const WEBHOOK_SIGNALS_KEY = 'tradingview-webhook-signals';
+
+// Store for event subscribers
+type WebhookCallback = () => void;
+const subscribers: WebhookCallback[] = [];
+
+/**
+ * Get stored webhook signals from local storage
+ */
+export const getStoredWebhookSignals = (): WebhookSignal[] => {
+  try {
+    const storedSignals = localStorage.getItem(WEBHOOK_SIGNALS_KEY);
+    if (storedSignals) {
+      return JSON.parse(storedSignals);
+    }
+  } catch (error) {
+    console.error('Error getting stored webhook signals:', error);
+  }
+  return [];
+};
+
+/**
+ * Store webhook signal
+ */
+export const storeWebhookSignal = (signal: WebhookSignal): void => {
+  try {
+    const signals = getStoredWebhookSignals();
+    signals.unshift(signal);
+    
+    // Limit to 50 signals
+    const limitedSignals = signals.slice(0, 50);
+    
+    localStorage.setItem(WEBHOOK_SIGNALS_KEY, JSON.stringify(limitedSignals));
+    
+    // Notify subscribers
+    notifySignalSubscribers();
+  } catch (error) {
+    console.error('Error storing webhook signal:', error);
+  }
+};
+
+/**
+ * Clear stored webhook signals
+ */
+export const clearStoredWebhookSignals = (): void => {
+  try {
+    localStorage.removeItem(WEBHOOK_SIGNALS_KEY);
+    notifySignalSubscribers();
+    toast.success('האיתותים נוקו בהצלחה');
+  } catch (error) {
+    console.error('Error clearing webhook signals:', error);
+    toast.error('שגיאה בניקוי האיתותים');
+  }
+};
 
 /**
  * Subscribe to webhook signal updates
  */
-export const subscribeToWebhookSignals = (callback: () => void) => {
-  listeners.push(callback);
+export const subscribeToWebhookSignals = (callback: WebhookCallback): (() => void) => {
+  subscribers.push(callback);
+  
+  // Return unsubscribe function
   return () => {
-    const index = listeners.indexOf(callback);
+    const index = subscribers.indexOf(callback);
     if (index > -1) {
-      listeners.splice(index, 1);
+      subscribers.splice(index, 1);
     }
   };
 };
 
 /**
- * Notify all listeners of signal updates
+ * Notify all subscribers
  */
-const notifyListeners = () => {
-  listeners.forEach(callback => callback());
+const notifySignalSubscribers = (): void => {
+  subscribers.forEach(callback => callback());
 };
 
 /**
- * Process a new webhook signal from TradingView
+ * Simulate a webhook signal for testing
  */
-export const processWebhookSignal = (signal: Partial<WebhookSignal>) => {
-  // Create a valid signal with required fields
-  const completeSignal: WebhookSignal = {
-    id: uuidv4(),
-    timestamp: signal.timestamp || Date.now(),
-    symbol: signal.symbol || 'UNKNOWN',
-    message: signal.message || 'התקבל איתות חדש',
-    action: signal.action || 'info',
-    source: signal.source || 'TradingView',
-    details: signal.details
-  };
-  
-  // Store signal in localStorage for persistence
-  const storedSignals = JSON.parse(localStorage.getItem('tradingViewSignals') || '[]');
-  storedSignals.push(completeSignal);
-  localStorage.setItem('tradingViewSignals', JSON.stringify(storedSignals));
-  
-  // Show toast notification for the signal
-  const toastType = 
-    completeSignal.action === 'buy' ? toast.success : 
-    completeSignal.action === 'sell' ? toast.warning : 
-    toast.info;
-  
-  toastType(`איתות ${
-    completeSignal.action === 'buy' ? 'קנייה' : 
-    completeSignal.action === 'sell' ? 'מכירה' : 
-    'מידע'} התקבל`,
-    {
-      description: `${completeSignal.symbol} - ${completeSignal.message}`,
-      duration: 8000,
-    }
-  );
-  
-  // Notify all listeners that new data is available
-  notifyListeners();
-};
-
-/**
- * Get stored webhook signals from localStorage
- */
-export const getStoredWebhookSignals = (): WebhookSignal[] => {
-  return JSON.parse(localStorage.getItem('tradingViewSignals') || '[]');
-};
-
-/**
- * Clear all stored webhook signals
- */
-export const clearStoredWebhookSignals = () => {
-  localStorage.removeItem('tradingViewSignals');
-  notifyListeners();
-};
-
-// Mock function to simulate receiving a webhook from TradingView
-export const simulateWebhookSignal = (type: 'buy' | 'sell' | 'info' = 'info') => {
-  const assets = ['BTC', 'ETH', 'SOL', 'ADA', 'BNB'];
-  const randomAsset = assets[Math.floor(Math.random() * assets.length)];
-  
-  let message = '';
-  if (type === 'buy') {
-    message = `איתות קנייה ל-${randomAsset} - חציית ממוצע נע 50 כלפי מעלה`;
-  } else if (type === 'sell') {
-    message = `איתות מכירה ל-${randomAsset} - שבירת תמיכה`;
-  } else {
-    message = `תנועה משמעותית ב-${randomAsset}`;
+export const simulateWebhookSignal = async (type: 'buy' | 'sell' | 'info' = 'info'): Promise<void> => {
+  try {
+    // Simulate webhook to test the flow
+    await simulateWebhook(type);
+    
+    // Create a simulated webhook signal for UI display
+    const signal: WebhookSignal = {
+      id: uuidv4(),
+      timestamp: Date.now(),
+      symbol: type === 'buy' ? 'BTC/USD' : type === 'sell' ? 'ETH/USD' : 'XRP/USD',
+      message: type === 'buy' ? 'איתות קנייה לדוגמה' : type === 'sell' ? 'איתות מכירה לדוגמה' : 'עדכון שוק לדוגמה',
+      action: type,
+      source: 'סימולציית Webhook',
+      details: 'איתות לדוגמה שנוצר בלחיצת כפתור'
+    };
+    
+    // Store the signal for UI display
+    storeWebhookSignal(signal);
+    
+    toast.success(`איתות ${type} לדוגמה נוצר בהצלחה`);
+  } catch (error) {
+    console.error('Error simulating webhook signal:', error);
+    toast.error('שגיאה ביצירת איתות לדוגמה');
   }
-  
-  const signal: Partial<WebhookSignal> = {
-    symbol: `${randomAsset}/USD`,
-    message,
-    action: type,
-    source: 'TradingView Webhook',
-    details: 'איתות לדוגמה - הסימולציה הופעלה מהאפליקציה'
-  };
-  
-  processWebhookSignal(signal);
-  return signal;
+};
+
+/**
+ * Test the webhook flow with real implementation
+ */
+export const testWebhookSignalFlow = async (type: 'buy' | 'sell' | 'info' = 'info'): Promise<boolean> => {
+  try {
+    return await testWebhookFlow(type);
+  } catch (error) {
+    console.error('Error testing webhook signal flow:', error);
+    return false;
+  }
 };

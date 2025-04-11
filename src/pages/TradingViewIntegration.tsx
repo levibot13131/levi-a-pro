@@ -9,8 +9,9 @@ import { useTradingViewPage } from '../hooks/use-tradingview-page';
 import TelegramIntegration from '../components/tradingview/TelegramIntegration';
 import WhatsAppIntegration from '../components/tradingview/WhatsAppIntegration';
 import IntegrationGuide from '../components/technical-analysis/integration/IntegrationGuide';
+import WebhookTester from '../components/tradingview/webhook/WebhookTester';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageSquare, Link2, Share2, HelpCircle } from 'lucide-react';
+import { MessageSquare, Link2, Share2, HelpCircle, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { sendAlert } from '@/services/tradingView/tradingViewAlertService';
@@ -81,7 +82,7 @@ const TradingViewIntegration: React.FC = () => {
       </div>
       
       <Tabs defaultValue="integration" className="space-y-4">
-        <TabsList className="w-full md:w-[400px] grid grid-cols-3">
+        <TabsList className="w-full md:w-[500px] grid grid-cols-4">
           <TabsTrigger value="integration">
             <Link2 className="h-4 w-4 mr-2" />
             אינטגרציה
@@ -89,6 +90,10 @@ const TradingViewIntegration: React.FC = () => {
           <TabsTrigger value="messages">
             <MessageSquare className="h-4 w-4 mr-2" />
             התראות
+          </TabsTrigger>
+          <TabsTrigger value="webhook">
+            <Bell className="h-4 w-4 mr-2" />
+            Webhook
           </TabsTrigger>
           <TabsTrigger value="guide">
             <HelpCircle className="h-4 w-4 mr-2" />
@@ -108,6 +113,12 @@ const TradingViewIntegration: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <TelegramIntegration />
             <WhatsAppIntegration />
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="webhook">
+          <div className="grid grid-cols-1 gap-6">
+            <WebhookTester />
           </div>
         </TabsContent>
         
