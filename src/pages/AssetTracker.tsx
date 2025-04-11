@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { 
@@ -45,7 +44,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { useTradingViewConnection } from '@/hooks/use-tradingview-connection';
-import { TradingViewConnectButton } from '@/components/technical-analysis/tradingview/TradingViewConnectButton';
+import TradingViewConnectButton from '@/components/technical-analysis/tradingview/TradingViewConnectButton';
 
 const AssetTracker = () => {
   const [activeMarket, setActiveMarket] = useState<string>('all');
@@ -55,7 +54,6 @@ const AssetTracker = () => {
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const { isConnected } = useTradingViewConnection();
   
-  // Fetch tracked assets
   const { data: trackedAssets = [], refetch } = useQuery({
     queryKey: ['trackedAssets', activeMarket, priorityFilter, signalFilter],
     queryFn: () => getFilteredTrackedAssets(
@@ -63,30 +61,21 @@ const AssetTracker = () => {
       priorityFilter !== 'all' ? priorityFilter as any : undefined,
       signalFilter !== 'all' ? signalFilter as any : undefined
     ),
-    refetchInterval: 5000, // Refetch every 5 seconds
+    refetchInterval: 5000,
   });
   
-  // Check tracking status on load
   useEffect(() => {
-    // Initialize tracked assets if none exist
     initializeTrackedAssets();
-    
-    // Check if tracking is already active
     setTrackingActive(isTrackingActive());
     
-    // Start tracking automatically if it's not active
     if (!isTrackingActive()) {
       startAssetTracking();
       setTrackingActive(true);
     }
     
-    // Cleanup on unmount
-    return () => {
-      // Don't stop tracking when navigating away - it should continue in background
-    };
+    return () => {};
   }, []);
   
-  // Toggle tracking on/off
   const handleToggleTracking = () => {
     if (trackingActive) {
       stopAssetTracking();
@@ -97,7 +86,6 @@ const AssetTracker = () => {
     }
   };
   
-  // Handle asset updates
   const handleTogglePin = (assetId: string) => {
     toggleAssetPin(assetId);
     refetch();
@@ -113,7 +101,6 @@ const AssetTracker = () => {
     refetch();
   };
   
-  // Count assets by market
   const cryptoCount = trackedAssets.filter(a => a.type === 'crypto').length;
   const stocksCount = trackedAssets.filter(a => a.type === 'stocks').length;
   const forexCount = trackedAssets.filter(a => a.type === 'forex').length;
@@ -160,7 +147,6 @@ const AssetTracker = () => {
         </div>
       </div>
       
-      {/* TradingView connection status */}
       {!isConnected && (
         <Card className="mb-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
           <CardContent className="p-4 flex flex-col md:flex-row justify-between items-center">
@@ -175,7 +161,6 @@ const AssetTracker = () => {
         </Card>
       )}
       
-      {/* Market tabs */}
       <Tabs defaultValue="dashboard" className="space-y-4">
         <TabsList className="grid grid-cols-5 md:w-auto">
           <TabsTrigger value="dashboard">
