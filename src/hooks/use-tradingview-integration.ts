@@ -10,7 +10,7 @@ import {
   getTradingViewNews,
   TradingViewChartData,
   TradingViewNewsItem
-} from '../services/tradingView/tradingViewIntegrationService';
+} from '../services/tradingView';
 import { toast } from 'sonner';
 
 export function useTradingViewIntegration() {
