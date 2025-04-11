@@ -153,11 +153,18 @@ export const stopRealTimeAnalysis = () => {
 
 /**
  * קבלת האיתותים השמורים
+ * @param assetId אופציונלי - מזהה נכס לסינון
  */
-export const useStoredSignals = () => {
+export const useStoredSignals = (assetId?: string) => {
+  // הוספת isLoading property
   return {
-    data: storedSignals,
-    refetch: () => storedSignals,
+    data: assetId 
+      ? storedSignals.filter(signal => signal.assetId === assetId) 
+      : storedSignals,
+    refetch: () => assetId 
+      ? storedSignals.filter(signal => signal.assetId === assetId)
+      : storedSignals,
+    isLoading: false,
     isRunning
   };
 };
