@@ -72,8 +72,7 @@ const BacktestingSystem: React.FC = () => {
             </CardHeader>
             <CardContent>
               <BacktestingForm 
-                onRunBacktest={handleRunBacktest} 
-                existingSettings={settings}
+                onRunBacktest={handleRunBacktest}
               />
             </CardContent>
           </Card>
