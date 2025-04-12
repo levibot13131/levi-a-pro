@@ -1,5 +1,6 @@
 
 // Export all the type definitions
+
 export interface Asset {
   id: string;
   name: string;
