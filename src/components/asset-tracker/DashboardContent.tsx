@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getTrackedAssets } from '@/services/assetTracking';
 import { toggleAssetPin, toggleAssetAlerts, setAssetPriority } from '@/services/assetTracking/assetManagement';
@@ -11,7 +11,7 @@ import TradingViewBanner from './TradingViewBanner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Globe, Activity, ExternalLink } from 'lucide-react';
 import { useTradingViewConnection } from '@/hooks/use-tradingview-connection';
-import { startAssetTracking, stopAssetTracking, isTrackingActive } from '@/services/assetTracking/realTimeSync';
+import { startAssetTracking, stopAssetTracking, isTrackingActive } from '@/services/assetTracking';
 import { Asset } from '@/types/asset';
 import { TrackedAsset } from '@/services/assetTracking/types';
 
@@ -24,7 +24,7 @@ const DashboardContent = () => {
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const { isConnected } = useTradingViewConnection();
   
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isTrackingActive()) {
       startAssetTracking();
     }
@@ -50,19 +50,21 @@ const DashboardContent = () => {
   };
 
   const handleSelectAsset = (assetId: string) => {
-    const asset = assets.find(a => a.id === assetId);
-    if (asset) {
+    // Find the asset in the tracked assets list
+    const trackedAsset = Array.isArray(assets) ? assets.find(a => a.id === assetId) : null;
+    
+    if (trackedAsset) {
       // Convert TrackedAsset to Asset for compatibility
       const convertedAsset: Asset = {
-        id: asset.id,
-        name: asset.name,
-        symbol: asset.symbol,
-        type: asset.type,
-        price: asset.price,
-        change24h: asset.change24h,
-        marketCap: asset.marketCap || 0,
-        volume24h: asset.volume24h || 0,
-        rank: asset.rank || 0
+        id: trackedAsset.id,
+        name: trackedAsset.name,
+        symbol: trackedAsset.symbol,
+        type: trackedAsset.type,
+        price: trackedAsset.price,
+        change24h: trackedAsset.change24h,
+        marketCap: trackedAsset.marketCap || 0,
+        volume24h: trackedAsset.volume24h || 0,
+        rank: trackedAsset.rank || 0
       };
       setSelectedAsset(convertedAsset);
     }

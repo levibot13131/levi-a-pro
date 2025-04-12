@@ -47,8 +47,8 @@ const InfluencersTab: React.FC<InfluencersTabProps> = ({
           {influencers.map(influencer => {
             // Determine sentiment color
             const sentimentColor = 
-              influencer.sentiment === 'bullish' || influencer.sentiment === 'positive' ? 'text-green-600' : 
-              influencer.sentiment === 'bearish' || influencer.sentiment === 'negative' ? 'text-red-600' : 
+              (influencer.sentiment === 'bullish' || influencer.sentiment === 'positive') ? 'text-green-600' : 
+              (influencer.sentiment === 'bearish' || influencer.sentiment === 'negative') ? 'text-red-600' : 
               influencer.sentiment === 'variable' ? 'text-purple-600' : 'text-blue-600';
             
             return (
@@ -59,7 +59,7 @@ const InfluencersTab: React.FC<InfluencersTabProps> = ({
                     <CardDescription className="mt-1">{influencer.description}</CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
-                    {influencer.followStatus && <Check className="h-5 w-5 text-green-500" />}
+                    {influencer.followStatus === true && <Check className="h-5 w-5 text-green-500" />}
                   </div>
                 </CardHeader>
                 <CardContent className="text-right">
@@ -77,8 +77,8 @@ const InfluencersTab: React.FC<InfluencersTabProps> = ({
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-500">גישה כללית:</span>
                       <span className={`text-sm font-medium ${sentimentColor}`}>
-                        {influencer.sentiment === 'bullish' || influencer.sentiment === 'positive' ? 'חיובית' : 
-                         influencer.sentiment === 'bearish' || influencer.sentiment === 'negative' ? 'שלילית' :
+                        {(influencer.sentiment === 'bullish' || influencer.sentiment === 'positive') ? 'חיובית' : 
+                         (influencer.sentiment === 'bearish' || influencer.sentiment === 'negative') ? 'שלילית' :
                          influencer.sentiment === 'variable' ? 'משתנה' : 'ניטרלית'}
                       </span>
                     </div>
@@ -106,7 +106,7 @@ const InfluencersTab: React.FC<InfluencersTabProps> = ({
                 </CardContent>
                 <CardFooter className="flex justify-end pt-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm">{influencer.followStatus ? "במעקב" : "הוסף למעקב"}</span>
+                    <span className="text-sm">{influencer.followStatus === true ? "במעקב" : "הוסף למעקב"}</span>
                     <Switch 
                       checked={influencer.followStatus === true} 
                       onCheckedChange={(checked) => handleToggleInfluencer(influencer.id, checked)}

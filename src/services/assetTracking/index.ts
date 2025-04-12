@@ -1,46 +1,72 @@
 
 import { Asset } from '@/types/asset';
-import { 
-  getTrackedAssets, 
-  saveTrackedAssets,
-  getAssetById, 
-  toggleAssetPin, 
-  toggleAssetAlerts,
-  setAssetPriority
-} from './assetManagement';
-import { TrackedAsset } from './types';
+import { TrackedAsset, TRACKED_ASSETS_KEY } from './types';
+import { getTrackedAssets as getTrackedAssetsFromStorage, saveTrackedAssets } from './storage';
 
 export { 
-  getTrackedAssets, 
   toggleAssetPin, 
   toggleAssetAlerts, 
   setAssetPriority 
+} from './assetManagement';
+
+// Export the main getTrackedAssets function
+export const getTrackedAssets = async () => {
+  return getTrackedAssetsFromStorage();
 };
 
-export const addTrackedAsset = async (asset: Asset): Promise<boolean> => {
+export const addTrackedAsset = async (asset: Asset | string): Promise<boolean> => {
   try {
-    const existingAssets = getTrackedAssets();
+    const existingAssets = await getTrackedAssetsFromStorage();
+    
+    // Handle both Asset object and string ID
+    const assetId = typeof asset === 'string' ? asset : asset.id;
     
     // Check if asset is already tracked
-    if (existingAssets.some(a => a.id === asset.id)) {
+    if (existingAssets.some(a => a.id === assetId)) {
       return false;
     }
     
-    const newTrackedAsset: TrackedAsset = {
-      id: asset.id,
-      name: asset.name,
-      symbol: asset.symbol,
-      addedAt: Date.now(),
-      isPinned: false,
-      alertsEnabled: false,
-      lastChecked: Date.now(),
-      priceAtAdd: asset.price,
-      priority: 'medium',
-      notes: '',
-      tags: [],
-      status: 'active',
-      type: 'crypto'
-    };
+    // Create tracked asset object based on input type
+    let newTrackedAsset: TrackedAsset;
+    
+    if (typeof asset === 'string') {
+      // Minimal asset when only ID is provided
+      newTrackedAsset = {
+        id: asset,
+        name: `Asset ${asset}`, // Placeholder
+        symbol: asset.toUpperCase(), // Placeholder
+        type: 'crypto', // Default
+        price: 0,
+        change24h: 0,
+        priority: 'medium',
+        alertsEnabled: false,
+        lastUpdated: Date.now(),
+        isPinned: false,
+        status: 'active',
+        addedAt: Date.now(),
+        lastChecked: Date.now(),
+      };
+    } else {
+      // Full asset object is available
+      newTrackedAsset = {
+        id: asset.id,
+        name: asset.name,
+        symbol: asset.symbol,
+        type: asset.type as 'crypto' | 'stocks' | 'forex' | 'commodities',
+        price: asset.price,
+        change24h: asset.change24h,
+        priority: 'medium',
+        alertsEnabled: false,
+        lastUpdated: Date.now(),
+        marketCap: asset.marketCap,
+        volume24h: asset.volume24h,
+        rank: asset.rank,
+        isPinned: false,
+        status: 'active',
+        addedAt: Date.now(),
+        lastChecked: Date.now(),
+      };
+    }
     
     saveTrackedAssets([...existingAssets, newTrackedAsset]);
     return true;
@@ -52,7 +78,7 @@ export const addTrackedAsset = async (asset: Asset): Promise<boolean> => {
 
 export const removeTrackedAsset = async (assetId: string): Promise<boolean> => {
   try {
-    const existingAssets = getTrackedAssets();
+    const existingAssets = await getTrackedAssetsFromStorage();
     const updatedAssets = existingAssets.filter(asset => asset.id !== assetId);
     
     if (updatedAssets.length === existingAssets.length) {
@@ -69,7 +95,7 @@ export const removeTrackedAsset = async (assetId: string): Promise<boolean> => {
 
 export const updateTrackedAsset = async (updatedAsset: TrackedAsset): Promise<boolean> => {
   try {
-    const existingAssets = getTrackedAssets();
+    const existingAssets = await getTrackedAssetsFromStorage();
     const updatedAssets = existingAssets.map(asset => 
       asset.id === updatedAsset.id ? { ...asset, ...updatedAsset } : asset
     );
@@ -79,27 +105,6 @@ export const updateTrackedAsset = async (updatedAsset: TrackedAsset): Promise<bo
   } catch (error) {
     console.error('Error updating tracked asset:', error);
     return false;
-  }
-};
-
-export const getFilteredTrackedAssets = (
-  priorityFilter: string,
-  statusFilter: string,
-  typeFilter: string
-): TrackedAsset[] => {
-  try {
-    const assets = getTrackedAssets();
-    
-    return assets.filter(asset => {
-      const matchesPriority = priorityFilter === 'all' || asset.priority === priorityFilter;
-      const matchesStatus = statusFilter === 'all' || asset.status === statusFilter;
-      const matchesType = typeFilter === 'all' || asset.type === typeFilter;
-      
-      return matchesPriority && matchesStatus && matchesType;
-    });
-  } catch (error) {
-    console.error('Error getting filtered tracked assets:', error);
-    return [];
   }
 };
 
@@ -113,17 +118,17 @@ export const startAssetTracking = (intervalMs = 60000): void => {
   trackingActive = true;
   trackingInterval = setInterval(async () => {
     try {
-      const trackedAssets = getTrackedAssets();
+      const trackedAssets = await getTrackedAssetsFromStorage();
       
+      // Update asset data in local storage
       for (const asset of trackedAssets) {
-        const currentAsset = await getAssetById(asset.id);
-        if (currentAsset) {
-          // Update last checked timestamp
-          updateTrackedAsset({
-            ...asset,
-            lastChecked: Date.now()
-          });
-        }
+        // In a real app, you would fetch current data from an API
+        const updatedAsset: TrackedAsset = {
+          ...asset,
+          lastChecked: Date.now()
+        };
+        
+        await updateTrackedAsset(updatedAsset);
       }
     } catch (error) {
       console.error('Error in asset tracking interval:', error);
@@ -141,12 +146,4 @@ export const stopAssetTracking = (): void => {
 
 export const isTrackingActive = (): boolean => {
   return trackingActive;
-};
-
-export const initializeTrackedAssets = (): void => {
-  // Check if tracked assets exist in storage, if not initialize with empty array
-  const assets = getTrackedAssets();
-  if (!assets || assets.length === 0) {
-    saveTrackedAssets([]);
-  }
 };

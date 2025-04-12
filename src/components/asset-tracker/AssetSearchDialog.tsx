@@ -1,12 +1,11 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Plus, Check, AlertTriangle } from 'lucide-react';
 import { getAllAssetsSync } from '@/services/realTimeAssetService';
 import { Asset } from '@/types/asset';
-import { addTrackedAsset } from '@/services/assetTracking';
+import { addTrackedAsset, getTrackedAssets } from '@/services/assetTracking';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -26,7 +25,7 @@ const AssetSearchDialog: React.FC<AssetSearchDialogProps> = ({
   const [trackedAssetIds, setTrackedAssetIds] = useState<string[]>([]);
   
   // Get current tracked assets to check if an asset is already being tracked
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchTrackedAssets = async () => {
       const trackedAssets = await getTrackedAssets();
       setTrackedAssetIds(trackedAssets.map(a => a.id));
@@ -36,16 +35,6 @@ const AssetSearchDialog: React.FC<AssetSearchDialogProps> = ({
       fetchTrackedAssets();
     }
   }, [isOpen]);
-  
-  const getTrackedAssets = async () => {
-    try {
-      // Mock function - in a real app, you would fetch this from your data store
-      return JSON.parse(localStorage.getItem('tracked_assets_list') || '[]');
-    } catch (error) {
-      console.error('Error getting tracked assets:', error);
-      return [];
-    }
-  };
   
   const handleSearch = () => {
     if (!searchQuery.trim()) {
@@ -73,12 +62,12 @@ const AssetSearchDialog: React.FC<AssetSearchDialogProps> = ({
     }
   };
   
-  const handleAddAsset = async (assetId: string) => {
-    const success = await addTrackedAsset(assetId);
+  const handleAddAsset = async (asset: Asset) => {
+    const success = await addTrackedAsset(asset);
     if (success) {
       onAssetAdd();
       // Update local tracked IDs for UI feedback
-      setTrackedAssetIds(prev => [...prev, assetId]);
+      setTrackedAssetIds(prev => [...prev, asset.id]);
     }
   };
   
@@ -153,7 +142,7 @@ const AssetSearchDialog: React.FC<AssetSearchDialogProps> = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleAddAsset(asset.id)}
+                    onClick={() => handleAddAsset(asset)}
                     disabled={trackedAssetIds.includes(asset.id)}
                   >
                     {trackedAssetIds.includes(asset.id) ? (

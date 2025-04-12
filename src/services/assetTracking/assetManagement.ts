@@ -1,11 +1,10 @@
 
-import { getAssetById } from '@/services/realTimeAssetService';
 import { TRACKED_ASSETS_KEY, TrackedAsset } from './types';
 import { Asset } from '@/types/asset';
 import { getTrackedAssets as getStoredAssets, saveTrackedAssets } from './storage';
 
 // Get list of tracked assets from local storage
-export const getTrackedAssetsFromStorage = async (): Promise<TrackedAsset[]> => {
+export const getTrackedAssets = async (): Promise<TrackedAsset[]> => {
   try {
     const storedData = localStorage.getItem(TRACKED_ASSETS_KEY);
     
@@ -18,6 +17,27 @@ export const getTrackedAssetsFromStorage = async (): Promise<TrackedAsset[]> => 
   } catch (error) {
     console.error('Error getting tracked assets:', error);
     return [];
+  }
+};
+
+// Get asset by ID (mock implementation)
+export const getAssetById = async (assetId: string): Promise<Asset | null> => {
+  try {
+    // Mock implementation - in a real app, you would fetch this from an API
+    return {
+      id: assetId,
+      name: `Asset ${assetId}`,
+      symbol: assetId.toUpperCase(),
+      type: 'crypto',
+      price: 1000,
+      change24h: 0.5,
+      marketCap: 1000000,
+      volume24h: 500000,
+      rank: 1
+    };
+  } catch (error) {
+    console.error('Error getting asset by ID:', error);
+    return null;
   }
 };
 
@@ -65,3 +85,5 @@ export const setAssetPriority = async (assetId: string, priority: 'high' | 'medi
     return false;
   }
 };
+
+export { saveTrackedAssets };

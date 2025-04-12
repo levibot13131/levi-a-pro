@@ -1,6 +1,4 @@
 
-import { Asset } from '@/types/asset';
-
 export interface TrackedAsset {
   id: string;
   name: string;
@@ -18,6 +16,11 @@ export interface TrackedAsset {
   marketCap?: number;
   volume24h?: number;
   rank?: number;
+  status?: string;
+  priceAtAdd?: number;
+  lastChecked?: number;
+  addedAt?: number;
+  tags?: string[];
 }
 
 // Storage key for tracked assets
