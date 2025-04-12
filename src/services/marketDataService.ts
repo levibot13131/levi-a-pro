@@ -42,15 +42,14 @@ export const fetchTrendingCoins = async (): Promise<Asset[]> => {
 };
 
 // Fetch market data for specific coins
-export const fetchMarketData = async (coinIds: string[]): Promise<Record<string, any>> => {
+export const fetchMarketData = async (coinIds: string[]): Promise<Record<string, MarketData>> => {
   // Mock implementation - would be replaced with actual API call
-  const result: Record<string, any> = {};
+  const result: Record<string, MarketData> = {};
   
   coinIds.forEach(id => {
     result[id] = {
-      marketCap: id === 'bitcoin' ? 1250000000000 : id === 'ethereum' ? 420000000000 : 89000000000,
-      volume24h: id === 'bitcoin' ? 30000000000 : id === 'ethereum' ? 18000000000 : 2000000000,
       dominance: id === 'bitcoin' ? 45.2 : id === 'ethereum' ? 18.5 : 4.2,
+      volume: id === 'bitcoin' ? 30000000000 : id === 'ethereum' ? 18000000000 : 2000000000,
       priceChange24h: id === 'bitcoin' ? 1500 : id === 'ethereum' ? 60 : 2.8,
       priceChangePercentage24h: id === 'bitcoin' ? 2.5 : id === 'ethereum' ? 1.8 : 0.5,
       priceChange7d: id === 'bitcoin' ? 3000 : id === 'ethereum' ? 120 : 5,

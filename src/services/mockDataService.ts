@@ -1,4 +1,3 @@
-
 import { Asset, PricePoint, AssetHistoricalData, TimeframeType } from '@/types/asset';
 
 // Mock assets
@@ -129,7 +128,7 @@ export const getAssetHistory = async (
   if (!asset) return null;
   
   const now = Date.now();
-  const pricePoints = [];
+  const pricePoints: [number, number][] = [];
   let price = asset.price;
   
   // Generate historical price data
@@ -165,11 +164,17 @@ export const getAssetHistory = async (
     // Push data point
     pricePoints.push([
       timestamp,
-      price,
-      // Only include volume for some timeframes
-      ['1d', '1h'].includes(timeframe) ? (asset.volume24h || 0) * (0.8 + Math.random() * 0.4) / days : 0
+      price
     ]);
   }
+  
+  const volumes = pricePoints.map(p => [p[0], (asset.volume24h || 0) * (0.8 + Math.random() * 0.4) / days]);
+  
+  const dataPoints = pricePoints.map((p, i) => ({
+    timestamp: p[0],
+    price: p[1],
+    volume: volumes[i][1]
+  }));
   
   return {
     id: asset.id,
@@ -178,12 +183,8 @@ export const getAssetHistory = async (
     timeframe,
     prices: pricePoints,
     market_caps: pricePoints.map(p => [p[0], (asset.marketCap || 0) * (0.9 + Math.random() * 0.2)]),
-    total_volumes: pricePoints.map(p => [p[0], p[2]]),
-    data: pricePoints.map(p => ({
-      timestamp: p[0],
-      price: p[1],
-      volume: p[2]
-    })),
+    total_volumes: volumes,
+    data: dataPoints,
     firstDate: pricePoints[0][0],
     lastDate: pricePoints[pricePoints.length - 1][0]
   };
