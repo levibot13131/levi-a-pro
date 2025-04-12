@@ -1,4 +1,3 @@
-
 import { TradeSignal } from '@/types/asset';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
@@ -81,4 +80,51 @@ export const useStoredSignals = (assetId?: string) => {
     },
     refetchInterval: 5000, // Refresh every 5 seconds
   });
+};
+
+export interface SignalAnalysisResult {
+  totalSignals: number;
+  buySignals: number;
+  sellSignals: number;
+  strongSignals: number;
+  weakSignals: number;
+  confidenceScore: number;
+  assetId: string;
+  timeframe: string;
+  conclusion: string;
+  recommendation: string;
+  supportingFactors: string[];
+  riskFactors: string[];
+  alternativeScenarios: string[];
+}
+
+/**
+ * Generate a signal analysis result
+ */
+export const generateSignalAnalysis = (assetId?: string): SignalAnalysisResult => {
+  return {
+    totalSignals: 42,
+    buySignals: 28,
+    sellSignals: 14,
+    strongSignals: 15,
+    weakSignals: 27,
+    confidenceScore: 72,
+    assetId: assetId || 'all',
+    timeframe: '1d',
+    conclusion: 'מגמה חיובית בטווח הקצר',
+    recommendation: 'אפשרויות כניסה נוחות לפוזיציות לונג',
+    supportingFactors: [
+      'התבססות מעל ממוצע נע 200',
+      'תנועת כספים חיובית לשוק',
+      'רוב האינדיקטורים במצב חיובי'
+    ],
+    riskFactors: [
+      'התנגדות משמעותית ברמת 50,000$',
+      'סנטימנט חיובי מידי בטווח הקצר'
+    ],
+    alternativeScenarios: [
+      'תיקון טכני קל לפני המשך עלייה',
+      'דשדוש ברמות הנוכחיות'
+    ]
+  };
 };

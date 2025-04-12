@@ -1,9 +1,10 @@
-
 import { generateSignalsFromHistory } from '../signals';
 import { PricePoint, TradeSignal } from '@/types/asset';
 import { detectTrends } from '../patterns/trendAnalyzer';
 import { BacktestSettings } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { useState, useEffect } from 'react';
+import { getStoredSignals } from './signalStorage';
 
 // In-memory storage for signals
 let storedSignals: TradeSignal[] = [];
@@ -50,12 +51,31 @@ export function startRealTimeAnalysis(
 /**
  * Get stored signals from memory
  */
-export function useStoredSignals() {
-  return {
-    data: storedSignals,
-    refetch: () => storedSignals
+export const useStoredSignals = () => {
+  const [signals, setSignals] = useState<TradeSignal[]>([]);
+  
+  const fetchSignals = () => {
+    const storedSignals = getStoredSignals();
+    setSignals(storedSignals);
+    return storedSignals;
   };
-}
+  
+  useEffect(() => {
+    fetchSignals();
+    
+    // Set up interval to periodically check for new signals
+    const interval = setInterval(fetchSignals, 30000);
+    
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+  
+  return {
+    data: signals,
+    refetch: fetchSignals
+  };
+};
 
 /**
  * Clear all stored signals

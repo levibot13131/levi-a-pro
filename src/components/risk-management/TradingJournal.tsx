@@ -7,6 +7,7 @@ import { addTradingJournalEntry } from '@/services/customTradingStrategyService'
 import { toast } from "sonner";
 import { TradeJournalEntry } from '@/types/asset';
 import TradingJournalForm from './TradingJournalForm';
+import TradingJournalEntryList from './TradingJournalEntryList';
 
 interface TradingJournalProps {
   initialEntries?: TradeJournalEntry[];
