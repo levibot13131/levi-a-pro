@@ -12,7 +12,16 @@ interface RealTimeAlertsProps {
 const RealTimeAlerts: React.FC<RealTimeAlertsProps> = ({ assetIds, settings }) => {
   return (
     <RealTimeAlertsService assetIds={assetIds} settings={settings}>
-      {({ signals, isActive, toggleRealTimeAlerts, handleClearSignals, enableAutomaticAlerts, areAutoAlertsEnabled }) => (
+      {({ 
+        signals, 
+        isActive, 
+        toggleRealTimeAlerts, 
+        handleClearSignals, 
+        enableAutomaticAlerts, 
+        areAutoAlertsEnabled,
+        isBinanceConnected,
+        binanceMarketData
+      }) => (
         <AlertsCard
           signals={signals}
           isActive={isActive}
@@ -20,6 +29,8 @@ const RealTimeAlerts: React.FC<RealTimeAlertsProps> = ({ assetIds, settings }) =
           handleClearSignals={handleClearSignals}
           enableAutomaticAlerts={enableAutomaticAlerts}
           areAutoAlertsEnabled={areAutoAlertsEnabled}
+          isBinanceConnected={isBinanceConnected}
+          binanceMarketData={binanceMarketData}
         />
       )}
     </RealTimeAlertsService>

@@ -4,6 +4,9 @@ import { useStoredSignals, startRealTimeAnalysis, clearStoredSignals } from '@/s
 import { toast } from 'sonner';
 import { BacktestSettings } from '@/services/backtesting/types';
 import { getTrackedAssets } from '@/services/assetTracking/storage';
+import { useAuth } from '@/contexts/AuthContext';
+import { useBinanceConnection } from '@/hooks/use-binance-connection';
+import { useBinanceData } from '@/hooks/use-binance-data';
 
 interface RealTimeAlertsServiceProps {
   assetIds: string[];
@@ -15,6 +18,8 @@ interface RealTimeAlertsServiceProps {
     handleClearSignals: () => void;
     enableAutomaticAlerts: () => void;
     areAutoAlertsEnabled: boolean;
+    isBinanceConnected: boolean;
+    binanceMarketData: any;
   }) => React.ReactNode;
 }
 
@@ -23,10 +28,25 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
   settings, 
   children 
 }) => {
+  const { user, isAdmin } = useAuth();
   const [isActive, setIsActive] = React.useState(false);
   const [alertInstance, setAlertInstance] = React.useState<{ stop: () => void } | null>(null);
   const { data: signals = [], refetch } = useStoredSignals();
   const [autoAlertsEnabled, setAutoAlertsEnabled] = useState(false);
+  
+  // Binance integration
+  const { isConnected: isBinanceConnected } = useBinanceConnection();
+  const mappedAssetIds = assetIds.map(id => {
+    // Convert our internal asset IDs to Binance symbols
+    switch(id.toLowerCase()) {
+      case 'bitcoin': return 'BTCUSDT';
+      case 'ethereum': return 'ETHUSDT';
+      case 'solana': return 'SOLUSDT';
+      default: return id.toUpperCase() + 'USDT';
+    }
+  });
+  
+  const { marketData: binanceMarketData } = useBinanceData(isBinanceConnected ? mappedAssetIds : []);
   
   // למצוא נכסים במעקב באופן אוטומטי
   useEffect(() => {
@@ -64,6 +84,12 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
   }, [alertInstance, refetch]);
   
   const startAutomaticAlerts = (assets: string[]) => {
+    // Verify that the user has permission
+    if (!user) {
+      toast.error("יש להתחבר כדי להפעיל התראות אוטומטיות");
+      return;
+    }
+    
     if (assets.length === 0) {
       toast.info("אין נכסים עם התראות פעילות");
       return;
@@ -79,6 +105,12 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
   };
   
   const toggleRealTimeAlerts = () => {
+    // Verify that the user has permission
+    if (!user) {
+      toast.error("יש להתחבר כדי להפעיל התראות");
+      return;
+    }
+    
     if (isActive && alertInstance) {
       // Stop current analysis
       alertInstance.stop();
@@ -103,6 +135,12 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
   };
   
   const enableAutomaticAlerts = () => {
+    // Verify that the user has permission
+    if (!user) {
+      toast.error("יש להתחבר כדי להפעיל התראות אוטומטיות");
+      return;
+    }
+    
     setAutoAlertsEnabled(true);
     
     const trackedAssets = getTrackedAssets();
@@ -127,7 +165,9 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
         toggleRealTimeAlerts,
         handleClearSignals,
         enableAutomaticAlerts,
-        areAutoAlertsEnabled: autoAlertsEnabled
+        areAutoAlertsEnabled: autoAlertsEnabled,
+        isBinanceConnected,
+        binanceMarketData
       })}
     </>
   );
