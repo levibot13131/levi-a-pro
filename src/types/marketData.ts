@@ -1,3 +1,4 @@
+
 export interface MarketData {
   id: string;
   name: string;

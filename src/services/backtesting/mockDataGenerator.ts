@@ -36,7 +36,7 @@ export const generateMockAssetHistory = (assetId: string, timeframe: string = '1
   };
 };
 
-// Add the missing function to generate historical data
+// Export the generateHistoricalData function
 export const generateHistoricalData = async (assetId: string, timeframe: string = '1d'): Promise<AssetHistoricalData> => {
   // For simplicity, we're reusing the generateMockAssetHistory function
   return generateMockAssetHistory(assetId, timeframe);

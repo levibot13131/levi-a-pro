@@ -69,6 +69,7 @@ export interface BacktestTrade {
   status?: 'open' | 'closed' | 'target' | 'stopped' | 'canceled';
   duration?: number;
   strategyUsed?: string;
+  stopLoss?: number;
 }
 
 export interface EquityPoint {
