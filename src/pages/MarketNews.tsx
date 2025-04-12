@@ -10,6 +10,8 @@ import { formatTimeAgo } from '@/lib/utils';
 import NewsGrid from '@/components/market-news/NewsGrid';
 import SocialTab from '@/components/market-news/SocialTab';
 
+type SentimentType = 'all' | 'positive' | 'negative' | 'neutral';
+
 const MarketNews = () => {
   const { 
     selectedTab, setSelectedTab,
@@ -21,6 +23,11 @@ const MarketNews = () => {
     nextNewsPage, prevNewsPage,
     nextSocialPage, prevSocialPage
   } = useMarketNews();
+
+  // Type-safe handler for sentiment change
+  const handleSentimentChange = (value: string) => {
+    setSelectedSentiment(value as SentimentType);
+  };
 
   return (
     <div className="container mx-auto py-8">
@@ -36,7 +43,7 @@ const MarketNews = () => {
             </Button>
             
             <div className="flex gap-4">
-              <Select value={selectedSentiment} onValueChange={setSelectedSentiment}>
+              <Select value={selectedSentiment} onValueChange={handleSentimentChange}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="סנטימנט" />
                 </SelectTrigger>
@@ -103,7 +110,7 @@ const MarketNews = () => {
             
             <TabsContent value="social">
               <SocialTab
-                posts={socialPosts}
+                socialPosts={socialPosts}
                 isLoading={false}
               />
               

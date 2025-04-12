@@ -21,17 +21,17 @@ export const generateSignalsFromHistory = async (
     case "A.A":
     case "KSem":
       // שימוש באסטרטגיית AA של KSem
-      signals = await generateAASignals(priceData, assetId, strategy);
+      signals = await generateAASignals(priceData, assetId);
       break;
     
     case "Whale Activity":
       // איתותי פעילות לווייתנים
-      signals = await generateWhaleSignals(priceData, assetId, strategy);
+      signals = await generateWhaleSignals(priceData, assetId);
       break;
     
     default:
       // ברירת מחדל - אסטרטגיית AA
-      signals = await generateAASignals(priceData, assetId, 'A.A');
+      signals = await generateAASignals(priceData, assetId);
   }
   
   // מיון האיתותים לפי זמן (מהחדש לישן)
@@ -43,10 +43,10 @@ export const generateSignalsFromHistory = async (
 // אסטרטגיית AA לניתוח מחיר
 const generateAASignals = async (
   priceData: PricePoint[],
-  assetId: string,
-  strategy: string
+  assetId: string
 ): Promise<TradeSignal[]> => {
   const signals: TradeSignal[] = [];
+  const strategy = "A.A"; // Define strategy here
   
   // חישובים לזיהוי מגמות ונקודות כניסה
   // ממוצע נע פשוט קצר טווח

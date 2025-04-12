@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -17,6 +18,14 @@ interface SmartTabContentProps {
 const SmartTabContent: React.FC<SmartTabContentProps> = ({ assetId }) => {
   const [smartTabActive, setSmartTabActive] = useState('realtime');
   const { isConnected, credentials, loading } = useTradingViewConnection();
+  
+  // Helper function to format price
+  const formatPrice = (price: number) => {
+    return price.toLocaleString(undefined, { 
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
   
   return (
     <div className="space-y-6">
@@ -53,7 +62,7 @@ const SmartTabContent: React.FC<SmartTabContentProps> = ({ assetId }) => {
         <TabsContent value="realtime" className="pt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <CustomSignals assetId={assetId} />
+              <CustomSignals assetId={assetId} formatPrice={formatPrice} />
             </div>
             <div>
               <TradingViewWebhookHandler />

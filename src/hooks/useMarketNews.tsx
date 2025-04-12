@@ -5,6 +5,18 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 
 export const useMarketNews = () => {
+  // State declarations for pagination, filtering, and data
+  const [selectedTab, setSelectedTab] = useState<'news' | 'social'>('news');
+  const [currentNewsPage, setCurrentNewsPage] = useState<number>(1);
+  const [totalNewsPages, setTotalNewsPages] = useState<number>(1);
+  const [currentSocialPage, setCurrentSocialPage] = useState<number>(1);
+  const [totalSocialPages, setTotalSocialPages] = useState<number>(1);
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
+  const [socialPosts, setSocialPosts] = useState<SocialPost[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [selectedAsset, setSelectedAsset] = useState<string>('all');
+  const [selectedSentiment, setSelectedSentiment] = useState<'all' | 'positive' | 'negative' | 'neutral'>('all');
+  
   // Function to filter data by asset
   const filterItems = <T extends { relatedAssets?: string[] }>(
     items: T[] | undefined, 
@@ -54,7 +66,49 @@ export const useMarketNews = () => {
     });
   };
 
+  // Pagination functions
+  const nextNewsPage = () => {
+    if (currentNewsPage < totalNewsPages) {
+      setCurrentNewsPage(prev => prev + 1);
+    }
+  };
+  
+  const prevNewsPage = () => {
+    if (currentNewsPage > 1) {
+      setCurrentNewsPage(prev => prev - 1);
+    }
+  };
+  
+  const nextSocialPage = () => {
+    if (currentSocialPage < totalSocialPages) {
+      setCurrentSocialPage(prev => prev + 1);
+    }
+  };
+  
+  const prevSocialPage = () => {
+    if (currentSocialPage > 1) {
+      setCurrentSocialPage(prev => prev - 1);
+    }
+  };
+
   return {
+    selectedTab,
+    setSelectedTab,
+    currentNewsPage,
+    totalNewsPages,
+    currentSocialPage,
+    totalSocialPages,
+    news: newsItems,
+    socialPosts,
+    selectedAsset,
+    setSelectedAsset,
+    selectedSentiment,
+    setSelectedSentiment,
+    isLoading: loading,
+    nextNewsPage,
+    prevNewsPage,
+    nextSocialPage,
+    prevSocialPage,
     filterItems,
     getSentimentBadge,
     formatNumber,
