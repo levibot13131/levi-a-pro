@@ -2,7 +2,7 @@
 import { AnalysisData } from '@/components/backtesting/analysis/types';
 
 export const generateComprehensiveAnalysis = (assetId: string, timeframe: string): AnalysisData => {
-  // Mock implementation that returns a properly structured analysis
+  // מימוש מדויק לפי ממשק AnalysisData
   return {
     historical: {
       keyEvents: [

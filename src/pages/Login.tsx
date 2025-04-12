@@ -92,9 +92,10 @@ const Login = () => {
             </div>
             <div className="text-sm text-muted-foreground text-right">
               <p className="font-semibold">Levi Bot - גישה מוגבלת בלבד</p>
-              <p>* עבור גרסת הדגמה:</p>
+              <p>* לגישת מנהל:</p>
+              <p>מנהל מערכת: almogahronov1997@gmail.com / 1907900</p>
+              <p>* לגישת משתמש רגיל:</p>
               <p>משתמש רגיל: user@example.com / user123</p>
-              <p>מנהל מערכת: admin@example.com / admin123</p>
             </div>
           </CardContent>
           <CardFooter>

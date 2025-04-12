@@ -1,168 +1,205 @@
 
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getTradeSignals } from '@/services/mockTradingService';
-import { useStoredSignals } from '@/services/backtesting/realTimeAnalysis';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Bell, ChevronRight, ZapOff } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { TradeSignal } from '@/types/asset';
-import { toast } from 'sonner';
+import { formatPrice as defaultFormatPrice } from '@/lib/utils';
 
-interface CustomSignalsProps {
+export interface CustomSignalsProps {
   assetId: string;
   formatPrice: (price: number) => string;
 }
 
-const CustomSignals: React.FC<CustomSignalsProps> = ({
-  assetId,
-  formatPrice,
-}) => {
-  // שליפת איתותים ממקור נתונים מדומה
-  const { data: mockSignals = [], isLoading: mockSignalsLoading } = useQuery({
-    queryKey: ['customSignals', assetId],
-    queryFn: () => getTradeSignals(assetId),
-    refetchOnWindowFocus: false,
-    refetchInterval: 60000, // רענון כל דקה
-  });
+// Mock signal generation
+const generateMockSignals = (assetId: string): TradeSignal[] => {
+  const now = Date.now();
+  const day = 24 * 60 * 60 * 1000;
   
-  // שליפת איתותים בזמן אמת מהמערכת החדשה
-  const { data: realTimeSignals = [], refetch: refetchRealTime } = useStoredSignals();
-  const realTimeSignalsLoading = false;
+  return [
+    {
+      id: '1',
+      assetId,
+      symbol: 'BTC', // הוספת symbol
+      type: 'buy',
+      price: 50000,
+      timestamp: now - 2 * day,
+      strength: 'strong',
+      strategy: 'Breakout',
+      timeframe: '1d',
+      targetPrice: 55000,
+      stopLoss: 48000,
+      riskRewardRatio: 2.5,
+      createdAt: now - 2 * day,
+      confidence: 85, // הוספת confidence
+      indicator: 'פריצת התנגדות', // הוספת indicator
+      description: 'פריצת התנגדות ארוכת טווח עם נפח גבוה' // הוספת description
+    },
+    {
+      id: '2',
+      assetId,
+      symbol: 'BTC', // הוספת symbol
+      type: 'sell',
+      price: 52000,
+      timestamp: now - day,
+      strength: 'medium',
+      strategy: 'RSI Divergence',
+      timeframe: '4h',
+      targetPrice: 49000,
+      stopLoss: 53000,
+      riskRewardRatio: 3.0,
+      createdAt: now - day,
+      confidence: 70, // הוספת confidence
+      indicator: 'דיברגנס RSI', // הוספת indicator
+      description: 'דיברגנס שלילי ב-RSI וירידה בנפח המסחר' // הוספת description
+    },
+    {
+      id: '3',
+      assetId,
+      symbol: 'BTC', // הוספת symbol
+      type: 'buy',
+      price: 49000,
+      timestamp: now - 12 * 60 * 60 * 1000,
+      strength: 'weak',
+      strategy: 'Support Bounce',
+      timeframe: '1h',
+      targetPrice: 50500,
+      stopLoss: 48500,
+      riskRewardRatio: 1.5,
+      createdAt: now - 12 * 60 * 60 * 1000,
+      confidence: 65, // הוספת confidence
+      indicator: 'התמיכה בממוצע נע', // הוספת indicator
+      description: 'ניתור מרמת תמיכה של ממוצע נע 200' // הוספת description
+    }
+  ];
+};
+
+const CustomSignals: React.FC<CustomSignalsProps> = ({ assetId, formatPrice = defaultFormatPrice }) => {
+  const [activeTab, setActiveTab] = useState('current');
+  const signals = generateMockSignals(assetId);
   
-  // פונקציה לשליחת איתות לערוצי התקשורת (טלגרם/וואטסאפ)
-  const sendSignal = (signalId: string) => {
-    toast.success("האיתות נשלח בהצלחה", {
-      description: `איתות מספר ${signalId} נשלח לכל הערוצים המוגדרים`
+  // Group signals
+  const currentSignals = signals.filter(signal => 
+    (signal.type === 'buy' && signal.price <= 51000) || 
+    (signal.type === 'sell' && signal.price >= 51000)
+  );
+  const pastSignals = signals.filter(signal => signal.timestamp < Date.now() - 24 * 60 * 60 * 1000);
+  
+  // Format date
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString('he-IL', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
   
-  // סינון האיתותים לפי נכס ספציפי
-  const filteredRealTimeSignals = assetId === 'all' 
-    ? realTimeSignals 
-    : realTimeSignals.filter(signal => signal.assetId === assetId);
-  
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader className="pb-2">
-        <CardTitle className="text-right text-xl">איתותים מותאמים אישית</CardTitle>
+        <CardTitle className="text-right">איתותי מסחר ספציפיים לנכס</CardTitle>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="custom">
-          <TabsList className="grid grid-cols-2 mb-4">
-            <TabsTrigger value="custom">איתותים מותאמים</TabsTrigger>
-            <TabsTrigger value="realtime">איתותים בזמן אמת</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full mb-4">
+            <TabsTrigger value="current" className="flex-1">איתותים נוכחיים</TabsTrigger>
+            <TabsTrigger value="past" className="flex-1">איתותי עבר</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="custom">
-            {mockSignalsLoading ? (
-              <div className="text-center py-4">טוען איתותים...</div>
-            ) : mockSignals.length === 0 ? (
-              <div className="text-center py-8 space-y-2">
-                <ZapOff className="h-12 w-12 mx-auto text-muted-foreground" />
-                <p className="text-muted-foreground">לא נמצאו איתותים מותאמים עבור נכס זה</p>
+          <TabsContent value="current" className="space-y-4">
+            {currentSignals.length === 0 ? (
+              <div className="text-center p-6 border rounded-md">
+                <Clock className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-muted-foreground">אין איתותים פעילים כרגע</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {mockSignals.map((signal: TradeSignal) => (
-                  <SignalCard 
-                    key={signal.id}
-                    signal={signal}
-                    formatPrice={formatPrice}
-                    onSend={sendSignal}
-                  />
-                ))}
-              </div>
+              currentSignals.map(signal => (
+                <div key={signal.id} className="border rounded-md p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <Badge variant={signal.type === 'buy' ? 'success' : 'destructive'}>
+                      {signal.type === 'buy' ? 'קנייה' : 'מכירה'}
+                    </Badge>
+                    <div className="text-right">
+                      <h3 className="font-medium">{signal.symbol} / {signal.strategy}</h3>
+                      <p className="text-sm text-muted-foreground">{formatDate(signal.timestamp)}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">מחיר כניסה</p>
+                      <p className="font-medium">{formatPrice(signal.price)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">ביטחון</p>
+                      <p className="font-medium">{signal.confidence}%</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">סטופ לוס</p>
+                      <p className="font-medium">{formatPrice(signal.stopLoss || 0)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">יעד מחיר</p>
+                      <p className="font-medium">{formatPrice(signal.targetPrice || 0)}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="text-right mb-2">
+                    <p className="text-sm font-medium">אינדיקטור: {signal.indicator}</p>
+                    <p className="text-sm text-muted-foreground">{signal.description}</p>
+                  </div>
+                  
+                  <div className="flex justify-end">
+                    <Button variant="outline" size="sm">הוסף ליומן המסחר</Button>
+                  </div>
+                </div>
+              ))
             )}
           </TabsContent>
           
-          <TabsContent value="realtime">
-            {realTimeSignalsLoading ? (
-              <div className="text-center py-4">טוען איתותים בזמן אמת...</div>
-            ) : filteredRealTimeSignals.length === 0 ? (
-              <div className="text-center py-8 space-y-2">
-                <ZapOff className="h-12 w-12 mx-auto text-muted-foreground" />
-                <p className="text-muted-foreground">לא נמצאו איתותים בזמן אמת עבור נכס זה</p>
-                <Button variant="outline" size="sm" onClick={() => refetchRealTime()}>
-                  רענן איתותים
-                </Button>
+          <TabsContent value="past" className="space-y-4">
+            {pastSignals.length === 0 ? (
+              <div className="text-center p-6 border rounded-md">
+                <AlertCircle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                <p className="text-muted-foreground">אין היסטוריית איתותים לנכס זה</p>
               </div>
             ) : (
-              <div className="space-y-3">
-                {filteredRealTimeSignals.map((signal: TradeSignal) => (
-                  <SignalCard 
-                    key={signal.id}
-                    signal={signal}
-                    formatPrice={formatPrice}
-                    onSend={sendSignal}
-                    isRealTime
-                  />
-                ))}
-              </div>
+              pastSignals.map(signal => (
+                <div key={signal.id} className="border rounded-md p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <Badge variant="outline">
+                      {signal.type === 'buy' ? 'קנייה' : 'מכירה'}
+                    </Badge>
+                    <div className="text-right">
+                      <h3 className="font-medium">{signal.symbol} / {signal.strategy}</h3>
+                      <p className="text-sm text-muted-foreground">{formatDate(signal.timestamp)}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">מחיר כניסה</p>
+                      <p className="font-medium">{formatPrice(signal.price)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-muted-foreground">תוצאה</p>
+                      <p className="font-medium flex items-center">
+                        <CheckCircle className="h-4 w-4 mr-1 text-green-500" />
+                        הצלחה
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))
             )}
           </TabsContent>
         </Tabs>
       </CardContent>
     </Card>
-  );
-};
-
-// SignalCard Component
-interface SignalCardProps {
-  signal: TradeSignal;
-  formatPrice: (price: number) => string;
-  onSend: (id: string) => void;
-  isRealTime?: boolean;
-}
-
-const SignalCard: React.FC<SignalCardProps> = ({ signal, formatPrice, onSend, isRealTime }) => {
-  return (
-    <div className="border rounded-md p-3">
-      <div className="flex justify-between items-start mb-2">
-        <Badge 
-          className={signal.type === 'buy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
-        >
-          {signal.type === 'buy' ? 'קנייה' : 'מכירה'}
-        </Badge>
-        <div className="text-right">
-          <p className="font-medium">{signal.symbol || signal.assetId}</p>
-          <p className="text-xs text-muted-foreground">
-            {new Date(signal.timestamp).toLocaleString('he-IL')}
-          </p>
-        </div>
-      </div>
-      
-      <div className="flex justify-between text-sm mb-2">
-        <div>מחיר: ${formatPrice(signal.price)}</div>
-        <div className="text-right">ביטחון: {signal.confidence || 75}%</div>
-      </div>
-      
-      <div className="text-right text-sm mb-3">
-        <div>אינדיקטור: {signal.indicator || 'MACD'}</div>
-        <div>{signal.description || 'חצה ממוצע נע 50 כלפי מעלה'}</div>
-      </div>
-      
-      <div className="flex justify-end">
-        <Button 
-          variant="outline" 
-          size="sm"
-          className="flex items-center gap-1"
-          onClick={() => onSend(signal.id)}
-        >
-          <Bell className="h-3 w-3" />
-          שלח כהתראה
-          <ChevronRight className="h-3 w-3" />
-        </Button>
-      </div>
-      
-      {isRealTime && (
-        <div className="mt-2 text-right">
-          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-600">בזמן אמת</Badge>
-        </div>
-      )}
-    </div>
   );
 };
 

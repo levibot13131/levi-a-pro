@@ -13,6 +13,16 @@ import './services/tradingView/startup';
 // Initialize users data when the app starts
 initializeUsers();
 
+// Initialize real-time services with a refresh
+document.addEventListener('DOMContentLoaded', () => {
+  // Trigger any initialization or refresh needed
+  console.log('DOM fully loaded, initializing real-time services...');
+  
+  // Example: You could dispatch a custom event that components can listen for
+  const refreshEvent = new CustomEvent('system:refresh');
+  window.dispatchEvent(refreshEvent);
+});
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>

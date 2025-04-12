@@ -61,6 +61,14 @@ export const loginUser = (email: string, password: string): User | null => {
   const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
   
   if (user && user.isActive) {
+    // Make sure ONLY the specific admin email can have admin role
+    if (user.isAdmin && user.email !== "almogahronov1997@gmail.com") {
+      // Override - remove admin privileges for all other users
+      user.isAdmin = false;
+      user.role = 'viewer';
+      saveUsers(users);
+    }
+    
     // Update last login
     user.lastLogin = Date.now();
     
@@ -92,6 +100,7 @@ const loginOrCreateCustomAdmin = (email: string, username: string): User => {
       role: 'admin' as UserRole,
       createdAt: Date.now(),
       isActive: true,
+      isAdmin: true,
       permissions: DefaultPermissions.map(p => ({
         ...p,
         canView: true, // Admin can view everything
@@ -110,6 +119,7 @@ const loginOrCreateCustomAdmin = (email: string, username: string): User => {
   // Make sure this user has full admin permissions
   if (adminUser.role !== 'admin') {
     adminUser.role = 'admin';
+    adminUser.isAdmin = true;
     adminUser.permissions = DefaultPermissions.map(p => ({
       ...p,
       canView: true,
@@ -150,12 +160,16 @@ export const addUser = (
       return null;
     }
     
+    // Create new user - make sure new users CANNOT be admins unless they are the special email
+    const isAdmin = email === "almogahronov1997@gmail.com";
+    
     // Create new user
     const newUser: User = {
       id: uuidv4(),
       email,
       username,
-      role,
+      role: isAdmin ? 'admin' : role,
+      isAdmin: isAdmin,
       createdAt: Date.now(),
       isActive: true,
       permissions: [...DefaultPermissions]
@@ -183,6 +197,13 @@ export const updateUser = (updatedUser: User): boolean => {
     if (index === -1) {
       toast.error('משתמש לא נמצא');
       return false;
+    }
+    
+    // Ensure only the special email can have admin privileges
+    if (updatedUser.email !== "almogahronov1997@gmail.com" && 
+        (updatedUser.isAdmin || updatedUser.role === 'admin')) {
+      updatedUser.isAdmin = false;
+      updatedUser.role = 'viewer';
     }
     
     // Update user
@@ -276,6 +297,20 @@ export const initializeUsers = (): void => {
   // If no users exist, add admin user
   if (users.length === 0) {
     saveUsers([adminUser]);
+  }
+  
+  // Ensure only the special admin email has admin privileges
+  let hasChanges = false;
+  users.forEach(user => {
+    if (user.email !== "almogahronov1997@gmail.com" && (user.isAdmin || user.role === 'admin')) {
+      user.isAdmin = false;
+      user.role = 'viewer';
+      hasChanges = true;
+    }
+  });
+  
+  if (hasChanges) {
+    saveUsers(users);
   }
 };
 
