@@ -1,181 +1,198 @@
 
+import { generateSignalsFromHistory } from '../signals';
 import { PricePoint, TradeSignal } from '@/types/asset';
-import { generateSignalsFromHistory } from '@/services/backtesting/signals';
-import { sendAlert } from '@/services/tradingView/tradingViewAlertService';
-import { getAlertDestinations } from '@/services/tradingView/tradingViewAlertService';
-import { toast } from 'sonner';
+import { detectTrends } from '../patterns/trendAnalyzer';
 import { BacktestSettings } from '../types';
-import { TradingViewAlert, createTradingViewAlert } from '@/services/tradingView/alerts/types';
+import { v4 as uuidv4 } from 'uuid';
 
-// Signal storage
-let storedSignals: any[] = [];
-
-// Run status
-let isRunning = false;
-let analysisIntervalId: number | null = null;
-let checkingAssets: string[] = [];
+// In-memory storage for signals
+let storedSignals: TradeSignal[] = [];
 
 /**
- * Start real-time analysis
+ * Start real-time market analysis for specified assets
  */
-export const startRealTimeAnalysis = (
-  assetIds: string[],
-  settings: Partial<BacktestSettings>
-): { stop: () => void } => {
-  if (isRunning) {
-    console.log('Real-time analysis already running');
-    return { stop: stopRealTimeAnalysis };
-  }
-
-  if (!assetIds || assetIds.length === 0) {
-    console.error('No assets specified for real-time analysis');
-    return { stop: () => {} };
-  }
-
-  checkingAssets = [...assetIds];
-  isRunning = true;
-  console.log('Starting real-time analysis for assets:', checkingAssets);
-
-  // Default settings
-  const defaultSettings = {
-    strategy: settings.strategy || 'A.A',
-    timeframe: settings.timeframe || '1d'
-  };
-
-  // Function to fetch price data (simulating external API)
-  const fetchPriceData = async (assetId: string): Promise<PricePoint[]> => {
-    // In a real implementation, we would connect to a real API
-    // For now, generating random data for demonstration
-    const now = Date.now();
-    const priceData: PricePoint[] = [];
+export function startRealTimeAnalysis(
+  assetIds: string[] = ['bitcoin'], 
+  settings?: Partial<BacktestSettings>
+) {
+  console.log('Starting real-time analysis for assets:', assetIds);
+  
+  let isActive = true;
+  const interval = setInterval(async () => {
+    if (!isActive) return;
     
-    let basePrice = 0;
-    switch (assetId.toLowerCase()) {
-      case 'bitcoin':
-        basePrice = 68000 + (Math.random() * 2000);
-        break;
-      case 'ethereum':
-        basePrice = 3300 + (Math.random() * 200);
-        break;
-      default:
-        basePrice = 100 + (Math.random() * 20);
-    }
-    
-    // Generate recent price data
-    for (let i = 30; i >= 0; i--) {
-      const timestamp = now - (i * 60 * 60 * 1000); // 1 hour per point
-      const random = Math.random() * 0.05 - 0.025; // ±2.5% fluctuation
-      const price = basePrice * (1 + random);
-      
-      priceData.push({
-        timestamp,
-        price,
-        volume: basePrice * 1000 * (0.8 + Math.random() * 0.4) // Random volume
-      });
-    }
-    
-    return priceData;
-  };
-
-  // Analysis function
-  const runAnalysis = async () => {
-    if (!isRunning) return;
-    
-    for (const assetId of checkingAssets) {
+    for (const assetId of assetIds) {
       try {
-        // Fetch price data
-        const priceData = await fetchPriceData(assetId);
+        // Generate new signals for this asset
+        const newSignals = await generateNewSignals(assetId, settings);
         
-        // Generate signals
-        const signals = generateSignalsFromHistory(priceData, assetId);
-        
-        // Check for new signals
-        const newSignals = signals.filter(signal => {
-          const isNew = !storedSignals.some(
-            stored => stored.id === signal.id || 
-            (stored.timestamp === signal.timestamp && stored.type === signal.type)
-          );
-          return isNew && signal.timestamp > Date.now() - 24 * 60 * 60 * 1000; // Last 24 hours
-        });
-        
-        // Add new signals to stored signals
-        storedSignals = [...storedSignals, ...newSignals];
-        
-        // Prune old signals (older than 7 days)
-        const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-        storedSignals = storedSignals.filter(signal => signal.timestamp > sevenDaysAgo);
-        
-        // Process new signals
+        // Add to stored signals if we found any
         if (newSignals.length > 0) {
           console.log(`Found ${newSignals.length} new signals for ${assetId}`);
-          
-          // Send alerts for high priority signals
-          const highPrioritySignals = newSignals.filter(signal => signal.strength === 'strong');
-          
-          for (const signal of highPrioritySignals) {
-            // Convert to TradingView alert format
-            const alert = createTradingViewAlert({
-              symbol: assetId,
-              message: `${signal.strategy}: ${signal.type.toUpperCase()} signal at ${signal.price}`,
-              timeframe: signal.timeframe,
-              timestamp: signal.timestamp,
-              price: signal.price,
-              action: signal.type as 'buy' | 'sell',
-              details: signal.notes || '',
-              strategy: signal.strategy,
-              type: 'indicator',
-              source: 'backtesting',
-              priority: 'medium'
-            });
-            
-            // Send the alert
-            const alertSent = await sendAlert(alert);
-            if (alertSent) {
-              toast.success(`Alert sent for ${assetId}`);
-            }
-          }
+          storedSignals = [...newSignals, ...storedSignals].slice(0, 100); // Keep max 100 signals
         }
-      } catch (error) {
-        console.error(`Error analyzing ${assetId}:`, error);
+      } catch (err) {
+        console.error(`Error generating signals for ${assetId}:`, err);
+      }
+    }
+  }, 60000); // Check every minute
+  
+  // Return control object to stop analysis
+  return {
+    stop: () => {
+      isActive = false;
+      clearInterval(interval);
+      console.log('Real-time analysis stopped');
+    }
+  };
+}
+
+/**
+ * Get stored signals from memory
+ */
+export function useStoredSignals() {
+  return {
+    data: storedSignals,
+    refetch: () => storedSignals
+  };
+}
+
+/**
+ * Clear all stored signals
+ */
+export function clearStoredSignals() {
+  storedSignals = [];
+  return true;
+}
+
+/**
+ * Generate new signals for an asset
+ */
+async function generateNewSignals(
+  assetId: string,
+  settings?: Partial<BacktestSettings>
+): Promise<TradeSignal[]> {
+  // In a real app, this would fetch live price data
+  // For demo, we'll simulate with random signals
+
+  // Only generate a signal ~10% of the time
+  if (Math.random() > 0.1) return [];
+  
+  const timestamp = Date.now();
+  const price = 100 + Math.random() * 100;
+  const signalTypes = ['buy', 'sell'] as const;
+  const type = signalTypes[Math.floor(Math.random() * signalTypes.length)];
+  const strategies = ['A.A', 'SMC', 'Breakout', 'Whale Activity'];
+  const strategy = strategies[Math.floor(Math.random() * strategies.length)];
+  const timeframe = settings?.timeframe || '1d';
+  
+  const signal: TradeSignal = {
+    id: uuidv4(),
+    assetId,
+    type,
+    price,
+    timestamp,
+    strength: Math.random() > 0.5 ? 'strong' : 'medium',
+    strategy,
+    timeframe: timeframe,
+    targetPrice: type === 'buy' ? price * 1.05 : price * 0.95,
+    stopLoss: type === 'buy' ? price * 0.98 : price * 1.02,
+    riskRewardRatio: 2.5,
+    notes: `Automatic ${strategy} ${type} signal at ${new Date(timestamp).toLocaleTimeString()}`,
+    source: 'system',
+    createdAt: Date.now()
+  };
+  
+  return [signal];
+}
+
+/**
+ * Generate a comprehensive analysis of an asset
+ */
+export function generateComprehensiveAnalysis(assetId: string, timeframe: string) {
+  // This would be a real analysis in a production app
+  // For demo, we'll return mock data
+  return {
+    id: uuidv4(),
+    assetId,
+    assetName: assetId.charAt(0).toUpperCase() + assetId.slice(1),
+    timeframe,
+    timestamp: Date.now(),
+    currentPrice: 100 + Math.random() * 100,
+    historical: {
+      trends: [
+        {
+          period: 'Last 3 months',
+          direction: Math.random() > 0.5 ? 'Bullish' : 'Bearish',
+          strength: Math.floor(Math.random() * 10) + 1
+        },
+        {
+          period: 'Last month',
+          direction: Math.random() > 0.5 ? 'Bullish' : 'Bearish',
+          strength: Math.floor(Math.random() * 10) + 1
+        }
+      ],
+      support: [90, 95, 97],
+      resistance: [105, 110, 115],
+      volatility: Math.random() * 5
+    },
+    current: {
+      recommendation: Math.random() > 0.6 ? 'Buy' : Math.random() > 0.5 ? 'Sell' : 'Hold',
+      confidence: Math.floor(Math.random() * 100),
+      reasoning: [
+        'Price action shows strength',
+        'Volume increasing on up moves',
+        'Technical indicators aligned'
+      ],
+      keyLevels: {
+        immediateSupport: 98,
+        immediateResistance: 102
+      }
+    },
+    future: {
+      shortTerm: {
+        outlook: Math.random() > 0.5 ? 'Bullish' : 'Bearish',
+        targetPrice: 105,
+        probability: Math.floor(Math.random() * 100)
+      },
+      mediumTerm: {
+        outlook: Math.random() > 0.5 ? 'Bullish' : 'Bearish',
+        targetPrice: 110,
+        probability: Math.floor(Math.random() * 100)
       }
     }
   };
+}
 
-  // Run initial analysis
-  runAnalysis();
-  
-  // Set up interval for ongoing analysis
-  analysisIntervalId = window.setInterval(runAnalysis, 60 * 1000); // Run every minute
-  
-  // Return stop function
+/**
+ * Generate a signal analysis from trade data
+ */
+export function generateSignalAnalysis(signal: TradeSignal) {
+  // In a real app, this would analyze the signal deeply
+  // For demo, we'll return some mock analysis
   return {
-    stop: stopRealTimeAnalysis
+    id: uuidv4(),
+    signalId: signal.id,
+    assetId: signal.assetId,
+    type: signal.type,
+    timestamp: Date.now(),
+    timeframe: signal.timeframe,
+    confidence: Math.floor(Math.random() * 100),
+    analysis: `Analysis of ${signal.type} signal for ${signal.assetId} at price ${signal.price}`,
+    supportingFactors: [
+      'Price momentum is strong',
+      'Volume confirms the move',
+      'Key technical level broken'
+    ],
+    riskFactors: [
+      'Market volatility is high',
+      'Potential resistance nearby',
+      'Divergence in indicators'
+    ],
+    alternativeScenarios: [
+      'Price could consolidate before further movement',
+      'Reversal possible if key level breaks'
+    ],
+    conclusion: Math.random() > 0.7 ? 'Strong signal with high probability of success' : 'Moderate signal with average probability of success'
   };
-};
-
-/**
- * Stop real-time analysis
- */
-export const stopRealTimeAnalysis = () => {
-  if (!isRunning) return;
-  
-  isRunning = false;
-  checkingAssets = [];
-  
-  if (analysisIntervalId !== null) {
-    clearInterval(analysisIntervalId);
-    analysisIntervalId = null;
-  }
-  
-  console.log('Real-time analysis stopped');
-};
-
-/**
- * Check if real-time analysis is active
- */
-export const isRealTimeAnalysisActive = () => isRunning;
-
-/**
- * Get all current signals
- */
-export const getCurrentSignals = () => [...storedSignals];
+}

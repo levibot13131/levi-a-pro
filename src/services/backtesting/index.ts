@@ -1,9 +1,9 @@
 
 import { BacktestResult, BacktestSettings, BacktestTrade } from './types';
-import { detectPatterns } from './patterns/patternDetection';
 import { calculatePerformance } from './performanceCalculator';
 import { detectTrends } from './patterns/trendAnalyzer';
 import { generateHistoricalData } from './mockDataGenerator';
+import { detectPatterns } from './patterns/candlestickPatterns';
 
 // Main function to run a backtest
 export async function runBacktest(settings: BacktestSettings): Promise<BacktestResult> {
@@ -93,7 +93,8 @@ export function analyzeBacktestTrends(result: BacktestResult) {
   const trendAnalysis = detectTrends(result.trades);
   return {
     trends: trendAnalysis.trends,
-    monthlyPerformance: trendAnalysis.monthlyPerformance
+    monthlyPerformance: trendAnalysis.monthlyPerformance,
+    overallTrend: trendAnalysis.overallTrend || 'neutral'
   };
 }
 
