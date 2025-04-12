@@ -45,6 +45,14 @@ export const generateSignalAnalysis = (assetId?: string): SignalAnalysisResult =
     supportingFactors: [],
     riskFactors: [],
     alternativeScenarios: [],
-    conclusion: ''
+    conclusion: '',
+    // Adding missing fields that are expected in some parts of the code
+    signalId: assetId ? `signal_${assetId}` : 'unknown_signal',
+    assetId: assetId || 'unknown_asset',
+    type: 'neutral',
+    timestamp: Date.now(),
+    timeframe: '1d',
+    confidence: 0,
+    analysis: 'נדרשים נתונים נוספים לביצוע ניתוח' // Additional data needed for analysis
   };
 };

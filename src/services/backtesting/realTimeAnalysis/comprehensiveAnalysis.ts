@@ -1,68 +1,60 @@
 
-import { generateSignalAnalysis } from './analysisGenerator';
+import { AnalysisData } from '@/components/backtesting/analysis/types';
 
-/**
- * Generate a comprehensive analysis for an asset based on historical data and real-time signals
- * 
- * @param assetId The asset identifier
- * @param timeframe The timeframe for analysis
- * @returns Comprehensive analysis data
- */
-export const generateComprehensiveAnalysis = (assetId: string, timeframe: string) => {
-  // Get signal analysis from the existing generator
-  const signalAnalysis = generateSignalAnalysis(assetId);
-  
-  // For now, return a simplified structure that includes the signal analysis
-  // and placeholder data for other aspects that would be in a comprehensive analysis
+export const generateComprehensiveAnalysis = (assetId: string, timeframe: string): AnalysisData => {
+  // Mock implementation that returns a properly structured analysis
   return {
-    signalAnalysis,
     historical: {
       keyEvents: [
-        { event: "מחיר הגיע לשיא היסטורי", date: "2025-02-15", impact: "High" }
+        { event: 'הנפקה ראשונית', date: '2023-01-15', impact: 'חיובית' },
+        { event: 'שינוי רגולטורי', date: '2023-06-22', impact: 'שלילית' }
       ],
-      trends: [],
+      trends: [
+        { period: 'ארוך טווח', direction: 'עולה', strength: 'חזקה' },
+        { period: 'בינוני', direction: 'יורד', strength: 'בינונית' }
+      ],
       cyclicalPatterns: [
-        { name: "מחזור שבועי", description: "תבנית מחזורית על בסיס שבועי" }
+        { name: 'מחזור שבועי', description: 'עליות בתחילת השבוע, ירידות בסופו' },
+        { name: 'מחזור חודשי', description: 'נטייה לעליות בתחילת החודש' }
       ]
     },
     current: {
-      marketCondition: 'sideways',
+      marketCondition: 'שוק צידי עם נטייה לעליות',
       sentimentAnalysis: {
-        overall: 'ניטרלי',
-        social: 'מעורב',
-        news: 'חיובי',
-        fearGreedIndex: 50
+        overall: 'חיובית',
+        social: 'חיובית מאוד',
+        news: 'מעורבת',
+        fearGreedIndex: 65
       },
-      keyLevels: [],
-      technicalIndicators: []
+      keyLevels: [
+        { price: 52000, type: 'התנגדות', strength: 'חזקה' },
+        { price: 48000, type: 'תמיכה', strength: 'בינונית' }
+      ],
+      technicalIndicators: [
+        { name: 'ממוצע נע 200', value: 'מעל', interpretation: 'חיובי' },
+        { name: 'RSI', value: 58, interpretation: 'ניטרלי' }
+      ]
     },
     future: {
       shortTerm: {
-        prediction: 'דשדוש',
-        confidence: 60,
-        keyLevels: [],
-        significantEvents: []
+        prediction: 'המשך מגמה עולה',
+        confidence: 70,
+        keyLevels: [
+          { scenario: 'אופטימי', target: 55000, probability: 65 },
+          { scenario: 'בסיסי', target: 52000, probability: 25 }
+        ],
+        significantEvents: [
+          { event: 'הודעת ריבית', date: '2023-07-28', potentialImpact: 'גבוהה' }
+        ]
       },
       longTerm: {
-        trend: 'מעורב',
-        keyFactors: [],
-        scenarios: []
+        trend: 'עולה',
+        keyFactors: ['אימוץ מוסדי', 'רגולציה תומכת'],
+        scenarios: [
+          { description: 'מגמת עליות חזקה', probability: 60, timeframe: '6 חודשים', priceTarget: 65000 },
+          { description: 'תיקון שוק', probability: 30, timeframe: '3 חודשים', priceTarget: 45000 }
+        ]
       }
     }
   };
-};
-
-export const analyzeMarketConditions = () => {
-  // Mock implementation
-  return {
-    volatility: 'medium',
-    trend: 'up',
-    strength: 7,
-    support: 0,
-    resistance: 0
-  };
-};
-
-export const analyzeAssetCorrelations = () => {
-  return [];
 };

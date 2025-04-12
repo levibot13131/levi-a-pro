@@ -12,6 +12,8 @@ export interface FinancialDataSource {
   focused?: boolean;
   accessType?: 'free' | 'freemium' | 'premium' | 'subscription';
   languages?: string[];
+  reliability?: number; // Adding missing field
+  updateFrequency?: string; // Adding missing field
 }
 
 export interface MarketInfluencer {
@@ -27,6 +29,8 @@ export interface MarketInfluencer {
   specialty?: string;
   sentiment?: 'positive' | 'negative' | 'neutral';
   platforms?: string[];
+  description?: string; // Adding missing field
+  reliability?: number; // Adding missing field
 }
 
 export interface MarketEvent {
