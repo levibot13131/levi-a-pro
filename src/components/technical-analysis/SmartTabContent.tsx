@@ -7,21 +7,13 @@ import PatternRecognition from './PatternRecognition';
 import CustomSignals from './CustomSignals';
 import SentimentAnalysis from './SentimentAnalysis';
 import WhaleTracker from './WhaleTracker';
+import { formatPrice } from '@/lib/utils';
 
 interface SmartTabContentProps {
   assetId: string;
 }
 
 const SmartTabContent: React.FC<SmartTabContentProps> = ({ assetId }) => {
-  // פונקציה לפורמט מחירים
-  const formatPrice = (price: number) => {
-    return price < 1 
-      ? price.toFixed(6) 
-      : price < 1000 
-        ? price.toFixed(2) 
-        : price.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  };
-  
   return (
     <Card className="w-full">
       <CardHeader className="pb-2">
@@ -54,7 +46,7 @@ const SmartTabContent: React.FC<SmartTabContentProps> = ({ assetId }) => {
           </TabsContent>
           
           <TabsContent value="whales">
-            <WhaleTracker assetId={assetId} />
+            <WhaleTracker assetId={assetId} formatPrice={formatPrice} />
           </TabsContent>
         </Tabs>
       </CardContent>

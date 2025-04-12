@@ -1,189 +1,77 @@
 
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Badge } from '@/components/ui/badge';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getWhaleMovements, getWhaleBehaviorPatterns } from "@/services/whaleTrackerService";
-import { type WhaleMovement, type WhaleBehaviorPattern } from "@/services/whaleTrackerService";
-import { BarChart, Eye, TrendingUp } from 'lucide-react';
-import { Slider } from '@/components/ui/slider';
+import { Badge } from '@/components/ui/badge';
+import { ArrowDownIcon, ArrowUpIcon } from 'lucide-react';
 
 interface WhaleTrackerProps {
   assetId: string;
   formatPrice: (price: number) => string;
 }
 
-const WhaleTracker = ({ assetId, formatPrice }: WhaleTrackerProps) => {
-  const [timeRange, setTimeRange] = useState<number>(7);
-  const [minAmount, setMinAmount] = useState<number>(500000);
-  
-  const { data: whaleMovements, isLoading: movementsLoading } = useQuery({
-    queryKey: ['whaleMovements', assetId, timeRange],
-    queryFn: () => getWhaleMovements(assetId, timeRange),
-  });
-  
-  const { data: behaviorPatterns, isLoading: patternsLoading } = useQuery({
-    queryKey: ['whaleBehaviorPatterns', assetId],
-    queryFn: () => getWhaleBehaviorPatterns(assetId),
-  });
-
-  const formatTimestamp = (timestamp: number) => {
-    const date = new Date(timestamp);
-    return date.toLocaleDateString('he-IL', { 
-      day: '2-digit', 
-      month: '2-digit', 
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-  
-  const formatAmount = (amount: number) => {
-    if (amount >= 1000000) {
-      return `$${(amount / 1000000).toFixed(2)}M`;
-    } else {
-      return `$${(amount / 1000).toFixed(0)}K`;
-    }
-  };
-  
-  const getSignificanceColor = (significance: WhaleMovement['impact']['significance']) => {
-    switch(significance) {
-      case 'very-high': return 'bg-red-500';
-      case 'high': return 'bg-orange-500';
-      case 'medium': return 'bg-yellow-500';
-      case 'low': return 'bg-green-500';
-      default: return 'bg-gray-500';
-    }
-  };
-  
-  const handleSliderChange = (value: number[]) => {
-    if (value && value.length > 0) {
-      setMinAmount(value[0]);
-    }
-  };
-  
+const WhaleTracker: React.FC<WhaleTrackerProps> = ({ assetId, formatPrice }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-right">מעקב ארנקים גדולים</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="movements" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="movements" className="flex items-center gap-1">
-              <Eye className="h-4 w-4 ml-1" />
-              תנועות ארנקים
-            </TabsTrigger>
-            <TabsTrigger value="patterns" className="flex items-center gap-1">
-              <TrendingUp className="h-4 w-4 ml-1" />
-              דפוסי התנהגות
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="movements" className="mt-4 space-y-4">
-            <div className="flex flex-col space-y-2 mb-4">
-              <div className="flex justify-between">
-                <span>טווח זמן: {timeRange} ימים</span>
-                <span>סכום מינימלי: {formatAmount(minAmount)}</span>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-right text-sm">תנועות לוויתנים אחרונות</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-right space-y-3">
+            <div className="flex justify-between items-center border-b pb-2">
+              <div className="flex items-center">
+                <Badge variant="secondary" className="ml-2">
+                  <ArrowUpIcon className="h-3 w-3 ml-1" />
+                  קנייה
+                </Badge>
+                <span className="text-green-500">{formatPrice(250)} BTC</span>
               </div>
-              <div className="py-2">
-                <Slider 
-                  defaultValue={[7]} 
-                  max={90} 
-                  min={1} 
-                  step={1} 
-                  onValueChange={(value) => setTimeRange(value[0])}
-                />
-              </div>
-              <div className="py-2">
-                <Slider 
-                  defaultValue={[500000]} 
-                  max={5000000} 
-                  min={100000} 
-                  step={100000} 
-                  onValueChange={handleSliderChange}
-                />
-              </div>
+              <div className="text-sm text-gray-500">לפני 3 שעות</div>
             </div>
             
-            {movementsLoading ? (
-              <div className="text-center py-4">טוען נתונים...</div>
-            ) : (
-              <div className="space-y-4 max-h-[400px] overflow-y-auto">
-                {whaleMovements && whaleMovements
-                  .filter(movement => movement.amount >= minAmount)
-                  .map(movement => (
-                    <div key={movement.id} className="border rounded-lg p-3 text-right">
-                      <div className="flex justify-between items-start">
-                        <Badge className={getSignificanceColor(movement.impact.significance)}>
-                          {movement.impact.significance === 'very-high' ? 'משמעותי מאוד' :
-                           movement.impact.significance === 'high' ? 'משמעותי' :
-                           movement.impact.significance === 'medium' ? 'בינוני' : 'נמוך'}
-                        </Badge>
-                        <div>
-                          <h4 className="font-semibold">
-                            {movement.transactionType === 'exchange_deposit' ? 'הפקדה לבורסה' : 
-                             movement.transactionType === 'exchange_withdrawal' ? 'משיכה מבורסה' : 'העברה בין ארנקים'}
-                          </h4>
-                          <p className="text-sm text-gray-500">{formatTimestamp(movement.timestamp)}</p>
-                        </div>
-                      </div>
-                      <div className="mt-2">
-                        <p>סכום: <span className="font-semibold">{formatAmount(movement.amount)}</span></p>
-                        <p className="text-sm">
-                          {movement.walletLabel ? movement.walletLabel : 
-                           `ארנק: ${movement.walletAddress.substring(0, 6)}...${movement.walletAddress.substring(movement.walletAddress.length - 4)}`}
-                        </p>
-                        <p className="text-sm">
-                          {movement.transactionType === 'wallet_transfer' ? 
-                            `מ${movement.source || 'ארנק לא ידוע'} אל ${movement.destination || 'ארנק לא ידוע'}` : 
-                            movement.transactionType === 'exchange_deposit' ? 
-                              `מ${movement.source || 'ארנק לא ידוע'}` : `אל ${movement.destination || 'ארנק לא ידוע'}`}
-                        </p>
-                      </div>
-                      <div className="mt-2 text-sm">
-                        <p>השפעה על המחיר: <span className={movement.impact.priceImpact > 2 ? 'text-red-500' : 'text-green-500'}>
-                          {movement.impact.priceImpact.toFixed(2)}%
-                        </span></p>
-                      </div>
-                    </div>
-                  ))}
+            <div className="flex justify-between items-center border-b pb-2">
+              <div className="flex items-center">
+                <Badge variant="secondary" className="ml-2">
+                  <ArrowDownIcon className="h-3 w-3 ml-1" />
+                  מכירה
+                </Badge>
+                <span className="text-red-500">{formatPrice(180)} BTC</span>
               </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="patterns" className="mt-4 space-y-4">
-            {patternsLoading ? (
-              <div className="text-center py-4">טוען נתונים...</div>
-            ) : (
-              <div className="space-y-6">
-                {behaviorPatterns && behaviorPatterns.map((pattern, index) => (
-                  <div key={index} className="border rounded-lg p-4 text-right">
-                    <div className="flex justify-between items-center mb-2">
-                      <Badge className={pattern.priceImpact.includes('+') ? 'bg-green-500' : 
-                        pattern.priceImpact.includes('-') ? 'bg-red-500' : 'bg-gray-500'}>
-                        {pattern.priceImpact}
-                      </Badge>
-                      <h3 className="text-lg font-semibold">{pattern.pattern}</h3>
-                    </div>
-                    <p className="mb-2">{pattern.description}</p>
-                    <div className="flex justify-between text-sm">
-                      <span>התרחש לאחרונה: {formatTimestamp(pattern.lastOccurrence)}</span>
-                      <span>רמת ביטחון: {pattern.confidence}%</span>
-                    </div>
-                    <div className="mt-3 pt-3 border-t">
-                      <p className="font-semibold">המלצה:</p>
-                      <p>{pattern.recommendation}</p>
-                    </div>
-                  </div>
-                ))}
+              <div className="text-sm text-gray-500">לפני 7 שעות</div>
+            </div>
+            
+            <div className="flex justify-between items-center">
+              <div className="flex items-center">
+                <Badge variant="secondary" className="ml-2">
+                  <ArrowUpIcon className="h-3 w-3 ml-1" />
+                  קנייה
+                </Badge>
+                <span className="text-green-500">{formatPrice(430)} BTC</span>
               </div>
-            )}
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+              <div className="text-sm text-gray-500">לפני 12 שעות</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-right text-sm">דוחות צבירה/הפצה</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-right">
+            <p className="mb-3">יחס צבירה/הפצה ב-7 ימים אחרונים:</p>
+            <div className="flex justify-end items-center mb-2">
+              <Badge className="ml-2 bg-green-500">חיובי</Badge>
+              <span className="font-medium">1.4</span>
+            </div>
+            <p className="text-sm text-gray-600">
+              היחס הנוכחי מצביע על צבירה נטו חיובית, כלומר כמות מטבעות גדולה יותר נכנסה לארנקי לוויתנים מאשר יצאה מהם בשבוע האחרון.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

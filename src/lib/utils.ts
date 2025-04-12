@@ -1,4 +1,3 @@
-
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -54,4 +53,12 @@ export function formatNumber(num: number, decimals: number = 2): string {
   } else {
     return num.toFixed(decimals);
   }
+}
+
+export function formatPrice(price: number): string {
+  return price < 1 
+    ? price.toFixed(6) 
+    : price < 1000 
+      ? price.toFixed(2) 
+      : price.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }

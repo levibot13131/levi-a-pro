@@ -1,25 +1,35 @@
 
-// Export all services from this directory
-export * from './eventsService';
-export * from './influencersService';
-export * from './sourcesService';
-export * from './externalSourcesService';
-export * from './mockData';
-
-// For backward compatibility, re-export functions with legacy names
-import { getInformationSources } from './sourcesService';
-import { getMarketInfluencers } from './influencersService';
-import { getUpcomingMarketEvents, setEventReminder, addCustomEvent } from './eventsService';
-import { toggleSourceFocus } from './sourcesService';
-import { toggleInfluencerFollow } from './influencersService';
-
-// Re-export with the names expected by InformationSources.tsx and other files
-export {
-  getInformationSources,
-  getMarketInfluencers,
-  getUpcomingMarketEvents,
-  toggleSourceFocus,
+// Re-export all market information services
+import { 
+  getInfluencers, 
+  getInfluencerById, 
+  getInfluencersByPlatform,
+  getInfluencersByAsset,
   toggleInfluencerFollow,
-  setEventReminder,
-  addCustomEvent
+  searchInfluencers
+} from './influencersService';
+
+import {
+  getSources,
+  getSourceById,
+  getSourcesByType,
+  searchSources,
+  toggleSourceFavorite
+} from './sourcesService';
+
+export {
+  // Influencers
+  getInfluencers,
+  getInfluencerById,
+  getInfluencersByPlatform,
+  getInfluencersByAsset,
+  toggleInfluencerFollow,
+  searchInfluencers,
+  
+  // Sources
+  getSources,
+  getSourceById,
+  getSourcesByType,
+  searchSources,
+  toggleSourceFavorite
 };

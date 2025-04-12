@@ -1,124 +1,65 @@
 
-export interface TradeJournalEntry {
-  id: string;
-  assetId: string;
-  assetName: string;
-  date: string;
-  direction: 'long' | 'short';
-  entryPrice: number;
-  stopLoss: number;
-  targetPrice?: number;
-  positionSize: number;
-  risk: number;
-  notes?: string;
-  strategy: string; // Required field
-  tags?: string[];
-  outcome: 'open' | 'win' | 'loss' | 'breakeven';
-}
-
 export interface Asset {
   id: string;
   name: string;
   symbol: string;
-  type: string;
   price: number;
   change24h: number;
-  marketCap: number;
   volume24h: number;
-  rank: number;
+  marketCap: number;
+  image?: string;
+  details?: AssetDetails;
   supply?: {
-    circulating?: number;
-    total?: number;
+    circulating: number;
+    total: number;
     max?: number;
   };
+}
+
+export interface AssetDetails {
   description?: string;
-  tags?: string[];
-  socials?: {
-    twitter?: string;
-    telegram?: string;
-    reddit?: string;
-    github?: string;
-  };
   website?: string;
+  github?: string;
+  twitter?: string;
+  reddit?: string;
   whitepaper?: string;
-  icon?: string;
-  imageUrl?: string;
+  launchDate?: string;
+  consensusMechanism?: string;
+  hashingAlgorithm?: string;
 }
-
-export interface AssetHistoricalData {
-  id: string;
-  name: string;
-  symbol: string;
-  timeframe: TimeframeType;
-  data: {
-    timestamp: number;
-    price: number;
-    volume?: number;
-  }[];
-  firstDate: number;
-  lastDate: number;
-}
-
-export type TimeframeType = 
-  | '1m' | '3m' | '5m' | '15m' | '30m' 
-  | '1h' | '2h' | '4h' | '6h' | '8h' | '12h' 
-  | '1d' | '3d' | '1w' | '1M'
-  | string; // מאפשר גם סטרינגים אחרים כדי לפתור את השגיאות
 
 export interface MarketData {
-  marketCap: number;
+  priceUsd: number;
+  priceBtc?: number;
+  priceEth?: number;
   volume24h: number;
-  dominance: number;
-  totalSupply?: number;
-  circulatingSupply?: number;
-  maxSupply?: number;
-  allTimeHigh?: number;
-  allTimeHighDate?: string;
+  volume7d?: number;
   priceChange24h: number;
   priceChangePercentage24h: number;
-  priceChange7d?: number;
   priceChangePercentage7d?: number;
-  priceChange30d?: number;
-  priceChangePercentage30d?: number;
+  marketCap: number;
+  marketCapRank?: number;
+  fullyDilutedValuation?: number;
+  allTimeHigh?: {
+    price: number;
+    date: string;
+    percentFromATH: number;
+  };
+  allTimeLow?: {
+    price: number;
+    date: string;
+    percentFromATL: number;
+  };
 }
 
 export interface PricePoint {
-  price: number;
   timestamp: number;
+  price: number;
   volume?: number;
   open?: number;
   high?: number;
   low?: number;
   close?: number;
-}
-
-export interface SocialPost {
-  id: string;
-  content: string;
-  author: string;
-  authorUsername?: string;
-  authorImageUrl?: string;
-  publishedAt: string;
-  platform: 'twitter' | 'reddit' | 'telegram' | string;
-  likes: number;
-  comments?: number;
-  shares?: number;
-  sentiment?: 'positive' | 'negative' | 'neutral';
-  relatedAssets?: string[];
-  postUrl?: string;
-}
-
-export interface NewsItem {
-  id: string;
-  title: string;
-  summary: string;
-  content: string;
-  publishedAt: string;
-  source: string;
-  url: string;
-  imageUrl?: string;
-  sentiment?: 'positive' | 'negative' | 'neutral';
-  relatedAssets?: string[];
 }
 
 export interface TradeSignal {
@@ -128,35 +69,125 @@ export interface TradeSignal {
   price: number;
   timestamp: number;
   strength: 'strong' | 'medium' | 'weak';
-  strategy: string;
-  timeframe: TimeframeType;
+  strategy: string;  // Required field
+  timeframe: string;
   targetPrice?: number;
   stopLoss?: number;
   riskRewardRatio?: number;
   notes?: string;
   source?: string;
   createdAt: number;
-  symbol?: string;
+  
+  // Additional properties needed by the UI
+  symbolName?: string;
   confidence?: number;
   indicator?: string;
   description?: string;
 }
 
-export interface MarketAnalysis {
+export interface TradeJournalEntry {
+  id: string;
+  date: string;
+  assetId: string;
+  assetName: string;
+  direction: 'long' | 'short';
+  entryPrice: number;
+  stopLoss: number;
+  targetPrice?: number;
+  positionSize: number;
+  risk: number;
+  strategy: string;  // Make this required
+  tags?: string[];
+  notes?: string;
+  outcome: 'win' | 'loss' | 'open' | 'breakeven';
+  exitPrice?: number;
+  exitDate?: string;
+  pnl?: number;
+  pnlPercentage?: number;
+  duration?: number;
+  screenshotUrl?: string;
+}
+
+export interface SocialPost {
+  id: string;
+  author: {
+    name: string;
+    username: string;
+    profileUrl: string;
+    avatarUrl: string;
+    verified: boolean;
+    followers?: number;
+  };
+  content: string;
+  timestamp: string;
+  url: string;
+  platform: 'twitter' | 'reddit' | 'telegram' | 'discord';
+  sentiment?: 'positive' | 'negative' | 'neutral';
+  likes?: number;
+  comments?: number;
+  reposts?: number;
+  mentions?: string[];
+  hashtags?: string[];
+  assetIds?: string[];
+}
+
+export interface NewsItem {
   id: string;
   title: string;
   summary: string;
-  type: 'technical' | 'fundamental' | 'sentiment';
-  assetId?: string;
-  marketSector?: string;
-  timeframe: TimeframeType;
-  timestamp: number;
-  publishedAt: string;
-  author: string;
-  content: string;
-  keyPoints: string[];
-  conclusion: string;
-  sentiment: 'bullish' | 'bearish' | 'neutral';
+  content?: string;
+  url: string;
   source: string;
-  confidence: number;
+  publishedAt: string;
+  author?: string;
+  categories?: string[];
+  tags?: string[];
+  assetIds?: string[];
+  imageUrl?: string;
+  sentiment?: 'positive' | 'negative' | 'neutral';
+  relevance?: number;
+  featured?: boolean;
+}
+
+export interface MarketEvent {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  assetIds?: string[];
+  type: 'conference' | 'release' | 'fork' | 'listing' | 'regulatory' | 'partnership' | 'other';
+  url?: string;
+  source?: string;
+  impact?: 'high' | 'medium' | 'low';
+  confirmed: boolean;
+  addedAt: string;
+}
+
+export interface MarketAlert {
+  id: string;
+  assetId: string;
+  type: 'price' | 'volume' | 'trend' | 'news' | 'social' | 'whale' | 'other';
+  message: string;
+  timestamp: number;
+  priority: 'high' | 'medium' | 'low';
+  url?: string;
+  read: boolean;
+  dismissed: boolean;
+}
+
+export interface WhaleTransaction {
+  id: string;
+  assetId: string;
+  amount: number;
+  amountUsd?: number;
+  fromAddress: string;
+  toAddress: string;
+  txHash: string;
+  timestamp: number;
+  blockNumber?: number;
+  fee?: number;
+  transactionType?: 'exchange_deposit' | 'exchange_withdrawal' | 'transfer' | 'contract_interaction' | 'unknown';
+  exchangeFrom?: string;
+  exchangeTo?: string;
+  notes?: string;
 }

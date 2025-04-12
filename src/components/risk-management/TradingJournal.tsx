@@ -57,7 +57,7 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
         positionSize,
         risk,
         notes: formData.notes,
-        strategy: formData.strategy,
+        strategy: formData.strategy, // This is now required
         tags: formData.tags || [],
         outcome: 'open'
       };

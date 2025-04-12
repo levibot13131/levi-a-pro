@@ -6,12 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { TradeSignal } from '@/types/asset';
-import { formatPrice as defaultFormatPrice } from '@/lib/utils';
+import { formatPrice } from '@/lib/utils';
 
 export interface CustomSignalsProps {
   assetId: string;
   formatPrice: (price: number) => string;
 }
+
+// Extend TradeSignal type with the missing properties in a different file if needed
 
 // Mock signal generation
 const generateMockSignals = (assetId: string): TradeSignal[] => {
@@ -22,7 +24,6 @@ const generateMockSignals = (assetId: string): TradeSignal[] => {
     {
       id: '1',
       assetId,
-      symbol: 'BTC', // הוספת symbol
       type: 'buy',
       price: 50000,
       timestamp: now - 2 * day,
@@ -33,14 +34,15 @@ const generateMockSignals = (assetId: string): TradeSignal[] => {
       stopLoss: 48000,
       riskRewardRatio: 2.5,
       createdAt: now - 2 * day,
-      confidence: 85, // הוספת confidence
-      indicator: 'פריצת התנגדות', // הוספת indicator
-      description: 'פריצת התנגדות ארוכת טווח עם נפח גבוה' // הוספת description
+      // Additional properties used in UI
+      symbolName: 'BTC',
+      confidence: 85,
+      indicator: 'פריצת התנגדות',
+      description: 'פריצת התנגדות ארוכת טווח עם נפח גבוה'
     },
     {
       id: '2',
       assetId,
-      symbol: 'BTC', // הוספת symbol
       type: 'sell',
       price: 52000,
       timestamp: now - day,
@@ -51,14 +53,15 @@ const generateMockSignals = (assetId: string): TradeSignal[] => {
       stopLoss: 53000,
       riskRewardRatio: 3.0,
       createdAt: now - day,
-      confidence: 70, // הוספת confidence
-      indicator: 'דיברגנס RSI', // הוספת indicator
-      description: 'דיברגנס שלילי ב-RSI וירידה בנפח המסחר' // הוספת description
+      // Additional properties
+      symbolName: 'BTC',
+      confidence: 70,
+      indicator: 'דיברגנס RSI',
+      description: 'דיברגנס שלילי ב-RSI וירידה בנפח המסחר'
     },
     {
       id: '3',
       assetId,
-      symbol: 'BTC', // הוספת symbol
       type: 'buy',
       price: 49000,
       timestamp: now - 12 * 60 * 60 * 1000,
@@ -69,14 +72,16 @@ const generateMockSignals = (assetId: string): TradeSignal[] => {
       stopLoss: 48500,
       riskRewardRatio: 1.5,
       createdAt: now - 12 * 60 * 60 * 1000,
-      confidence: 65, // הוספת confidence
-      indicator: 'התמיכה בממוצע נע', // הוספת indicator
-      description: 'ניתור מרמת תמיכה של ממוצע נע 200' // הוספת description
+      // Additional properties
+      symbolName: 'BTC',
+      confidence: 65,
+      indicator: 'התמיכה בממוצע נע',
+      description: 'ניתור מרמת תמיכה של ממוצע נע 200'
     }
   ];
 };
 
-const CustomSignals: React.FC<CustomSignalsProps> = ({ assetId, formatPrice = defaultFormatPrice }) => {
+const CustomSignals: React.FC<CustomSignalsProps> = ({ assetId, formatPrice }) => {
   const [activeTab, setActiveTab] = useState('current');
   const signals = generateMockSignals(assetId);
   
@@ -120,11 +125,11 @@ const CustomSignals: React.FC<CustomSignalsProps> = ({ assetId, formatPrice = de
               currentSignals.map(signal => (
                 <div key={signal.id} className="border rounded-md p-4">
                   <div className="flex justify-between items-start mb-2">
-                    <Badge variant={signal.type === 'buy' ? 'success' : 'destructive'}>
+                    <Badge variant={signal.type === 'buy' ? 'default' : 'destructive'}>
                       {signal.type === 'buy' ? 'קנייה' : 'מכירה'}
                     </Badge>
                     <div className="text-right">
-                      <h3 className="font-medium">{signal.symbol} / {signal.strategy}</h3>
+                      <h3 className="font-medium">{signal.symbolName} / {signal.strategy}</h3>
                       <p className="text-sm text-muted-foreground">{formatDate(signal.timestamp)}</p>
                     </div>
                   </div>
@@ -175,7 +180,7 @@ const CustomSignals: React.FC<CustomSignalsProps> = ({ assetId, formatPrice = de
                       {signal.type === 'buy' ? 'קנייה' : 'מכירה'}
                     </Badge>
                     <div className="text-right">
-                      <h3 className="font-medium">{signal.symbol} / {signal.strategy}</h3>
+                      <h3 className="font-medium">{signal.symbolName} / {signal.strategy}</h3>
                       <p className="text-sm text-muted-foreground">{formatDate(signal.timestamp)}</p>
                     </div>
                   </div>

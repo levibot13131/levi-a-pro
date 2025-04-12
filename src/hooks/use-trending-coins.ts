@@ -3,7 +3,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { getAssets } from '@/services/mockDataService';
 import { Asset, MarketData } from '@/types/asset';
 import { toast } from 'sonner';
-import { mockMarketData, mockFundamentalData } from '@/services/mockDataService';
 
 export const useTrendingCoins = () => {
   const [trendingCoins, setTrendingCoins] = useState<Asset[]>([]);
@@ -31,9 +30,30 @@ export const useTrendingCoins = () => {
         setAllAssets(assets);
         setTrendingCoins(sorted.slice(0, 10)); // Top 10 trending
         
-        // Set market data
-        setMarketData(mockMarketData);
-        setFundamentalData(mockFundamentalData);
+        // Initialize empty market data
+        const initialMarketData: Record<string, MarketData> = {};
+        assets.forEach(asset => {
+          initialMarketData[asset.id] = {
+            priceUsd: asset.price,
+            volume24h: asset.volume24h,
+            priceChange24h: 0,
+            priceChangePercentage24h: asset.change24h,
+            marketCap: asset.marketCap
+          };
+        });
+        setMarketData(initialMarketData);
+        
+        // Initialize empty fundamental data
+        const initialFundamentalData: Record<string, any> = {};
+        assets.forEach(asset => {
+          initialFundamentalData[asset.id] = {
+            description: asset.details?.description || '',
+            website: asset.details?.website || '',
+            github: asset.details?.github || '',
+            launchDate: asset.details?.launchDate || ''
+          };
+        });
+        setFundamentalData(initialFundamentalData);
       } catch (error) {
         console.error('Error fetching trending coins:', error);
         toast.error('שגיאה בטעינת המטבעות המובילים');
