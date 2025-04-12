@@ -72,6 +72,9 @@ export const processWebhookData = async (data: WebhookData): Promise<boolean> =>
     
     console.log('🔍 Successfully parsed webhook into alert:', JSON.stringify(alert, null, 2));
     
+    // בדיקה אם ההתראה נשלחת דרך הרשימה האוטומטית
+    const isAutomaticAlert = data.automatic === true || data.source === 'automatic_watchlist';
+    
     // Get alert type in Hebrew
     const alertTypeHebrew = alert.action === 'buy' ? 'קנייה' : 
                           alert.action === 'sell' ? 'מכירה' : 'מידע';
@@ -89,6 +92,12 @@ export const processWebhookData = async (data: WebhookData): Promise<boolean> =>
       toast.success('התראה נשלחה בהצלחה', {
         description: `התראת ${alertTypeHebrew} נשלחה ליעדים המוגדרים`
       });
+      
+      // אם זו התראה אוטומטית, ננהל אותה במערכת ההתראות האוטומטיות
+      if (isAutomaticAlert) {
+        console.log('Handling automatic alert in the system');
+        // כאן אפשר להוסיף לוגיקה נוספת לניהול התראות אוטומטיות
+      }
     } else {
       console.error('❌ Failed to send alert');
       toast.error('שליחת ההתראה נכשלה', {

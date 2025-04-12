@@ -2,6 +2,7 @@
 import React, { ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Bell, BellOff } from 'lucide-react';
 
 interface AssetMetricCardProps {
   title: string;
@@ -10,6 +11,8 @@ interface AssetMetricCardProps {
   icon?: ReactNode;
   trend?: 'up' | 'down' | 'neutral';
   className?: string;
+  alertEnabled?: boolean;
+  onAlertToggle?: () => void;
 }
 
 const AssetMetricCard = ({ 
@@ -18,7 +21,9 @@ const AssetMetricCard = ({
   badge, 
   icon, 
   trend, 
-  className 
+  className,
+  alertEnabled,
+  onAlertToggle 
 }: AssetMetricCardProps) => {
   return (
     <div className={cn(
@@ -33,7 +38,22 @@ const AssetMetricCard = ({
             {badge}
           </Badge>
         )}
-        <span className="text-muted-foreground text-xs">{title}</span>
+        <div className="flex items-center gap-1">
+          {alertEnabled !== undefined && (
+            <button
+              onClick={onAlertToggle}
+              className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              title={alertEnabled ? "בטל התראות" : "הפעל התראות"}
+            >
+              {alertEnabled ? (
+                <Bell size={14} className="text-primary" />
+              ) : (
+                <BellOff size={14} className="text-muted-foreground" />
+              )}
+            </button>
+          )}
+          <span className="text-muted-foreground text-xs">{title}</span>
+        </div>
       </div>
       <p className={cn(
         "font-medium mt-1 flex items-center justify-end gap-1",
