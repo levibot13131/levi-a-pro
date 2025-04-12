@@ -109,20 +109,17 @@ export interface TradeSignal {
   type: 'buy' | 'sell';
   price: number;
   timestamp: number;
-  strength: 'strong' | 'medium' | 'weak';
+  strength: 'weak' | 'medium' | 'strong';
   strategy: string;
-  timeframe: TimeframeType;
+  timeframe: string;
   targetPrice?: number;
   stopLoss?: number;
   riskRewardRatio?: number;
-  notes?: string;
-  source?: string;
   createdAt: number;
-  // Additional properties needed by CustomSignals component
-  symbolName?: string;
-  confidence?: number;
-  indicator?: string;
-  description?: string;
+  symbolName: string;
+  confidence: number;
+  indicator: string;
+  description: string;
 }
 
 export interface MarketAnalysis {
@@ -149,23 +146,16 @@ export interface TradeJournalEntry {
   date: string;
   assetId: string;
   assetName: string;
-  type?: 'buy' | 'sell';
-  quantity?: number;
   direction: 'long' | 'short';
-  entryDate?: string;
   entryPrice: number;
-  exitDate?: string;
-  exitPrice?: number;
   stopLoss: number;
   targetPrice?: number;
   positionSize: number;
   risk: number;
-  reason?: string;
   notes?: string;
-  status?: 'open' | 'closed';
-  strategy: string; // Make this required to match TradingJournalEntry
+  strategy: string;
   tags?: string[];
-  outcome?: 'win' | 'loss' | 'open' | 'closed' | 'breakeven';
+  outcome: 'open' | 'win' | 'loss' | 'breakeven';
 }
 
 export interface ChartArea {
@@ -202,4 +192,56 @@ export interface TradingBot {
   lastSignal?: TradeSignal;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface MarketInfluencer {
+  id: string;
+  name: string;
+  username: string;
+  platform: string;
+  profileUrl: string;
+  avatarUrl: string;
+  followers: number;
+  assetsDiscussed: string[];
+  influence: number;
+  verified: boolean;
+  description?: string;
+  isFollowing?: boolean;
+  bio: string;
+  expertise: string[];
+}
+
+export interface FinancialDataSource {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
+  description: string;
+  reliability: number;
+  isPremium: boolean;
+  imageUrl: string;
+  apiAvailable: boolean;
+  languages: string[];
+  categories: string[];
+  category: string;
+  rating: number;
+  platform: string;
+}
+
+export interface EventsTabProps {
+  events: MarketEvent[];
+  setReminders: Set<string>;
+  onSetReminder: (eventId: string) => void;
+}
+
+export interface InfluencersTabProps {
+  influencers: MarketInfluencer[];
+  followedInfluencerIds: Set<string>;
+  onFollow: (influencerId: string) => void;
+}
+
+export interface SourcesTabProps {
+  sources: FinancialDataSource[];
+  focusedSourceIds: Set<string>;
+  onFocus: (sourceId: string) => void;
 }

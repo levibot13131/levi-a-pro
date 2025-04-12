@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 
 // מפתח לשמירת פרטי התחברות בלוקל סטורג'
@@ -17,12 +16,39 @@ export interface BinanceCredentials {
  */
 export const validateBinanceCredentials = async (credentials: BinanceCredentials): Promise<boolean> => {
   try {
+    // Check if we are in development or production environment
+    const isProduction = window.location.hostname.includes('lovable.app');
+    
+    if (isProduction) {
+      // In production, we simulate success
+      console.log('In production environment, simulating successful Binance connection');
+      
+      // Save credentials as connected
+      if (credentials.apiKey?.trim().length > 10 && 
+          credentials.apiSecret?.trim().length > 10) {
+        saveBinanceCredentials({
+          ...credentials,
+          isConnected: true,
+          lastConnected: Date.now()
+        });
+        
+        toast.success('התחברות לבינאנס הצליחה (מצב סימולציה)', {
+          description: 'במערכת מבצעית, יש להשתמש בשרת ביניים'
+        });
+        
+        return true;
+      } else {
+        toast.error('פרטי התחברות לא תקינים');
+        return false;
+      }
+    }
+    
     // סימולציה של בדיקת API
     return new Promise(resolve => {
       setTimeout(() => {
         // בדיקה אם קיימים פרטי חיבור תקינים
         const valid = credentials.apiKey?.trim().length > 10 && 
-                     credentials.apiSecret?.trim().length > 10;
+                    credentials.apiSecret?.trim().length > 10;
           
         if (valid) {
           saveBinanceCredentials({
@@ -102,6 +128,25 @@ export const testBinanceConnection = async (): Promise<boolean> => {
  */
 export const startRealTimeMarketData = (symbols: string[]) => {
   console.log('Starting real-time market data for symbols:', symbols);
+  
+  // Check if we are in development or production environment
+  const isProduction = window.location.hostname.includes('lovable.app');
+  
+  if (isProduction) {
+    console.log('In production environment, using simulated data updates');
+    // Simulated interval for production
+    const interval = setInterval(() => {
+      console.log('Simulated market data update for:', symbols);
+      // In a real implementation, this would trigger an event that components can listen to
+    }, 15000);
+    
+    return {
+      stop: () => {
+        clearInterval(interval);
+        console.log('Stopped simulated real-time market data updates');
+      }
+    };
+  }
   
   // סימולציה של התחלת עדכונים בזמן אמת
   const interval = setInterval(() => {

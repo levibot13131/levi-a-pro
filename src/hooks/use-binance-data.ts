@@ -14,9 +14,10 @@ interface MarketData {
 export function useBinanceData(symbols: string[] = []) {
   const [marketData, setMarketData] = useState<Record<string, MarketData>>({});
   const [realTimeActive, setRealTimeActive] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Add isLoading state
 
   // נתונים בסיסיים עבור כל סימול
-  const { data: fundamentalData } = useQuery({
+  const { data: fundamentalData, isLoading: isFundamentalLoading } = useQuery({
     queryKey: ['binance', 'fundamental', symbols],
     queryFn: () => {
       // נביא נתונים בסיסיים רק אם יש סימבולים
@@ -36,7 +37,12 @@ export function useBinanceData(symbols: string[] = []) {
 
   // התחברות לנתונים בזמן אמת
   useEffect(() => {
-    if (symbols.length === 0) return;
+    if (symbols.length === 0) {
+      setIsLoading(false);
+      return;
+    }
+    
+    setIsLoading(true);
     
     // אתחול נתוני מחיר ראשוניים
     const initialData: Record<string, MarketData> = {};
@@ -75,6 +81,8 @@ export function useBinanceData(symbols: string[] = []) {
       });
     }, 5000); // עדכון כל 5 שניות
     
+    setIsLoading(false);
+    
     return () => {
       clearInterval(interval);
       if (realTimeService) {
@@ -99,6 +107,7 @@ export function useBinanceData(symbols: string[] = []) {
     fundamentalData,
     isRealTimeActive: realTimeActive,
     stopRealTimeUpdates,
-    startRealTimeUpdates
+    startRealTimeUpdates,
+    isLoading: isLoading || isFundamentalLoading // Add isLoading to return
   };
 }

@@ -44,7 +44,7 @@ export const generateSignal = (assetId: string, strategy?: string): TradeSignal 
   const now = Date.now();
   const signalType = Math.random() > 0.5 ? 'buy' : 'sell';
   const basePrice = 1000 + Math.random() * 50000;
-  const strengths = ['weak', 'medium', 'strong'] as const;
+  const strengths = ['weak', 'medium', 'strong'] as ['weak', 'medium', 'strong'];
   
   // Get symbol name from map or create one
   const symbolName = assetNameMap[assetId] || assetId.substring(0, 3).toUpperCase();

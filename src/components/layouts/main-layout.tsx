@@ -1,17 +1,20 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import AuthNavbar from '@/components/auth/AuthNavbar';
 import { MainNav } from '@/components/main-nav';
 import MainNavigation from '@/components/MainNavigation';
 import { useAuth } from '@/contexts/AuthContext';
+import BannerAlert from '@/components/ui/banner-alert';
 
 const MainLayout: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  const [showBanner, setShowBanner] = useState(true);
 
   return (
     <div className="min-h-screen flex flex-col">
+      {showBanner && <BannerAlert onClose={() => setShowBanner(false)} />}
       <AuthNavbar />
       
       <div className="flex flex-1 overflow-hidden">
