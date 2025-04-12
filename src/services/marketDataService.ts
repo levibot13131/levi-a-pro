@@ -1,5 +1,5 @@
-
-import { Asset, MarketData } from '@/types/asset';
+import { Asset } from '@/types/asset';
+import { MarketData } from '@/types/marketData';
 
 // Fetch trending coins
 export const fetchTrendingCoins = async (): Promise<Asset[]> => {
@@ -47,8 +47,8 @@ export const fetchMarketData = async (coinIds: string[]): Promise<Record<string,
   const result: Record<string, MarketData> = {};
   
   coinIds.forEach(coinId => {
+    // Create market data object according to the MarketData interface
     result[coinId] = {
-      id: coinId,  // Explicitly set the id
       name: coinId === 'bitcoin' ? 'Bitcoin' : coinId === 'ethereum' ? 'Ethereum' : 'Binance Coin',
       symbol: coinId === 'bitcoin' ? 'BTC' : coinId === 'ethereum' ? 'ETH' : 'BNB',
       price: coinId === 'bitcoin' ? 65000 : coinId === 'ethereum' ? 3400 : 580,
@@ -67,4 +67,3 @@ export const fetchMarketData = async (coinIds: string[]): Promise<Record<string,
   
   return result;
 };
-
