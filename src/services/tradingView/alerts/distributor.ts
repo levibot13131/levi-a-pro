@@ -125,18 +125,18 @@ export const sendAlertToDestinations = async (
 /**
  * Check if destinations are properly configured
  */
-export const checkDestinationsConfiguration = (): { 
+export const checkDestinationsConfiguration = (destinations: AlertDestination[]): { 
   isConfigured: boolean;
   telegram: boolean;
   whatsapp: boolean;
 } => {
   try {
-    const destinations = destinations.filter(d => d.active);
+    const activeDestinations = destinations.filter(d => d.active);
     
     let telegramConfigured = false;
     let whatsappConfigured = false;
     
-    for (const destination of destinations) {
+    for (const destination of activeDestinations) {
       if (destination.type === 'telegram' && destination.active) {
         const config = parseTelegramConfig(destination.name);
         telegramConfigured = !!config && !!config.botToken && !!config.chatId;
