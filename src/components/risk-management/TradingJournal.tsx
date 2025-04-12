@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { BookOpen, Plus } from 'lucide-react';
 import { addTradingJournalEntry } from '@/services/customTradingStrategyService';
 import { toast } from "sonner";
-import { TradeJournalEntry } from '@/types/asset';
+import { TradeJournalEntry } from '@/types/journal';
 import TradingJournalForm from './TradingJournalForm';
 import TradingJournalEntryList from './TradingJournalEntryList';
 
@@ -59,11 +59,11 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
         notes: formData.notes,
         strategy: formData.strategy || 'ידני', // Make sure strategy is always set
         tags: formData.tags || [],
-        outcome: 'open'
+        outcome: 'open' as const
       };
       
       const savedEntry = await addTradingJournalEntry(newEntry);
-      setEntries(prev => [savedEntry, ...prev]);
+      setEntries(prev => [savedEntry as TradeJournalEntry, ...prev]);
       setShowForm(false);
       
     } catch (err: any) {

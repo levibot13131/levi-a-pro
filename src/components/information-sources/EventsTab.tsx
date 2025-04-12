@@ -1,82 +1,107 @@
-import React from 'react';
-import { MarketEvent } from '@/types/marketInformation';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Calendar, AlertCircle } from 'lucide-react';
 
-export interface EventsTabProps {
+import React from 'react';
+import { MarketEvent } from '@/pages/InformationSources';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Bell, ExternalLink, TrendingUp, TrendingDown, LineChart } from 'lucide-react';
+
+interface EventsTabProps {
   events: MarketEvent[];
   setReminders: Set<string>;
-  onSetReminder: (eventId: string) => void;
+  onSetReminder: (id: string) => void;
 }
 
-const EventsTab: React.FC<EventsTabProps> = ({ 
-  events, 
-  setReminders, 
-  onSetReminder 
+const EventsTab: React.FC<EventsTabProps> = ({
+  events,
+  setReminders,
+  onSetReminder
 }) => {
-  const formatEventDate = (dateString: string) => {
-    const eventDate = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(eventDate.getTime() - now.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) {
-      return 'היום';
-    } else if (diffDays === 1) {
-      return 'מחר';
-    } else {
-      return `בעוד ${diffDays} ימים`;
-    }
-  };
-
-  const renderEventImportance = (importance: string) => {
-    switch(importance) {
-      case 'critical':
-        return <Badge className="bg-red-500">חשיבות קריטית</Badge>;
-      case 'high':
-        return <Badge className="bg-orange-500">חשיבות גבוהה</Badge>;
-      case 'medium':
-        return <Badge className="bg-yellow-500">חשיבות בינונית</Badge>;
-      default:
-        return <Badge>חשיבות נמוכה</Badge>;
-    }
-  };
-
   return (
-    <div className="space-y-4">
-      {events.length > 0 ? (
-        <div className="space-y-3 max-h-[500px] overflow-y-auto">
-          {events.map((event) => (
-            <Card key={event.id}>
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div>{renderEventImportance(event.importance)}</div>
-                  <h3 className="font-medium">{event.title}</h3>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {events.map(event => (
+        <Card key={event.id}>
+          <CardContent className="pt-6">
+            <div className="flex items-start mb-4">
+              <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center mr-4">
+                {event.expectedImpact === 'positive' ? (
+                  <TrendingUp className="h-5 w-5 text-green-500" />
+                ) : event.expectedImpact === 'negative' ? (
+                  <TrendingDown className="h-5 w-5 text-red-500" />
+                ) : (
+                  <LineChart className="h-5 w-5 text-primary" />
+                )}
+              </div>
+              <div className="text-right flex-1">
+                <h3 className="font-bold text-lg">{event.title}</h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    {event.date} {event.time && `בשעה ${event.time}`}
+                  </span>
                 </div>
-                <p className="text-sm text-muted-foreground mb-2">{event.description}</p>
-                <div className="flex justify-between items-center text-sm">
-                  <Button 
-                    variant={setReminders.has(event.id) ? "outline" : "default"} 
-                    size="sm"
-                    onClick={() => onSetReminder(event.id)}
-                  >
-                    {setReminders.has(event.id) ? 'בטל תזכורת' : 'הגדר תזכורת'}
-                  </Button>
-                  <div className="flex items-center">
-                    <Calendar className="h-3 w-3 ml-1" />
-                    {formatEventDate(event.date)}
-                  </div>
+              </div>
+            </div>
+            
+            <p className="text-sm text-muted-foreground mb-4">{event.description}</p>
+            
+            <div className="flex justify-between items-center mb-4">
+              <Badge variant={
+                event.expectedImpact === 'positive' 
+                  ? 'outline' 
+                  : event.expectedImpact === 'negative'
+                  ? 'destructive'
+                  : 'secondary'
+              }>
+                {event.expectedImpact === 'positive' 
+                  ? 'השפעה חיובית' 
+                  : event.expectedImpact === 'negative'
+                  ? 'השפעה שלילית'
+                  : 'השפעה ניטרלית'}
+              </Badge>
+              
+              <div className="text-right">
+                <span className="text-xs text-muted-foreground">נכסים קשורים:</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {event.relatedAssets.map(asset => (
+                    <span key={asset} className="text-xs bg-muted px-2 py-0.5 rounded">
+                      {asset}
+                    </span>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-6">
-          <AlertCircle className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-          <p>אין אירועים צפויים בטווח הזמן שנבחר</p>
+              </div>
+            </div>
+            
+            <div className="flex justify-between gap-2">
+              <Button
+                variant={setReminders.has(event.id) ? "default" : "outline"}
+                size="sm"
+                className="flex-1"
+                onClick={() => onSetReminder(event.id)}
+              >
+                <Bell className="h-4 w-4 mr-2" />
+                {setReminders.has(event.id) ? 'תזכורת פעילה' : 'הגדר תזכורת'}
+              </Button>
+              
+              {event.link && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => window.open(event.link, '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  קישור לאירוע
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+      
+      {events.length === 0 && (
+        <div className="col-span-full text-center py-12">
+          <p className="text-muted-foreground">לא נמצאו אירועים קרובים התואמים את החיפוש</p>
         </div>
       )}
     </div>

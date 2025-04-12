@@ -19,18 +19,23 @@ export interface TradeJournalEntry {
   strategy?: string;
   date?: string;
   symbol?: string;
+  direction?: 'long' | 'short';
+  stopLoss?: number;
+  targetPrice?: number;
+  positionSize?: number;
+  risk?: number;
 }
 
 export interface TradingJournalEntry {
   id: string;
   assetId: string;
   assetName: string;
-  type: 'buy' | 'sell';
+  type?: 'buy' | 'sell';
   entryPrice: number;
-  entryDate: number;
+  entryDate?: number;
   exitPrice?: number;
   exitDate?: number;
-  quantity: number;
+  quantity?: number;
   leverage?: number;
   fees?: number;
   profit?: number;
@@ -41,4 +46,9 @@ export interface TradingJournalEntry {
   strategy: string;
   date?: string;
   symbol?: string;
+  direction?: 'long' | 'short';
+  stopLoss?: number;
+  targetPrice?: number;
+  positionSize?: number;
+  risk?: number;
 }

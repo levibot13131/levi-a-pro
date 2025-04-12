@@ -1,28 +1,24 @@
 
 import React from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
-interface RequireAuthProps {
-  children: React.ReactNode;
-  requireAdmin?: boolean;
+export interface RequireAuthProps {
+  children?: React.ReactNode;
 }
 
-const RequireAuth: React.FC<RequireAuthProps> = ({ children, requireAdmin = false }) => {
-  const { isAuthenticated, isAdmin } = useAuth();
-  const location = useLocation();
-  
+const RequireAuth: React.FC<RequireAuthProps> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+
   if (!isAuthenticated) {
-    // Redirect to login and remember where they were trying to go
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" replace />;
   }
-  
-  if (requireAdmin && !isAdmin) {
-    // Redirect to home if admin access is required but user is not admin
-    return <Navigate to="/" replace />;
-  }
-  
-  return <>{children}</>;
+
+  return (
+    <>
+      {children || <Outlet />}
+    </>
+  );
 };
 
 export default RequireAuth;

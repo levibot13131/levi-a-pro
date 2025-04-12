@@ -1,119 +1,86 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  isAdmin: boolean;
-  role?: string; // Add role property to User interface
+export interface User {
+  email?: string;
+  displayName?: string;
+  photoURL?: string;
+  // Add other properties as needed
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => void;
-  refreshUser: () => void; // Add refreshUser method
+  register: (email: string, password: string, displayName: string) => Promise<boolean>;
+  logout: () => Promise<void>;
 }
 
-// Create context with default values
-const AuthContext = createContext<AuthContextType>({
+const defaultAuthContext: AuthContextType = {
   user: null,
   isAuthenticated: false,
   isAdmin: false,
   login: async () => false,
-  logout: () => {},
-  refreshUser: () => {}, // Add default implementation
-});
+  register: async () => false,
+  logout: async () => {}
+};
 
-// Custom hook to use auth context
-export const useAuth = () => useContext(AuthContext);
+const AuthContext = createContext<AuthContextType>(defaultAuthContext);
 
-// Mock user data for development
-const MOCK_USERS = [
-  {
-    id: '1',
-    email: 'admin@example.com',
-    password: 'admin123',
-    name: 'מנהל מערכת',
-    isAdmin: true,
-    role: 'admin', // Add role
-  },
-  {
-    id: '2',
-    email: 'user@example.com',
-    password: 'user123',
-    name: 'משתמש רגיל',
-    isAdmin: false,
-    role: 'viewer', // Add role
-  },
-];
+export interface AuthProviderProps {
+  children: ReactNode;
+}
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   
-  // Check for existing session on mount
-  useEffect(() => {
-    const storedUser = localStorage.getItem('auth_user');
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        localStorage.removeItem('auth_user');
-      }
-    }
-  }, []);
-  
-  // Login function
+  // This would normally connect to your authentication service
   const login = async (email: string, password: string): Promise<boolean> => {
-    // In a real app, this would be an API call
-    const foundUser = MOCK_USERS.find(
-      (u) => u.email === email && u.password === password
-    );
-    
-    if (foundUser) {
-      const { password, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem('auth_user', JSON.stringify(userWithoutPassword));
+    // Mock implementation
+    if (email && password) {
+      setUser({
+        email,
+        displayName: 'Test User',
+        photoURL: '',
+      });
       return true;
     }
-    
     return false;
   };
   
-  // Logout function
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('auth_user');
-  };
-  
-  // Add refreshUser function to reload user data from localStorage
-  const refreshUser = () => {
-    const storedUser = localStorage.getItem('auth_user');
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        localStorage.removeItem('auth_user');
-      }
+  const register = async (email: string, password: string, displayName: string): Promise<boolean> => {
+    // Mock implementation
+    if (email && password && displayName) {
+      setUser({
+        email,
+        displayName,
+        photoURL: '',
+      });
+      return true;
     }
+    return false;
   };
   
-  // Prepare context value
-  const value = {
-    user,
-    isAuthenticated: !!user,
-    isAdmin: user?.isAdmin || false,
-    login,
-    logout,
-    refreshUser, // Add refreshUser to context value
+  const logout = async (): Promise<void> => {
+    setUser(null);
   };
   
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  const isAuthenticated = !!user;
+  const isAdmin = isAuthenticated && user?.email === 'admin@example.com';
+
+  return (
+    <AuthContext.Provider value={{ 
+      user, 
+      isAuthenticated, 
+      isAdmin,
+      login, 
+      register,
+      logout 
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
+
+export const useAuth = () => useContext(AuthContext);
