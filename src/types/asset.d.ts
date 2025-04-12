@@ -1,9 +1,38 @@
 export interface Asset {
-  // ... keep existing code
+  id: string;
+  name: string;
+  symbol: string;
+  imageUrl: string;
+  price: number;
+  marketCap: number;
+  fullyDilutedValuation: number;
+  volume24h: number;
+  volumeChange24h: number;
+  circulatingSupply: number;
+  totalSupply: number;
+  maxSupply: number;
+  ath: number;
+  athChangePercentage: number;
+  athDate: string;
+  atl: number;
+  atlChangePercentage: number;
+  atlDate: string;
+  roi: null | {
+      times: number;
+      currency: string;
+      percentage: number;
+  };
+  lastUpdated: string;
+  sparklineIn7d: {
+      price: number[];
+  };
+  priceChangePercentage24h: number;
 }
 
 export interface AssetHistoricalData {
-  // ... keep existing code
+  prices: number[][];
+  market_caps: number[][];
+  total_volumes: number[][];
 }
 
 export type TimeframeType = 
@@ -13,19 +42,38 @@ export type TimeframeType =
   | string; // מאפשר גם סטרינגים אחרים כדי לפתור את השגיאות
 
 export interface MarketData {
-  // ... keep existing code
+  [timestamp: number]: {
+    price: number;
+    volume: number;
+  };
 }
 
 export interface PricePoint {
-  // ... keep existing code
+  time: string;
+  value: number;
 }
 
 export interface SocialPost {
-  // ... keep existing code
+  id: string;
+  assetId: string;
+  source: string;
+  author: string;
+  text: string;
+  likes: number;
+  retweets: number;
+  date: string;
+  url: string;
 }
 
 export interface NewsItem {
-  // ... keep existing code
+  id: string;
+  assetId: string;
+  source: string;
+  title: string;
+  content: string;
+  date: string;
+  url: string;
+  imageUrl: string;
 }
 
 export interface TradeSignal {
@@ -50,7 +98,13 @@ export interface TradeSignal {
 }
 
 export interface MarketAnalysis {
-  // ... keep existing code
+  assetId: string;
+  date: string;
+  sentiment: 'positive' | 'negative' | 'neutral';
+  summary: string;
+  analyst: string;
+  rating: 'buy' | 'sell' | 'hold';
+  targetPrice: number;
 }
 
 export interface TradeJournalEntry {
@@ -78,9 +132,20 @@ export interface TradeJournalEntry {
 }
 
 export interface ChartArea {
-  // ... keep existing code
+  top: number;
+  left: number;
+  width: number;
+  height: number;
 }
 
 export interface TradingBot {
-  // ... keep existing code
+  id: string;
+  name: string;
+  description: string;
+  assetId: string;
+  strategy: string;
+  parameters: { [key: string]: any };
+  status: 'active' | 'inactive';
+  createdAt: string;
+  updatedAt: string;
 }

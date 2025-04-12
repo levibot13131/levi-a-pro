@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster } from 'sonner';
 import { ThemeProvider } from "@/components/ui/theme-provider";
@@ -29,10 +30,10 @@ import LinkPage from './pages/LinkPage';
 function App() {
   return (
     <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
-      <Router>
-        <EnvironmentBanner />
-        <Routes>
-          <Route path="/" element={<MainLayout />} />
+      <EnvironmentBanner />
+      <Routes>
+        <Route path="/" element={<MainLayout />}>
+          <Route index element={<Backtesting />} />
           <Route path="/linkpage" element={<LinkPage />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
 
@@ -56,10 +57,10 @@ function App() {
           </Route>
 
           <Route path="*" element={<Missing />} />
-        </Routes>
-        <Toaster />
-        <SonnerToaster position="top-right" richColors />
-      </Router>
+        </Route>
+      </Routes>
+      <Toaster />
+      <SonnerToaster position="top-right" richColors />
     </ThemeProvider>
   );
 }

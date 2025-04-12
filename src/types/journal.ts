@@ -19,11 +19,11 @@ export interface TradeJournalEntry {
   strategy?: string;
   date: string; // Changed from optional to required
   symbol?: string;
-  direction?: 'long' | 'short';
-  stopLoss?: number;
+  direction: 'long' | 'short'; // Changed from optional to required
+  stopLoss: number; // Changed from optional to required
   targetPrice?: number;
-  positionSize?: number;
-  risk?: number;
+  positionSize: number; // Changed from optional to required
+  risk: number; // Changed from optional to required
 }
 
 export interface TradingJournalEntry {
@@ -46,9 +46,9 @@ export interface TradingJournalEntry {
   strategy: string;
   date: string;  // Already required
   symbol?: string;
-  direction?: 'long' | 'short';
-  stopLoss?: number;
+  direction: 'long' | 'short'; // Changed from optional to required
+  stopLoss: number; // Changed from optional to required
   targetPrice?: number;
-  positionSize?: number;
-  risk?: number;
+  positionSize: number; // Changed from optional to required
+  risk: number; // Changed from optional to required
 }
