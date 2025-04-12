@@ -15,7 +15,7 @@ export interface SignalAnalysisResult {
   buyToSellRatio?: string;
   mostCommonStrategy?: string;
   
-  // נוסיף את השדות שחסרים לפי ההשתמשות בקוד
+  // Additional fields needed based on usage in code
   signalId?: string;
   assetId?: string;
   type?: "buy" | "sell";
@@ -41,6 +41,10 @@ export const generateSignalAnalysis = (assetId?: string): SignalAnalysisResult =
     marketSentiment: 'neutral',
     signalStrength: 5,
     summary: 'אין מספיק נתונים לניתוח מקיף', // No sufficient data for comprehensive analysis
-    recommendation: 'המתן לנתונים נוספים' // Wait for more data
+    recommendation: 'המתן לנתונים נוספים', // Wait for more data
+    supportingFactors: [],
+    riskFactors: [],
+    alternativeScenarios: [],
+    conclusion: ''
   };
 };

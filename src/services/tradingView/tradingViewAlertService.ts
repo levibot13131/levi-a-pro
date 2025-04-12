@@ -1,3 +1,4 @@
+
 import { TradingViewAlert, createTradingViewAlert } from './alerts/types';
 import { sendAlertToDestinations } from './alerts/distributor';
 import { 
@@ -98,7 +99,5 @@ export {
   updateAlertDestination,
   deleteAlertDestination,
   sendAlert,
-  createTradingViewAlert,
-  processAndSendAlert,
-  createSampleAlert
+  createTradingViewAlert
 };

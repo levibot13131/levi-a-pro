@@ -1,5 +1,5 @@
 
-import { TradeSignal } from '@/types/asset';
+import { TradeSignal, TimeframeType } from '@/types/asset';
 
 /**
  * Generate a mock trade signal for testing
@@ -17,6 +17,7 @@ export const generateMockSignal = (assetId: string, strategy?: string): TradeSig
   const signalType = Math.random() > 0.5 ? 'buy' : 'sell';
   const price = 1000 + Math.random() * 50000;
   const currentTime = new Date();
+  const createdAtTime = currentTime.getTime();
   
   // Generate different reasons based on strategy
   let strategyName = strategy || 'A.A';
@@ -44,6 +45,10 @@ export const generateMockSignal = (assetId: string, strategy?: string): TradeSig
       : 'זוהתה חציית MACD כלפי מטה יחד עם RSI בקנייתיתר.';
   }
   
+  // Get a valid timeframe
+  const timeframeOptions: TimeframeType[] = ['1h', '4h', '1d', '1w'];
+  const timeframe = timeframeOptions[Math.floor(Math.random() * 4)];
+  
   return {
     id: `signal-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
     assetId,
@@ -52,10 +57,11 @@ export const generateMockSignal = (assetId: string, strategy?: string): TradeSig
     timestamp: currentTime.getTime(),
     strength: Math.random() > 0.7 ? 'strong' : Math.random() > 0.5 ? 'medium' : 'weak',
     strategy: strategyName,
-    timeframe: ['1h', '4h', '1d', '1w'][Math.floor(Math.random() * 4)],
+    timeframe,
     targetPrice: signalType === 'buy' ? price * (1 + Math.random() * 0.2) : price * (1 - Math.random() * 0.2),
     stopLoss: signalType === 'buy' ? price * (1 - Math.random() * 0.1) : price * (1 + Math.random() * 0.1),
     riskRewardRatio: 1 + Math.random() * 3,
     notes,
+    createdAt: createdAtTime // Add required createdAt field
   };
 };

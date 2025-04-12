@@ -1,323 +1,179 @@
-import { TradingBot, TradeSignal, MarketAnalysis, TradeJournalEntry } from "@/types/asset";
+import { TradeSignal, MarketAnalysis } from "@/types/asset";
 
-// נתונים סטטיים לדוגמה עבור בוטים מסחר
-const MOCK_TRADING_BOTS: TradingBot[] = [
+// Mock trade signals data
+const mockSignals: TradeSignal[] = [
   {
-    id: "bot1",
-    name: "הלוויתן החכם",
-    description: "בוט המתמחה בזיהוי תנועות ארביטראז' מהירות בשוק הקריפטו",
-    strategy: "ארביטראז' בין בורסות + מומנטום",
-    performance: {
-      totalReturn: 87.5,
-      winRate: 72.3,
-      averageProfit: 2.8,
-      averageLoss: -1.2,
-      sharpeRatio: 2.4,
-      maxDrawdown: -18.5,
-      totalTrades: 450,
-      profitLoss: 8750
-    },
-    supportedAssets: ["crypto"],
-    monthlyReturns: [
-      { month: "ינואר 2025", return: 7.2 },
-      { month: "פברואר 2025", return: 9.1 },
-      { month: "מרץ 2025", return: 5.6 },
-      { month: "אפריל 2025", return: 8.3 }
-    ],
-    riskLevel: "medium",
-    creatorInfo: "נוצר ע\"י AlphaTeam, פעיל משנת 2023",
-    imageUrl: "https://cryptologos.cc/logos/bitcoin-btc-logo.png"
-  },
-  {
-    id: "bot2",
-    name: "טרנד פולואר פרו",
-    description: "בוט הנצמד למגמות ארוכות טווח בשוק המניות",
-    strategy: "מעקב מגמות + אינדיקטורים טכניים",
-    performance: {
-      totalReturn: 65.2,
-      winRate: 58.7,
-      averageProfit: 5.2,
-      averageLoss: -2.3,
-      sharpeRatio: 1.8,
-      maxDrawdown: -22.1,
-      totalTrades: 320,
-      profitLoss: 6520
-    },
-    supportedAssets: ["stock"],
-    monthlyReturns: [
-      { month: "ינואר 2025", return: 3.8 },
-      { month: "פברואר 2025", return: 5.2 },
-      { month: "מרץ 2025", return: 4.5 },
-      { month: "אפריל 2025", return: 4.1 }
-    ],
-    riskLevel: "medium",
-    creatorInfo: "נוצר ע\"י TradeMaster, פעיל משנת 2022",
-    imageUrl: "https://companieslogo.com/img/orig/AAPL-bf1a4314.png"
-  },
-  {
-    id: "bot3",
-    name: "ברייקאאוט האנטר",
-    description: "בוט המזהה פריצות משמעותיות של מחירים בשוק הפורקס",
-    strategy: "זיהוי פריצות + היפוכי מגמה",
-    performance: {
-      totalReturn: 42.3,
-      winRate: 61.5,
-      averageProfit: 3.6,
-      averageLoss: -1.8,
-      sharpeRatio: 1.6,
-      maxDrawdown: -15.8,
-      totalTrades: 280,
-      profitLoss: 4230
-    },
-    supportedAssets: ["forex"],
-    monthlyReturns: [
-      { month: "ינואר 2025", return: 2.5 },
-      { month: "פברואר 2025", return: 3.8 },
-      { month: "מרץ 2025", return: 2.9 },
-      { month: "אפריל 2025", return: 3.2 }
-    ],
-    riskLevel: "low",
-    creatorInfo: "נוצר ע\"י ForexPro, פעיל משנת 2024",
-    imageUrl: "https://www.investopedia.com/thmb/cILSK5rWO3iqQbdNiMxKJOe7Zf4=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/EUR-USD_2019-69b39ed9619646d5b08fd7a2ee1a1c91.jpg"
-  },
-  {
-    id: "bot4",
-    name: "וויקוף מאסטר",
-    description: "בוט המתמחה בזיהוי תבניות וויקוף בשווקי קריפטו ומניות",
-    strategy: "מתודולוגיית וויקוף + ניתוח נפחים",
-    performance: {
-      totalReturn: 112.6,
-      winRate: 68.2,
-      averageProfit: 4.8,
-      averageLoss: -1.9,
-      sharpeRatio: 2.6,
-      maxDrawdown: -24.3,
-      totalTrades: 520,
-      profitLoss: 11260
-    },
-    supportedAssets: ["crypto", "stock"],
-    monthlyReturns: [
-      { month: "ינואר 2025", return: 9.5 },
-      { month: "פברואר 2025", return: 12.2 },
-      { month: "מרץ 2025", return: 8.7 },
-      { month: "אפריל 2025", return: 10.1 }
-    ],
-    riskLevel: "high",
-    creatorInfo: "נוצר ע\"י WyckoffAI, פעיל משנת 2023",
-    imageUrl: "https://cryptologos.cc/logos/ethereum-eth-logo.png"
-  },
-  {
-    id: "bot5",
-    name: "SMC סטרטגיסט",
-    description: "בוט המתמחה באסטרטגיית Smart Money Concept",
-    strategy: "SMC + ניתוח התנגדויות ותמיכות",
-    performance: {
-      totalReturn: 95.7,
-      winRate: 64.9,
-      averageProfit: 4.2,
-      averageLoss: -1.7,
-      sharpeRatio: 2.2,
-      maxDrawdown: -21.8,
-      totalTrades: 480,
-      profitLoss: 9570
-    },
-    supportedAssets: ["forex", "crypto"],
-    monthlyReturns: [
-      { month: "ינואר 2025", return: 6.8 },
-      { month: "פברואר 2025", return: 8.3 },
-      { month: "מרץ 2025", return: 7.5 },
-      { month: "אפריל 2025", return: 7.9 }
-    ],
-    riskLevel: "medium",
-    creatorInfo: "נוצר ע\"י ProTraders, פעיל משנת 2024",
-    imageUrl: "https://companieslogo.com/img/orig/MSFT-a203b22d.png"
-  }
-];
-
-// נתונים סטטיים לדוגמה עבור סיגנלים
-const MOCK_TRADE_SIGNALS: TradeSignal[] = [
-  {
-    id: "signal1",
+    id: "signal-1",
     assetId: "bitcoin",
     type: "buy",
-    price: 67250.42,
-    timestamp: Date.now() - 3600000, // לפני שעה
+    price: 47000,
+    timestamp: Date.now() - 1000000,
     strength: "strong",
-    strategy: "וויקוף אקומולציה",
-    timeframe: "4h",
-    targetPrice: 71500.00,
-    stopLoss: 65200.00,
-    riskRewardRatio: 2.5,
-    notes: "נצפית תבנית אקומולציה וויקוף ברורה עם הצטברות נפח משמעותית באזור התמיכה.",
-    createdAt: Date.now() - 3600000 // חובה להוסיף
+    strategy: "Moving Average Crossover",
+    timeframe: "1d",
+    targetPrice: 50000,
+    stopLoss: 45000,
+    riskRewardRatio: 2,
+    notes: "Bullish crossover detected on the daily chart.",
+    createdAt: Date.now()
   },
   {
-    id: "signal2",
+    id: "signal-2",
     assetId: "ethereum",
-    type: "buy",
-    price: 3325.18,
-    timestamp: Date.now() - 7200000, // לפני שעתיים
-    strength: "medium",
-    strategy: "פריצת התנגדות",
-    timeframe: "1d",
-    targetPrice: 3600.00,
-    stopLoss: 3200.00,
-    riskRewardRatio: 1.8,
-    notes: "פריצה של רמת התנגדות מרכזית עם עלייה בנפח המסחר.",
-    createdAt: Date.now() - 7200000 // חובה להוסיף
-  },
-  {
-    id: "signal3",
-    assetId: "apple",
     type: "sell",
-    price: 175.52,
-    timestamp: Date.now() - 10800000, // לפני 3 שעות
-    strength: "weak",
-    strategy: "דחייה מהתנגדות",
-    timeframe: "1d",
-    targetPrice: 168.00,
-    stopLoss: 178.50,
-    riskRewardRatio: 2.1,
-    notes: "דחייה חזקה מרמת התנגדות היסטורית, בשילוב דיברגנס שלילי ב-RSI.",
-    createdAt: Date.now() - 10800000 // חובה להוסיף
+    price: 3400,
+    timestamp: Date.now() - 2000000,
+    strength: "medium",
+    strategy: "RSI Overbought",
+    timeframe: "4h",
+    targetPrice: 3200,
+    stopLoss: 3500,
+    riskRewardRatio: 1.5,
+    notes: "RSI indicates overbought conditions on the 4-hour chart.",
+    createdAt: Date.now()
   },
   {
-    id: "signal4",
-    assetId: "eurusd",
+    id: "signal-3",
+    assetId: "aapl",
     type: "buy",
-    price: 1.0762,
-    timestamp: Date.now() - 14400000, // לפני 4 שעות
+    price: 170,
+    timestamp: Date.now() - 3000000,
+    strength: "weak",
+    strategy: "Support Bounce",
+    timeframe: "1w",
+    targetPrice: 180,
+    stopLoss: 165,
+    riskRewardRatio: 2.5,
+    notes: "Bouncing off long-term support level.",
+    createdAt: Date.now()
+  },
+  {
+    id: "signal-4",
+    assetId: "amzn",
+    type: "sell",
+    price: 3300,
+    timestamp: Date.now() - 4000000,
     strength: "strong",
-    strategy: "SMC מהלך חוזר",
-    timeframe: "4h",
-    targetPrice: 1.0820,
-    stopLoss: 1.0730,
-    riskRewardRatio: 1.9,
-    notes: "מחיר חוזר לאזור הנזילות (liquidity) לאחר הפעלת אסטרטגיית SMC.",
-    createdAt: Date.now() - 14400000 // חובה להוסיף
+    strategy: "Resistance Rejection",
+    timeframe: "1d",
+    targetPrice: 3100,
+    stopLoss: 3400,
+    riskRewardRatio: 2,
+    notes: "Rejected at key resistance level.",
+    createdAt: Date.now()
+  },
+  {
+    id: "signal-5",
+    assetId: "gold",
+    type: "buy",
+    price: 1800,
+    timestamp: Date.now() - 5000000,
+    strength: "medium",
+    strategy: "Inflation Hedge",
+    timeframe: "1M",
+    targetPrice: 1900,
+    stopLoss: 1750,
+    riskRewardRatio: 2,
+    notes: "Increasing inflation concerns driving demand for gold.",
+    createdAt: Date.now()
   }
 ];
 
-// נתונים סטטיים לדוגמה עבור ניתוחי שוק
-const MOCK_MARKET_ANALYSES: MarketAnalysis[] = [
+// For the mockAnalyses array, let's update each entry to include all required fields:
+const mockAnalyses: MarketAnalysis[] = [
   {
-    id: "analysis1",
-    title: "ביטקוין - הערכה טכנית לטווח הבינוני",
-    summary: "ניתוח טכני מקיף של ביטקוין לטווח של 3-6 חודשים הקרובים",
+    id: "analysis-1",
+    title: "Bitcoin Technical Analysis: Potential Breakout Forming",
+    summary: "Technical indicators suggest Bitcoin may be forming a breakout pattern after consolidation.",
     type: "technical",
     assetId: "bitcoin",
-    publishedAt: "2025-04-09T12:00:00Z",
-    author: "ד\"ר סטיבן כהן, אנליסט קריפטו בכיר",
-    content: "הניתוח הטכני מראה תבנית המשכית חיובית עם פוטנציאל לעלייה נוספת...",
-    keyPoints: [
-      "תמיכה חזקה באזור $63,000-$65,000",
-      "התנגדות משמעותית ב-$72,000",
-      "מתאם EMA200 עדיין תומך במגמה חיובית",
-      "נפח מסחר הולך וגובר מצביע על המשך מומנטום חיובי"
-    ],
-    conclusion: "התחזית היא להמשך מגמה חיובית עם יעד מחיר של $80,000 עד סוף הרבעון",
-    sentiment: "bullish",
-    // הוספת שדות חסרים שנדרשים לפי הממשק
     timeframe: "1d",
-    timestamp: Date.now() - 24 * 60 * 60 * 1000,
-    source: "TradingView",
-    confidence: 0.8
-  },
-  {
-    id: "analysis2",
-    title: "ניתוח פונדמנטלי של סקטור הטכנולוגיה",
-    summary: "סקירה מקיפה של מצב חברות הטכנולוגיה המובילות ברבעון האחרון",
-    type: "fundamental",
-    marketSector: "technology stocks",
-    publishedAt: "2025-04-08T14:30:00Z",
-    author: "רונית לוי, אנליסטית שוק ההון",
-    content: "הרבעון האחרון הראה צמיחה מרשימה בהכנסות חברות הטכנולוגיה הגדולות...",
+    timestamp: Date.now() - 1000000,
+    publishedAt: new Date(Date.now() - 1000000).toISOString(),
+    author: "TechAnalyst",
+    content: "Bitcoin has been consolidating in a tight range between $45,000 and $48,000 for the past two weeks. Volume has been decreasing during this consolidation, which typically precedes a significant move. The RSI is currently at 58, showing neutral momentum, but MACD is showing early signs of bullish crossover. The 200-day moving average is providing strong support at $42,800.",
     keyPoints: [
-      "צמיחה ממוצעת של 18% בהכנסות חברות ה-FAANG",
-      "השקעות מואצות בתחום ה-AI",
-      "לחצי רגולציה גוברים עלולים להוות סיכון",
-      "מכפילי רווח גבוהים מהממוצע ההיסטורי"
+      "Price consolidation with decreasing volume",
+      "Potential bullish MACD crossover forming",
+      "Strong support at the 200-day moving average"
     ],
-    conclusion: "למרות הערכה הגבוהה, סקטור הטכנולוגיה צפוי להמשיך לצמוח בקצב מהיר מהשוק הכללי",
+    conclusion: "Watch for a breakout above $48,000 with increased volume for confirmation of continued bullish trend.",
     sentiment: "bullish",
-    // הוספת שדות חסרים שנדרשים לפי הממשק
-    timeframe: "1w",
-    timestamp: Date.now() - 7 * 24 * 60 * 60 * 1000,
-    source: "Bloomberg",
-    confidence: 0.9
+    source: "TradingView",
+    confidence: 75
   },
+  
   {
-    id: "analysis3",
-    title: "אתריום - השלכות העדכון הקרוב על מחיר הנכס",
-    summary: "ניתוח ההשפעה הצפויה של עדכון הרשת על מחיר האתריום",
+    id: "analysis-2",
+    title: "Global Cryptocurrency Market Outlook",
+    summary: "Analysis of how recent regulatory developments may impact the cryptocurrency market.",
+    type: "fundamental",
+    marketSector: "cryptocurrency",
+    timeframe: "1M",
+    timestamp: Date.now() - 2000000,
+    publishedAt: new Date(Date.now() - 2000000).toISOString(),
+    author: "CryptoEconomist",
+    content: "Recent regulatory developments across major economies show a trend toward more structured oversight rather than restrictive policies. The United States SEC is working on clearer guidelines for token classifications, while the European Union's MiCA framework is progressing toward implementation. These developments suggest a maturing regulatory environment that could provide more certainty for institutional investors.",
+    keyPoints: [
+      "Regulatory clarity increasing globally",
+      "Institutional investment continuing to grow",
+      "Central banks exploring digital currencies"
+    ],
+    conclusion: "The regulatory environment is evolving toward acceptance with proper oversight, which is likely to be positive for the cryptocurrency ecosystem in the long term.",
+    sentiment: "bullish",
+    source: "Market Research",
+    confidence: 80
+  },
+  
+  {
+    id: "analysis-3",
+    title: "Ethereum Fundamental Analysis",
+    summary: "Examining Ethereum's fundamental value propositions and ecosystem development.",
     type: "fundamental",
     assetId: "ethereum",
-    publishedAt: "2025-04-07T16:45:00Z",
-    author: "אלכס גרין, יועץ בלוקצ'יין",
-    content: "העדכון הקרוב של רשת האתריום צפוי להביא לשיפור משמעותי בקנה המידה...",
-    keyPoints: [
-      "הגדלת קיבולת העסקאות פי 10",
-      "הפחתה צפויה של עד 80% בעמלות הגז",
-      "שיפור במנגנון ה-staking",
-      "אימוץ צפוי ע\"י יותר פרויקטים בזכות העלויות הנמוכות"
-    ],
-    conclusion: "העדכון הקרוב צפוי לתמוך בעליית מחיר האתריום בטווח הבינוני-ארוך",
-    sentiment: "bullish",
-    // הוספת שדות חסרים שנדרשים לפי הממשק
     timeframe: "1M",
-    timestamp: Date.now() - 30 * 24 * 60 * 60 * 1000,
-    source: "CoinDesk",
-    confidence: 0.7
+    timestamp: Date.now() - 3000000,
+    publishedAt: new Date(Date.now() - 3000000).toISOString(),
+    author: "BlockchainResearcher",
+    content: "Ethereum continues to dominate the smart contract platform space with over $100B in Total Value Locked (TVL) across its DeFi protocols. Developer activity remains robust with approximately 4,000 monthly active developers. The transition to Proof of Stake has reduced energy consumption by over 99%, addressing a major criticism. Layer-2 scaling solutions are seeing increased adoption, with over $5B locked in these protocols.",
+    keyPoints: [
+      "Leading smart contract platform by TVL and developer activity",
+      "Successful transition to Proof of Stake",
+      "Growing adoption of Layer-2 scaling solutions"
+    ],
+    conclusion: "Ethereum maintains strong fundamentals and ecosystem growth, supporting a bullish long-term outlook despite short-term price fluctuations.",
+    sentiment: "bullish",
+    source: "Blockchain Analytics",
+    confidence: 85
   }
 ];
 
-// פונקציות שירות לקבלת נתונים
-export const getTradingBots = async (): Promise<TradingBot[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(MOCK_TRADING_BOTS), 800);
-  });
-};
-
+// Function to get trade signals
 export const getTradeSignals = async (assetId?: string): Promise<TradeSignal[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      if (assetId) {
-        const filteredSignals = MOCK_TRADE_SIGNALS.filter(signal => 
-          signal.assetId === assetId
-        );
-        resolve(filteredSignals);
-      } else {
-        resolve(MOCK_TRADE_SIGNALS);
-      }
-    }, 600);
-  });
+  // In a real app, this would be an API call
+  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+  
+  if (assetId) {
+    return mockSignals.filter(signal => signal.assetId === assetId);
+  }
+  
+  return mockSignals;
 };
 
+// Function to get market analyses
 export const getMarketAnalyses = async (assetId?: string, type?: MarketAnalysis['type']): Promise<MarketAnalysis[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      let filteredAnalyses = [...MOCK_MARKET_ANALYSES];
-      
-      if (assetId) {
-        filteredAnalyses = filteredAnalyses.filter(analysis => 
-          analysis.assetId === assetId
-        );
-      }
-      
-      if (type) {
-        filteredAnalyses = filteredAnalyses.filter(analysis => 
-          analysis.type === type
-        );
-      }
-      
-      resolve(filteredAnalyses);
-    }, 700);
-  });
-};
-
-// פונקציה מדומה לקבלת יומן מסחר (ריק בשלב זה, נועד להרחבה בהמשך)
-export const getTradeJournal = async (): Promise<TradeJournalEntry[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve([]), 500);
-  });
+  // In a real app, this would be an API call
+  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
+  
+  let filteredAnalyses = [...mockAnalyses];
+  
+  if (assetId) {
+    filteredAnalyses = filteredAnalyses.filter(analysis => analysis.assetId === assetId);
+  }
+  
+  if (type) {
+    filteredAnalyses = filteredAnalyses.filter(analysis => analysis.type === type);
+  }
+  
+  return filteredAnalyses;
 };

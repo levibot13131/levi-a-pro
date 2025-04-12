@@ -1,13 +1,12 @@
 
-import { PricePoint, TradeSignal } from "@/types/asset";
+import { PricePoint, TradeSignal, TimeframeType } from "@/types/asset";
 import { generateWhaleSignals } from './whaleSignalGenerator';
 import { v4 as uuidv4 } from 'uuid';
 
 export const generateSignalsFromHistory = async (
   priceData: PricePoint[],
   strategy: string = "A.A",
-  assetId: string = "bitcoin",
-  timeframe: string = "1d"
+  assetId: string = "bitcoin"
 ): Promise<TradeSignal[]> => {
   if (!priceData || priceData.length < 10) {
     console.log('Not enough price data points for signal generation');
@@ -22,7 +21,7 @@ export const generateSignalsFromHistory = async (
     case "A.A":
     case "KSem":
       // שימוש באסטרטגיית AA של KSem
-      signals = await generateAASignals(priceData, assetId, strategy, timeframe);
+      signals = await generateAASignals(priceData, assetId, strategy);
       break;
     
     case "Whale Activity":
@@ -32,7 +31,7 @@ export const generateSignalsFromHistory = async (
     
     default:
       // ברירת מחדל - אסטרטגיית AA
-      signals = await generateAASignals(priceData, assetId, 'A.A', timeframe);
+      signals = await generateAASignals(priceData, assetId, 'A.A');
   }
   
   // מיון האיתותים לפי זמן (מהחדש לישן)
@@ -45,8 +44,7 @@ export const generateSignalsFromHistory = async (
 const generateAASignals = async (
   priceData: PricePoint[],
   assetId: string,
-  strategy: string,
-  timeframe: string
+  strategy: string
 ): Promise<TradeSignal[]> => {
   const signals: TradeSignal[] = [];
   
@@ -84,6 +82,9 @@ const generateAASignals = async (
     const prevLongSum = priceData.slice(i - longTermPeriod - 1, i - 1).reduce((sum, point) => sum + point.price, 0);
     const prevLongAvg = prevLongSum / longTermPeriod;
     
+    const timeframe: TimeframeType = "1d";
+    const now = Date.now();
+    
     // חציית ממוצעים כלפי מעלה - איתות קנייה
     if (prevShortAvg <= prevLongAvg && shortAvg > longAvg) {
       // איתות קנייה
@@ -99,7 +100,8 @@ const generateAASignals = async (
         targetPrice: priceData[i].price * 1.05,
         stopLoss: priceData[i].price * 0.97,
         riskRewardRatio: 1.67,
-        notes: 'חציית ממוצעים נעים כלפי מעלה - איתות קנייה'
+        notes: 'חציית ממוצעים נעים כלפי מעלה - איתות קנייה',
+        createdAt: now
       });
     }
     // חציית ממוצעים כלפי מטה - איתות מכירה
@@ -117,7 +119,8 @@ const generateAASignals = async (
         targetPrice: priceData[i].price * 0.95,
         stopLoss: priceData[i].price * 1.03,
         riskRewardRatio: 1.67,
-        notes: 'חציית ממוצעים נעים כלפי מטה - איתות מכירה'
+        notes: 'חציית ממוצעים נעים כלפי מטה - איתות מכירה',
+        createdAt: now
       });
     }
   }

@@ -190,6 +190,7 @@ export interface TradingBot {
     averageProfit?: number;
     averageLoss?: number;
     sharpeRatio?: number;
+    maxDrawdown?: number;
   };
   timeframe: TimeframeType;
   assets: string[];

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,19 @@ import TradingJournalEntryList from './TradingJournalEntryList';
 
 interface TradingJournalProps {
   initialEntries?: TradeJournalEntry[];
+}
+
+interface TradingJournalFormData {
+  assetId: string;
+  date: string;
+  direction: string;
+  entryPrice: string;
+  stopLoss: string;
+  targetPrice?: string;
+  positionSize: string;
+  notes?: string;
+  strategy: string;
+  tags?: string[];
 }
 
 const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {

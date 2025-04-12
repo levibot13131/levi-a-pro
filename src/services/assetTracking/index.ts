@@ -1,42 +1,82 @@
-import { TrackedAsset } from '@/types/asset';
 
-// מערך מוק של נכסים מעקב
-const MOCK_TRACKED_ASSETS: TrackedAsset[] = [
-  // ... keep existing code
-];
+import { Asset } from '@/types/asset';
+import { TrackedAsset, TRACKED_ASSETS_KEY } from './types';
 
-// פונקציה חדשה - אתחול נכסים במעקב
+// Helper to initialize tracked assets for first time users
 export const initializeTrackedAssets = (): void => {
-  console.log('Initializing tracked assets');
-  // כאן היינו בדרך כלל מאתחלים את המערכת מהשרת או מהאחסון המקומי
-};
-
-// סינון של נכסים לפי קריטריונים
-export const getFilteredTrackedAssets = (filter: string = 'all'): TrackedAsset[] => {
-  if (filter === 'all') {
-    return getTrackedAssets();
-  } else if (filter === 'favorites') {
-    return getTrackedAssets().filter(asset => asset.isFavorite);
-  } else if (filter === 'alerts') {
-    return getTrackedAssets().filter(asset => asset.alerts && asset.alerts.length > 0);
-  } else if (filter.startsWith('type:')) {
-    const type = filter.split(':')[1];
-    return getTrackedAssets().filter(asset => asset.type === type);
+  const existingAssets = localStorage.getItem(TRACKED_ASSETS_KEY);
+  
+  if (!existingAssets) {
+    // Initialize with some default tracked assets
+    const defaultAssets: TrackedAsset[] = [
+      {
+        id: 'bitcoin',
+        name: 'Bitcoin',
+        symbol: 'BTC',
+        type: 'crypto',
+        price: 50000,
+        change24h: 2.5,
+        priority: 'high',
+        alertsEnabled: true,
+        lastUpdated: Date.now(),
+        technicalSignal: 'buy',
+        sentimentSignal: 'bullish',
+        isPinned: true,
+        marketCap: 1000000000000,
+        volume24h: 30000000000,
+        rank: 1
+      },
+      {
+        id: 'ethereum',
+        name: 'Ethereum',
+        symbol: 'ETH',
+        type: 'crypto',
+        price: 3500,
+        change24h: 1.8,
+        priority: 'high',
+        alertsEnabled: true,
+        lastUpdated: Date.now(),
+        technicalSignal: 'neutral',
+        sentimentSignal: 'neutral',
+        isPinned: false,
+        marketCap: 400000000000,
+        volume24h: 18000000000,
+        rank: 2
+      }
+    ];
+    
+    localStorage.setItem(TRACKED_ASSETS_KEY, JSON.stringify(defaultAssets));
   }
-  return getTrackedAssets();
 };
 
-// פונקציות קיימות
+// Get all tracked assets
 export const getTrackedAssets = (): TrackedAsset[] => {
-  // ... keep existing code
-  return MOCK_TRACKED_ASSETS;
+  const assetsJson = localStorage.getItem(TRACKED_ASSETS_KEY) || '[]';
+  return JSON.parse(assetsJson);
 };
 
-// Re-export from storage
-export * from './storage';
-// Export asset management functions
-export { addTrackedAsset, removeTrackedAsset, updateTrackedAsset } from './assetManagement';
-// Export realtime sync functions
-export * from './realTimeSync';
-// Export types
-export * from './types';
+// Get filtered tracked assets
+export const getFilteredTrackedAssets = (
+  marketType?: string,
+  priority?: 'high' | 'medium' | 'low',
+  signal?: 'buy' | 'sell' | 'neutral'
+): TrackedAsset[] => {
+  let assets = getTrackedAssets();
+  
+  if (marketType && marketType !== 'all') {
+    assets = assets.filter(asset => asset.type === marketType);
+  }
+  
+  if (priority && priority !== 'all') {
+    assets = assets.filter(asset => asset.priority === priority);
+  }
+  
+  if (signal && signal !== 'all') {
+    assets = assets.filter(asset => asset.technicalSignal === signal);
+  }
+  
+  return assets;
+};
+
+// The other asset tracking functions would go here...
+// The implementation of these functions will depend on the actual app requirements

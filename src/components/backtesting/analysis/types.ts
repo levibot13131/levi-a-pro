@@ -78,3 +78,6 @@ export interface Analysis {
     longTerm: LongTermAnalysis;
   };
 }
+
+// This alias helps with the ComprehensiveAnalysis component
+export type AnalysisData = Analysis;
