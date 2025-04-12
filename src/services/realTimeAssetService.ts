@@ -12,7 +12,7 @@ const marketAssets: Record<string, Asset[]> = {
 // Mock initial data
 const generateMockAssets = (market: string, count: number = 50): Asset[] => {
   const assets: Asset[] = [];
-  const basePrice = market === 'crypto' ? 3000 : market === 'stocks' ? 150 : market === 'forex' ? 1 : 1800;
+  const basePrice = market === 'crypto' ? 83000 : market === 'stocks' ? 150 : market === 'forex' ? 1 : 1800;
   
   // Prefixes for different markets
   const prefixes: Record<string, string[]> = {
@@ -25,7 +25,6 @@ const generateMockAssets = (market: string, count: number = 50): Asset[] => {
   const marketPrefix = prefixes[market] || prefixes.crypto;
   
   for (let i = 0; i < count; i++) {
-    // Cycle through prefixes and add numbers for additional assets
     const prefix = marketPrefix[i % marketPrefix.length];
     const suffix = i >= marketPrefix.length ? `-${Math.floor(i / marketPrefix.length)}` : '';
     
