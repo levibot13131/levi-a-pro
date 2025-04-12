@@ -1,4 +1,5 @@
 
+// Export all the type definitions
 export interface Asset {
   id: string;
   name: string;
@@ -162,10 +163,19 @@ export interface TradeJournalEntry {
 }
 
 export interface ChartArea {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
+  id: string;
+  assetId: string;
+  name: string;
+  description: string;
+  startTimestamp: number;
+  endTimestamp: number;
+  minPrice: number;
+  maxPrice: number;
+  type: string;
+  top?: number;
+  left?: number;
+  width?: number;
+  height?: number;
 }
 
 export interface TradingBot {
