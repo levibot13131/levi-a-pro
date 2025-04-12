@@ -66,7 +66,7 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
       };
       
       const savedEntry = await addTradingJournalEntry(newEntry);
-      setEntries(prev => [savedEntry, ...prev]);
+      setEntries(prev => [savedEntry, ...prev] as TradeJournalEntry[]); // Type cast to ensure correct typing
       setShowForm(false);
       
     } catch (err: any) {

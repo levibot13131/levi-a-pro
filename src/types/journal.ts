@@ -17,7 +17,7 @@ export interface TradeJournalEntry {
   notes?: string;
   tags?: string[];
   strategy?: string;
-  date?: string;
+  date: string; // Changed from optional to required
   symbol?: string;
   direction?: 'long' | 'short';
   stopLoss?: number;
@@ -44,7 +44,7 @@ export interface TradingJournalEntry {
   notes?: string;
   tags?: string[];
   strategy: string;
-  date: string;  // Changed to required
+  date: string;  // Already required
   symbol?: string;
   direction?: 'long' | 'short';
   stopLoss?: number;

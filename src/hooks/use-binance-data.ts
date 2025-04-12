@@ -1,122 +1,158 @@
 
 import { useState, useEffect } from 'react';
 
-// Mock Binance market data
-interface BinanceMarketData {
+export interface BinanceMarketData {
+  symbol: string;
   price: number;
   change24h: number;
-  volume: number;
+  volume24h: number;
   high24h: number;
   low24h: number;
   lastUpdated: number;
 }
 
-// Add fundamental data interface
-interface BinanceFundamentalData {
+export interface BinanceFundamentalData {
+  symbol: string;
   marketCap: number;
-  totalSupply: number;
   circulatingSupply: number;
+  totalSupply: number;
   maxSupply?: number;
   launchDate?: string;
-  category: string;
+  website?: string;
+  allTimeHigh?: number;
+  allTimeHighDate?: string;
+  fundamentalScore?: number;
+  socialMentions24h?: number;
+  sentiment?: number; // Added missing properties
 }
 
-// Types for hook return values
-interface UseBinanceDataReturn {
+export interface UseBinanceDataReturn {
   marketData: Record<string, BinanceMarketData>;
-  fundamentalData?: Record<string, BinanceFundamentalData>;  // Added missing property
+  fundamentalData: Record<string, BinanceFundamentalData>; // Added missing property
+  isConnected: boolean;
   isLoading: boolean;
-  error: Error | null;
-  refetch: () => void;
+  error: string | null;
+  startRealTimeUpdates: () => void;
+  stopRealTimeUpdates: () => void;
 }
 
 export const useBinanceData = (symbols: string[]): UseBinanceDataReturn => {
   const [marketData, setMarketData] = useState<Record<string, BinanceMarketData>>({});
-  const [fundamentalData, setFundamentalData] = useState<Record<string, BinanceFundamentalData>>({}); // Added state
+  const [fundamentalData, setFundamentalData] = useState<Record<string, BinanceFundamentalData>>({});
+  const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const [refreshCounter, setRefreshCounter] = useState(0);
-
-  const refetch = () => {
-    setRefreshCounter(prev => prev + 1);
-  };
+  const [error, setError] = useState<string | null>(null);
+  const [updateInstance, setUpdateInstance] = useState<{ stop: () => void } | null>(null);
 
   useEffect(() => {
-    let isMounted = true;
-    let intervalId: number | null = null;
-
-    const fetchData = async () => {
-      if (symbols.length === 0) {
-        setIsLoading(false);
-        return;
-      }
-
+    const fetchInitialData = async () => {
       setIsLoading(true);
-      setError(null);
-
       try {
-        // Simulate fetching data from Binance API
-        const mockData: Record<string, BinanceMarketData> = {};
-        const mockFundamentalData: Record<string, BinanceFundamentalData> = {}; // Added fundamental data
+        // Mock initial data loading
+        const mockMarketData: Record<string, BinanceMarketData> = {};
+        const mockFundamentalData: Record<string, BinanceFundamentalData> = {};
         
-        for (const symbol of symbols) {
-          const basePrice = symbol.includes('BTC') ? 45000 : 
-                          symbol.includes('ETH') ? 3000 : 
-                          symbol.includes('SOL') ? 120 : 
-                          symbol.includes('BNB') ? 400 : 50;
-          
-          // Add some random variation
-          const randomFactor = 0.98 + Math.random() * 0.04; // +/- 2%
-          const price = basePrice * randomFactor;
-          
-          mockData[symbol] = {
-            price,
-            change24h: (Math.random() * 10) - 5, // -5% to +5%
-            volume: Math.random() * 100000000,
-            high24h: price * 1.02,
-            low24h: price * 0.98,
+        symbols.forEach(symbol => {
+          // Generate mock market data
+          mockMarketData[symbol] = {
+            symbol,
+            price: 10000 + Math.random() * 50000,
+            change24h: (Math.random() * 10) - 5,
+            volume24h: Math.random() * 1000000000,
+            high24h: 15000 + Math.random() * 50000,
+            low24h: 9000 + Math.random() * 40000,
             lastUpdated: Date.now()
           };
           
-          // Add mock fundamental data
+          // Generate mock fundamental data
           mockFundamentalData[symbol] = {
-            marketCap: price * (Math.random() * 10000000 + 1000000),
-            totalSupply: Math.round(Math.random() * 1000000000),
-            circulatingSupply: Math.round(Math.random() * 500000000),
+            symbol,
+            marketCap: Math.random() * 1000000000000,
+            circulatingSupply: Math.random() * 100000000,
+            totalSupply: Math.random() * 200000000,
             maxSupply: symbol.includes('BTC') ? 21000000 : undefined,
-            launchDate: ['BTC', 'ETH', 'BNB'].includes(symbol.replace('USDT', '')) ? 
-              '2015-01-01' : '2020-01-01',
-            category: symbol.includes('BTC') ? 'Currency' : 
-                   symbol.includes('ETH') ? 'Smart Contract' : 
-                   symbol.includes('BNB') ? 'Exchange' : 'Other'
+            launchDate: '2010-01-01',
+            website: 'https://example.com',
+            allTimeHigh: 69000,
+            allTimeHighDate: '2021-11-10',
+            fundamentalScore: Math.floor(Math.random() * 100),
+            socialMentions24h: Math.floor(Math.random() * 100000),
+            sentiment: Math.random() // 0-1 scale
           };
-        }
-
-        if (isMounted) {
-          setMarketData(mockData);
-          setFundamentalData(mockFundamentalData); // Set fundamental data
-          setIsLoading(false);
-        }
+        });
+        
+        setMarketData(mockMarketData);
+        setFundamentalData(mockFundamentalData);
+        setIsConnected(true);
       } catch (err) {
-        if (isMounted) {
-          setError(err instanceof Error ? err : new Error('Failed to fetch data'));
-          setIsLoading(false);
-        }
+        setError('Failed to fetch initial data');
+        console.error('Error fetching Binance data:', err);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchData();
-
-    // Refresh every 10 seconds for real-time simulation
     if (symbols.length > 0) {
-      intervalId = window.setInterval(fetchData, 10000);
+      fetchInitialData();
     }
-
+    
     return () => {
-      isMounted = false;
-      if (intervalId !== null) clearInterval(intervalId);
+      if (updateInstance) {
+        updateInstance.stop();
+      }
     };
-  }, [symbols, refreshCounter]);
+  }, [symbols]);
 
-  return { marketData, fundamentalData, isLoading, error, refetch };
+  const startRealTimeUpdates = () => {
+    if (updateInstance) {
+      return;
+    }
+    
+    // Mock real-time updates
+    const intervalId = setInterval(() => {
+      setMarketData(prevData => {
+        const newData = { ...prevData };
+        
+        Object.keys(newData).forEach(symbol => {
+          const change = (Math.random() * 2) - 1; // -1% to +1%
+          const currentPrice = newData[symbol].price;
+          const newPrice = currentPrice * (1 + change / 100);
+          
+          newData[symbol] = {
+            ...newData[symbol],
+            price: newPrice,
+            change24h: newData[symbol].change24h + (Math.random() * 0.2) - 0.1,
+            lastUpdated: Date.now()
+          };
+        });
+        
+        return newData;
+      });
+    }, 5000);
+    
+    const stopFn = {
+      stop: () => clearInterval(intervalId)
+    };
+    
+    setUpdateInstance(stopFn);
+  };
+
+  const stopRealTimeUpdates = () => {
+    if (updateInstance) {
+      updateInstance.stop();
+      setUpdateInstance(null);
+    }
+  };
+
+  return {
+    marketData,
+    fundamentalData,
+    isConnected,
+    isLoading,
+    error,
+    startRealTimeUpdates,
+    stopRealTimeUpdates
+  };
 };
+
+export default useBinanceData;

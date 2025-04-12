@@ -36,7 +36,8 @@ const generateMockSignals = (assetId: string): TradeSignal[] => {
       symbolName: 'BTC',
       confidence: 85,
       indicator: 'פריצת התנגדות',
-      description: 'פריצת התנגדות ארוכת טווח עם נפח גבוה'
+      description: 'פריצת התנגדות ארוכת טווח עם נפח גבוה',
+      notes: 'אפשר לנצל את ההזדמנות הזו לעמדה לטווח ארוך.'
     },
     {
       id: '2',
@@ -55,7 +56,8 @@ const generateMockSignals = (assetId: string): TradeSignal[] => {
       symbolName: 'BTC',
       confidence: 70,
       indicator: 'דיברגנס RSI',
-      description: 'דיברגנס שלילי ב-RSI וירידה בנפח המסחר'
+      description: 'דיברגנס שלילי ב-RSI וירידה בנפח המסחר',
+      notes: 'מומלץ לצמצם פוזיציות ולתת סטופ לוס מעל הרמה של 53,000.'
     },
     {
       id: '3',
@@ -74,7 +76,8 @@ const generateMockSignals = (assetId: string): TradeSignal[] => {
       symbolName: 'BTC',
       confidence: 65,
       indicator: 'התמיכה בממוצע נע',
-      description: 'ניתור מרמת תמיכה של ממוצע נע 200'
+      description: 'ניתור מרמת תמיכה של ממוצע נע 200',
+      notes: 'אפשרות לעסקה קצרת טווח עם סטופ לוס מתחת לממוצע הנע.'
     }
   ];
 };

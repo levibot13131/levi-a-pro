@@ -67,7 +67,8 @@ export const generateSignal = (assetId: string, strategy?: string): TradeSignal 
     indicator: signalType === 'buy' ? 'פריצת התנגדות' : 'שבירת תמיכה',
     description: signalType === 'buy' 
       ? 'איתות קנייה בהתבסס על ניתוח טכני ומומנטום חיובי'
-      : 'איתות מכירה בהתבסס על היפוך מגמה ואינדיקטורים שליליים'
+      : 'איתות מכירה בהתבסס על היפוך מגמה ואינדיקטורים שליליים',
+    notes: 'פרטים נוספים על האיתות יופיעו כאן.'
   };
   
   return signal;

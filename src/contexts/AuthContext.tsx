@@ -2,11 +2,14 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface User {
-  id: string;  // Added missing property
+  id: string;
   email?: string;
   displayName?: string;
   photoURL?: string;
-  isAdmin?: boolean;  // Added missing property
+  isAdmin?: boolean;
+  role?: 'admin' | 'analyst' | 'trader' | 'viewer';
+  lastLogin?: number;
+  createdAt?: number;
   // Add other properties as needed
 }
 
@@ -44,11 +47,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Mock implementation
     if (email && password) {
       setUser({
-        id: '1',  // Added ID
+        id: '1',
         email,
         displayName: 'Test User',
         photoURL: '',
-        isAdmin: email === 'admin@example.com'  // Set isAdmin property
+        isAdmin: email === 'admin@example.com',
+        role: email === 'admin@example.com' ? 'admin' : 'viewer',
+        lastLogin: Date.now(),
+        createdAt: Date.now() - 30 * 24 * 60 * 60 * 1000 // 30 days ago
       });
       return true;
     }
@@ -59,11 +65,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Mock implementation
     if (email && password && displayName) {
       setUser({
-        id: '2',  // Added ID
+        id: '2',
         email,
         displayName,
         photoURL: '',
-        isAdmin: false
+        isAdmin: false,
+        role: 'viewer',
+        lastLogin: Date.now(),
+        createdAt: Date.now()
       });
       return true;
     }
@@ -82,7 +91,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
   
   const isAuthenticated = !!user;
-  const isAdmin = isAuthenticated && user?.isAdmin === true;
+  const isAdmin = isAuthenticated && (user?.isAdmin === true || user?.role === 'admin');
 
   return (
     <AuthContext.Provider value={{ 
