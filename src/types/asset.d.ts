@@ -117,7 +117,6 @@ export interface TradeSignal {
   confidence?: number;
   indicator?: string;
   description?: string;
-  source?: string;
 }
 
 export interface MarketAnalysis {

@@ -40,7 +40,6 @@ export const generateMomentumSignals = (
         createdAt: Date.now(),
         notes: 'Short-term moving average crossed above long-term moving average',
         indicator: 'MA Crossover',
-        // Remove the source property since it doesn't exist in TradeSignal type
       });
     }
     
@@ -64,7 +63,6 @@ export const generateMomentumSignals = (
         createdAt: Date.now(),
         notes: 'Short-term moving average crossed below long-term moving average',
         indicator: 'MA Crossover',
-        // Remove the source property since it doesn't exist in TradeSignal type
       });
     }
   }

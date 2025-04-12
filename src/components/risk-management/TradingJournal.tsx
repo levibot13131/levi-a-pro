@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { BookOpen, Plus } from 'lucide-react';
 import { addTradingJournalEntry } from '@/services/customTradingStrategyService';
 import { toast } from "sonner";
-import { TradeJournalEntry } from '@/types/journal';
+import { TradeJournalEntry } from '@/types/asset';
 import TradingJournalForm from './TradingJournalForm';
 import TradingJournalEntryList from './TradingJournalEntryList';
 
@@ -13,7 +13,7 @@ interface TradingJournalProps {
   initialEntries?: TradeJournalEntry[];
 }
 
-// Rename to resolve the conflict with imported TradingJournalFormData
+// Rename to resolve the conflict with imported TradeJournalEntry
 interface JournalFormData {
   assetId: string;
   date: string;
@@ -66,7 +66,9 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
       };
       
       const savedEntry = await addTradingJournalEntry(newEntry);
-      setEntries(prev => [savedEntry, ...prev]);
+      
+      // Update entries with the new entry from the server
+      setEntries(prev => [savedEntry as TradeJournalEntry, ...prev]);
       setShowForm(false);
       
       toast.success("העסקה נוספה בהצלחה ליומן המסחר");
@@ -101,7 +103,7 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
           />
         )}
         
-        <TradingJournalEntryList entries={entries as any} />
+        <TradingJournalEntryList entries={entries} />
       </CardContent>
       <CardFooter className="flex justify-center">
         <Button variant="outline" className="w-1/2" disabled={entries.length === 0}>

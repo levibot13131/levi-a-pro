@@ -44,7 +44,6 @@ export const generatePatternSignals = (
       createdAt: Date.now(),
       notes: 'Head and Shoulders pattern detected, suggesting potential reversal',
       indicator: 'Chart Pattern',
-      // Remove the source property since it doesn't exist in TradeSignal type
     });
   }
   
@@ -65,7 +64,6 @@ export const generatePatternSignals = (
       createdAt: Date.now(),
       notes: 'Double Bottom pattern detected, suggesting potential reversal',
       indicator: 'Chart Pattern',
-      // Remove the source property since it doesn't exist in TradeSignal type
     });
   }
   

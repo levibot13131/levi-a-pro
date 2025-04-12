@@ -49,7 +49,6 @@ export const generateWhaleSignals = (
         createdAt: Date.now(),
         notes: `Significant volume spike (${(volume / avgVolume).toFixed(1)}x average) with ${priceChange.toFixed(1)}% price increase`,
         indicator: 'Volume Spike',
-        // Remove the source property since it doesn't exist in TradeSignal type
       });
     }
     
