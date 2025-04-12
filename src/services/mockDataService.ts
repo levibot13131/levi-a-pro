@@ -1,163 +1,168 @@
 
-import { Asset, AssetHistoricalData, PricePoint, VolumePoint, TimeframeType } from "@/types/asset";
+import { Asset, AssetHistoricalData, AssetType, PricePoint, TimeframeType } from '@/types/asset';
 
-// נתונים סטטיים לדוגמה
-const MOCK_ASSETS: Asset[] = [
+// Mock assets data
+const mockAssets: Asset[] = [
   {
-    id: "bitcoin",
-    symbol: "BTC",
-    name: "Bitcoin",
-    type: "crypto",
-    price: 67250.42,
+    id: 'bitcoin',
+    name: 'Bitcoin',
+    symbol: 'BTC',
+    price: 68423.12,
     change24h: 2.35,
-    volume24h: 24500000000,
-    marketCap: 1280000000000,
-    imageUrl: "https://cryptologos.cc/logos/bitcoin-btc-logo.png"
+    type: 'crypto',
+    icon: '₿',
+    marketCap: 1342587450000,
+    volume24h: 42587450000,
   },
   {
-    id: "ethereum",
-    symbol: "ETH",
-    name: "Ethereum",
-    type: "crypto",
-    price: 3325.18,
-    change24h: -1.24,
-    volume24h: 12800000000,
-    marketCap: 398000000000,
-    imageUrl: "https://cryptologos.cc/logos/ethereum-eth-logo.png"
+    id: 'ethereum',
+    name: 'Ethereum',
+    symbol: 'ETH',
+    price: 3342.87,
+    change24h: -0.75,
+    type: 'crypto',
+    icon: 'Ξ',
+    marketCap: 401235780000,
+    volume24h: 15789632400,
   },
   {
-    id: "apple",
-    symbol: "AAPL",
-    name: "Apple Inc.",
-    type: "stocks",
-    price: 175.52,
-    change24h: 0.87,
-    volume24h: 65700000,
-    marketCap: 2750000000000,
-    imageUrl: "https://companieslogo.com/img/orig/AAPL-bf1a4314.png"
+    id: 'solana',
+    name: 'Solana',
+    symbol: 'SOL',
+    price: 143.21,
+    change24h: 5.23,
+    type: 'crypto',
+    icon: '◎',
+    marketCap: 65432789000,
+    volume24h: 3287496500,
   },
   {
-    id: "microsoft",
-    symbol: "MSFT",
-    name: "Microsoft Corporation",
-    type: "stocks",
-    price: 406.32,
-    change24h: 1.12,
-    volume24h: 34500000,
-    marketCap: 3020000000000,
-    imageUrl: "https://companieslogo.com/img/orig/MSFT-a203b22d.png"
+    id: 'aapl',
+    name: 'Apple Inc.',
+    symbol: 'AAPL',
+    price: 187.43,
+    change24h: 0.34,
+    type: 'stock',
+    icon: '🍎',
+    marketCap: 2987654320000,
+    volume24h: 4578923400,
   },
   {
-    id: "eurusd",
-    symbol: "EUR/USD",
-    name: "Euro / US Dollar",
-    type: "forex",
-    price: 1.0762,
-    change24h: -0.25,
-    volume24h: 98500000000,
-    marketCap: 0,
-    imageUrl: "https://www.investopedia.com/thmb/cILSK5rWO3iqQbdNiMxKJOe7Zf4=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/EUR-USD_2019-69b39ed9619646d5b08fd7a2ee1a1c91.jpg"
+    id: 'amzn',
+    name: 'Amazon.com, Inc.',
+    symbol: 'AMZN',
+    price: 178.23,
+    change24h: -1.05,
+    type: 'stock',
+    icon: '📦',
+    marketCap: 1876543210000,
+    volume24h: 3897654320,
   }
 ];
 
-// יצירת נתונים היסטוריים מדומים
-const generateHistoricalData = (basePrice: number, days: number): PricePoint[] => {
-  const data: PricePoint[] = [];
-  const now = Date.now();
-  const dayInMs = 86400000;
-  
-  for (let i = days; i >= 0; i--) {
-    const timestamp = now - (i * dayInMs);
-    // נוסיף תנודתיות רנדומלית של עד 5%
-    const volatility = (Math.random() - 0.5) * 0.05;
-    const dayFactor = 1 + volatility;
-    const price = basePrice * Math.pow(dayFactor, days - i);
-    
-    data.push({
-      timestamp,
-      price: parseFloat(price.toFixed(2))
-    });
-  }
-  
-  return data;
-};
-
-// יצירת נתוני נפח מדומים
-const generateVolumeData = (baseVolume: number, days: number): VolumePoint[] => {
-  const data: VolumePoint[] = [];
-  const now = Date.now();
-  const dayInMs = 86400000;
-  
-  for (let i = days; i >= 0; i--) {
-    const timestamp = now - (i * dayInMs);
-    // נוסיף תנודתיות רנדומלית של עד 30%
-    const volatility = (Math.random() - 0.5) * 0.6;
-    const dayFactor = 1 + volatility;
-    const volume = baseVolume * Math.pow(dayFactor, Math.random() * 0.5);
-    
-    data.push({
-      timestamp,
-      volume: Math.round(volume)
-    });
-  }
-  
-  return data;
-};
-
-// פונקציות שירות לקבלת נתונים
+// Get all assets
 export const getAssets = async (): Promise<Asset[]> => {
-  // מדמה תקשורת עם שרת
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(MOCK_ASSETS), 500);
-  });
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return mockAssets;
 };
 
+// Get asset by ID
 export const getAssetById = async (id: string): Promise<Asset | undefined> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const asset = MOCK_ASSETS.find(asset => asset.id === id);
-      resolve(asset);
-    }, 300);
-  });
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 300));
+  return mockAssets.find(asset => asset.id === id);
 };
 
+// Generate mock historical data
 export const getAssetHistory = async (
   assetId: string,
-  timeframe: TimeframeType
+  timeframe: TimeframeType = '1d',
+  days: number = 30
 ): Promise<AssetHistoricalData> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const asset = MOCK_ASSETS.find(a => a.id === assetId);
-      
-      if (!asset) {
-        throw new Error(`Asset with ID ${assetId} not found`);
-      }
-      
-      let days = 30;
-      switch (timeframe) {
-        case '1d': days = 1; break;
-        case '1w': days = 7; break;
-        case '5m': days = 1; break;
-        case '15m': days = 2; break;
-        case '1h': days = 5; break;
-        case '4h': days = 15; break;
-        case '1m': days = 30; break;
-        case '3m': days = 90; break;
-        case '1y': days = 365; break;
-        case '30m': days = 3; break;
-        case '1M': days = 30; break;
-        case 'all': days = 1095; break; // ~3 years
-      }
-      
-      const data = generateHistoricalData(asset.price, days);
-      const volumeData = generateVolumeData(asset.volume24h / 24, days); // Daily average volume
-      
-      resolve({
-        assetId,
-        timeframe,
-        data,
-        volumeData
-      });
-    }, 700);
-  });
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  // Get base asset price
+  const asset = mockAssets.find(a => a.id === assetId);
+  if (!asset) {
+    throw new Error(`Asset with ID ${assetId} not found`);
+  }
+  
+  const basePrice = asset.price;
+  
+  // Generate price points
+  const now = Date.now();
+  const data: PricePoint[] = [];
+  
+  // Timeframe in milliseconds
+  let timeStep: number;
+  switch (timeframe) {
+    case '5m': timeStep = 5 * 60 * 1000; days = 1; break;
+    case '15m': timeStep = 15 * 60 * 1000; days = 3; break;
+    case '1h': timeStep = 60 * 60 * 1000; days = 7; break;
+    case '4h': timeStep = 4 * 60 * 60 * 1000; days = 14; break;
+    case '1d': timeStep = 24 * 60 * 60 * 1000; break;
+    case '1w': timeStep = 7 * 24 * 60 * 60 * 1000; days = 52; break;
+    default: timeStep = 24 * 60 * 60 * 1000;
+  }
+  
+  // Number of points based on timeframe and days
+  const points = Math.floor((days * 24 * 60 * 60 * 1000) / timeStep);
+  
+  // Generate sine wave with random noise
+  for (let i = 0; i < points; i++) {
+    const timestamp = now - ((points - i) * timeStep);
+    
+    // Base trend: Sine wave with 1.5 cycles over the period
+    const trend = Math.sin((i / points) * Math.PI * 1.5) * 0.2;
+    
+    // Random walk component
+    const volatility = asset.id === 'bitcoin' ? 0.03 : asset.id === 'solana' ? 0.05 : 0.02;
+    let randomWalk = 0;
+    for (let j = 0; j <= i; j++) {
+      randomWalk += (Math.random() * 2 - 1) * volatility / Math.sqrt(points);
+    }
+    
+    // Combine components
+    const priceModifier = 1 + trend + randomWalk;
+    const price = basePrice * priceModifier;
+    
+    // Random volume
+    const volume = Math.random() * basePrice * 10000 * (1 + Math.sin((i / points) * Math.PI * 3) * 0.5);
+    
+    data.push({
+      timestamp,
+      price,
+      volume
+    });
+  }
+  
+  return {
+    assetId,
+    timeframe,
+    data
+  };
+};
+
+// Function to find assets by type
+export const getAssetsByType = async (type: AssetType): Promise<Asset[]> => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return mockAssets.filter(asset => asset.type === type);
+};
+
+// Search assets by name or symbol
+export const searchAssets = async (query: string): Promise<Asset[]> => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  if (!query) return [];
+  
+  const searchTerm = query.toLowerCase();
+  return mockAssets.filter(
+    asset => 
+      asset.name.toLowerCase().includes(searchTerm) || 
+      asset.symbol.toLowerCase().includes(searchTerm)
+  );
 };

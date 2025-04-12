@@ -1,193 +1,162 @@
 
-import { toast } from "sonner";
+// Mock whale data service
 
 export interface WhaleMovement {
   id: string;
   timestamp: number;
-  walletAddress: string;
-  walletLabel?: string; // כינוי לארנק (למשל "ארנק בינאנס קולד" או "קרן השקעות X")
-  assetId: string;
+  fromAddress: string;
+  toAddress: string;
   amount: number;
-  transactionType: 'buy' | 'sell' | 'transfer';
-  source?: string;
-  destination?: string;
-  impact: {
-    priceImpact: number; // ההשפעה המשוערת על המחיר באחוזים
-    marketCapPercentage: number; // אחוז מסך שווי השוק
-    significance: 'low' | 'medium' | 'high' | 'very-high'; // חשיבות התנועה
-  };
-  relatedTransactions?: string[]; // עסקאות קשורות
+  transactionType: 'transfer' | 'buy' | 'sell' | 'stake' | 'unstake';
+  asset: string;
+  usdValue: number;
+  transactionHash: string;
 }
 
-export interface WhaleWallet {
-  address: string;
-  label?: string;
-  category: 'exchange' | 'institution' | 'whale' | 'smart-money' | 'unknown';
-  holdingValue: number; // הערך המוחזק בדולרים
-  watchlist: boolean; // האם לעקוב אחרי ארנק זה
-  tags?: string[];
-  lastActivity?: number; // unix timestamp
+export interface WhaleBehaviorPattern {
+  id: string;
+  name: string;
+  description: string;
+  confidence: number;
+  impact: 'high' | 'medium' | 'low';
+  timeframe: string;
+  affectedAssets: string[];
 }
 
-// מקבל מזהה של נכס ומחזיר תנועות ארנקים גדולים
-export const getWhaleMovements = async (assetId: string, days = 7): Promise<WhaleMovement[]> => {
-  // בפועל, כאן יהיה חיבור ל-API מתאים כמו Whale Alert, Nansen, או שירות דומה
-  // לצורך הדוגמה, נחזיר נתונים מדומים
-  await new Promise(resolve => setTimeout(resolve, 1000)); // דימוי זמן טעינה
+// Get whale movements for an asset
+export const getWhaleMovements = async (assetId: string, days: number = 7): Promise<WhaleMovement[]> => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 600));
   
-  // יצירת נתונים מדומים
-  const mockMovements: WhaleMovement[] = [];
+  // Generate mock whale movements
+  const movements: WhaleMovement[] = [];
   const now = Date.now();
-  const dayInMs = 86400000;
+  const daysInMs = days * 24 * 60 * 60 * 1000;
   
-  // מספר התנועות שייווצרו
-  const numberOfMovements = 10 + Math.floor(Math.random() * 15);
+  // Base amount depends on the asset
+  let baseAmount = 10;
+  let baseUsdValue = 500000;
   
-  for (let i = 0; i < numberOfMovements; i++) {
-    const isRecent = Math.random() > 0.7;
-    const timestamp = isRecent 
-      ? now - Math.floor(Math.random() * dayInMs) // ב-24 שעות האחרונות
-      : now - Math.floor(Math.random() * (days * dayInMs)); // בטווח הימים שנבחר
+  if (assetId === 'bitcoin') {
+    baseAmount = 10;
+    baseUsdValue = 500000;
+  } else if (assetId === 'ethereum') {
+    baseAmount = 100;
+    baseUsdValue = 300000;
+  } else if (assetId === 'solana') {
+    baseAmount = 5000;
+    baseUsdValue = 700000;
+  } else {
+    baseAmount = 1000;
+    baseUsdValue = 200000;
+  }
+  
+  // Generate 5-15 random whale movements
+  const count = 5 + Math.floor(Math.random() * 10);
+  
+  for (let i = 0; i < count; i++) {
+    // Random timestamp within the specified days
+    const timestamp = now - Math.random() * daysInMs;
     
-    // סוג התנועה
-    const transactionType = Math.random() > 0.6 
-      ? 'buy' 
-      : Math.random() > 0.5 
-        ? 'sell' 
-        : 'transfer';
+    // Random transaction type with weighted distribution
+    const typeRandom = Math.random();
+    let transactionType: 'transfer' | 'buy' | 'sell' | 'stake' | 'unstake';
     
-    // גודל התנועה
-    const amount = Math.random() * 1000000 + 100000; // בין 100K ל-1.1M
-    
-    // חשיבות התנועה
-    let significance: 'low' | 'medium' | 'high' | 'very-high';
-    if (amount > 1000000) {
-      significance = 'very-high';
-    } else if (amount > 500000) {
-      significance = 'high';
-    } else if (amount > 250000) {
-      significance = 'medium';
+    if (typeRandom < 0.4) {
+      transactionType = 'transfer';
+    } else if (typeRandom < 0.7) {
+      transactionType = Math.random() > 0.5 ? 'buy' : 'sell';
     } else {
-      significance = 'low';
+      transactionType = Math.random() > 0.5 ? 'stake' : 'unstake';
     }
     
-    // מקור/יעד לפי סוג העסקה
-    let source, destination;
-    if (transactionType === 'buy') {
-      source = 'Exchange';
-      destination = `Wallet-${Math.floor(Math.random() * 1000)}`;
-    } else if (transactionType === 'sell') {
-      source = `Wallet-${Math.floor(Math.random() * 1000)}`;
-      destination = 'Exchange';
-    } else {
-      source = `Wallet-${Math.floor(Math.random() * 1000)}`;
-      destination = `Wallet-${Math.floor(Math.random() * 1000)}`;
-    }
+    // Random amount scaling
+    const amountScale = 0.5 + Math.random() * 2.5;
+    const amount = baseAmount * amountScale;
+    const usdValue = baseUsdValue * amountScale;
     
-    mockMovements.push({
-      id: `mov-${i}-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    // Random addresses
+    const fromAddress = `0x${Math.random().toString(16).substring(2, 14)}...${Math.random().toString(16).substring(2, 6)}`;
+    const toAddress = `0x${Math.random().toString(16).substring(2, 14)}...${Math.random().toString(16).substring(2, 6)}`;
+    
+    movements.push({
+      id: `movement-${i}-${Date.now()}`,
       timestamp,
-      walletAddress: `0x${Math.random().toString(16).substr(2, 40)}`,
-      walletLabel: Math.random() > 0.3 
-        ? ['Binance Cold Wallet', 'Grayscale Fund', 'Alameda Research', 'Jump Trading', 'Three Arrows Capital'][
-            Math.floor(Math.random() * 5)
-          ] 
-        : undefined,
-      assetId,
+      fromAddress,
+      toAddress,
       amount,
       transactionType,
-      source,
-      destination,
-      impact: {
-        priceImpact: Math.random() * 5,
-        marketCapPercentage: (amount / 1000000000) * 100, // מניח שווי שוק של 1B$
-        significance
-      }
+      asset: assetId,
+      usdValue,
+      transactionHash: `0x${Math.random().toString(16).substring(2, 42)}`
     });
   }
   
-  // מיון לפי זמן (מהחדש לישן)
-  return mockMovements.sort((a, b) => b.timestamp - a.timestamp);
+  // Sort by timestamp (newest first)
+  return movements.sort((a, b) => b.timestamp - a.timestamp);
 };
 
-// טווחי זמן אפשריים לחיפוש תנועות
-export const timeRangeOptions = [
-  { value: '1', label: 'יום אחרון' },
-  { value: '7', label: 'שבוע אחרון' },
-  { value: '30', label: 'חודש אחרון' },
-  { value: '90', label: 'שלושה חודשים' },
-];
-
-// הגדרת מעקב אחרי ארנק
-export const addWalletToWatchlist = async (address: string, label?: string): Promise<void> => {
-  // בפועל, כאן תהיה שמירה במסד נתונים
-  await new Promise(resolve => setTimeout(resolve, 500));
-  toast.success(`הארנק ${address.substring(0, 8)}... נוסף למעקב`);
-};
-
-// יצירת התראה על תנועת ארנק
-export const createWhaleAlert = async (
-  assetId: string, 
-  minAmount: number, 
-  alertType: 'buy' | 'sell' | 'any' = 'any'
-): Promise<void> => {
-  // בפועל, כאן תהיה שמירה במסד נתונים
-  await new Promise(resolve => setTimeout(resolve, 500));
+// Get whale behavior patterns
+export const getWhaleBehaviorPatterns = async (assetId: string): Promise<WhaleBehaviorPattern[]> => {
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 700));
   
-  const assetName = {
-    'bitcoin': 'ביטקוין',
-    'ethereum': 'אתריום',
-    'solana': 'סולנה'
-  }[assetId] || assetId;
+  // Generate 1-3 behavior patterns
+  const patterns: WhaleBehaviorPattern[] = [];
+  const count = 1 + Math.floor(Math.random() * 3);
   
-  const alertTypeText = {
-    'buy': 'קניות',
-    'sell': 'מכירות',
-    'any': 'כל התנועות'
-  }[alertType];
-  
-  toast.success(`התראה חדשה נוצרה בהצלחה`, {
-    description: `תקבל התראות על ${alertTypeText} של לפחות $${minAmount.toLocaleString()} ב${assetName}`
-  });
-};
-
-// חיפוש דפוסי התנהגות קודמים
-export const getWhaleBehaviorPatterns = async (assetId: string): Promise<{
-  pattern: string;
-  description: string;
-  confidence: number;
-  lastOccurrence: number;
-  priceImpact: string;
-  recommendation: string;
-}[]> => {
-  // בפועל, ניתוח דפוסי התנהגות של ארנקים גדולים מבוסס על נתונים היסטוריים
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // דוגמאות לדפוסי התנהגות
-  return [
+  const patternTemplates = [
     {
-      pattern: "צבירה לפני עלייה",
-      description: "ארנקים גדולים צוברים כמויות משמעותיות טרם תנועת מחיר חיובית",
-      confidence: 78,
-      lastOccurrence: Date.now() - 45 * 86400000, // לפני 45 ימים
-      priceImpact: "+15-25%",
-      recommendation: "שקול פוזיציית קנייה עם סטופ מוגדר היטב"
+      name: 'אקומולציה מוסדית',
+      description: 'זוהתה תבנית של צבירת מטבעות על ידי ארנקים גדולים, המתרחשת במקביל לירידות מחיר קלות. התנהגות זו מרמזת על ציפייה למגמה חיובית בטווח הבינוני.',
+      impact: 'high' as const
     },
     {
-      pattern: "חלוקה מתואמת",
-      description: "מספר ארנקים גדולים מוכרים בו-זמנית, סימן אפשרי להפצה מתואמת",
-      confidence: 65,
-      lastOccurrence: Date.now() - 120 * 86400000, // לפני 120 ימים
-      priceImpact: "-10-20%",
-      recommendation: "שקול הקטנת פוזיציות או יציאה זמנית מהשוק"
+      name: 'הפצה שקטה',
+      description: 'נצפתה פעילות של חלוקת מטבעות ממספר ארנקים גדולים לארנקים קטנים יותר, לרוב סימן להקטנת חשיפה לקראת תיקון אפשרי.',
+      impact: 'medium' as const
     },
     {
-      pattern: "העברות בין ארנקים",
-      description: "תנועות רבות בין ארנקים ללא הגעה לבורסות, סימן להערכות אפשרית",
-      confidence: 55,
-      lastOccurrence: Date.now() - 12 * 86400000, // לפני 12 ימים
-      priceImpact: "אינדיקציה לא ברורה",
-      recommendation: "המשך מעקב והמתנה לסימנים נוספים"
+      name: 'העברות בין בורסות',
+      description: 'נצפו העברות משמעותיות בין בורסות, מה שיכול להצביע על הכנות למסחר אגרסיבי או לקיחת רווחים.',
+      impact: 'low' as const
+    },
+    {
+      name: 'הסטת נזילות',
+      description: 'ארנקים גדולים מעבירים נכסים מחוזים חכמים של DeFi, מה שעלול להשפיע על נזילות הפרוטוקולים.',
+      impact: 'medium' as const
+    },
+    {
+      name: 'מומנטום קנייה',
+      description: 'זוהתה התכנסות של פעילות קנייה מארנקים גדולים, המעידה על אמון במחיר הנוכחי.',
+      impact: 'high' as const
     }
   ];
+  
+  // Select random patterns
+  const selectedIndices = new Set<number>();
+  while (selectedIndices.size < count) {
+    const index = Math.floor(Math.random() * patternTemplates.length);
+    selectedIndices.add(index);
+  }
+  
+  let i = 0;
+  for (const index of selectedIndices) {
+    const template = patternTemplates[index];
+    const confidence = 60 + Math.floor(Math.random() * 35);
+    
+    patterns.push({
+      id: `pattern-${i}-${Date.now()}`,
+      name: template.name,
+      description: template.description,
+      confidence,
+      impact: template.impact,
+      timeframe: ['24h', '7d', '30d'][Math.floor(Math.random() * 3)],
+      affectedAssets: [assetId]
+    });
+    
+    i++;
+  }
+  
+  return patterns;
 };

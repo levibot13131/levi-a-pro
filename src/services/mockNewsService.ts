@@ -1,173 +1,135 @@
 
-import { NewsItem, SocialPost } from "@/types/asset";
+import { NewsItem } from '@/hooks/use-market-news';
 
-// נתונים סטטיים לדוגמה עבור חדשות
-const MOCK_NEWS: NewsItem[] = [
+// Mock news data with asset relations
+const mockNewsItems: NewsItem[] = [
   {
-    id: "news1",
-    title: "ביטקוין שובר את רף ה-70,000$ בפעם הראשונה",
-    summary: "המטבע הדיגיטלי המוביל בעולם ממשיך במגמת העלייה ההיסטורית שלו.",
-    source: "CoinDesk",
-    url: "https://www.coindesk.com/bitcoin-breaks-70k",
-    publishedAt: "2025-04-08T08:30:00Z",
-    sentiment: "positive",
-    relatedAssets: ["bitcoin"],
-    imageUrl: "https://cryptologos.cc/logos/bitcoin-btc-logo.png",
-    category: "crypto"
+    id: '1',
+    title: 'ביטקוין חצה את רף ה-$50,000',
+    summary: 'לאחר עליות משמעותיות, ביטקוין חצה את רף ה-$50,000 לראשונה מאז ינואר.',
+    publishedAt: new Date(Date.now() - 3600000).toISOString(),
+    source: 'Crypto News',
+    url: '#',
+    imageUrl: 'https://picsum.photos/seed/crypto1/800/600',
+    sentiment: 'positive',
+    relatedAssets: ['bitcoin']
   },
   {
-    id: "news2",
-    title: "אפל מכריזה על תוצאות רבעון מעל לציפיות האנליסטים",
-    summary: "ענקית הטכנולוגיה מדווחת על צמיחה של 12% בהכנסות ממכירות האייפון.",
-    source: "CNBC",
-    url: "https://www.cnbc.com/apple-earnings",
-    publishedAt: "2025-04-07T21:15:00Z",
-    sentiment: "positive",
-    relatedAssets: ["apple"],
-    imageUrl: "https://companieslogo.com/img/orig/AAPL-bf1a4314.png",
-    category: "stocks"
+    id: '2',
+    title: 'אתריום מתקרב לשיא חדש',
+    summary: 'אתריום ממשיך במגמה חיובית ומתקרב לשיא היסטורי חדש, בעקבות התקדמות בעדכון הרשת.',
+    publishedAt: new Date(Date.now() - 7200000).toISOString(),
+    source: 'DeFi Times',
+    url: '#',
+    imageUrl: 'https://picsum.photos/seed/crypto2/800/600',
+    sentiment: 'positive',
+    relatedAssets: ['ethereum']
   },
   {
-    id: "news3",
-    title: "הפד משאיר את הריבית ללא שינוי, רומז על הפחתה אפשרית ברבעון הבא",
-    summary: "הבנק המרכזי של ארה\"ב שומר על מדיניות זהירה למרות סימני התמתנות באינפלציה.",
-    source: "Bloomberg",
-    url: "https://www.bloomberg.com/fed-rates",
-    publishedAt: "2025-04-06T16:45:00Z",
-    sentiment: "neutral",
-    imageUrl: "https://companieslogo.com/img/orig/BLK-bb9c0c67.png",
-    category: "economy"
+    id: '3',
+    title: 'רגולטורים מחמירים את הפיקוח על בורסות קריפטו',
+    summary: 'רשויות רגולטוריות בארה"ב ובאירופה מודיעות על הידוק הפיקוח על בורסות קריפטו.',
+    publishedAt: new Date(Date.now() - 10800000).toISOString(),
+    source: 'Regulation Today',
+    url: '#',
+    sentiment: 'negative',
+    relatedAssets: ['bitcoin', 'ethereum', 'solana']
   },
   {
-    id: "news4",
-    title: "אתריום מתקרב לעדכון רשת משמעותי, מחיר ה-ETH עולה ב-5%",
-    summary: "העדכון החדש צפוי לשפר את קנה המידה של הרשת ולהפחית עמלות גז.",
-    source: "Cointelegraph",
-    url: "https://www.cointelegraph.com/ethereum-upgrade",
-    publishedAt: "2025-04-05T12:20:00Z",
-    sentiment: "positive",
-    relatedAssets: ["ethereum"],
-    imageUrl: "https://cryptologos.cc/logos/ethereum-eth-logo.png",
-    category: "crypto"
+    id: '4',
+    title: 'CBDC של ישראל: בנק ישראל בוחן אפשרות להנפיק שקל דיגיטלי',
+    summary: 'בנק ישראל פרסם נייר עמדה על האפשרות להנפיק מטבע דיגיטלי של הבנק המרכזי (CBDC).',
+    publishedAt: new Date(Date.now() - 14400000).toISOString(),
+    source: 'Banking News IL',
+    url: '#',
+    imageUrl: 'https://picsum.photos/seed/crypto4/800/600',
+    sentiment: 'neutral',
+    relatedAssets: []
   },
   {
-    id: "news5",
-    title: "מיקרוסופט משקיעה 5 מיליארד דולר בהרחבת תשתיות הענן באירופה",
-    summary: "ההשקעה מסמנת את המחויבות של החברה לצמיחה בשוק האירופי.",
-    source: "Reuters",
-    url: "https://www.reuters.com/microsoft-cloud-investment",
-    publishedAt: "2025-04-04T09:10:00Z",
-    sentiment: "positive",
-    relatedAssets: ["microsoft"],
-    imageUrl: "https://companieslogo.com/img/orig/MSFT-a203b22d.png",
-    category: "stocks"
-  }
+    id: '5',
+    title: 'חברת סולנה משיקה קרן לפיתוח אפליקציות DeFi',
+    summary: 'חברת סולנה הכריזה על הקמת קרן של 100 מיליון דולר לתמיכה בפיתוח אפליקציות DeFi על הפלטפורמה.',
+    publishedAt: new Date(Date.now() - 18000000).toISOString(),
+    source: 'DeFi Daily',
+    url: '#',
+    imageUrl: 'https://picsum.photos/seed/crypto5/800/600',
+    sentiment: 'positive',
+    relatedAssets: ['solana']
+  },
+  {
+    id: '6',
+    title: 'קרדנו משחררת עדכון משמעותי לרשת',
+    summary: 'קרדנו השיקה עדכון חדש לרשת שלה, שמטרתו לשפר את הביצועים והתמיכה בחוזים חכמים.',
+    publishedAt: new Date(Date.now() - 21600000).toISOString(),
+    source: 'ADA News',
+    url: '#',
+    sentiment: 'positive',
+    relatedAssets: ['cardano']
+  },
 ];
 
-// נתונים סטטיים לדוגמה עבור פוסטים מרשתות חברתיות
-const MOCK_SOCIAL_POSTS: SocialPost[] = [
-  {
-    id: "post1",
-    platform: "twitter",
-    author: "אילון מאסק",
-    authorUsername: "@elonmusk",
-    authorImageUrl: "https://pbs.twimg.com/profile_images/1683325380441128960/yRsRRjGO_400x400.jpg",
-    content: "Dogecoin to the mooooon!! 🚀🌕",
-    postUrl: "https://twitter.com/elonmusk/status/12345",
-    publishedAt: "2025-04-09T18:45:00Z",
-    likes: 152000,
-    comments: 24500,
-    shares: 36700,
-    sentiment: "positive",
-    relatedAssets: ["dogecoin"]
-  },
-  {
-    id: "post2",
-    platform: "twitter",
-    author: "מייקל סיילור",
-    authorUsername: "@michael_saylor",
-    authorImageUrl: "https://pbs.twimg.com/profile_images/1485632175932383235/8t0DGo6V_400x400.jpg",
-    content: "Just bought another 500 Bitcoin. The path forward is clear - institutional adoption continues to accelerate.",
-    postUrl: "https://twitter.com/michael_saylor/status/67890",
-    publishedAt: "2025-04-08T14:20:00Z",
-    likes: 98700,
-    comments: 12300,
-    shares: 15600,
-    sentiment: "positive",
-    relatedAssets: ["bitcoin"]
-  },
-  {
-    id: "post3",
-    platform: "reddit",
-    author: "CryptoAnalyst",
-    content: "Here's my technical analysis for Ethereum for the next month. I'm seeing a clear bullish pattern forming with strong support at $3,200.",
-    postUrl: "https://reddit.com/r/cryptocurrency/posts/abcdef",
-    publishedAt: "2025-04-07T09:15:00Z",
-    likes: 1450,
-    comments: 342,
-    sentiment: "positive",
-    relatedAssets: ["ethereum"]
-  },
-  {
-    id: "post4",
-    platform: "twitter",
-    author: "וורן באפט",
-    authorUsername: "@warrenbuffett",
-    authorImageUrl: "https://companieslogo.com/img/orig/BRK.A-a28c53e0.png?t=1684126872",
-    content: "The stock market is designed to transfer money from the active to the patient.",
-    postUrl: "https://twitter.com/warrenbuffett/status/13579",
-    publishedAt: "2025-04-06T16:30:00Z",
-    likes: 125000,
-    comments: 15600,
-    shares: 28900,
-    sentiment: "neutral"
-  },
-  {
-    id: "post5",
-    platform: "telegram",
-    author: "CryptoWhale",
-    content: "בשבוע האחרון ראינו התבססות מחודשת של ביטקוין מעל רמת ה-$65,000. הנתונים מהבלוקצ'יין מצביעים על אגירה משמעותית מצד ארנקים גדולים.",
-    postUrl: "https://t.me/cryptowhale/message123",
-    publishedAt: "2025-04-05T11:45:00Z",
-    likes: 8700,
-    comments: 1230,
-    sentiment: "positive",
-    relatedAssets: ["bitcoin"]
-  }
-];
-
-// פונקציות שירות לקבלת נתונים
-export const getLatestNews = async (): Promise<NewsItem[]> => {
-  // מדמה תקשורת עם שרת
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(MOCK_NEWS), 600);
-  });
-};
-
+/**
+ * Get news related to a specific asset
+ * @param assetId - The asset ID to get news for
+ * @returns An array of news items
+ */
 export const getNewsByAssetId = async (assetId: string): Promise<NewsItem[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const filteredNews = MOCK_NEWS.filter(news => 
-        news.relatedAssets?.includes(assetId)
-      );
-      resolve(filteredNews);
-    }, 400);
-  });
-};
-
-export const getSocialPosts = async (): Promise<SocialPost[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(MOCK_SOCIAL_POSTS), 700);
-  });
-};
-
-export const getSocialPostsByAssetId = async (assetId: string): Promise<SocialPost[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const filteredPosts = MOCK_SOCIAL_POSTS.filter(post => 
-        post.relatedAssets?.includes(assetId)
-      );
-      resolve(filteredPosts);
-    }, 500);
-  });
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 700));
+  
+  if (!assetId) {
+    return mockNewsItems;
+  }
+  
+  // Filter news by asset ID
+  const filteredNews = mockNewsItems.filter(
+    item => !item.relatedAssets || item.relatedAssets.includes(assetId)
+  );
+  
+  // Add some asset-specific news
+  let assetNews: NewsItem[] = [];
+  
+  if (assetId === 'bitcoin') {
+    assetNews = [
+      {
+        id: `btc-news-${Date.now()}`,
+        title: 'מיינרים של ביטקוין מגדילים אחזקות',
+        summary: 'נתונים חדשים מראים כי מיינרים של ביטקוין מגדילים את אחזקות הביטקוין שלהם במקום למכור אותן מיד.',
+        publishedAt: new Date(Date.now() - 5400000).toISOString(),
+        source: 'Mining Insights',
+        url: '#',
+        sentiment: 'positive',
+        relatedAssets: ['bitcoin']
+      }
+    ];
+  } else if (assetId === 'ethereum') {
+    assetNews = [
+      {
+        id: `eth-news-${Date.now()}`,
+        title: 'שדרוג חדש לאתריום צפוי החודש',
+        summary: 'הקהילה מתכוננת לשדרוג משמעותי ברשת האתריום שצפוי לשפר את הביצועים והפחתת עמלות.',
+        publishedAt: new Date(Date.now() - 8600000).toISOString(),
+        source: 'ETH Updates',
+        url: '#',
+        sentiment: 'positive',
+        relatedAssets: ['ethereum']
+      }
+    ];
+  } else if (assetId === 'solana') {
+    assetNews = [
+      {
+        id: `sol-news-${Date.now()}`,
+        title: 'סולנה מדווחת על שיא חדש בעסקאות',
+        summary: 'רשת סולנה עברה את רף ה-100 מיליון עסקאות יומיות לראשונה, מה שמדגיש את הביקוש הגובר לפלטפורמה.',
+        publishedAt: new Date(Date.now() - 12400000).toISOString(),
+        source: 'SOL Network News',
+        url: '#',
+        sentiment: 'positive',
+        relatedAssets: ['solana']
+      }
+    ];
+  }
+  
+  return [...filteredNews, ...assetNews];
 };
