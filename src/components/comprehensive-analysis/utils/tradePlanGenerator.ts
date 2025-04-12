@@ -1,130 +1,154 @@
 
+interface TradePlan {
+  entryPrice: number | null;
+  stopLoss: number | null;
+  takeProfit: number | null;
+  riskRewardRatio: number | null;
+  positionSize: number | null;
+  maxRisk: string | null;
+  direction: 'long' | 'short' | null;
+  timeframe: string | null;
+  description: string[];
+  keyLevels: { price: number; type: string; description: string }[];
+}
+
 export const generateTradePlan = (
-  selectedAsset: any,
+  currentPrice: number,
   technicalAnalysis: any,
-  smcPatterns: any,
-  assetHistory: any,
-  userStrategy: any
-) => {
-  if (!selectedAsset || !technicalAnalysis || !smcPatterns || !assetHistory) {
-    return null;
-  }
-  
-  // Extract the current price
-  const currentPrice = assetHistory?.data?.[assetHistory.data.length - 1]?.price || 0;
-  
-  // Get key levels from technical analysis
-  const keyLevels = technicalAnalysis.keyLevels || [];
-  
-  // Determine action based on technical analysis signal
-  let action = 'המתנה'; // Default: Wait
-  let reason = 'אין תנאים מספיקים לכניסה לעסקה';
-  let actionable = false;
-  
-  if (technicalAnalysis.overallSignal === 'buy' && technicalAnalysis.signalStrength >= 7) {
-    action = 'קנייה';
-    reason = `זוהו ${technicalAnalysis.overallSignal === 'buy' ? 'תנאי קנייה' : 'תנאי מכירה'} חזקים עם עוצמת סיגנל ${technicalAnalysis.signalStrength}/10`;
-    actionable = true;
-  } else if (technicalAnalysis.overallSignal === 'sell' && technicalAnalysis.signalStrength >= 7) {
-    action = 'מכירה';
-    reason = `זוהו תנאי מכירה חזקים עם עוצמת סיגנל ${technicalAnalysis.signalStrength}/10`;
-    actionable = true;
-  }
-  
-  // Create trade levels based on action type
-  const tradeLevels = [];
-  
-  if (actionable) {
-    // Find nearby support and resistance levels
-    const supports = keyLevels.filter((level: any) => level.type === 'support' && level.price < currentPrice)
-      .sort((a: any, b: any) => b.price - a.price);
-    
-    const resistances = keyLevels.filter((level: any) => level.type === 'resistance' && level.price > currentPrice)
-      .sort((a: any, b: any) => a.price - b.price);
-    
-    // Entry price (current price)
-    tradeLevels.push({
-      name: 'כניסה',
-      price: currentPrice,
-      type: 'entry'
-    });
-    
-    // Stop Loss
-    if (action === 'קנייה' && supports.length > 0) {
-      // Place stop below nearest support
-      tradeLevels.push({
-        name: 'סטופ לוס',
-        price: supports[0].price * 0.98, // 2% below support
-        type: 'stop'
-      });
-    } else if (action === 'מכירה' && resistances.length > 0) {
-      // Place stop above nearest resistance
-      tradeLevels.push({
-        name: 'סטופ לוס',
-        price: resistances[0].price * 1.02, // 2% above resistance
-        type: 'stop'
-      });
-    }
-    
-    // Target price(s)
-    if (action === 'קנייה' && resistances.length > 0) {
-      // First target at nearest resistance
-      tradeLevels.push({
-        name: 'יעד ראשון',
-        price: resistances[0].price,
-        type: 'target'
-      });
-      
-      // Second target if available
-      if (resistances.length > 1) {
-        tradeLevels.push({
-          name: 'יעד שני',
-          price: resistances[1].price,
-          type: 'target'
-        });
-      }
-    } else if (action === 'מכירה' && supports.length > 0) {
-      // First target at nearest support
-      tradeLevels.push({
-        name: 'יעד ראשון',
-        price: supports[0].price,
-        type: 'target'
-      });
-      
-      // Second target if available
-      if (supports.length > 1) {
-        tradeLevels.push({
-          name: 'יעד שני',
-          price: supports[1].price,
-          type: 'target'
-        });
-      }
-    }
-  }
-  
-  // Calculate position size based on user risk rules
-  const riskPercent = 1; // Default 1% risk per trade
-  let positionSize = '1% מהתיק';
-  
-  if (actionable && tradeLevels.length >= 2) {
-    const entryLevel = tradeLevels.find((level: any) => level.type === 'entry');
-    const stopLevel = tradeLevels.find((level: any) => level.type === 'stop');
-    
-    if (entryLevel && stopLevel) {
-      const riskPercent = Math.abs((stopLevel.price - entryLevel.price) / entryLevel.price) * 100;
-      if (riskPercent > 0) {
-        positionSize = `${(1 / riskPercent).toFixed(2)}% מהתיק`;
-      }
-    }
-  }
-  
-  return {
-    action,
-    reason,
-    actionable,
-    levels: tradeLevels,
-    positionSize,
-    asset: selectedAsset.id,
-    price: currentPrice
+  patterns: any,
+  historicalData: any,
+  supportResistanceLevels: any[],
+  userSettings: any = {}
+): TradePlan => {
+  // Default empty plan
+  const emptyPlan: TradePlan = {
+    entryPrice: null,
+    stopLoss: null,
+    takeProfit: null,
+    riskRewardRatio: null,
+    positionSize: null,
+    maxRisk: null,
+    direction: null,
+    timeframe: null,
+    description: ['לא ניתן לייצר תוכנית מסחר עם הנתונים הקיימים'],
+    keyLevels: []
   };
+
+  // Check if we have sufficient data to generate a plan
+  if (!currentPrice || !technicalAnalysis || !patterns || !supportResistanceLevels) {
+    return emptyPlan;
+  }
+
+  try {
+    // Determine direction based on technical analysis
+    const direction = technicalAnalysis.overallSignal === 'buy' ? 'long' : 
+                      technicalAnalysis.overallSignal === 'sell' ? 'short' : null;
+    
+    if (!direction) {
+      return {
+        ...emptyPlan,
+        description: ['אין איתות מסחר ברור, מומלץ להמתין']
+      };
+    }
+
+    // Find nearest support/resistance levels
+    const sortedLevels = [...supportResistanceLevels].sort((a, b) => 
+      Math.abs(a.price - currentPrice) - Math.abs(b.price - currentPrice)
+    );
+
+    // Nearest support (below current price)
+    const nearestSupport = supportResistanceLevels
+      .filter(level => level.type === 'support' && level.price < currentPrice)
+      .sort((a, b) => b.price - a.price)[0];
+
+    // Nearest resistance (above current price)
+    const nearestResistance = supportResistanceLevels
+      .filter(level => level.type === 'resistance' && level.price > currentPrice)
+      .sort((a, b) => a.price - b.price)[0];
+
+    // Determine entry, stop loss and take profit based on direction and levels
+    let entryPrice: number;
+    let stopLoss: number;
+    let takeProfit: number;
+    
+    if (direction === 'long') {
+      // For long positions
+      entryPrice = currentPrice;
+      stopLoss = nearestSupport ? nearestSupport.price * 0.99 : currentPrice * 0.95;
+      takeProfit = nearestResistance ? nearestResistance.price : currentPrice * 1.1;
+    } else {
+      // For short positions
+      entryPrice = currentPrice;
+      stopLoss = nearestResistance ? nearestResistance.price * 1.01 : currentPrice * 1.05;
+      takeProfit = nearestSupport ? nearestSupport.price : currentPrice * 0.9;
+    }
+
+    // Calculate risk-reward ratio
+    const risk = Math.abs(entryPrice - stopLoss);
+    const reward = Math.abs(entryPrice - takeProfit);
+    const riskRewardRatio = risk > 0 ? (reward / risk) : 0;
+
+    // Calculate position size (assuming 2% risk per trade by default)
+    const accountSize = userSettings.accountSize || 10000;
+    const riskPercentage = userSettings.riskPercentage || 2;
+    const maxRiskAmount = accountSize * (riskPercentage / 100);
+    const positionSize = risk > 0 ? (maxRiskAmount / risk) : 0;
+
+    // Generate description based on the plan
+    const description = [
+      direction === 'long' ? 'פוזיציית קנייה (Long)' : 'פוזיציית מכירה (Short)',
+      `כניסה במחיר ${entryPrice.toFixed(2)}`,
+      `סטופ לוס במחיר ${stopLoss.toFixed(2)} (${((Math.abs(entryPrice - stopLoss) / entryPrice) * 100).toFixed(2)}%)`,
+      `טייק פרופיט במחיר ${takeProfit.toFixed(2)} (${((Math.abs(entryPrice - takeProfit) / entryPrice) * 100).toFixed(2)}%)`,
+      `יחס סיכוי/סיכון: ${riskRewardRatio.toFixed(2)}`,
+      `גודל פוזיציה מומלץ: ${positionSize.toFixed(2)} יחידות`,
+      `סיכון מקסימלי: ${maxRiskAmount.toFixed(2)} (${riskPercentage}% מההון)`
+    ];
+
+    // Key price levels to watch
+    const keyLevels = [
+      { price: entryPrice, type: 'entry', description: 'מחיר כניסה' },
+      { price: stopLoss, type: 'stop', description: 'סטופ לוס' },
+      { price: takeProfit, type: 'target', description: 'טייק פרופיט' }
+    ];
+
+    // Add support/resistance levels if available
+    if (nearestSupport) {
+      keyLevels.push({ 
+        price: nearestSupport.price, 
+        type: 'support', 
+        description: 'תמיכה קרובה' 
+      });
+    }
+    
+    if (nearestResistance) {
+      keyLevels.push({ 
+        price: nearestResistance.price, 
+        type: 'resistance', 
+        description: 'התנגדות קרובה' 
+      });
+    }
+
+    // Determine timeframe based on patterns or user settings
+    const timeframe = userSettings.timeframe || '1d';
+
+    return {
+      entryPrice,
+      stopLoss,
+      takeProfit,
+      riskRewardRatio,
+      positionSize,
+      maxRisk: `${maxRiskAmount.toFixed(2)} (${riskPercentage}%)`,
+      direction: direction as 'long' | 'short',
+      timeframe,
+      description,
+      keyLevels
+    };
+  } catch (error) {
+    console.error('Error generating trade plan:', error);
+    return {
+      ...emptyPlan,
+      description: ['שגיאה בייצור תוכנית מסחר', 'נא לנסות שוב מאוחר יותר']
+    };
+  }
 };

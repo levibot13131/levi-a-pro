@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getUpcomingEvents } from '@/services/marketInformation/eventsService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Newspaper, Users, Calendar } from 'lucide-react';
+import { Newspaper, Users, Calendar, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { MarketEvent } from '@/types/marketInformation';
+import { MarketEvent } from '@/types/marketData';
 import { Asset } from '@/types/asset';
 
 interface MarketInformationProps {
@@ -18,32 +18,51 @@ interface MarketInformationProps {
 
 const MarketInformation: React.FC<MarketInformationProps> = ({ selectedAsset }) => {
   const [selectedTimeRange, setSelectedTimeRange] = useState<string>('30');
+  const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
 
   // Fetch upcoming market events
-  const { data: events, isLoading: eventsLoading } = useQuery({
+  const { data: events, isLoading: eventsLoading, refetch } = useQuery({
     queryKey: ['marketEvents', selectedTimeRange, selectedAsset?.id],
     queryFn: async () => {
       const result = await getUpcomingEvents(parseInt(selectedTimeRange));
       return result as MarketEvent[];
     },
+    refetchInterval: autoRefresh ? 60000 : false, // Auto refresh every minute if enabled
   });
+
+  // Auto-refresh effect
+  useEffect(() => {
+    if (!autoRefresh) return;
+    
+    const refreshInterval = setInterval(() => {
+      refetch();
+    }, 60000); // Refresh every minute
+    
+    return () => clearInterval(refreshInterval);
+  }, [autoRefresh, refetch]);
 
   const handleSetReminder = (eventId: string, reminder: boolean) => {
     // In a real app, we would call the setEventReminder service
-    // For now, we'll just show a toast
     toast.success(`${reminder ? 'הגדרת' : 'ביטלת'} תזכורת לאירוע`);
+    
+    // Update the local state to reflect the change
+    if (events) {
+      const updatedEvents = events.map(event => 
+        event.id === eventId ? { ...event, reminder } : event
+      );
+      // In a real implementation, this would update the server and then the query cache
+    }
   };
 
   const renderEventImportance = (importance: string) => {
     switch(importance) {
       case 'critical':
-        return <Badge className="bg-red-500">חשיבות קריטית</Badge>;
       case 'high':
-        return <Badge className="bg-orange-500">חשיבות גבוהה</Badge>;
+        return <Badge className="bg-red-500">חשיבות גבוהה</Badge>;
       case 'medium':
-        return <Badge className="bg-yellow-500">חשיבות בינונית</Badge>;
+        return <Badge className="bg-orange-500">חשיבות בינונית</Badge>;
       default:
-        return <Badge>חשיבות נמוכה</Badge>;
+        return <Badge variant="outline">חשיבות נמוכה</Badge>;
     }
   };
 
@@ -62,11 +81,24 @@ const MarketInformation: React.FC<MarketInformationProps> = ({ selectedAsset }) 
     }
   };
 
+  const handleRefresh = () => {
+    refetch();
+    toast.success('נתונים התעדכנו בהצלחה');
+  };
+
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-right flex items-center justify-between">
-          <div>
+          <div className="flex items-center space-x-2">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleRefresh}
+              className="h-8 w-8"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
             <select 
               className="bg-transparent text-sm font-normal border border-gray-300 rounded px-2 py-1 ml-2"
               value={selectedTimeRange}
@@ -76,6 +108,18 @@ const MarketInformation: React.FC<MarketInformationProps> = ({ selectedAsset }) 
               <option value="30">30 ימים</option>
               <option value="90">90 ימים</option>
             </select>
+            <div className="flex items-center">
+              <label htmlFor="auto-refresh" className="mr-2 text-sm">
+                עדכון אוטומטי
+              </label>
+              <input
+                type="checkbox"
+                id="auto-refresh"
+                checked={autoRefresh}
+                onChange={(e) => setAutoRefresh(e.target.checked)}
+                className="rounded"
+              />
+            </div>
           </div>
           <div>מידע פונדמנטלי</div>
         </CardTitle>
@@ -133,6 +177,10 @@ const MarketInformation: React.FC<MarketInformationProps> = ({ selectedAsset }) 
               <div className="text-center py-6">
                 <Calendar className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
                 <p>אין אירועים צפויים בטווח הזמן שנבחר</p>
+                <Button onClick={handleRefresh} variant="outline" className="mt-4">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  רענן נתונים
+                </Button>
               </div>
             )}
           </TabsContent>

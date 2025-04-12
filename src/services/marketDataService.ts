@@ -48,7 +48,7 @@ export const fetchMarketData = async (coinIds: string[]): Promise<Record<string,
   
   coinIds.forEach(id => {
     result[id] = {
-      id: id, // Now correctly adding id as required by MarketData type
+      id: id,
       name: id === 'bitcoin' ? 'Bitcoin' : id === 'ethereum' ? 'Ethereum' : 'Binance Coin',
       symbol: id === 'bitcoin' ? 'BTC' : id === 'ethereum' ? 'ETH' : 'BNB',
       price: id === 'bitcoin' ? 65000 : id === 'ethereum' ? 3400 : 580,

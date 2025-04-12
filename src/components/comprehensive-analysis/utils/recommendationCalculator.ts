@@ -7,7 +7,7 @@ export const calculateOverallRecommendation = (
   newsItems: any
 ): { signal: 'buy' | 'sell' | 'neutral'; strength: number; reasoning: string[] } => {
   if (!technicalAnalysis || !wyckoffPatterns || !smcPatterns || !whaleMovements) {
-    return { signal: 'neutral', strength: 5, reasoning: [] };
+    return { signal: 'neutral', strength: 5, reasoning: ['נתונים חסרים או לא מספקים'] };
   }
   
   const reasoning: string[] = [];
@@ -17,85 +17,76 @@ export const calculateOverallRecommendation = (
   // Technical indicators
   if (technicalAnalysis.overallSignal === 'buy') {
     buyPoints += technicalAnalysis.signalStrength / 2;
-    reasoning.push(`אינדיקטורים טכניים מראים סיגנל קנייה (${technicalAnalysis.signalStrength}/10)`);
+    reasoning.push(`אינדיקטורים טכניים מראים סימני קנייה (${technicalAnalysis.signalStrength}/10)`);
   } else if (technicalAnalysis.overallSignal === 'sell') {
     sellPoints += technicalAnalysis.signalStrength / 2;
-    reasoning.push(`אינדיקטורים טכניים מראים סיגנל מכירה (${technicalAnalysis.signalStrength}/10)`);
+    reasoning.push(`אינדיקטורים טכניים מראים סימני מכירה (${technicalAnalysis.signalStrength}/10)`);
   }
   
-  // Wyckoff analysis
-  if (wyckoffPatterns.phase) {
-    if (wyckoffPatterns.phase.includes('אקומולציה')) {
-      buyPoints += 3;
-      reasoning.push(`ניתוח וויקוף מזהה שלב אקומולציה - חיובי לטווח הבינוני`);
-    } else if (wyckoffPatterns.phase.includes('דיסטריביושן')) {
-      sellPoints += 3;
-      reasoning.push(`ניתוח וויקוף מזהה שלב הפצה - שלילי לטווח הבינוני`);
+  // Wyckoff Analysis
+  if (wyckoffPatterns && wyckoffPatterns.length > 0) {
+    const latestPattern = wyckoffPatterns[0];
+    if (latestPattern.type.includes('accumulation')) {
+      buyPoints += 2;
+      reasoning.push(`תבנית Wyckoff מראה צבירה (${latestPattern.strength}/10)`);
+    } else if (latestPattern.type.includes('distribution')) {
+      sellPoints += 2;
+      reasoning.push(`תבנית Wyckoff מראה הפצה (${latestPattern.strength}/10)`);
     }
   }
   
-  // SMC patterns
-  if (smcPatterns.patterns && smcPatterns.patterns.length > 0) {
-    const bullishPatterns = smcPatterns.patterns.filter((p: any) => p.bias === 'bullish').length;
-    const bearishPatterns = smcPatterns.patterns.filter((p: any) => p.bias === 'bearish').length;
+  // SMC Patterns
+  if (smcPatterns && smcPatterns.length > 0) {
+    const bullishPatterns = smcPatterns.filter(p => p.direction === 'bullish').length;
+    const bearishPatterns = smcPatterns.filter(p => p.direction === 'bearish').length;
     
     if (bullishPatterns > bearishPatterns) {
-      buyPoints += 2;
-      reasoning.push(`זיהוי ${bullishPatterns} תבניות SMC חיוביות`);
+      buyPoints += 1.5;
+      reasoning.push(`זוהו ${bullishPatterns} תבניות SMC חיוביות`);
     } else if (bearishPatterns > bullishPatterns) {
-      sellPoints += 2;
-      reasoning.push(`זיהוי ${bearishPatterns} תבניות SMC שליליות`);
+      sellPoints += 1.5;
+      reasoning.push(`זוהו ${bearishPatterns} תבניות SMC שליליות`);
     }
   }
   
-  // Whale movements
-  if (whaleMovements && whaleMovements.length > 0) {
-    const recentMovements = whaleMovements.filter((m: any) => m.timestamp > Date.now() - 86400000 * 2); // Last 2 days
-    const buyVolume = recentMovements
-      .filter((m: any) => m.transactionType === 'buy')
-      .reduce((total: number, m: any) => total + m.amount, 0);
-    const sellVolume = recentMovements
-      .filter((m: any) => m.transactionType === 'sell')
-      .reduce((total: number, m: any) => total + m.amount, 0);
-    
-    if (buyVolume > sellVolume * 1.5) {
-      buyPoints += 2;
-      reasoning.push(`תנועות ארנקים גדולים: קניות משמעותיות ב-48 שעות האחרונות`);
-    } else if (sellVolume > buyVolume * 1.5) {
-      sellPoints += 2;
-      reasoning.push(`תנועות ארנקים גדולים: מכירות משמעותיות ב-48 שעות האחרונות`);
+  // Whale Movements
+  if (whaleMovements) {
+    if (whaleMovements.netInflowOutflow > 0) {
+      buyPoints += 1.5;
+      reasoning.push(`תנועות לוויתן חיוביות, זרימת הון נטו: ${whaleMovements.netInflowOutflow.toFixed(2)}%`);
+    } else if (whaleMovements.netInflowOutflow < 0) {
+      sellPoints += 1.5;
+      reasoning.push(`תנועות לוויתן שליליות, זרימת הון נטו: ${whaleMovements.netInflowOutflow.toFixed(2)}%`);
     }
   }
   
-  // News sentiment
+  // News Sentiment
   if (newsItems && newsItems.length > 0) {
-    const positiveNews = newsItems.filter((n: any) => n.sentiment === 'positive').length;
-    const negativeNews = newsItems.filter((n: any) => n.sentiment === 'negative').length;
+    const sentiment = newsItems.reduce((acc, item) => acc + item.sentiment, 0) / newsItems.length;
     
-    if (positiveNews > negativeNews) {
+    if (sentiment > 0.6) {
       buyPoints += 1;
-      reasoning.push(`סנטימנט חדשות חיובי`);
-    } else if (negativeNews > positiveNews) {
+      reasoning.push(`סנטימנט חדשותי חיובי (${(sentiment * 10).toFixed(1)}/10)`);
+    } else if (sentiment < 0.4) {
       sellPoints += 1;
-      reasoning.push(`סנטימנט חדשות שלילי`);
+      reasoning.push(`סנטימנט חדשותי שלילי (${(sentiment * 10).toFixed(1)}/10)`);
     }
   }
   
-  // Calculate final signal
-  const totalPoints = buyPoints + sellPoints;
-  let signal: 'buy' | 'sell' | 'neutral';
-  let strength: number;
+  // Calculate final signal and strength
+  let signal: 'buy' | 'sell' | 'neutral' = 'neutral';
+  let strength = 5;
   
-  if (buyPoints > sellPoints + 2) {
+  if (buyPoints > sellPoints && buyPoints > 2) {
     signal = 'buy';
-    strength = Math.min(10, Math.round((buyPoints / totalPoints) * 10));
-  } else if (sellPoints > buyPoints + 2) {
+    strength = Math.min(Math.round(buyPoints), 10);
+    reasoning.unshift(`איתות קנייה עם עוצמה של ${strength}/10`);
+  } else if (sellPoints > buyPoints && sellPoints > 2) {
     signal = 'sell';
-    strength = Math.min(10, Math.round((sellPoints / totalPoints) * 10));
+    strength = Math.min(Math.round(sellPoints), 10);
+    reasoning.unshift(`איתות מכירה עם עוצמה של ${strength}/10`);
   } else {
-    signal = 'neutral';
-    strength = 5;
-    reasoning.push('איזון בין סימני קנייה ומכירה, אין איתות חד משמעי');
+    reasoning.unshift('אין איתות ברור, המלצה ניטרלית');
   }
   
   return { signal, strength, reasoning };

@@ -23,4 +23,5 @@ export interface MarketEvent {
   importance: 'high' | 'medium' | 'low';
   category: string;
   description: string;
+  reminder?: boolean;
 }
