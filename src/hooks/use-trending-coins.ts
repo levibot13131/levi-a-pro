@@ -1,6 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { Asset, MarketData } from '@/types/asset';
+import { Asset } from '@/types/asset';
+import { MarketData } from '@/types/marketData';
 import { fetchTrendingCoins, fetchMarketData } from '@/services/marketDataService';
 import { toast } from 'sonner';
 
@@ -20,7 +21,8 @@ export const useTrendingCoins = () => {
       const trendingCoins = await fetchTrendingCoins();
       const marketDataResult = await fetchMarketData(trendingCoins.map(c => c.id));
       
-      setMarketData(marketDataResult);
+      // Using a function to update state to ensure React's state setter is properly typed
+      setMarketData(prevState => ({ ...prevState, ...marketDataResult }));
       
       // Fetch additional fundamental data
       // This would be implemented in a real app
