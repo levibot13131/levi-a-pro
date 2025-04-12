@@ -1,84 +1,93 @@
 
 import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getLatestNews, getSocialPosts } from '@/services/mockNewsService';
+import { getNewsByAssetId, getSocialPostsByAssetId } from '@/services/mockNewsService';
 import { NewsItem, SocialPost } from '@/types/asset';
 import { formatTimeAgo } from '@/lib/utils';
 
-export function useMarketNews() {
+export const useMarketNews = () => {
   const [selectedTab, setSelectedTab] = useState<'news' | 'social'>('news');
   const [currentNewsPage, setCurrentNewsPage] = useState(1);
+  const [totalNewsPages, setTotalNewsPages] = useState(1);
   const [currentSocialPage, setCurrentSocialPage] = useState(1);
-  const itemsPerPage = 5;
+  const [totalSocialPages, setTotalSocialPages] = useState(1);
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
+  const [socialPosts, setSocialPosts] = useState<SocialPost[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState<string>('all');
+  const [selectedSentiment, setSelectedSentiment] = useState<'all' | 'positive' | 'negative' | 'neutral'>('all');
+  
+  const itemsPerPage = 9;
 
-  const { data: news = [], isLoading: newsLoading, refetch: refetchNews } = useQuery({
-    queryKey: ['marketNews'],
-    queryFn: () => getLatestNews(50),
-  });
-
-  const { data: socialPosts = [], isLoading: socialLoading, refetch: refetchSocial } = useQuery({
-    queryKey: ['socialPosts'],
-    queryFn: () => getSocialPosts(50),
-  });
-
-  const totalNewsPages = Math.ceil(news.length / itemsPerPage);
-  const totalSocialPages = Math.ceil(socialPosts.length / itemsPerPage);
-
-  const currentNewsItems = news.slice(
-    (currentNewsPage - 1) * itemsPerPage,
+  // Load data
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      
+      try {
+        // Fetch news
+        const allNews = await getNewsByAssetId(selectedAsset !== 'all' ? selectedAsset : undefined);
+        setNewsItems(allNews);
+        setTotalNewsPages(Math.ceil(allNews.length / itemsPerPage));
+        
+        // Fetch social posts  
+        const allPosts = await getSocialPostsByAssetId(selectedAsset !== 'all' ? selectedAsset : undefined);
+        setSocialPosts(allPosts);
+        setTotalSocialPages(Math.ceil(allPosts.length / itemsPerPage));
+      } catch (error) {
+        console.error('Error loading news data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [selectedAsset]);
+  
+  // Filter data by sentiment
+  const filteredNews = newsItems.filter(item => 
+    selectedSentiment === 'all' || item.sentiment === selectedSentiment
+  );
+  
+  const filteredSocialPosts = socialPosts.filter(post => 
+    selectedSentiment === 'all' || post.sentiment === selectedSentiment
+  );
+  
+  // Pagination
+  const paginatedNews = filteredNews.slice(
+    (currentNewsPage - 1) * itemsPerPage, 
     currentNewsPage * itemsPerPage
   );
-
-  const currentSocialItems = socialPosts.slice(
-    (currentSocialPage - 1) * itemsPerPage,
+  
+  const paginatedSocialPosts = filteredSocialPosts.slice(
+    (currentSocialPage - 1) * itemsPerPage, 
     currentSocialPage * itemsPerPage
   );
-
-  const refreshData = async () => {
-    await Promise.all([refetchNews(), refetchSocial()]);
-  };
-
-  const goToNextNewsPage = () => {
+  
+  // Navigation
+  const nextNewsPage = () => {
     if (currentNewsPage < totalNewsPages) {
       setCurrentNewsPage(prev => prev + 1);
     }
   };
-
-  const goToPrevNewsPage = () => {
+  
+  const prevNewsPage = () => {
     if (currentNewsPage > 1) {
       setCurrentNewsPage(prev => prev - 1);
     }
   };
-
-  const goToNextSocialPage = () => {
+  
+  const nextSocialPage = () => {
     if (currentSocialPage < totalSocialPages) {
       setCurrentSocialPage(prev => prev + 1);
     }
   };
-
-  const goToPrevSocialPage = () => {
+  
+  const prevSocialPage = () => {
     if (currentSocialPage > 1) {
       setCurrentSocialPage(prev => prev - 1);
     }
   };
-
-  // Refresh data every 5 minutes
-  useEffect(() => {
-    const interval = setInterval(refreshData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('he-IL', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
+    
   return {
     selectedTab,
     setSelectedTab,
@@ -86,18 +95,19 @@ export function useMarketNews() {
     totalNewsPages,
     currentSocialPage,
     totalSocialPages,
-    news: currentNewsItems,
-    socialPosts: currentSocialItems,
-    newsLoading,
-    socialLoading,
-    refreshData,
-    goToNextNewsPage,
-    goToPrevNewsPage,
-    goToNextSocialPage,
-    goToPrevSocialPage,
-    formatDate,
+    news: paginatedNews,
+    socialPosts: paginatedSocialPosts,
+    selectedAsset,
+    setSelectedAsset,
+    selectedSentiment,
+    setSelectedSentiment,
+    isLoading: loading,
+    nextNewsPage,
+    prevNewsPage,
+    nextSocialPage,
+    prevSocialPage,
     formatTimeAgo
   };
-}
+};
 
 export default useMarketNews;

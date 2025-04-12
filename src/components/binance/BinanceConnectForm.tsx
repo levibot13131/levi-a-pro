@@ -1,142 +1,110 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { validateBinanceCredentials } from '@/services/binance/binanceService';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
 
 interface BinanceConnectFormProps {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConnectSuccess?: () => void;
+  onConnect: (apiKey: string, apiSecret: string) => void;
+  isConnected: boolean;
+  onDisconnect: () => void;
 }
 
 const BinanceConnectForm: React.FC<BinanceConnectFormProps> = ({
-  isOpen,
-  onOpenChange,
-  onConnectSuccess
+  onConnect,
+  isConnected,
+  onDisconnect
 }) => {
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [autoTrade, setAutoTrade] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!apiKey.trim() || !apiSecret.trim()) {
-      toast.error('אנא הזן מפתח API וסיסמה', {
-        description: 'שני השדות הם חובה'
-      });
+      toast.error('נא להזין מפתח API וסוד API');
       return;
     }
     
-    setIsSubmitting(true);
-    
-    try {
-      console.log('מתחבר לחשבון בינאנס...', { apiKeyLength: apiKey.length, apiSecretLength: apiSecret.length });
-      
-      const success = await validateBinanceCredentials(apiKey, apiSecret);
-      
-      if (success) {
-        toast.success('התחברת בהצלחה לבינאנס', {
-          description: 'המפתחות נשמרו מקומית במכשיר שלך. הנתונים יתחילו להתעדכן בקרוב.'
-        });
-        
-        // reset form
-        setApiKey('');
-        setApiSecret('');
-        onOpenChange(false);
-        
-        // notify parent component
-        if (onConnectSuccess) {
-          onConnectSuccess();
-        }
-        
-        // בדיקת חיבור מיידית
-        console.log('בודק חיבור לבינאנס...');
-        // כאן אפשר להוסיף קריאה לפונקציה שתבדוק את החיבור
-      } else {
-        toast.error('החיבור לבינאנס נכשל', {
-          description: 'ייתכן שהמפתחות שהזנת אינם תקינים. אנא נסה שוב.'
-        });
-      }
-    } catch (error) {
-      console.error('שגיאה בחיבור לבינאנס:', error);
-      toast.error('שגיאה בחיבור לבינאנס', {
-        description: 'אירעה שגיאה בעת ניסיון להתחבר. אנא נסה שוב.'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    onConnect(apiKey, apiSecret);
   };
-  
+
+  const handleDisconnect = () => {
+    setApiKey('');
+    setApiSecret('');
+    onDisconnect();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle className="text-right">התחברות לחשבון בינאנס</DialogTitle>
-            <DialogDescription className="text-right">
-              הזן את מפתחות ה-API של חשבון הבינאנס שלך.
-              <br />
-              המפתחות נשמרים מקומית במכשיר שלך בלבד.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="apiKey" className="text-right">Binance API Key</Label>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-right">התחברות ל-Binance</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isConnected ? (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Switch 
+                id="auto-trade"
+                checked={autoTrade}
+                onCheckedChange={setAutoTrade}
+              />
+              <Label htmlFor="auto-trade" className="text-right">מסחר אוטומטי</Label>
+            </div>
+            
+            <p className="text-sm text-muted-foreground text-right">
+              כאשר מסחר אוטומטי מופעל, המערכת תבצע עסקאות באופן אוטומטי בהתאם לאיתותים.
+            </p>
+            
+            <Button 
+              variant="destructive"
+              className="w-full mt-4"
+              onClick={handleDisconnect}
+            >
+              נתק מ-Binance
+            </Button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="api-key" className="text-right block">מפתח API</Label>
               <Input
-                id="apiKey"
-                placeholder="הזן את מפתח ה-API שלך"
+                id="api-key"
+                type="text"
                 value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                className="text-left dir-ltr"
-                autoComplete="off"
-                required
+                onChange={e => setApiKey(e.target.value)}
+                placeholder="הזן את מפתח ה-API שלך"
+                className="text-left"
               />
             </div>
             
-            <div className="grid gap-2">
-              <Label htmlFor="apiSecret" className="text-right">Binance API Secret</Label>
+            <div className="space-y-2">
+              <Label htmlFor="api-secret" className="text-right block">סוד API</Label>
               <Input
-                id="apiSecret"
-                placeholder="הזן את ה-Secret של ה-API שלך"
-                value={apiSecret}
-                onChange={(e) => setApiSecret(e.target.value)}
-                className="text-left dir-ltr"
+                id="api-secret"
                 type="password"
-                autoComplete="off"
-                required
+                value={apiSecret}
+                onChange={e => setApiSecret(e.target.value)}
+                placeholder="הזן את סוד ה-API שלך"
+                className="text-left"
               />
             </div>
             
             <p className="text-sm text-muted-foreground text-right">
-              שים לב: צור מפתח API בהגדרות בינאנס עם הרשאות קריאה בלבד לבטיחות מרבית.
+              מפתחות API משמשים לקריאת נתונים ולביצוע עסקאות. אנו ממליצים להשתמש במפתחות עם הרשאות קריאה בלבד.
             </p>
-          </div>
-          
-          <DialogFooter className="flex sm:justify-start">
-            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
-              ביטול
+            
+            <Button type="submit" className="w-full mt-4">
+              התחבר ל-Binance
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  מתחבר...
-                </>
-              ) : (
-                'התחבר'
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          </form>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

@@ -1,64 +1,149 @@
 
-import { Trade } from '../types';
-import { TrendInfo } from './types';
+import { BacktestTrade } from '../types';
 
-// Detect trend patterns from a sequence of trades
-export const detectMarketTrends = (trades: Trade[]): {
-  trends: TrendInfo[];
-  overallTrend: string;
-} => {
-  // Sort trades by date
-  const sortedTrades = [...trades].sort((a, b) => 
-    new Date(a.entryDate).getTime() - new Date(b.entryDate).getTime()
-  );
+// Function to detect market trends based on trade patterns
+export const detectMarketTrends = (trades: BacktestTrade[]) => {
+  const trendPeriods = [];
+  const monthlyPerformance = getMonthlyPerformance(trades);
   
-  if (sortedTrades.length < 5) {
-    return { 
-      trends: [], 
-      overallTrend: 'insufficient data' 
-    };
+  // Define some thresholds
+  const BULL_MARKET_THRESHOLD = 0.05; // 5% growth
+  const BEAR_MARKET_THRESHOLD = -0.03; // 3% decline
+  
+  // Find consecutive months with similar trend
+  let currentTrend = null;
+  let trendStart = '';
+  let trendPoints = [];
+  
+  for (let i = 0; i < monthlyPerformance.length; i++) {
+    const month = monthlyPerformance[i];
+    
+    if (month.return > BULL_MARKET_THRESHOLD) {
+      // Bullish month
+      if (currentTrend === 'bull') {
+        // Continue existing bull trend
+        trendPoints.push(month);
+      } else {
+        // Start new bull trend
+        if (currentTrend !== null && trendPoints.length > 0) {
+          trendPeriods.push({
+            type: currentTrend,
+            start: trendStart,
+            end: monthlyPerformance[i-1].period,
+            strength: getTrendStrength(trendPoints),
+            duration: trendPoints.length
+          });
+        }
+        
+        currentTrend = 'bull';
+        trendStart = month.period;
+        trendPoints = [month];
+      }
+    } else if (month.return < BEAR_MARKET_THRESHOLD) {
+      // Bearish month
+      if (currentTrend === 'bear') {
+        // Continue existing bear trend
+        trendPoints.push(month);
+      } else {
+        // Start new bear trend
+        if (currentTrend !== null && trendPoints.length > 0) {
+          trendPeriods.push({
+            type: currentTrend,
+            start: trendStart,
+            end: monthlyPerformance[i-1].period,
+            strength: getTrendStrength(trendPoints),
+            duration: trendPoints.length
+          });
+        }
+        
+        currentTrend = 'bear';
+        trendStart = month.period;
+        trendPoints = [month];
+      }
+    } else {
+      // Sideways/consolidation
+      if (currentTrend === 'sideways') {
+        // Continue sideways
+        trendPoints.push(month);
+      } else {
+        // Start new sideways trend
+        if (currentTrend !== null && trendPoints.length > 0) {
+          trendPeriods.push({
+            type: currentTrend,
+            start: trendStart,
+            end: monthlyPerformance[i-1].period,
+            strength: getTrendStrength(trendPoints),
+            duration: trendPoints.length
+          });
+        }
+        
+        currentTrend = 'sideways';
+        trendStart = month.period;
+        trendPoints = [month];
+      }
+    }
   }
   
+  // Add the last trend if exists
+  if (currentTrend !== null && trendPoints.length > 0) {
+    trendPeriods.push({
+      type: currentTrend,
+      start: trendStart,
+      end: monthlyPerformance[monthlyPerformance.length - 1].period,
+      strength: getTrendStrength(trendPoints),
+      duration: trendPoints.length
+    });
+  }
+  
+  return {
+    trends: trendPeriods,
+    monthlyPerformance: monthlyPerformance
+  };
+};
+
+// Helper function to calculate monthly performance
+const getMonthlyPerformance = (trades: BacktestTrade[]) => {
+  const monthlyTrades = {};
+  const monthlyPerformance = [];
+  
   // Group trades by month
-  const monthlyGroups: Record<string, Trade[]> = {};
-  
-  sortedTrades.forEach(trade => {
-    const yearMonth = trade.entryDate.substring(0, 7); // YYYY-MM
-    if (!monthlyGroups[yearMonth]) {
-      monthlyGroups[yearMonth] = [];
+  trades.forEach(trade => {
+    // Use a string for the date instead of a number
+    const entryDate = new Date(trade.entryDate);
+    const month = `${entryDate.getFullYear()}-${String(entryDate.getMonth() + 1).padStart(2, '0')}`;
+    
+    if (!monthlyTrades[month]) {
+      monthlyTrades[month] = [];
     }
-    monthlyGroups[yearMonth].push(trade);
+    
+    monthlyTrades[month].push(trade);
   });
   
-  // Calculate trend for each month
-  const trends = Object.entries(monthlyGroups).map(([period, periodTrades]) => {
-    const winningTrades = periodTrades.filter(t => (t.profit || 0) > 0);
-    const losingTrades = periodTrades.filter(t => (t.profit || 0) <= 0);
+  // Calculate performance for each month
+  Object.keys(monthlyTrades).sort().forEach(month => {
+    const monthTrades = monthlyTrades[month];
+    const totalReturn = monthTrades.reduce((sum, trade) => sum + trade.profit, 0);
     
-    // Calculate trend strength (positive is bullish, negative is bearish)
-    const tradeResults = periodTrades.map(t => t.profit || 0);
-    const netResult = tradeResults.reduce((sum, profit) => sum + profit, 0);
-    const averageResult = netResult / periodTrades.length;
-    
-    // Normalize strength to a -10 to 10 scale
-    const strength = Math.min(10, Math.max(-10, averageResult * 5 / Math.max(...tradeResults.map(Math.abs))));
-    
-    return {
-      period,
-      direction: strength > 0 ? 'bullish' : strength < 0 ? 'bearish' : 'neutral',
-      strength: Math.abs(strength)
-    };
+    monthlyPerformance.push({
+      period: month,
+      return: totalReturn,
+      trades: monthTrades.length
+    });
   });
   
-  // Calculate overall trend
-  const trendStrengths = trends.map(t => t.direction === 'bullish' ? t.strength : t.direction === 'bearish' ? -t.strength : 0);
-  const averageTrendStrength = trendStrengths.reduce((sum, s) => sum + s, 0) / trendStrengths.length;
+  return monthlyPerformance;
+};
+
+// Helper to calculate trend strength
+const getTrendStrength = (trendPoints) => {
+  if (trendPoints.length === 0) return 0;
   
-  let overallTrend = 'neutral';
-  if (averageTrendStrength > 2) overallTrend = 'strongly bullish';
-  else if (averageTrendStrength > 0.5) overallTrend = 'mildly bullish';
-  else if (averageTrendStrength < -2) overallTrend = 'strongly bearish';
-  else if (averageTrendStrength < -0.5) overallTrend = 'mildly bearish';
+  const avgReturn = trendPoints.reduce((sum, point) => sum + point.return, 0) / trendPoints.length;
   
-  return { trends, overallTrend };
+  // Strength based on average return and duration
+  const strengthValue = Math.abs(avgReturn) * Math.min(trendPoints.length, 6) / 6;
+  
+  if (strengthValue > 0.05) return 'strong';
+  if (strengthValue > 0.02) return 'medium';
+  return 'weak';
 };

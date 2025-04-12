@@ -1,241 +1,213 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { useWhatsappIntegration } from '@/hooks/use-whatsapp-integration';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Smartphone, Check, X, Send, AlertTriangle, Link, Clipboard } from 'lucide-react';
-import { toast } from 'sonner';
+import { useWhatsAppIntegration } from '@/hooks/use-whatsapp-integration';
+import { Phone, QrCode, Send, Check, Loader2 } from 'lucide-react';
 
 const WhatsappIntegrationPanel: React.FC = () => {
-  const {
-    isConnected,
-    webhookUrl,
-    isConfiguring,
-    configureWhatsapp,
-    disconnectWhatsapp,
-    sendTestMessage
-  } = useWhatsappIntegration();
+  const [phone, setPhone] = useState('');
+  const [code, setCode] = useState('');
+  const [stage, setStage] = useState<'connect' | 'verify'>('connect');
   
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newWebhookUrl, setNewWebhookUrl] = useState(webhookUrl);
+  const { 
+    isConnected, 
+    phoneNumber,
+    isPending,
+    qrCode,
+    connectWhatsApp,
+    verifyConnection,
+    disconnectWhatsApp 
+  } = useWhatsAppIntegration();
   
-  const handleOpenDialog = () => {
-    setNewWebhookUrl(webhookUrl);
-    setIsDialogOpen(true);
-  };
-  
-  const handleSaveWebhook = async () => {
-    const success = await configureWhatsapp(newWebhookUrl);
-    if (success) {
-      setIsDialogOpen(false);
+  const handleConnect = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!phone) return;
+    
+    const result = await connectWhatsApp(phone);
+    if (result.success) {
+      setStage('verify');
     }
   };
   
-  const copyInstructions = () => {
-    const instructions = `
-לשליחת הודעות וואטסאפ דרך CallMeBot:
-
-1. שמור את המספר +34 644 66 01 68 אצלך בטלפון כקשר בשם "WhatsApp API".
-2. שלח הודעת WhatsApp למספר זה: 'I allow callmebot to send me messages'.
-3. המתן לקבלת API KEY בתשובה.
-4. העתק את ה-URL הבא לשדה Webhook URL, והחלף את {phone} עם מספר הטלפון שלך (עם קידומת מדינה, למשל 972501234567) ואת {APIKEY} עם המפתח שקיבלת:
-https://api.callmebot.com/whatsapp.php?phone={phone}&apikey={APIKEY}&text=
-`.trim();
-
-    navigator.clipboard.writeText(instructions);
-    toast.success('ההוראות הועתקו ללוח');
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!code) return;
+    
+    const result = await verifyConnection(code);
+    if (result.success) {
+      setCode('');
+      setPhone('');
+      setStage('connect');
+    }
   };
-
+  
+  if (isConnected) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-right">חיבור וואטסאפ</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+            <Phone className="h-8 w-8 text-green-600" />
+          </div>
+          
+          <h3 className="text-xl font-semibold mb-2">וואטסאפ מחובר</h3>
+          <p className="text-muted-foreground mb-6">
+            אתה מחובר למספר {phoneNumber}
+          </p>
+          
+          <div className="space-y-2 w-full">
+            <div className="p-3 bg-muted rounded-md">
+              <div className="flex justify-between mb-1">
+                <Check className="h-4 w-4 text-green-500" />
+                <h4 className="font-medium text-right">התראות סיגנלים</h4>
+              </div>
+              <p className="text-sm text-muted-foreground text-right">
+                התראות על סיגנלי קנייה ומכירה חדשים.
+              </p>
+            </div>
+            
+            <div className="p-3 bg-muted rounded-md">
+              <div className="flex justify-between mb-1">
+                <Check className="h-4 w-4 text-green-500" />
+                <h4 className="font-medium text-right">עדכוני שוק</h4>
+              </div>
+              <p className="text-sm text-muted-foreground text-right">
+                עדכונים יומיים על מצב השוק והנכסים המעוקבים.
+              </p>
+            </div>
+          </div>
+          
+          <Button 
+            variant="destructive" 
+            className="mt-8 w-full"
+            onClick={() => disconnectWhatsApp()}
+          >
+            נתק וואטסאפ
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
   
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-right flex items-center justify-between">
-          <Button
-            variant={isConnected ? "outline" : "default"}
-            size="sm"
-            onClick={isConnected ? disconnectWhatsapp : handleOpenDialog}
-            className="gap-1"
-          >
-            {isConnected ? (
-              <>
-                <X className="h-4 w-4" />
-                נתק
-              </>
-            ) : (
-              <>
-                <Link className="h-4 w-4" />
-                חבר
-              </>
-            )}
-          </Button>
-          <div className="flex items-center gap-2">
-            <span>חיבור WhatsApp</span>
-            <Smartphone className="h-5 w-5" />
-          </div>
-        </CardTitle>
+        <CardTitle className="text-right">חיבור וואטסאפ</CardTitle>
       </CardHeader>
       <CardContent>
-        {isConnected ? (
-          <div className="space-y-4">
-            <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-md">
-              <div className="flex justify-between items-center mb-3">
-                <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300 flex gap-1">
-                  <Check className="h-4 w-4" />
-                  מחובר
-                </Badge>
-                <h3 className="font-bold">WhatsApp מחובר</h3>
+        {stage === 'connect' ? (
+          <form onSubmit={handleConnect} className="space-y-4">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                <Phone className="h-8 w-8 text-muted-foreground" />
               </div>
-              
-              <div className="space-y-3">
-                <div className="text-sm">
-                  <span className="text-muted-foreground">מקבל התראות ב:</span>
-                  <span className="font-semibold mr-1">וואטסאפ</span>
-                </div>
-                
-                <div className="bg-white dark:bg-gray-800 p-2 rounded border text-xs dir-ltr overflow-hidden">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate flex-1">{webhookUrl}</span>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={() => {
-                        navigator.clipboard.writeText(webhookUrl);
-                        toast.success('הועתק ללוח');
-                      }}
-                    >
-                      <Clipboard className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex justify-end mt-3">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1"
-                  onClick={sendTestMessage}
-                >
-                  <Send className="h-4 w-4" />
-                  שלח הודעת בדיקה
-                </Button>
-              </div>
+              <h3 className="text-lg font-medium">קבל התראות לוואטסאפ</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                חבר את וואטסאפ לקבלת התראות על סיגנלים ועדכוני שוק
+              </p>
             </div>
             
-            <div className="p-4 border rounded-md text-right">
-              <h3 className="font-medium mb-2">סוגי התראות שישלחו</h3>
-              <div className="space-y-1 text-sm">
-                <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="bg-green-100 text-green-800">פעיל</Badge>
-                  <div>איתותי קנייה חזקים</div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="bg-green-100 text-green-800">פעיל</Badge>
-                  <div>איתותי מכירה חזקים</div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <Badge variant="outline" className="bg-green-100 text-green-800">פעיל</Badge>
-                  <div>התראות פריצת רמות מרכזיות</div>
-                </div>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-right block">מספר טלפון</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+972501234567"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="text-left"
+              />
+              <p className="text-xs text-muted-foreground text-right">
+                הכנס מספר טלפון כולל קידומת מדינה
+              </p>
             </div>
-          </div>
+            
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={isPending || !phone}
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  מתחבר...
+                </>
+              ) : (
+                <>
+                  <Send className="mr-2 h-4 w-4" />
+                  שלח קוד אימות
+                </>
+              )}
+            </Button>
+          </form>
         ) : (
-          <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-md text-right">
-            <div className="flex justify-between items-center mb-3">
-              <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300 flex gap-1">
-                <AlertTriangle className="h-4 w-4" />
-                לא מחובר
-              </Badge>
-              <h3 className="font-bold">יש לחבר את WhatsApp</h3>
+          <form onSubmit={handleVerify} className="space-y-4">
+            <div className="text-center mb-6">
+              {qrCode ? (
+                <div className="mb-4">
+                  <QrCode className="h-8 w-8 mx-auto mb-2 text-primary" />
+                  <img 
+                    src={qrCode} 
+                    alt="WhatsApp QR Code" 
+                    className="mx-auto h-48 w-48 object-cover rounded-md"
+                  />
+                  <p className="text-sm mt-2">סרוק את הקוד לאימות או הכנס את הקוד למטה</p>
+                </div>
+              ) : (
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                  <QrCode className="h-8 w-8 text-muted-foreground" />
+                </div>
+              )}
+              <h3 className="text-lg font-medium">הזן קוד אימות</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                שלחנו קוד אימות למספר {phone}
+              </p>
             </div>
             
-            <p className="text-sm mb-4">
-              חיבור WhatsApp יאפשר לך לקבל התראות וסיגנלים ישירות לטלפון שלך באמצעות וואטסאפ.
-            </p>
+            <div className="space-y-2">
+              <Label htmlFor="code" className="text-right block">קוד אימות</Label>
+              <Input
+                id="code"
+                type="text"
+                placeholder="123456"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className="text-center text-2xl tracking-widest"
+                maxLength={6}
+              />
+            </div>
             
-            <div className="flex justify-between">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1"
-                onClick={copyInstructions}
-              >
-                <Clipboard className="h-4 w-4" />
-                העתק הוראות
-              </Button>
-              
-              <Button 
-                onClick={handleOpenDialog}
-                className="gap-1"
-              >
-                <Link className="h-4 w-4" />
-                חבר וואטסאפ
-              </Button>
-            </div>
-          </div>
-        )}
-        
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="text-right">הגדרת חיבור WhatsApp</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 my-4 text-right">
-              <div>
-                <Label htmlFor="whatsapp-webhook" className="text-right block mb-2">כתובת Webhook</Label>
-                <Input
-                  id="whatsapp-webhook"
-                  value={newWebhookUrl}
-                  onChange={e => setNewWebhookUrl(e.target.value)}
-                  dir="ltr"
-                  placeholder="https://api.callmebot.com/whatsapp.php?phone=972501234567&apikey=123456&text="
-                />
-                <p className="text-sm text-muted-foreground mt-1">
-                  השתמש בשירות כמו CallMeBot לקבלת Webhook לוואטסאפ
-                </p>
-              </div>
-              
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-sm">
-                <h4 className="font-medium mb-1">כיצד לקבל Webhook?</h4>
-                <ol className="list-decimal list-inside space-y-1">
-                  <li>שמור את מספר CallMeBot בטלפון (+34 644 66 01 68)</li>
-                  <li>שלח הודעת וואטסאפ: "I allow callmebot to send me messages"</li>
-                  <li>המתן לקבלת API key</li>
-                  <li>הכנס את ה-URL עם מספר הטלפון והמפתח שקיבלת</li>
-                </ol>
-                <Button 
-                  variant="ghost"
-                  size="sm"
-                  className="mt-2 gap-1 text-xs"
-                  onClick={copyInstructions}
-                >
-                  <Clipboard className="h-3 w-3" />
-                  העתק הוראות מפורטות
-                </Button>
-              </div>
-            </div>
-            <DialogFooter className="flex justify-between">
+            <div className="flex gap-2">
               <Button 
                 variant="outline" 
-                onClick={() => setIsDialogOpen(false)}
+                className="flex-1"
+                onClick={() => setStage('connect')}
+                type="button"
               >
-                ביטול
+                חזור
               </Button>
               <Button 
-                onClick={handleSaveWebhook}
-                disabled={isConfiguring || !newWebhookUrl.includes('callmebot')}
+                type="submit" 
+                className="flex-1"
+                disabled={isPending || code.length < 6}
               >
-                {isConfiguring ? 'מחבר...' : 'שמור וחבר'}
+                {isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    מאמת...
+                  </>
+                ) : (
+                  'אמת קוד'
+                )}
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </div>
+          </form>
+        )}
       </CardContent>
     </Card>
   );

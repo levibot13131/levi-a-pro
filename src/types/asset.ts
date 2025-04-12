@@ -25,6 +25,7 @@ export interface Asset {
   website?: string;
   whitepaper?: string;
   icon?: string;
+  imageUrl?: string; // Added this property
 }
 
 export interface AssetHistoricalData {
@@ -41,7 +42,7 @@ export interface AssetHistoricalData {
   lastDate: number;
 }
 
-export type TimeframeType = '1m' | '5m' | '15m' | '1h' | '4h' | '1d' | '1w' | '3m' | '1y';
+export type TimeframeType = '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w' | '3m' | '1y';
 
 export interface MarketData {
   marketCap: number;
@@ -58,4 +59,132 @@ export interface MarketData {
   priceChangePercentage7d?: number;
   priceChange30d?: number;
   priceChangePercentage30d?: number;
+}
+
+// Add the missing interface definitions
+export interface PricePoint {
+  price: number;
+  timestamp: number;
+  volume?: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  close?: number;
+}
+
+export interface SocialPost {
+  id: string;
+  content: string;
+  author: string;
+  authorUsername?: string;
+  authorImageUrl?: string;
+  publishedAt: string;
+  platform: 'twitter' | 'reddit' | 'telegram' | string;
+  likes: number;
+  comments?: number;
+  shares?: number;
+  sentiment?: 'positive' | 'negative' | 'neutral';
+  relatedAssets?: string[];
+  postUrl?: string;
+}
+
+export interface NewsItem {
+  id: string;
+  title: string;
+  summary: string;
+  content: string;
+  publishedAt: string;
+  source: string;
+  url: string;
+  imageUrl?: string;
+  sentiment?: 'positive' | 'negative' | 'neutral';
+  relatedAssets?: string[];
+}
+
+export interface TradeSignal {
+  id: string;
+  assetId: string;
+  type: 'buy' | 'sell';
+  price: number;
+  timestamp: number;
+  strength: 'strong' | 'medium' | 'weak';
+  strategy: string;
+  timeframe: TimeframeType;
+  targetPrice?: number;
+  stopLoss?: number;
+  riskRewardRatio?: number;
+  notes?: string;
+  source?: string;
+  createdAt: number;
+}
+
+export interface MarketAnalysis {
+  id: string;
+  title: string;
+  summary: string;
+  type: 'technical' | 'fundamental' | 'sentiment';
+  assetId?: string;
+  marketSector?: string;
+  timeframe: TimeframeType;
+  timestamp: number;
+  publishedAt: string;
+  author: string;
+  content: string;
+  keyPoints: string[];
+  conclusion: string;
+  sentiment: 'bullish' | 'bearish' | 'neutral';
+  source: string;
+  confidence: number;
+}
+
+export interface TradeJournalEntry {
+  id: string;
+  assetId: string;
+  type: 'buy' | 'sell';
+  quantity: number;
+  entryDate: string;
+  entryPrice: number;
+  exitDate?: string;
+  exitPrice?: number;
+  reason: string;
+  notes?: string;
+  status: 'open' | 'closed';
+  profitLoss?: number;
+  profitLossPercentage?: number;
+  screenshots?: string[];
+  tags?: string[];
+}
+
+export interface ChartArea {
+  id: string;
+  assetId: string;
+  name: string;
+  description: string;
+  startTimestamp: number;
+  endTimestamp: number;
+  minPrice: number;
+  maxPrice: number;
+  type: 'support' | 'resistance' | 'accumulation' | 'distribution' | 'pattern';
+  color?: string;
+}
+
+export interface TradingBot {
+  id: string;
+  name: string;
+  description: string;
+  strategy: string;
+  isActive: boolean;
+  performance: {
+    winRate: number;
+    totalTrades: number;
+    profitLoss: number;
+    totalReturn?: number;
+    averageProfit?: number;
+    averageLoss?: number;
+  };
+  timeframe: TimeframeType;
+  assets: string[];
+  lastSignal?: TradeSignal;
+  createdAt: string;
+  updatedAt: string;
 }

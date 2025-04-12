@@ -13,6 +13,7 @@ import { Globe, Activity, ExternalLink } from 'lucide-react';
 import { useTradingViewConnection } from '@/hooks/use-tradingview-connection';
 import { startAssetTracking, stopAssetTracking, isTrackingActive } from '@/services/assetTracking/realTimeSync';
 import { Asset } from '@/types/asset';
+import { TrackedAsset } from '@/services/assetTracking/types';
 
 const DashboardContent = () => {
   const { data: assets = [], isLoading, refetch } = useQuery({
@@ -50,7 +51,21 @@ const DashboardContent = () => {
 
   const handleSelectAsset = (assetId: string) => {
     const asset = assets.find(a => a.id === assetId);
-    setSelectedAsset(asset || null);
+    if (asset) {
+      // Convert TrackedAsset to Asset for compatibility
+      const convertedAsset: Asset = {
+        id: asset.id,
+        name: asset.name,
+        symbol: asset.symbol,
+        type: asset.type,
+        price: asset.price,
+        change24h: asset.change24h,
+        marketCap: asset.marketCap || 0,
+        volume24h: asset.volume24h || 0,
+        rank: asset.rank || 0
+      };
+      setSelectedAsset(convertedAsset);
+    }
   };
 
   if (isLoading) {

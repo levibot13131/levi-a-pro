@@ -31,7 +31,7 @@ export interface BacktestResult {
   equity: EquityPoint[];
   monthly?: MonthlyPerformance[];
   assetPerformance?: AssetPerformance[];
-  performance?: {
+  performance: {
     totalReturn: number;
     totalReturnPercentage: number;
     winRate: number;
@@ -72,7 +72,7 @@ export interface BacktestTrade {
 
 export interface EquityPoint {
   date: number | string;
-  value: number; 
+  value: number;
   equity?: number;
   drawdown: number;
 }
@@ -93,5 +93,5 @@ export interface AssetPerformance {
 
 export type Trade = BacktestTrade;
 
-// נשנה את השם לפי דרישת המשתמש
+// Rename according to user request
 export type BacktestResults = BacktestResult;

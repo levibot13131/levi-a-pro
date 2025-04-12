@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { DatePicker } from '@/components/ui/date-picker';
 import { Switch } from '@/components/ui/switch';
 import { BacktestSettings } from '@/services/backtesting/types';
 import { getAssets } from '@/services/mockDataService';
@@ -31,7 +31,13 @@ const BacktestingForm: React.FC<BacktestingFormProps> = ({ onRunBacktest, isLoad
     endDate: new Date().toISOString().split('T')[0],
     trailingStop: false,
     maxOpenTrades: 3,
-    assetIds: ['bitcoin']
+    assetIds: ['bitcoin'],
+    takeProfit: 5,
+    stopLoss: 2,
+    tradeSize: 'percentage',
+    leverage: 1,
+    compounding: false,
+    fees: 0.1
   });
 
   useEffect(() => {

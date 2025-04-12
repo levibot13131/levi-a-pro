@@ -40,6 +40,29 @@ const BacktestingSystem: React.FC = () => {
     }
   };
 
+  // Create default settings with all required properties
+  const defaultSettings: BacktestSettings = {
+    strategy: 'Levi Bot', 
+    riskPerTrade: 1, 
+    initialCapital: 10000, 
+    assetIds: [selectedAsset], 
+    timeframe: '1d', 
+    startDate: new Date().toISOString().split('T')[0], 
+    endDate: new Date().toISOString().split('T')[0], 
+    entryType: 'market', 
+    stopLossType: 'fixed', 
+    takeProfitType: 'fixed', 
+    riskRewardRatio: 2, 
+    trailingStop: false, 
+    maxOpenTrades: 1,
+    takeProfit: 5,
+    stopLoss: 2,
+    tradeSize: 'percentage',
+    leverage: 1,
+    compounding: false,
+    fees: 0.1
+  };
+
   return (
     <Container className="py-8">
       <h1 className="text-3xl font-bold mb-8 text-right">
@@ -96,21 +119,7 @@ const BacktestingSystem: React.FC = () => {
           <div className="grid grid-cols-1 gap-6">
             <RealTimeAlerts
               assetIds={settings?.assetIds || [selectedAsset]}
-              settings={settings || { 
-                strategy: 'Levi Bot', 
-                riskPerTrade: 1, 
-                initialCapital: 10000, 
-                assetIds: [], 
-                timeframe: '1d', 
-                startDate: new Date(), 
-                endDate: new Date(), 
-                entryType: 'market', 
-                stopLossType: 'fixed', 
-                takeProfitType: 'fixed', 
-                riskRewardRatio: 2, 
-                trailingStop: false, 
-                maxOpenTrades: 1 
-              }}
+              settings={settings || defaultSettings}
             />
           </div>
         </TabsContent>

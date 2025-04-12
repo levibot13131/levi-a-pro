@@ -15,6 +15,9 @@ export interface TrackedAsset {
   sentimentSignal?: 'bullish' | 'bearish' | 'neutral';
   notes?: string;
   isPinned?: boolean;
+  marketCap?: number;
+  volume24h?: number;
+  rank?: number;
 }
 
 // Storage key for tracked assets
