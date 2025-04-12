@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,10 +10,11 @@ import {
   addAlertDestination,
   updateAlertDestination,
   deleteAlertDestination
-} from '@/services/tradingView/alerts/destinations';
+} from '@/services/tradingView/tradingViewAlertService';
 import { AlertDestination } from '@/services/tradingView/alerts/types';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { v4 as uuidv4 } from 'uuid';
 
 const AlertDestinationsManager = () => {
   const [destinations, setDestinations] = useState<AlertDestination[]>(getAlertDestinations);
@@ -34,6 +34,7 @@ const AlertDestinationsManager = () => {
     
     try {
       const destination = addAlertDestination({
+        id: uuidv4(),
         name: newName,
         type: 'webhook',
         endpoint: newEndpoint,

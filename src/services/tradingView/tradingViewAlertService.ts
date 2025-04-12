@@ -1,7 +1,16 @@
 
 import { TradingViewAlert, createTradingViewAlert, AlertDestination } from './alerts/types';
 import { sendAlertToDestinations } from './alerts/distributor';
-import { getActiveDestinations } from './alerts/destinations';
+import { 
+  getActiveDestinations, 
+  getAlertDestinations, 
+  getAlertDestinationById,
+  toggleDestinationActive,
+  addAlertDestination,
+  updateAlertDestination,
+  deleteAlertDestination
+} from './alerts/destinations';
+import { sendAlert } from './alerts/sender';
 
 /**
  * Process and send a TradingView alert to configured destinations
@@ -75,3 +84,19 @@ export function createSampleAlert(type: 'buy' | 'sell' | 'info' = 'info'): Tradi
       });
   }
 }
+
+// Re-export functions from destinations.ts
+export {
+  getActiveDestinations,
+  getAlertDestinations,
+  getAlertDestinationById,
+  toggleDestinationActive,
+  addAlertDestination,
+  updateAlertDestination,
+  deleteAlertDestination,
+  AlertDestination
+};
+
+// Re-export functions from sender.ts
+export { sendAlert };
+

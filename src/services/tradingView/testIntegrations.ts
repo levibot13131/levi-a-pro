@@ -1,6 +1,10 @@
 
 import { toast } from 'sonner';
-import { getAlertDestinations, sendAlert, createSampleAlert } from './tradingViewAlertService';
+import { 
+  getAlertDestinations, 
+  createSampleAlert, 
+  sendAlert 
+} from './tradingViewAlertService';
 import { testTelegramConnection, parseTelegramConfig } from './telegramService';
 import { testWhatsAppConnection } from './alerts/providers/whatsapp';
 
