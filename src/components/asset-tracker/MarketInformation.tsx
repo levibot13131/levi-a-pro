@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getUpcomingEvents } from '@/services/marketInformation/eventsService';
+import { getUpcomingEvents } from '@/services/marketInformation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Newspaper, Users, Calendar, RefreshCw } from 'lucide-react';
@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { MarketEvent } from '@/types/marketData';
+import { MarketEvent } from '@/types/marketInformation';
 import { Asset } from '@/types/asset';
 
 interface MarketInformationProps {
@@ -19,7 +19,6 @@ const MarketInformation: React.FC<MarketInformationProps> = ({ selectedAsset }) 
   const [selectedTimeRange, setSelectedTimeRange] = useState<string>('30');
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
 
-  // Fetch upcoming market events
   const { data: events, isLoading: eventsLoading, refetch } = useQuery({
     queryKey: ['marketEvents', selectedTimeRange, selectedAsset?.id],
     queryFn: async () => {
@@ -29,7 +28,6 @@ const MarketInformation: React.FC<MarketInformationProps> = ({ selectedAsset }) 
     refetchInterval: autoRefresh ? 60000 : false, // Auto refresh every minute if enabled
   });
 
-  // Auto-refresh effect
   useEffect(() => {
     if (!autoRefresh) return;
     
