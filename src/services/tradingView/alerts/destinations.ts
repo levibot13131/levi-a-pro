@@ -1,5 +1,5 @@
 
-import { AlertDestination, AlertDestinationType } from './types';
+import { AlertDestination } from './types';
 
 const DESTINATIONS_STORAGE_KEY = 'levi-bot-alert-destinations';
 

@@ -1,7 +1,7 @@
 
 import { toast } from 'sonner';
 import { getAlertDestinations } from './alerts/destinations';
-import { sendAlert as sendAlertToDestinations } from './alerts/sender';
+import { sendAlertToDestinations } from './alerts/distributor';
 import { TradingViewAlert, createTradingViewAlert, AlertDestination } from './alerts/types';
 
 // Store for tracked alerts
@@ -87,17 +87,17 @@ export function getAlerts(): TradingViewAlert[] {
 }
 
 /**
- * Get all destinations for alerts
+ * Export the getAlertDestinations function from the destinations module
  */
 export { getAlertDestinations } from './alerts/destinations';
 
 /**
  * Update an alert destination
  */
-export function updateAlertDestination(type: string, updates: Partial<AlertDestination>): boolean {
+export function updateAlertDestination(id: string, updates: Partial<AlertDestination>): boolean {
   try {
     const destinations = getAlertDestinations();
-    const index = destinations.findIndex(d => d.type === type);
+    const index = destinations.findIndex(d => d.id === id);
     
     if (index !== -1) {
       destinations[index] = { ...destinations[index], ...updates };
@@ -110,6 +110,13 @@ export function updateAlertDestination(type: string, updates: Partial<AlertDesti
     console.error('Error updating alert destination:', error);
     return false;
   }
+}
+
+/**
+ * Process and send an alert to designated channels
+ */
+export function processAndSendAlert(alert: TradingViewAlert): Promise<boolean> {
+  return sendAlert(alert);
 }
 
 /**

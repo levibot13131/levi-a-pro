@@ -28,7 +28,7 @@ export const testAllIntegrations = async (): Promise<{
     if (destination.type === 'telegram') {
       try {
         console.log('Testing Telegram connection...');
-        const config = parseTelegramConfig(destination.name);
+        const config = parseTelegramConfig(destination.id);
         
         if (config) {
           telegramStatus = await testTelegramConnection(config);
@@ -42,7 +42,7 @@ export const testAllIntegrations = async (): Promise<{
     } else if (destination.type === 'whatsapp') {
       try {
         console.log('Testing WhatsApp connection...');
-        whatsappStatus = await testWhatsAppConnection(destination.name);
+        whatsappStatus = await testWhatsAppConnection(destination.id);
         console.log(`WhatsApp test result: ${whatsappStatus ? 'SUCCESS' : 'FAILED'}`);
       } catch (error) {
         console.error('Error testing WhatsApp:', error);

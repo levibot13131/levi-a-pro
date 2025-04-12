@@ -1,122 +1,87 @@
 
-import { formatAlertMessage } from '../alerts/formatters';
-import { processAndSendAlert, createSampleAlert } from '../tradingViewAlertService';
-import { TradingViewAlert, createTradingViewAlert } from '../alerts/types';
-import { parseWebhookData, webhookDataToAlert } from './parser';
-import { WebhookData } from './types';
 import { toast } from 'sonner';
+import { parseWebhookData, webhookDataToAlert } from './parser';
+import { processAndSendAlert, createSampleAlert } from '../tradingViewAlertService';
+import { WebhookData } from './types';
+import { createTradingViewAlert, TradingViewAlert } from '../alerts/types';
 
-// Process incoming webhook
+/**
+ * Process webhook data from TradingView
+ */
 export async function processWebhook(data: any): Promise<boolean> {
   try {
     // Parse the webhook data
-    const parsedData = parseWebhookData(data);
+    const parsedData: WebhookData = parseWebhookData(data);
     console.log('Parsed webhook data:', parsedData);
     
-    // Convert to alert
-    const alert = webhookDataToAlert(parsedData);
-    console.log('Created alert:', alert);
+    // Create an alert object
+    const alert: TradingViewAlert = webhookDataToAlert(parsedData);
+    console.log('Created alert from webhook data:', alert);
     
-    // Process the alert
-    return await handleAlert(alert, parsedData);
-  } catch (error) {
-    console.error('Error processing webhook:', error);
-    toast.error('Error processing webhook');
-    return false;
-  }
-}
-
-// Handle the alert
-async function handleAlert(
-  alert: TradingViewAlert,
-  webhookData: WebhookData
-): Promise<boolean> {
-  try {
-    // Check if alert should be sent
-    if (shouldSendAlert(alert, webhookData)) {
-      // Check if it's a Binance order
-      if (webhookData.binanceExecute && webhookData.binanceOrderType) {
-        return await executeBinanceOrder(webhookData);
-      } else {
-        // Regular alert
-        return await processAndSendAlert(alert);
-      }
+    // Process and send the alert
+    const success = await processAndSendAlert(alert);
+    
+    if (success) {
+      toast.success(`Processed webhook for ${alert.symbol}`, {
+        description: `Signal: ${alert.action.toUpperCase()} at $${alert.price}`
+      });
+    } else {
+      toast.error(`Failed to process webhook for ${alert.symbol}`);
     }
     
-    // Alert shouldn't be sent
-    return false;
+    return success;
   } catch (error) {
-    console.error('Error handling alert:', error);
+    console.error('Error processing webhook:', error);
+    toast.error('Error processing webhook data');
     return false;
   }
 }
 
-// Determine if alert should be sent
-function shouldSendAlert(
-  alert: TradingViewAlert,
-  webhookData: WebhookData
-): boolean {
-  // Check for automatic execution flag
-  if (webhookData.automatic === false) {
-    return false;
-  }
-  
-  // Always send critical alerts
-  if (alert.priority === 'high') {
-    return true;
-  }
-  
-  // Logic for determining if an alert should be sent based on settings, time of day, etc.
-  // For now, send all alerts
-  return true;
-}
-
-// Execute a Binance order (mock implementation)
-async function executeBinanceOrder(webhookData: WebhookData): Promise<boolean> {
+/**
+ * Test the webhook signal flow with sample data
+ */
+export async function testWebhookSignalFlow(type: 'buy' | 'sell' | 'info'): Promise<boolean> {
   try {
-    console.log('Executing Binance order:', webhookData);
-    toast.info(`Simulating Binance ${webhookData.binanceOrderType} order for ${webhookData.symbol}`);
+    // Create a sample alert
+    const sampleAlert = createSampleAlert(type);
+    console.log('Created sample alert for testing:', sampleAlert);
     
-    // In a real implementation, this would call the Binance API
+    // Process and send the alert
+    const success = await processAndSendAlert(sampleAlert);
     
-    // Mock success for now
-    return true;
+    return success;
   } catch (error) {
-    console.error('Error executing Binance order:', error);
-    toast.error('Error executing Binance order');
+    console.error('Error in webhook signal flow test:', error);
     return false;
   }
 }
 
-// Send a test alert
-export async function sendTestAlert(symbol: string = 'BTC/USDT'): Promise<boolean> {
+/**
+ * Send a test alert to all configured destinations
+ */
+export async function sendTestAlert(): Promise<boolean> {
   try {
-    const alert = createTradingViewAlert({
-      symbol,
-      message: `Test alert for ${symbol}`,
-      type: 'custom',
+    // Create a test alert
+    const testAlert = createTradingViewAlert({
+      symbol: 'TEST/USD',
+      message: 'This is a test alert from the system',
       action: 'info',
-      timeframe: '1h',
       timestamp: Date.now(),
-      price: 45000, // Just a sample price
-      source: 'test',
-      priority: 'low'
+      price: 1000,
+      timeframe: '1h',
+      type: 'custom',
+      source: 'system-test',
+      details: 'This alert was generated automatically to test the webhook integration.'
     });
     
-    return await processAndSendAlert(alert);
+    console.log('Created test alert:', testAlert);
+    
+    // Process and send the alert
+    const success = await processAndSendAlert(testAlert);
+    
+    return success;
   } catch (error) {
     console.error('Error sending test alert:', error);
     return false;
   }
-}
-
-// Export webhook processing functions for external use
-export function testWebhookSignalFlow(type: 'buy' | 'sell' | 'info'): Promise<boolean> {
-  const sampleAlert = createSampleAlert(type);
-  return processAndSendAlert(sampleAlert);
-}
-
-export function simulateWebhookSignal(type: 'buy' | 'sell' | 'info'): Promise<boolean> {
-  const sampleAlert = createSampleAlert(type);
-  return processAndSendAlert(sampleAlert);
 }

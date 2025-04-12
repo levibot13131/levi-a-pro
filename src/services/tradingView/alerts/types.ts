@@ -17,9 +17,12 @@ export interface TradingViewAlert {
 }
 
 export interface AlertDestination {
+  id: string;
   type: 'telegram' | 'whatsapp' | 'email' | 'webhook';
   name: string;
   active: boolean;
+  endpoint?: string;
+  headers?: Record<string, string>;
   config?: Record<string, any>;
 }
 

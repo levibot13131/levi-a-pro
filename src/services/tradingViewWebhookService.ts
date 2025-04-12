@@ -2,6 +2,11 @@
 import { toast } from 'sonner';
 import { processWebhook, testWebhookSignalFlow, sendTestAlert } from './tradingView/webhooks/processor';
 import { getAlertDestinations, updateAlertDestination } from './tradingView/tradingViewAlertService';
+import { WebhookSignal } from '@/types/webhookSignal';
+
+// Store for webhook signals
+const webhookSignals: WebhookSignal[] = [];
+const signalListeners: Array<() => void> = [];
 
 // Process an incoming webhook from TradingView
 export async function handleTradingViewWebhook(data: any): Promise<boolean> {
@@ -67,7 +72,7 @@ export async function testWebhookIntegration(): Promise<boolean> {
 export function updateWebhookSettings(enabled: boolean): boolean {
   try {
     // Update 'webhook' destination
-    const result = updateAlertDestination('webhook', {
+    const result = updateAlertDestination('webhook-default', {
       active: enabled,
       name: 'TradingView Webhook',
     });
@@ -84,4 +89,38 @@ export function updateWebhookSettings(enabled: boolean): boolean {
     toast.error('Error updating webhook settings');
     return false;
   }
+}
+
+// Store a webhook signal
+export function storeWebhookSignal(signal: WebhookSignal): void {
+  webhookSignals.push(signal);
+  
+  // Notify all listeners
+  signalListeners.forEach(listener => listener());
+}
+
+// Get stored webhook signals
+export function getStoredWebhookSignals(): WebhookSignal[] {
+  return [...webhookSignals];
+}
+
+// Clear stored webhook signals
+export function clearStoredWebhookSignals(): void {
+  webhookSignals.length = 0;
+  
+  // Notify all listeners
+  signalListeners.forEach(listener => listener());
+}
+
+// Subscribe to webhook signal updates
+export function subscribeToWebhookSignals(listener: () => void): () => void {
+  signalListeners.push(listener);
+  
+  // Return unsubscribe function
+  return () => {
+    const index = signalListeners.indexOf(listener);
+    if (index !== -1) {
+      signalListeners.splice(index, 1);
+    }
+  };
 }
