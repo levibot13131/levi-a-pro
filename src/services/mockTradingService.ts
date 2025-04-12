@@ -89,7 +89,7 @@ const mockAnalyses: MarketAnalysis[] = [
     assetId: "bitcoin",
     timeframe: "1d",
     timestamp: Date.now() - 1000000,
-    publishedAt: new Date(Date.now() - 1000000).toISOString(),
+    publishedAt: Date.now() - 1000000,
     author: "TechAnalyst",
     content: "Bitcoin has been consolidating in a tight range between $45,000 and $48,000 for the past two weeks. Volume has been decreasing during this consolidation, which typically precedes a significant move. The RSI is currently at 58, showing neutral momentum, but MACD is showing early signs of bullish crossover. The 200-day moving average is providing strong support at $42,800.",
     keyPoints: [
@@ -100,7 +100,8 @@ const mockAnalyses: MarketAnalysis[] = [
     conclusion: "Watch for a breakout above $48,000 with increased volume for confirmation of continued bullish trend.",
     sentiment: "bullish",
     source: "TradingView",
-    confidence: 75
+    confidence: 75,
+    date: new Date(Date.now() - 1000000).toISOString()
   },
   
   {
@@ -108,10 +109,11 @@ const mockAnalyses: MarketAnalysis[] = [
     title: "Global Cryptocurrency Market Outlook",
     summary: "Analysis of how recent regulatory developments may impact the cryptocurrency market.",
     type: "fundamental",
+    assetId: "bitcoin",
     marketSector: "cryptocurrency",
     timeframe: "1M",
     timestamp: Date.now() - 2000000,
-    publishedAt: new Date(Date.now() - 2000000).toISOString(),
+    publishedAt: Date.now() - 2000000,
     author: "CryptoEconomist",
     content: "Recent regulatory developments across major economies show a trend toward more structured oversight rather than restrictive policies. The United States SEC is working on clearer guidelines for token classifications, while the European Union's MiCA framework is progressing toward implementation. These developments suggest a maturing regulatory environment that could provide more certainty for institutional investors.",
     keyPoints: [
@@ -122,7 +124,8 @@ const mockAnalyses: MarketAnalysis[] = [
     conclusion: "The regulatory environment is evolving toward acceptance with proper oversight, which is likely to be positive for the cryptocurrency ecosystem in the long term.",
     sentiment: "bullish",
     source: "Market Research",
-    confidence: 80
+    confidence: 80,
+    date: new Date(Date.now() - 2000000).toISOString()
   },
   
   {
@@ -133,7 +136,7 @@ const mockAnalyses: MarketAnalysis[] = [
     assetId: "ethereum",
     timeframe: "1M",
     timestamp: Date.now() - 3000000,
-    publishedAt: new Date(Date.now() - 3000000).toISOString(),
+    publishedAt: Date.now() - 3000000,
     author: "BlockchainResearcher",
     content: "Ethereum continues to dominate the smart contract platform space with over $100B in Total Value Locked (TVL) across its DeFi protocols. Developer activity remains robust with approximately 4,000 monthly active developers. The transition to Proof of Stake has reduced energy consumption by over 99%, addressing a major criticism. Layer-2 scaling solutions are seeing increased adoption, with over $5B locked in these protocols.",
     keyPoints: [
@@ -144,7 +147,8 @@ const mockAnalyses: MarketAnalysis[] = [
     conclusion: "Ethereum maintains strong fundamentals and ecosystem growth, supporting a bullish long-term outlook despite short-term price fluctuations.",
     sentiment: "bullish",
     source: "Blockchain Analytics",
-    confidence: 85
+    confidence: 85,
+    date: new Date(Date.now() - 3000000).toISOString()
   }
 ];
 

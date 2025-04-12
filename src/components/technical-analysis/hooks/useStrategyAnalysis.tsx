@@ -11,7 +11,7 @@ export const useStrategyAnalysis = (assetHistory: AssetHistoricalData | undefine
   const [showStrategyAnalysis, setShowStrategyAnalysis] = useState<boolean>(false);
 
   const analyzeStrategy = () => {
-    if (!assetHistory || !assetHistory.data || assetHistory.data.length < 30) {
+    if (!assetHistory || !assetHistory.prices || assetHistory.prices.length < 30) {
       toast.error("נדרשים נתונים היסטוריים מספקים לניתוח");
       return;
     }
@@ -22,11 +22,11 @@ export const useStrategyAnalysis = (assetHistory: AssetHistoricalData | undefine
     setTimeout(() => {
       try {
         // Create mock trades for demonstration - in a real app, these would be actual backtest results
-        const mockTradesData = assetHistory.data.slice(0, -5).map((point, index) => {
-          const futurePoints = assetHistory.data.slice(index + 1, index + 6);
+        const mockTradesData = assetHistory.prices.slice(0, -5).map((point, index) => {
+          const futurePoints = assetHistory.prices.slice(index + 1, index + 6);
           const direction = Math.random() > 0.5 ? 'long' : 'short';
-          const entryPrice = point.price;
-          const exitPrice = futurePoints[futurePoints.length - 1].price;
+          const entryPrice = point[1]; // Using price from the price array
+          const exitPrice = futurePoints[futurePoints.length - 1][1]; // Using price from the future array
           const profit = direction === 'long' ? exitPrice - entryPrice : entryPrice - exitPrice;
           const profitPercentage = (profit / entryPrice) * 100;
           
@@ -35,9 +35,9 @@ export const useStrategyAnalysis = (assetHistory: AssetHistoricalData | undefine
             type: direction === 'long' ? 'buy' : 'sell',
             quantity: 100,
             entryPrice,
-            entryDate: point.timestamp,
+            entryDate: point[0], // Using timestamp from the price array
             exitPrice,
-            exitDate: futurePoints[futurePoints.length - 1].timestamp,
+            exitDate: futurePoints[futurePoints.length - 1][0], // Using timestamp from the future array
             profit,
             profitPercentage,
             assetId: 'sample-asset',
@@ -58,10 +58,10 @@ export const useStrategyAnalysis = (assetHistory: AssetHistoricalData | undefine
           id: 'sample-backtest',
           assetId: 'sample-asset',
           settings: {
-            startDate: new Date(assetHistory.firstDate).toISOString(),
-            endDate: new Date(assetHistory.lastDate).toISOString(),
+            startDate: new Date(assetHistory.prices[0][0]).toISOString(),
+            endDate: new Date(assetHistory.prices[assetHistory.prices.length - 1][0]).toISOString(),
             strategy: 'Sample Strategy',
-            timeframe: assetHistory.timeframe,
+            timeframe: '1d', // Default timeframe
             initialCapital: 10000,
             takeProfit: 5,
             stopLoss: 3,
@@ -88,8 +88,8 @@ export const useStrategyAnalysis = (assetHistory: AssetHistoricalData | undefine
             losingTrades: mockTradesData.filter(t => (t.profit || 0) <= 0).length,
             averageTradeDuration: 5
           },
-          equity: assetHistory.data.map((point, index) => ({
-            date: new Date(point.timestamp).toISOString(),
+          equity: assetHistory.prices.map((point, index) => ({
+            date: new Date(point[0]).toISOString(),
             value: 1000 * (1 + (index * 0.01)),
             drawdown: Math.random() * 5,
             equity: 1000 * (1 + (index * 0.01))

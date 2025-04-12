@@ -39,12 +39,42 @@ export interface Asset {
   tags?: string[];
   strategy?: string;
   relatedAssets?: string[];
+  // Add missing properties
+  icon?: string;
+  description?: string;
+  website?: string;
+  whitepaper?: string;
+  socials?: {
+    twitter?: string;
+    telegram?: string;
+    reddit?: string;
+    github?: string;
+    discord?: string;
+    [key: string]: string | undefined;
+  };
+  supply?: {
+    circulating?: number;
+    total?: number;
+    max?: number;
+  };
 }
 
 export interface AssetHistoricalData {
   prices: number[][];
   market_caps: number[][];
   total_volumes: number[][];
+  // Add missing properties
+  id?: string;
+  symbol?: string;
+  name?: string;
+  timeframe?: string;
+  data?: Array<{
+    timestamp: number;
+    price: number;
+    volume?: number;
+  }>;
+  firstDate?: number;
+  lastDate?: number;
 }
 
 export type TimeframeType = 
@@ -63,6 +93,7 @@ export interface MarketData {
 export interface PricePoint {
   time: string;
   value: number;
+  timestamp?: number; // Add missing property
 }
 
 export interface SocialPost {
@@ -137,6 +168,11 @@ export interface MarketAnalysis {
   rating?: 'buy' | 'sell' | 'hold';
   targetPrice?: number;
   analyst?: string;
+  content?: string; // Add missing property
+  timeframe?: string; // Add missing property
+  timestamp?: number; // Add missing property
+  confidence?: number; // Add missing property
+  source?: string; // Add missing property
 }
 
 export interface TradeJournalEntry {
