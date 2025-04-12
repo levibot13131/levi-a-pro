@@ -32,7 +32,7 @@ const generateMockSignals = (assetId: string): TradeSignal[] => {
       stopLoss: 48000,
       riskRewardRatio: 2.5,
       createdAt: now - 2 * day,
-      // Additional properties used in UI
+      // Additional properties 
       symbolName: 'BTC',
       confidence: 85,
       indicator: 'פריצת התנגדות',

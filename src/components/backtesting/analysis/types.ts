@@ -66,6 +66,10 @@ export interface Analysis {
     keyEvents: HistoricalEvent[];
     trends: HistoricalTrend[];
     cyclicalPatterns: CyclicalPattern[];
+    // Optional fields that might be used in some places
+    support?: number[];
+    resistance?: number[];
+    volatility?: number;
   };
   current: {
     marketCondition: string;

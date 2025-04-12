@@ -1,18 +1,43 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  getInformationSources, 
-  getMarketInfluencers, 
-  getUpcomingMarketEvents,
-  toggleSourceFocus,
-  toggleInfluencerFollow,
-  setEventReminder
+  getSources as getInformationSources, 
+  getInfluencers as getMarketInfluencers, 
+  toggleSourceFavorite as toggleSourceFocus,
+  toggleInfluencerFollow
 } from '@/services/marketInformation/index';
 import { MarketInfluencer, MarketSource } from '@/types/market';
-import { InfluencersTab } from '@/components/information-sources/InfluencersTab';
-import { SourcesTab } from '@/components/information-sources/SourcesTab';
-import { EventsTab } from '@/components/information-sources/EventsTab';
+import InfluencersTab from '@/components/information-sources/InfluencersTab';
+import SourcesTab from '@/components/information-sources/SourcesTab';
+import EventsTab from '@/components/information-sources/EventsTab';
+
+// Mock function for upcoming events
+const getUpcomingMarketEvents = () => {
+  return [
+    {
+      id: '1',
+      title: 'הודעת ריבית פדרלית',
+      date: '2025-05-01',
+      importance: 'high',
+      category: 'economic',
+      description: 'הודעת הריבית הפדרלית לחודש מאי 2025'
+    },
+    {
+      id: '2',
+      title: 'פרסום דוחות רבעון ראשון',
+      date: '2025-04-20',
+      importance: 'medium',
+      category: 'earnings',
+      description: 'פרסום דוחות רבעוניים של חברות מרכזיות בשוק הקריפטו'
+    }
+  ];
+};
+
+// Mock function for setting event reminders
+const setEventReminder = (eventId: string) => {
+  console.log(`Setting reminder for event ${eventId}`);
+  return true;
+};
 
 const InformationSources = () => {
   const [activeTab, setActiveTab] = useState('influencers');
@@ -66,10 +91,10 @@ const InformationSources = () => {
     const newRemindEvents = new Set(remindEvents);
     if (newRemindEvents.has(eventId)) {
       newRemindEvents.delete(eventId);
-      setEventReminder(eventId, false);
+      setEventReminder(eventId);
     } else {
       newRemindEvents.add(eventId);
-      setEventReminder(eventId, true);
+      setEventReminder(eventId);
     }
     setRemindEvents(newRemindEvents);
   };
