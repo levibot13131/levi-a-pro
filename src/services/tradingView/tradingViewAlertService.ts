@@ -132,11 +132,7 @@ export async function sendAlert(alert: TradingViewAlert): Promise<boolean> {
       return false;
     }
     
-    const results = await Promise.all(
-      activeDestinations.map(destination => sendAlertToDestinations(alert, destination))
-    );
-    
-    const successCount = results.filter(success => success).length;
+    const successCount = await sendAlertToDestinations(alert, activeDestinations);
     
     if (successCount > 0) {
       toast.success(`Alert sent to ${successCount} destination${successCount !== 1 ? 's' : ''}`);

@@ -1,7 +1,7 @@
 
 import { toast } from 'sonner';
 import { parseWebhookData, webhookDataToAlert } from './parser';
-import { processAndSendAlert, createSampleAlert } from '../tradingViewAlertService';
+import { processAndSendAlert } from '../tradingViewAlertService';
 import { WebhookData } from './types';
 import { createTradingViewAlert, TradingViewAlert } from '../alerts/types';
 
@@ -42,6 +42,9 @@ export async function processWebhook(data: any): Promise<boolean> {
  */
 export async function testWebhookSignalFlow(type: 'buy' | 'sell' | 'info'): Promise<boolean> {
   try {
+    // Import createSampleAlert directly from tradingViewAlertService
+    const { createSampleAlert } = require('../tradingViewAlertService');
+    
     // Create a sample alert
     const sampleAlert = createSampleAlert(type);
     console.log('Created sample alert for testing:', sampleAlert);
