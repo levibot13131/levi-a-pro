@@ -1,23 +1,16 @@
-export interface FinancialDataSource {
-  id: string;
-  name: string;
-  description: string;
-  url: string;
-  type: string;
-  category: string;
-  rating: number;
-  platform: string;
-  focused?: boolean;
-  accessType?: 'free' | 'freemium' | 'premium' | 'subscription';
-  languages?: string[];
-  reliability?: number;
-  updateFrequency?: string;
-}
 
-export interface PlatformInfo {
+export interface MarketEvent {
+  id: string;
+  title: string;
+  date: string;
+  importance: string;
+  category: string;
+  description: string;
+  relatedAssets: string[];
+  expectedImpact: string;
+  source: string;
+  reminder: boolean;
   type: string;
-  url: string;
-  followers: number;
 }
 
 export interface MarketInfluencer {
@@ -25,28 +18,22 @@ export interface MarketInfluencer {
   name: string;
   platform: string;
   followers: number;
-  bio: string;
-  profileUrl: string;
+  reliability: number;
   expertise: string[];
-  username: string;
-  followStatus?: boolean;
-  specialty?: string[];
-  sentiment?: 'positive' | 'negative' | 'neutral' | 'bullish' | 'bearish' | 'variable';
-  platforms?: PlatformInfo[];
-  description?: string;
-  reliability?: number;
+  imageUrl?: string;
+  description: string;
+  lastPrediction?: string;
+  isPremium?: boolean;
 }
 
-export interface MarketEvent {
+export interface FinancialDataSource {
   id: string;
-  title: string;
-  description: string;
-  date: string;
-  category: string;
-  importance: 'low' | 'medium' | 'high' | 'critical';
-  relatedAssets: string[];
-  expectedImpact: 'positive' | 'negative' | 'neutral' | 'variable';
-  source: string;
-  reminder: boolean;
+  name: string;
   type: string;
+  reliability: number;
+  category: string[];
+  url: string;
+  description: string;
+  isPaid: boolean;
+  frequencyUpdate: string;
 }

@@ -14,7 +14,7 @@ interface MarketData {
 export function useBinanceData(symbols: string[] = []) {
   const [marketData, setMarketData] = useState<Record<string, MarketData>>({});
   const [realTimeActive, setRealTimeActive] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // Add isLoading state
+  const [isLoading, setIsLoading] = useState(true);
 
   // נתונים בסיסיים עבור כל סימול
   const { data: fundamentalData, isLoading: isFundamentalLoading } = useQuery({
@@ -31,83 +31,75 @@ export function useBinanceData(symbols: string[] = []) {
       
       return result;
     },
-    enabled: symbols.length > 0,
-    staleTime: 1000 * 60 * 60, // פעם בשעה
+    enabled: symbols.length > 0
   });
 
-  // התחברות לנתונים בזמן אמת
   useEffect(() => {
+    // Check if we are in production environment (Lovable preview/production)
+    const isProduction = window.location.hostname.includes('lovable.app');
+    
     if (symbols.length === 0) {
       setIsLoading(false);
       return;
     }
-    
-    setIsLoading(true);
-    
-    // אתחול נתוני מחיר ראשוניים
-    const initialData: Record<string, MarketData> = {};
-    symbols.forEach(symbol => {
-      initialData[symbol] = {
-        symbol,
-        price: Math.random() * 1000 + 100, // מחיר התחלתי אקראי
-        change24h: (Math.random() * 10) - 5, // שינוי יומי אקראי
-        volume: Math.random() * 1000000,
-        lastUpdate: Date.now()
-      };
-    });
-    setMarketData(initialData);
-    
-    // התחלת עדכוני מחיר בזמן אמת
-    const realTimeService = startRealTimeMarketData(symbols);
-    setRealTimeActive(true);
-    
-    // אינטרבל לסימולציה של נתונים בזמן אמת
-    const interval = setInterval(() => {
-      setMarketData(prev => {
-        const updated = { ...prev };
-        symbols.forEach(symbol => {
-          if (updated[symbol]) {
-            // עדכון מחיר בצורה אקראית (לדמות תנודות מחיר)
-            const priceChange = updated[symbol].price * (Math.random() * 0.02 - 0.01);
-            updated[symbol] = {
-              ...updated[symbol],
-              price: updated[symbol].price + priceChange,
-              change24h: updated[symbol].change24h + (Math.random() * 0.5 - 0.25),
-              lastUpdate: Date.now()
-            };
-          }
-        });
-        return updated;
+
+    if (isProduction) {
+      // In production/preview, simulate real-time data instead of connecting to Binance
+      console.log('Running in Lovable environment, simulating Binance data');
+      
+      // Generate simulated data for each symbol
+      const simulatedData: Record<string, MarketData> = {};
+      symbols.forEach(symbol => {
+        simulatedData[symbol] = {
+          symbol,
+          price: Math.random() * 50000 + 1000, // Random price between 1,000 and 51,000
+          change24h: (Math.random() * 10) - 5, // Random change between -5% and +5%
+          volume: Math.random() * 1000000000,
+          lastUpdate: Date.now()
+        };
       });
-    }, 5000); // עדכון כל 5 שניות
-    
-    setIsLoading(false);
-    
-    return () => {
-      clearInterval(interval);
-      if (realTimeService) {
-        realTimeService.stop();
-      }
-      setRealTimeActive(false);
-    };
+      
+      setMarketData(simulatedData);
+      setRealTimeActive(true);
+      setIsLoading(false);
+      
+      // Simulate periodic updates
+      const interval = setInterval(() => {
+        setMarketData(prev => {
+          const updated = { ...prev };
+          symbols.forEach(symbol => {
+            if (updated[symbol]) {
+              // Small random price change
+              const priceChange = updated[symbol].price * (Math.random() * 0.01 - 0.005);
+              updated[symbol] = {
+                ...updated[symbol],
+                price: updated[symbol].price + priceChange,
+                change24h: updated[symbol].change24h + (Math.random() * 0.2 - 0.1),
+                lastUpdate: Date.now()
+              };
+            }
+          });
+          return updated;
+        });
+      }, 5000);
+      
+      return () => clearInterval(interval);
+    } else {
+      // In development, try to connect to the real Binance API
+      const cleanup = startRealTimeMarketData(symbols, (data) => {
+        setMarketData(prev => ({ ...prev, ...data }));
+        setRealTimeActive(true);
+        setIsLoading(false);
+      });
+      
+      return cleanup;
+    }
   }, [symbols.join(',')]);
-
-  // עצירת עדכוני מחיר בזמן אמת
-  const stopRealTimeUpdates = () => {
-    setRealTimeActive(false);
-  };
-
-  // התחלת עדכוני מחיר בזמן אמת
-  const startRealTimeUpdates = () => {
-    setRealTimeActive(true);
-  };
 
   return {
     marketData,
     fundamentalData,
-    isRealTimeActive: realTimeActive,
-    stopRealTimeUpdates,
-    startRealTimeUpdates,
-    isLoading: isLoading || isFundamentalLoading // Add isLoading to return
+    isLoading: isLoading || isFundamentalLoading,
+    realTimeActive
   };
 }

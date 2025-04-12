@@ -1,99 +1,100 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { LogIn, LogOut, User, Menu, X } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { LogOut, User, Settings } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
-const AuthNavbar: React.FC = () => {
-  const { isAuthenticated, logout } = useAuth();
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-
+const AuthNavbar = () => {
+  const { user, isAdmin, logout } = useAuth();
+  
   return (
-    <nav className="bg-background border-b py-3 px-4 flex items-center justify-between">
-      <div className="flex items-center gap-2">
-        <Link to="/" className="text-xl font-bold">Levi Bot</Link>
-      </div>
-
-      {/* Mobile Menu Button */}
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="h-5 w-5" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="right" className="w-[250px] sm:w-[300px]">
-          <div className="flex flex-col gap-4 mt-8">
-            <Link to="/" className="text-lg font-medium hover:text-primary">ראשי</Link>
-            <Link to="/assets" className="text-lg font-medium hover:text-primary">נכסים</Link>
-            <Link to="/market-news" className="text-lg font-medium hover:text-primary">חדשות</Link>
-            <Link to="/trading-signals" className="text-lg font-medium hover:text-primary">איתותי מסחר</Link>
-            <Link to="/backtesting" className="text-lg font-medium hover:text-primary">בדיקה היסטורית</Link>
-            <Link to="/tradingview-integration" className="text-lg font-medium hover:text-primary">TradingView</Link>
-            
-            {isAuthenticated ? (
-              <>
-                <Link to="/settings" className="text-lg font-medium hover:text-primary">הגדרות</Link>
-                <Button 
-                  variant="outline" 
-                  className="mt-2"
-                  onClick={() => logout()}
-                >
-                  <LogOut className="ml-2 h-4 w-4" />
-                  התנתק
-                </Button>
-              </>
-            ) : (
-              <Link to="/login">
-                <Button className="w-full">
-                  <LogIn className="ml-2 h-4 w-4" />
-                  התחבר
-                </Button>
-              </Link>
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      {/* Desktop Navigation */}
-      <div className="hidden md:flex items-center gap-6">
-        <Link to="/" className="text-sm font-medium hover:text-primary">ראשי</Link>
-        <Link to="/assets" className="text-sm font-medium hover:text-primary">נכסים</Link>
-        <Link to="/market-news" className="text-sm font-medium hover:text-primary">חדשות</Link>
-        <Link to="/trading-signals" className="text-sm font-medium hover:text-primary">איתותי מסחר</Link>
-        <Link to="/backtesting" className="text-sm font-medium hover:text-primary">בדיקה היסטורית</Link>
-      </div>
-
-      {/* Authentication Buttons */}
-      <div className="hidden md:flex items-center gap-2">
-        {isAuthenticated ? (
-          <>
-            <Link to="/settings">
-              <Button variant="ghost" size="sm">
-                <User className="ml-2 h-4 w-4" />
-                הגדרות
-              </Button>
-            </Link>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => logout()}
-            >
-              <LogOut className="ml-2 h-4 w-4" />
-              התנתק
-            </Button>
-          </>
-        ) : (
-          <Link to="/login">
-            <Button size="sm">
-              <LogIn className="ml-2 h-4 w-4" />
-              התחבר
-            </Button>
+    <div className="border-b">
+      <div className="flex h-16 items-center px-4 container mx-auto">
+        <div className="flex items-center space-x-4 rtl:space-x-reverse">
+          <Link to="/" className="font-semibold text-lg">
+            מערכת ניתוח מתקדמת
           </Link>
-        )}
+          
+          {/* Always show basic navigation, even if not logged in */}
+          <nav className="mr-2 flex items-center space-x-4 rtl:space-x-reverse text-sm font-medium">
+            <Link to="/asset-tracker" className="text-foreground/60 hover:text-foreground transition-colors">
+              רשימת מעקב
+            </Link>
+            <Link to="/trading-signals" className="text-foreground/60 hover:text-foreground transition-colors">
+              איתותי מסחר
+            </Link>
+            <Link to="/technical-analysis" className="text-foreground/60 hover:text-foreground transition-colors">
+              ניתוח טכני
+            </Link>
+          </nav>
+        </div>
+        
+        <div className="ml-auto flex items-center space-x-4 rtl:space-x-reverse">
+          <ThemeToggle />
+          
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={user.photoURL || ''} />
+                    <AvatarFallback className="bg-primary/10">
+                      {user.displayName?.charAt(0) || user.email?.charAt(0) || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end">
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="flex items-center">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>פרופיל</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/settings" className="flex items-center">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>הגדרות</span>
+                  </Link>
+                </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem asChild>
+                    <Link to="/admin" className="flex items-center">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>ניהול</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logout} className="flex items-center">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>התנתק</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="flex items-center space-x-2 rtl:space-x-reverse">
+              <Link to="/login">
+                <Button variant="ghost" size="sm">כניסה</Button>
+              </Link>
+              <Link to="/register">
+                <Button size="sm">הרשמה</Button>
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
-    </nav>
+    </div>
   );
 };
 

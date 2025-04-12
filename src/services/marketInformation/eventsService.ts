@@ -1,5 +1,5 @@
 
-import { MarketEvent } from '@/types/asset';
+import { MarketEvent } from '@/types/marketInformation';
 import { MARKET_EVENTS } from './mockData';
 
 export const getMarketEvents = (filter?: string): MarketEvent[] => {
