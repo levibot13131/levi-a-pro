@@ -7,59 +7,14 @@ import {
   toggleSourceFavorite,
   toggleInfluencerFollow,
   getUpcomingMarketEvents,
-  setEventReminder
+  setEventReminder,
+  MarketInfluencer,
+  MarketEvent,
+  FinancialDataSource
 } from '@/services/marketInformation/index';
 import InfluencersTab from '@/components/information-sources/InfluencersTab';
 import SourcesTab from '@/components/information-sources/SourcesTab';
 import EventsTab from '@/components/information-sources/EventsTab';
-
-// Define the types required for this component
-export interface MarketInfluencer {
-  id: string;
-  name: string;
-  username: string;
-  bio: string;
-  platform: 'twitter' | 'youtube' | 'telegram' | 'other';
-  profileUrl: string;
-  avatarUrl?: string;
-  followers: number;
-  expertise: string[];
-  reliability: number;
-  isVerified: boolean;
-  isFollowing?: boolean;
-  lastPost?: string;
-  posts?: any[];
-}
-
-export interface MarketEvent {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  time?: string;
-  type: string;
-  expectedImpact: 'positive' | 'negative' | 'neutral';
-  relatedAssets: string[];
-  source: string;
-  reminder: boolean;
-  link?: string;
-}
-
-export interface FinancialDataSource {
-  id: string;
-  name: string;
-  type: 'news' | 'data' | 'social' | 'research' | 'other';
-  description: string;
-  url: string;
-  isFeatured: boolean;
-  isPaid: boolean;
-  frequencyUpdate: string;
-  reliability: number;
-  languages: string[];
-  categories: string[];
-  logo?: string;
-  isFavorite?: boolean;
-}
 
 const InformationSources = () => {
   const [activeTab, setActiveTab] = useState('influencers');
@@ -82,21 +37,23 @@ const InformationSources = () => {
     // Adapt the returned influencers to include required properties
     const fetchedInfluencers = getInfluencers().map(inf => ({
       ...inf, 
-      bio: inf.description || 'No bio available',
-      expertise: inf.assetsDiscussed || ['cryptocurrency'],
-      username: inf.name.toLowerCase().replace(/\s/g, ''), // Generate a username if missing
-      reliability: 4, // Add missing property
+      bio: inf.bio || inf.description || 'No bio available',
+      expertise: inf.expertise || inf.assetsDiscussed || ['cryptocurrency'],
+      username: inf.username || inf.name.toLowerCase().replace(/\s/g, ''), // Generate a username if missing
+      reliability: inf.influence || 4, // Add missing property
     })) as MarketInfluencer[];
     
     // Adapt the returned sources to include required properties
     const fetchedSources = getSources().map(source => ({
       ...source,
-      category: source.type,
+      category: source.category || source.type,
       rating: source.reliability || 3,
-      platform: source.type,
-      isPaid: false,
+      platform: source.platform || source.type,
+      isPaid: source.isPremium || false,
       frequencyUpdate: 'daily',
-      languages: ['en']
+      languages: source.languages || ['en'],
+      categories: source.categories || [source.type],
+      isFeatured: Math.random() > 0.7 // Randomly feature some sources for the demo
     })) as FinancialDataSource[];
     
     // Complete the market events with required fields
@@ -106,7 +63,7 @@ const InformationSources = () => {
       relatedAssets: event.relatedAssets || [],
       expectedImpact: event.expectedImpact || 'neutral',
       source: event.source || 'system',
-      reminder: false,
+      reminder: Boolean(event.reminder),
       type: event.type || 'economic'
     })) as MarketEvent[];
     
