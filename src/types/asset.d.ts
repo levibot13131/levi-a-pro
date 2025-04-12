@@ -1,3 +1,4 @@
+
 export interface TradeJournalEntry {
   id: string;
   assetId: string;
