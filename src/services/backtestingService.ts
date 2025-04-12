@@ -11,10 +11,10 @@ export * from './whaleTrackerService';
 // Import directly from the marketInformation directory services 
 // to avoid circular dependency and type conflicts
 import {
-  getInformationSources,
-  getMarketInfluencers,
+  getSources as getInformationSources,
+  getInfluencers as getMarketInfluencers,
   getUpcomingMarketEvents,
-  toggleSourceFocus,
+  toggleSourceFavorite as toggleSourceFocus,
   toggleInfluencerFollow,
   setEventReminder,
   addCustomEvent
@@ -31,4 +31,5 @@ export {
 };
 
 // Re-export the types directly from the types module
-export type { FinancialDataSource, MarketInfluencer, MarketEvent } from '@/types/marketInformation';
+export type { MarketInfluencer, MarketSource } from '@/types/market';
+export type { MarketEvent } from '@/types/marketData';

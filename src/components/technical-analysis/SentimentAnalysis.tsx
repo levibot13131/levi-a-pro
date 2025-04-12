@@ -21,7 +21,7 @@ const SentimentAnalysis: React.FC<SentimentAnalysisProps> = ({ assetId }) => {
                 <span className="text-sm text-green-500">65</span>
                 <span className="text-sm">מדד פחד/חמדנות</span>
               </div>
-              <Progress value={65} className="h-2 bg-gray-200" indicatorClassName="bg-green-500" />
+              <Progress value={65} className="h-2 bg-gray-200" />
             </div>
             
             <div>
@@ -29,7 +29,7 @@ const SentimentAnalysis: React.FC<SentimentAnalysisProps> = ({ assetId }) => {
                 <span className="text-sm text-green-500">72%</span>
                 <span className="text-sm">סנטימנט רשתות חברתיות</span>
               </div>
-              <Progress value={72} className="h-2 bg-gray-200" indicatorClassName="bg-green-500" />
+              <Progress value={72} className="h-2 bg-gray-200" />
             </div>
             
             <div>
@@ -37,7 +37,7 @@ const SentimentAnalysis: React.FC<SentimentAnalysisProps> = ({ assetId }) => {
                 <span className="text-sm text-yellow-500">55%</span>
                 <span className="text-sm">סנטימנט חדשות</span>
               </div>
-              <Progress value={55} className="h-2 bg-gray-200" indicatorClassName="bg-yellow-500" />
+              <Progress value={55} className="h-2 bg-gray-200" />
             </div>
           </div>
         </CardContent>

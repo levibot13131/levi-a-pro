@@ -1,4 +1,3 @@
-
 export interface Asset {
   id: string;
   name: string;
@@ -69,16 +68,12 @@ export interface TradeSignal {
   price: number;
   timestamp: number;
   strength: 'strong' | 'medium' | 'weak';
-  strategy: string;  // Required field
+  strategy: string;
   timeframe: string;
   targetPrice?: number;
   stopLoss?: number;
   riskRewardRatio?: number;
-  notes?: string;
-  source?: string;
   createdAt: number;
-  
-  // Additional properties needed by the UI
   symbolName?: string;
   confidence?: number;
   indicator?: string;
@@ -96,16 +91,10 @@ export interface TradeJournalEntry {
   targetPrice?: number;
   positionSize: number;
   risk: number;
-  strategy: string;  // Make this required
-  tags?: string[];
   notes?: string;
-  outcome: 'win' | 'loss' | 'open' | 'breakeven';
-  exitPrice?: number;
-  exitDate?: string;
-  pnl?: number;
-  pnlPercentage?: number;
-  duration?: number;
-  screenshotUrl?: string;
+  strategy: string;
+  tags?: string[];
+  outcome: 'open' | 'win' | 'loss' | 'breakeven';
 }
 
 export interface SocialPost {

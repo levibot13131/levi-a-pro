@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 
 interface PatternRecognitionProps {
   assetId: string;
@@ -12,39 +11,36 @@ const PatternRecognition: React.FC<PatternRecognitionProps> = ({ assetId }) => {
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-right text-sm">תבניות נרות יפניים</CardTitle>
+          <CardTitle className="text-right text-sm">תבניות נבחרות</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-right space-y-2">
-            <div className="flex justify-between items-center">
-              <Badge variant="outline" className="border-green-500 text-green-600">חזק</Badge>
-              <span>Bullish Engulfing</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <Badge variant="outline" className="border-gray-400 text-gray-500">חלש</Badge>
-              <span>Morning Star</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <Badge variant="outline" className="border-yellow-500 text-yellow-600">בינוני</Badge>
-              <span>Hammer</span>
-            </div>
+          <div className="text-right">
+            <p className="mb-2">המערכת מזהה מספר תבניות אפשריות לנכס {assetId}.</p>
+            <ul className="list-disc list-inside space-y-1">
+              <li>תבנית הכתפיים העוקפת: סבירות בינונית (65%)</li>
+              <li>תמיכה משמעותית בגובה $48,500</li>
+              <li>התנגדות מהותית בגובה $52,000</li>
+            </ul>
           </div>
         </CardContent>
       </Card>
       
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-right text-sm">תבניות מחיר</CardTitle>
+          <CardTitle className="text-right text-sm">תבניות בעלות סבירות גבוהה</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-right space-y-2">
-            <div className="flex justify-between items-center">
-              <Badge variant="outline" className="border-green-500 text-green-600">מאומת</Badge>
-              <span>דגל עולה</span>
+          <div className="text-right">
+            <div className="mb-3 pb-3 border-b">
+              <h3 className="font-medium mb-1">תבנית דגל עולה</h3>
+              <p className="text-sm text-muted-foreground">סבירות: 78%</p>
+              <p className="text-sm">אופייני למגמה עולה, עם התמשכות צפויה של העלייה</p>
             </div>
-            <div className="flex justify-between items-center">
-              <Badge variant="outline" className="border-yellow-500 text-yellow-600">בהתהוות</Badge>
-              <span>תחתית כפולה</span>
+            
+            <div>
+              <h3 className="font-medium mb-1">מנייד נר יפני</h3>
+              <p className="text-sm text-muted-foreground">סבירות: 65%</p>
+              <p className="text-sm">נר מקלות אורך עם פתיל תחתון משמעותי</p>
             </div>
           </div>
         </CardContent>

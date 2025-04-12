@@ -13,8 +13,6 @@ export interface CustomSignalsProps {
   formatPrice: (price: number) => string;
 }
 
-// Extend TradeSignal type with the missing properties in a different file if needed
-
 // Mock signal generation
 const generateMockSignals = (assetId: string): TradeSignal[] => {
   const now = Date.now();

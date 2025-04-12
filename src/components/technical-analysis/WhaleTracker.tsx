@@ -2,7 +2,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowDownIcon, ArrowUpIcon } from 'lucide-react';
 
 interface WhaleTrackerProps {
   assetId: string;
@@ -18,37 +17,32 @@ const WhaleTracker: React.FC<WhaleTrackerProps> = ({ assetId, formatPrice }) => 
         </CardHeader>
         <CardContent>
           <div className="text-right space-y-3">
-            <div className="flex justify-between items-center border-b pb-2">
-              <div className="flex items-center">
-                <Badge variant="secondary" className="ml-2">
-                  <ArrowUpIcon className="h-3 w-3 ml-1" />
-                  קנייה
-                </Badge>
-                <span className="text-green-500">{formatPrice(250)} BTC</span>
+            <div className="border p-3 rounded-md">
+              <div className="flex justify-between items-start mb-1">
+                <Badge variant="outline" className="bg-green-100 text-green-800">קנייה</Badge>
+                <div>
+                  <p className="font-medium">1,500 BTC</p>
+                  <p className="text-xs text-muted-foreground">לפני 3 שעות</p>
+                </div>
               </div>
-              <div className="text-sm text-gray-500">לפני 3 שעות</div>
+              <div className="text-sm">
+                <p>ארנק: bc1q...34jk</p>
+                <p>שווי: {formatPrice(1500 * 45000)} USD</p>
+              </div>
             </div>
             
-            <div className="flex justify-between items-center border-b pb-2">
-              <div className="flex items-center">
-                <Badge variant="secondary" className="ml-2">
-                  <ArrowDownIcon className="h-3 w-3 ml-1" />
-                  מכירה
-                </Badge>
-                <span className="text-red-500">{formatPrice(180)} BTC</span>
+            <div className="border p-3 rounded-md">
+              <div className="flex justify-between items-start mb-1">
+                <Badge variant="outline" className="bg-red-100 text-red-800">מכירה</Badge>
+                <div>
+                  <p className="font-medium">850 BTC</p>
+                  <p className="text-xs text-muted-foreground">לפני 8 שעות</p>
+                </div>
               </div>
-              <div className="text-sm text-gray-500">לפני 7 שעות</div>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <div className="flex items-center">
-                <Badge variant="secondary" className="ml-2">
-                  <ArrowUpIcon className="h-3 w-3 ml-1" />
-                  קנייה
-                </Badge>
-                <span className="text-green-500">{formatPrice(430)} BTC</span>
+              <div className="text-sm">
+                <p>ארנק: bc1q...87fg</p>
+                <p>שווי: {formatPrice(850 * 45500)} USD</p>
               </div>
-              <div className="text-sm text-gray-500">לפני 12 שעות</div>
             </div>
           </div>
         </CardContent>
@@ -56,18 +50,23 @@ const WhaleTracker: React.FC<WhaleTrackerProps> = ({ assetId, formatPrice }) => 
       
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-right text-sm">דוחות צבירה/הפצה</CardTitle>
+          <CardTitle className="text-right text-sm">זרימת לוויתנים - 7 ימים אחרונים</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-right">
-            <p className="mb-3">יחס צבירה/הפצה ב-7 ימים אחרונים:</p>
-            <div className="flex justify-end items-center mb-2">
-              <Badge className="ml-2 bg-green-500">חיובי</Badge>
-              <span className="font-medium">1.4</span>
+          <div className="text-right space-y-2">
+            <div className="flex justify-between">
+              <span className="text-green-500 font-medium">+3,200 BTC</span>
+              <span>קניות נטו</span>
             </div>
-            <p className="text-sm text-gray-600">
-              היחס הנוכחי מצביע על צבירה נטו חיובית, כלומר כמות מטבעות גדולה יותר נכנסה לארנקי לוויתנים מאשר יצאה מהם בשבוע האחרון.
-            </p>
+            <div className="flex justify-between">
+              <span className="text-red-500 font-medium">-1,800 BTC</span>
+              <span>מכירות נטו</span>
+            </div>
+            <div className="flex justify-between font-medium">
+              <span className="text-blue-500">+1,400 BTC</span>
+              <span>מאזן נטו</span>
+            </div>
+            <p className="text-sm mt-2">התנהגות הלוויתנים מצביעה על אמון בשוק בטווח הארוך.</p>
           </div>
         </CardContent>
       </Card>

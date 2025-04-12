@@ -1,155 +1,146 @@
+
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   getInformationSources, 
   getMarketInfluencers, 
   getUpcomingMarketEvents,
   toggleSourceFocus,
   toggleInfluencerFollow,
-  setEventReminder,
+  setEventReminder
 } from '@/services/marketInformation/index';
-
-import type {
-  FinancialDataSource,
-  MarketInfluencer,
-  MarketEvent
-} from '@/types/marketInformation';
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Newspaper, Users } from 'lucide-react';
-
-import SearchBar from '@/components/information-sources/SearchBar';
-import SourcesTab from '@/components/information-sources/SourcesTab';
-import InfluencersTab from '@/components/information-sources/InfluencersTab';
-import EventsTab from '@/components/information-sources/EventsTab';
+import { MarketInfluencer, MarketSource } from '@/types/market';
+import { InfluencersTab } from '@/components/information-sources/InfluencersTab';
+import { SourcesTab } from '@/components/information-sources/SourcesTab';
+import { EventsTab } from '@/components/information-sources/EventsTab';
 
 const InformationSources = () => {
+  const [activeTab, setActiveTab] = useState('influencers');
   const [searchTerm, setSearchTerm] = useState('');
-  const [sourceCategory, setSourceCategory] = useState<string>('all');
-  const [influencerFilter, setInfluencerFilter] = useState<string>('all');
-  const [eventFilter, setEventFilter] = useState<string>('all');
   
-  const { data: sources = [], isLoading: sourcesLoading, refetch: refetchSources } = useQuery<FinancialDataSource[]>({
-    queryKey: ['informationSources'],
-    queryFn: getInformationSources,
-  });
+  // Sources state
+  const [sources, setSources] = useState<MarketSource[]>([]);
+  const [focusedSourceIds, setFocusedSourceIds] = useState<Set<string>>(new Set());
   
-  const { data: influencers = [], isLoading: influencersLoading, refetch: refetchInfluencers } = useQuery<MarketInfluencer[]>({
-    queryKey: ['marketInfluencers'],
-    queryFn: getMarketInfluencers,
-  });
+  // Influencers state
+  const [influencers, setInfluencers] = useState<MarketInfluencer[]>([]);
+  const [followedInfluencerIds, setFollowedInfluencerIds] = useState<Set<string>>(new Set());
   
-  const { data: events = [], isLoading: eventsLoading, refetch: refetchEvents } = useQuery<MarketEvent[]>({
-    queryKey: ['marketEvents'],
-    queryFn: () => getUpcomingMarketEvents(90),
-  });
+  // Events state
+  const [events, setEvents] = useState<any[]>([]);
+  const [remindEvents, setRemindEvents] = useState<Set<string>>(new Set());
   
-  const filteredSources = sources.filter(source => {
-    const matchesSearch = source.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (source.description && source.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCategory = sourceCategory === 'all' || source.category === sourceCategory;
-    return matchesSearch && matchesCategory;
-  });
+  // Fetch initial data
+  React.useEffect(() => {
+    setInfluencers(getMarketInfluencers());
+    setSources(getInformationSources());
+    setEvents(getUpcomingMarketEvents());
+  }, []);
   
-  const filteredInfluencers = influencers.filter(influencer => {
-    const matchesSearch = influencer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (influencer.description && influencer.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesFilter = influencerFilter === 'all' || 
-                        (influencerFilter === 'following' && influencer.followStatus === true) ||
-                        (influencerFilter === 'specialty' && influencer.specialty && 
-                         Array.isArray(influencer.specialty) && 
-                         influencer.specialty.some(s => s.toLowerCase().includes(searchTerm.toLowerCase())));
-    return matchesSearch && matchesFilter;
-  });
-  
-  const filteredEvents = events.filter(event => {
-    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (event.description && event.description.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesFilter = eventFilter === 'all' || 
-                        (eventFilter === 'reminder' && event.reminder) ||
-                        (eventFilter === 'critical' && event.importance === 'critical');
-    return matchesSearch && matchesFilter;
-  });
-  
-  const handleToggleSource = async (sourceId: string, focused: boolean) => {
-    await toggleSourceFocus(sourceId, focused);
-    refetchSources();
+  // Handle focus source
+  const handleSourceFocus = (sourceId: string) => {
+    const newFocusedSources = new Set(focusedSourceIds);
+    if (newFocusedSources.has(sourceId)) {
+      newFocusedSources.delete(sourceId);
+    } else {
+      newFocusedSources.add(sourceId);
+    }
+    setFocusedSourceIds(newFocusedSources);
+    toggleSourceFocus(sourceId);
   };
   
-  const handleToggleInfluencer = async (influencerId: string, following: boolean) => {
-    await toggleInfluencerFollow(influencerId, following);
-    refetchInfluencers();
+  // Handle follow influencer
+  const handleFollowInfluencer = (influencerId: string) => {
+    const newFollowedInfluencers = new Set(followedInfluencerIds);
+    if (newFollowedInfluencers.has(influencerId)) {
+      newFollowedInfluencers.delete(influencerId);
+    } else {
+      newFollowedInfluencers.add(influencerId);
+    }
+    setFollowedInfluencerIds(newFollowedInfluencers);
+    toggleInfluencerFollow(influencerId);
   };
   
-  const handleToggleEventReminder = async (eventId: string, reminder: boolean) => {
-    await setEventReminder(eventId, reminder);
-    refetchEvents();
+  // Handle event reminder
+  const handleEventReminder = (eventId: string) => {
+    const newRemindEvents = new Set(remindEvents);
+    if (newRemindEvents.has(eventId)) {
+      newRemindEvents.delete(eventId);
+      setEventReminder(eventId, false);
+    } else {
+      newRemindEvents.add(eventId);
+      setEventReminder(eventId, true);
+    }
+    setRemindEvents(newRemindEvents);
   };
   
-  const formatDate = (dateString: string) => {
-    const options: Intl.DateTimeFormatOptions = { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric', 
-      hour: '2-digit', 
-      minute: '2-digit'
-    };
-    return new Date(dateString).toLocaleDateString('he-IL', options);
-  };
+  // Filter data based on search term
+  const filteredInfluencers = influencers.filter(
+    inf => 
+      inf.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      inf.username.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const filteredSources = sources.filter(
+    source => 
+      source.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      source.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const filteredEvents = events.filter(
+    event => 
+      event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   
   return (
-    <div className="container mx-auto py-6 px-4 md:px-6">
-      <h1 className="text-3xl font-bold mb-6 text-right">מקורות מידע וניטור שוק</h1>
+    <div className="container mx-auto py-6">
+      <h1 className="text-3xl font-bold mb-6 text-right">מקורות מידע</h1>
       
-      <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+      <div className="flex flex-col-reverse md:flex-row gap-4 mb-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
+          <TabsList className="w-full">
+            <TabsTrigger value="influencers" className="flex-1">משפיענים</TabsTrigger>
+            <TabsTrigger value="sources" className="flex-1">מקורות</TabsTrigger>
+            <TabsTrigger value="events" className="flex-1">אירועים</TabsTrigger>
+          </TabsList>
+        </Tabs>
+        
+        <div className="w-full md:w-64">
+          <input
+            type="text"
+            placeholder="חיפוש..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full p-2 border rounded-md"
+            dir="rtl"
+          />
+        </div>
+      </div>
       
-      <Tabs defaultValue="sources" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 md:w-[600px] mx-auto">
-          <TabsTrigger value="sources" className="flex items-center gap-2">
-            <Newspaper className="h-4 w-4" />
-            מקורות מידע
-          </TabsTrigger>
-          <TabsTrigger value="influencers" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            דמויות מפתח
-          </TabsTrigger>
-          <TabsTrigger value="events" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" />
-            אירועי שוק
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="sources">
-          <SourcesTab 
-            sources={filteredSources}
-            sourceCategory={sourceCategory}
-            setSourceCategory={setSourceCategory}
-            handleToggleSource={handleToggleSource}
-            isLoading={sourcesLoading}
-          />
-        </TabsContent>
-        
-        <TabsContent value="influencers">
-          <InfluencersTab 
-            influencers={filteredInfluencers}
-            influencerFilter={influencerFilter}
-            setInfluencerFilter={setInfluencerFilter}
-            handleToggleInfluencer={handleToggleInfluencer}
-            isLoading={influencersLoading}
-          />
-        </TabsContent>
-        
-        <TabsContent value="events">
-          <EventsTab 
-            events={filteredEvents}
-            eventFilter={eventFilter}
-            setEventFilter={setEventFilter}
-            handleToggleEventReminder={handleToggleEventReminder}
-            formatDate={formatDate}
-            isLoading={eventsLoading}
-          />
-        </TabsContent>
-      </Tabs>
+      <TabsContent value="influencers" className={activeTab === 'influencers' ? 'block' : 'hidden'}>
+        <InfluencersTab
+          influencers={filteredInfluencers}
+          followedInfluencerIds={followedInfluencerIds}
+          onFollow={handleFollowInfluencer}
+        />
+      </TabsContent>
+      
+      <TabsContent value="sources" className={activeTab === 'sources' ? 'block' : 'hidden'}>
+        <SourcesTab
+          sources={filteredSources}
+          focusedSourceIds={focusedSourceIds}
+          onFocus={handleSourceFocus}
+        />
+      </TabsContent>
+      
+      <TabsContent value="events" className={activeTab === 'events' ? 'block' : 'hidden'}>
+        <EventsTab
+          events={filteredEvents}
+          remindEvents={remindEvents}
+          onRemind={handleEventReminder}
+        />
+      </TabsContent>
     </div>
   );
 };

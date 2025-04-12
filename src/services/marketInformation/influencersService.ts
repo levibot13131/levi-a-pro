@@ -26,7 +26,7 @@ const initializeInfluencers = () => {
   return influencers;
 };
 
-// Toggle follow status
+// Toggle follow status - תיקון החזרת ערך בוליאני במקום string
 export const toggleInfluencerFollow = (id: string): boolean => {
   const influencer = influencers.find(inf => inf.id === id);
   if (influencer) {
