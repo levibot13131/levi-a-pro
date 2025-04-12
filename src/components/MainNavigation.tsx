@@ -1,186 +1,270 @@
 
-import React, { useState } from 'react';
-import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { useIsMobile } from '../hooks/use-mobile';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import {
-  Home,
-  Layout,
-  Eye,
-  LineChart,
-  Database,
-  History,
-  ShieldAlert,
-  BarChart3,
-  PieChart,
-  Users,
-  FileText,
-  BellRing,
-  Bot,
-  Newspaper,
-  Link2,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+import { useAuth } from '@/contexts/AuthContext';
+import {
   Menu,
-  X, // Added X icon for closing sidebar
-  ArrowLeftToLine, // Added for collapsing sidebar
-  ArrowRightToLine // Added for expanding sidebar
+  LogOut,
+  User,
+  Settings,
+  BarChart4,
+  TrendingUp,
+  BookOpen,
+  DollarSign,
+  LineChart,
+  Bell,
+  Activity,
+  CircleUser,
+  Home,
+  PieChart,
+  Gauge,
+  Newspaper,
+  MessageSquare,
+  ChevronRight,
+  CreditCard
 } from 'lucide-react';
+import AdminMenu from './AdminMenu';
 
-const sidebarExpandedStyles = `
-  fixed top-0 left-0 h-full w-72 bg-secondary border-r z-50
-  transform transition-transform duration-300 ease-in-out
-  md:translate-x-0
-`;
-
-const sidebarCollapsedStyles = `
-  fixed top-0 left-0 h-full w-16 bg-secondary border-r z-50
-  transform transition-all duration-300 ease-in-out
-  md:translate-x-0
-`;
-
-const backdropStyles = `
-  fixed top-0 left-0 w-full h-full bg-gray-900 opacity-50 z-40
-  md:hidden
-`;
-
-const navLinkClass = (isActive: boolean) =>
-  `flex items-center px-6 py-2 text-sm font-medium rounded-md
-  transition-colors hover:bg-accent hover:text-accent-foreground
-  ${isActive ? 'bg-accent text-accent-foreground' : 'text-muted-foreground'}`;
-
-const MainNavigation: React.FC = () => {
-  const { isMobile, isMenuOpen, setIsMenuOpen } = useIsMobile();
-  const navigate = useNavigate();
+const MainNavigation = () => {
+  const { isAuthenticated, user, logout, hasPermission } = useAuth();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
-  const [showSidebar, setShowSidebar] = useState(false);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  
+  // Close menu when location changes
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location]);
 
-  const toggleSidebar = () => {
-    setShowSidebar(!showSidebar);
-  };
+  // If not authenticated, don't show the navigation
+  if (!isAuthenticated) {
+    return null;
+  }
 
-  const closeSidebar = () => {
-    setShowSidebar(false);
-  };
-
-  const toggleCollapse = () => {
-    setIsCollapsed(!isCollapsed);
-  };
-
-  const handleNavLinkClick = () => {
-    if (isMobile) {
-      closeSidebar();
+  const navLinks = [
+    {
+      name: 'דשבורד',
+      href: '/dashboard',
+      icon: <Home className="h-5 w-5 mr-2" />,
+      resource: 'dashboard'
+    },
+    {
+      name: 'בדיקות היסטוריות',
+      href: '/backtesting',
+      icon: <Activity className="h-5 w-5 mr-2" />,
+      resource: 'backtesting'
+    },
+    {
+      name: 'ניתוח טכני',
+      href: '/technical-analysis',
+      icon: <BarChart4 className="h-5 w-5 mr-2" />,
+      resource: 'technicalAnalysis'
+    },
+    {
+      name: 'ניהול סיכונים',
+      href: '/risk-management',
+      icon: <Gauge className="h-5 w-5 mr-2" />,
+      resource: 'riskManagement'
+    },
+    {
+      name: 'נתוני שוק',
+      href: '/market-data',
+      icon: <PieChart className="h-5 w-5 mr-2" />,
+      resource: 'marketData'
+    },
+    {
+      name: 'איתותי מסחר',
+      href: '/trading-signals',
+      icon: <TrendingUp className="h-5 w-5 mr-2" />,
+      resource: 'tradingSignals'
+    },
+    {
+      name: 'Binance',
+      href: '/binance-integration',
+      icon: <CreditCard className="h-5 w-5 mr-2" />
+    },
+    {
+      name: 'TradingView',
+      href: '/tradingview-integration',
+      icon: <LineChart className="h-5 w-5 mr-2" />,
+      resource: 'tradingView'
+    },
+    {
+      name: 'מעקב נכסים',
+      href: '/asset-tracker',
+      icon: <DollarSign className="h-5 w-5 mr-2" />,
+      resource: 'assetTracker'
+    },
+    {
+      name: 'ניטור רשתות חברתיות',
+      href: '/social-monitoring',
+      icon: <MessageSquare className="h-5 w-5 mr-2" />,
+      resource: 'socialMonitoring'
+    },
+    {
+      name: 'חדשות שוק',
+      href: '/market-news',
+      icon: <Newspaper className="h-5 w-5 mr-2" />
+    },
+    {
+      name: 'מקורות מידע',
+      href: '/information-sources',
+      icon: <BookOpen className="h-5 w-5 mr-2" />
     }
-  };
+  ];
+
+  // Filter links based on user permissions
+  const filteredLinks = navLinks.filter(link => 
+    !link.resource || hasPermission(link.resource, 'view')
+  );
 
   return (
-    <>
-      <header className="fixed top-0 left-0 w-full h-16 bg-background border-b z-50 flex items-center justify-between px-6">
-        <button onClick={toggleSidebar} className="md:hidden">
-          <Menu className="h-6 w-6" />
-        </button>
-        <h1 className="text-lg font-semibold">KSem AI Assistant</h1>
-        {!isMobile && (
-          <button 
-            onClick={toggleCollapse} 
-            className="hidden md:flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground"
-            title={isCollapsed ? "הרחב תפריט" : "כווץ תפריט"}
-          >
-            {isCollapsed ? <ArrowRightToLine className="h-5 w-5" /> : <ArrowLeftToLine className="h-5 w-5" />}
-          </button>
-        )}
-      </header>
-      
-      <aside className={`${isCollapsed ? sidebarCollapsedStyles : sidebarExpandedStyles} ${showSidebar ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
-        <div className="h-16 flex items-center px-6 border-b justify-between">
-          {!isCollapsed && <h2 className="text-lg font-semibold">KSem AI Assistant</h2>}
-          <div className="flex items-center gap-2">
-            {!isCollapsed && !isMobile && (
-              <button 
-                onClick={toggleCollapse} 
-                className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground"
-                title="כווץ תפריט"
-              >
-                <ArrowLeftToLine className="h-5 w-5" />
-              </button>
-            )}
-            {isMobile && (
-              <button 
-                onClick={closeSidebar} 
-                className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-accent hover:text-accent-foreground"
-                title="סגור תפריט"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            )}
-          </div>
+    <header className="fixed top-0 right-0 left-0 z-50 bg-background/95 backdrop-blur-sm border-b">
+      <div className="container flex items-center h-16 px-4">
+        {/* Mobile menu */}
+        <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="icon" className="md:hidden">
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">פתח תפריט</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-[280px] sm:w-[350px]">
+            <SheetHeader>
+              <SheetTitle className="text-right">תפריט</SheetTitle>
+            </SheetHeader>
+            <nav className="flex flex-col mt-4 space-y-1">
+              {filteredLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className={`
+                    flex items-center px-4 py-2 text-sm font-medium rounded-md
+                    ${location.pathname === link.href
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                    }
+                  `}
+                >
+                  <div className="flex items-center justify-end w-full">
+                    <span>{link.name}</span>
+                    {link.icon}
+                  </div>
+                </Link>
+              ))}
+            </nav>
+          </SheetContent>
+        </Sheet>
+
+        {/* Logo & title */}
+        <div className="flex items-center ml-auto">
+          <h1 className="text-xl font-bold">
+            מערכת ניתוח מסחר
+          </h1>
         </div>
-        <div className={`py-4 space-y-1 ${isCollapsed ? 'px-2' : 'pl-6 pr-2'}`}>
-          <NavLink to="/" className={({ isActive }) => `${navLinkClass(isActive)} ${isCollapsed ? 'px-2 justify-center' : ''}`} onClick={handleNavLinkClick} title={isCollapsed ? "בית" : undefined}>
-            <Home className="h-5 w-5 mr-3" />
-            {!isCollapsed && <span>בית</span>}
-          </NavLink>
-          <NavLink to="/dashboard" className={({ isActive }) => `${navLinkClass(isActive)} ${isCollapsed ? 'px-2 justify-center' : ''}`} onClick={handleNavLinkClick} title={isCollapsed ? "דשבורד" : undefined}>
-            <Layout className="h-5 w-5 mr-3" />
-            {!isCollapsed && <span>דשבורד</span>}
-          </NavLink>
-          <NavLink to="/asset-tracker" className={({ isActive }) => `${navLinkClass(isActive)} ${isCollapsed ? 'px-2 justify-center' : ''}`} onClick={handleNavLinkClick} title={isCollapsed ? "מעקב נכסים" : undefined}>
-            <Eye className="h-5 w-5 mr-3" />
-            {!isCollapsed && <span>מעקב נכסים</span>}
-          </NavLink>
-          <NavLink to="/technical-analysis" className={({ isActive }) => `${navLinkClass(isActive)} ${isCollapsed ? 'px-2 justify-center' : ''}`} onClick={handleNavLinkClick} title={isCollapsed ? "ניתוח טכני" : undefined}>
-            <LineChart className="h-5 w-5 mr-3" />
-            {!isCollapsed && <span>ניתוח טכני</span>}
-          </NavLink>
-          <NavLink to="/tradingview-integration" className={({ isActive }) => `${navLinkClass(isActive)} ${isCollapsed ? 'px-2 justify-center' : ''}`} onClick={handleNavLinkClick} title={isCollapsed ? "TradingView" : undefined}>
-            <Link2 className="h-5 w-5 mr-3" />
-            {!isCollapsed && <span>TradingView</span>}
-          </NavLink>
-          <NavLink to="/fundamental-data" className={({ isActive }) => `${navLinkClass(isActive)} ${isCollapsed ? 'px-2 justify-center' : ''}`} onClick={handleNavLinkClick} title={isCollapsed ? "מידע פונדמנטלי" : undefined}>
-            <Database className="h-5 w-5 mr-3" />
-            {!isCollapsed && <span>מידע פונדמנטלי</span>}
-          </NavLink>
-          <NavLink to="/backtesting" className={({ isActive }) => `${navLinkClass(isActive)} ${isCollapsed ? 'px-2 justify-center' : ''}`} onClick={handleNavLinkClick} title={isCollapsed ? "בקטסטינג" : undefined}>
-            <History className="h-5 w-5 mr-3" />
-            {!isCollapsed && <span>בקטסטינג</span>}
-          </NavLink>
-          <NavLink to="/risk-management" className={({ isActive }) => `${navLinkClass(isActive)} ${isCollapsed ? 'px-2 justify-center' : ''}`} onClick={handleNavLinkClick} title={isCollapsed ? "ניהול סיכונים" : undefined}>
-            <ShieldAlert className="h-5 w-5 mr-3" />
-            {!isCollapsed && <span>ניהול סיכונים</span>}
-          </NavLink>
-          <NavLink to="/market-data" className={({ isActive }) => `${navLinkClass(isActive)} ${isCollapsed ? 'px-2 justify-center' : ''}`} onClick={handleNavLinkClick} title={isCollapsed ? "נתוני שוק" : undefined}>
-            <BarChart3 className="h-5 w-5 mr-3" />
-            {!isCollapsed && <span>נתוני שוק</span>}
-          </NavLink>
-          <NavLink to="/comprehensive-analysis" className={({ isActive }) => `${navLinkClass(isActive)} ${isCollapsed ? 'px-2 justify-center' : ''}`} onClick={handleNavLinkClick} title={isCollapsed ? "ניתוח מקיף" : undefined}>
-            <PieChart className="h-5 w-5 mr-3" />
-            {!isCollapsed && <span>ניתוח מקיף</span>}
-          </NavLink>
-          <NavLink to="/social-monitoring" className={({ isActive }) => `${navLinkClass(isActive)} ${isCollapsed ? 'px-2 justify-center' : ''}`} onClick={handleNavLinkClick} title={isCollapsed ? "ניטור חברתי" : undefined}>
-            <Users className="h-5 w-5 mr-3" />
-            {!isCollapsed && <span>ניטור חברתי</span>}
-          </NavLink>
-          <NavLink to="/information-sources" className={({ isActive }) => `${navLinkClass(isActive)} ${isCollapsed ? 'px-2 justify-center' : ''}`} onClick={handleNavLinkClick} title={isCollapsed ? "מקורות מידע" : undefined}>
-            <FileText className="h-5 w-5 mr-3" />
-            {!isCollapsed && <span>מקורות מידע</span>}
-          </NavLink>
-          <NavLink to="/trading-signals" className={({ isActive }) => `${navLinkClass(isActive)} ${isCollapsed ? 'px-2 justify-center' : ''}`} onClick={handleNavLinkClick} title={isCollapsed ? "איתותי מסחר" : undefined}>
-            <BellRing className="h-5 w-5 mr-3" />
-            {!isCollapsed && <span>איתותי מסחר</span>}
-          </NavLink>
-          <NavLink to="/trading-bots" className={({ isActive }) => `${navLinkClass(isActive)} ${isCollapsed ? 'px-2 justify-center' : ''}`} onClick={handleNavLinkClick} title={isCollapsed ? "בוטים למסחר" : undefined}>
-            <Bot className="h-5 w-5 mr-3" />
-            {!isCollapsed && <span>בוטים למסחר</span>}
-          </NavLink>
-          <NavLink to="/market-news" className={({ isActive }) => `${navLinkClass(isActive)} ${isCollapsed ? 'px-2 justify-center' : ''}`} onClick={handleNavLinkClick} title={isCollapsed ? "חדשות שוק" : undefined}>
-            <Newspaper className="h-5 w-5 mr-3" />
-            {!isCollapsed && <span>חדשות שוק</span>}
-          </NavLink>
+
+        {/* Desktop menu */}
+        <nav className="mx-6 hidden md:flex items-center space-x-4 ml-auto">
+          {filteredLinks.slice(0, 7).map((link) => (
+            <Link
+              key={link.href}
+              to={link.href}
+              className={`
+                text-sm font-medium transition-colors hover:text-primary
+                ${location.pathname === link.href
+                  ? "text-primary"
+                  : "text-muted-foreground"
+                }
+              `}
+            >
+              {link.name}
+            </Link>
+          ))}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                עוד <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {filteredLinks.slice(7).map((link) => (
+                <DropdownMenuItem key={link.href} asChild>
+                  <Link 
+                    to={link.href}
+                    className="flex items-center justify-end w-full"
+                  >
+                    <span>{link.name}</span>
+                    {link.icon}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </nav>
+
+        {/* Admin & User menu */}
+        <div className="flex items-center space-x-2">
+          {/* Admin Menu */}
+          <AdminMenu />
+          
+          {/* User Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="flex items-center gap-1"
+              >
+                <CircleUser className="h-4 w-4" />
+                <span className="hidden md:inline">{user?.username || 'משתמש'}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end">
+              <DropdownMenuLabel className="text-right">החשבון שלי</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem className="flex items-center justify-end">
+                  <User className="ml-2 h-4 w-4" />
+                  הפרופיל שלי
+                </DropdownMenuItem>
+                <DropdownMenuItem className="flex items-center justify-end">
+                  <Bell className="ml-2 h-4 w-4" />
+                  התראות
+                </DropdownMenuItem>
+                <DropdownMenuItem className="flex items-center justify-end">
+                  <Settings className="ml-2 h-4 w-4" />
+                  הגדרות
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                className="flex items-center justify-end text-red-600"
+                onClick={logout}
+              >
+                <LogOut className="ml-2 h-4 w-4" />
+                התנתקות
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-      </aside>
-      
-      {showSidebar && isMobile && (
-        <div className={backdropStyles} onClick={closeSidebar}></div>
-      )}
-    </>
+      </div>
+    </header>
   );
 };
 

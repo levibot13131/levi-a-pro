@@ -3,6 +3,54 @@ import { handleTradingViewWebhook, testWebhookFlow, simulateWebhook } from './tr
 import { isTradingViewConnected } from './tradingView/tradingViewAuthService';
 import { getAlertDestinations } from './tradingView/tradingViewAlertService';
 import { toast } from 'sonner';
+import { WebhookSignal } from '@/types/webhookSignal';
+
+// Store for webhook signals
+let webhookSignals: WebhookSignal[] = [];
+const signalListeners: Array<() => void> = [];
+
+/**
+ * Get stored webhook signals
+ */
+export const getStoredWebhookSignals = (): WebhookSignal[] => {
+  return [...webhookSignals];
+};
+
+/**
+ * Clear all stored webhook signals
+ */
+export const clearStoredWebhookSignals = (): void => {
+  webhookSignals = [];
+  notifySignalListeners();
+};
+
+/**
+ * Subscribe to webhook signal updates
+ */
+export const subscribeToWebhookSignals = (callback: () => void): (() => void) => {
+  signalListeners.push(callback);
+  return () => {
+    const index = signalListeners.indexOf(callback);
+    if (index > -1) {
+      signalListeners.splice(index, 1);
+    }
+  };
+};
+
+/**
+ * Notify all signal listeners of updates
+ */
+const notifySignalListeners = (): void => {
+  signalListeners.forEach(listener => listener());
+};
+
+/**
+ * Add a new webhook signal
+ */
+export const addWebhookSignal = (signal: WebhookSignal): void => {
+  webhookSignals = [signal, ...webhookSignals].slice(0, 100); // Keep only the latest 100 signals
+  notifySignalListeners();
+};
 
 /**
  * Try to simulate a webhook signal and process it through the system

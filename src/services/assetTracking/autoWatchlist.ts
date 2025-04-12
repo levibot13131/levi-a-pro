@@ -1,141 +1,170 @@
-
-import { getTrackedAssets, saveTrackedAssets } from './storage';
-import { getAllAssets } from '@/services/realTimeAssetService';
+import { Asset } from '@/types/asset';
+import { getAssets, getTrendingAssets } from '@/services/mockDataService';
 import { toast } from 'sonner';
-import { TrackedAsset } from './types';
+
+// Type for tracked assets
+export interface TrackedAsset {
+  id: string;
+  name: string;
+  symbol: string;
+  type: 'crypto' | 'stocks' | 'forex' | 'commodities';
+  price: number;
+  change24h: number;
+  priority: string;
+  alertsEnabled: boolean;
+  lastUpdated: number;
+  isPinned: boolean;
+}
+
+// Storage key for auto watchlist
+const AUTO_WATCHLIST_KEY = 'auto_watchlist_assets';
+const AUTO_WATCHLIST_ENABLED_KEY = 'auto_watchlist_enabled';
 
 /**
- * יוצר רשימת מעקב אוטומטית מבוססת על הנכסים המובילים
- * @param count מספר הנכסים שיתווספו לרשימת המעקב
- * @returns מספר הנכסים שנוספו בהצלחה
+ * Sort assets by trading volume (descending)
  */
-export const createAutomaticWatchlist = (count: number = 5): number => {
+export const sortAssetsByVolume = (assets: Asset[]): Asset[] => {
+  return [...assets].sort((a, b) => {
+    // Use volume24h if available, otherwise use a default comparison
+    const volumeA = (a as any).volume24h || (a as any).volume || 0;
+    const volumeB = (b as any).volume24h || (b as any).volume || 0;
+    return volumeB - volumeA;
+  });
+};
+
+/**
+ * Create an auto watchlist of top assets
+ */
+export const createAutoWatchlist = async (count: number = 10): Promise<TrackedAsset[]> => {
   try {
-    // קבלת כל הנכסים הזמינים
-    const allAssets = getAllAssets();
+    // Get trending assets first
+    const trendingAssets = await getTrendingAssets(count);
     
-    // קבלת הנכסים שכבר במעקב
-    const trackedAssets = getTrackedAssets();
-    const trackedIds = trackedAssets.map(asset => asset.id);
-    
-    // מיון הנכסים לפי נפח מסחר (או מדד אחר שמעניין)
-    const sortedAssets = [...allAssets].sort((a, b) => {
-      // לדוגמה, מיון לפי נפח מסחר יומי
-      return b.volume24h - a.volume24h; // Changed from volume to volume24h which exists in Asset type
-    });
-    
-    // בחירת הנכסים המובילים שעוד לא במעקב
-    const topAssets = sortedAssets
-      .filter(asset => !trackedIds.includes(asset.id))
-      .slice(0, count);
-    
-    if (topAssets.length === 0) {
-      return 0;
+    // If we don't have enough trending assets, get some regular assets
+    let assetsToTrack: Asset[] = [...trendingAssets];
+    if (assetsToTrack.length < count) {
+      const regularAssets = await getAssets();
+      const sortedAssets = sortAssetsByVolume(regularAssets);
+      
+      // Add more assets until we reach the desired count
+      assetsToTrack = [
+        ...assetsToTrack,
+        ...sortedAssets.filter(asset => 
+          !assetsToTrack.some(a => a.id === asset.id)
+        )
+      ].slice(0, count);
     }
     
-    // יצירת נכסים למעקב
-    const newTrackedAssets: TrackedAsset[] = topAssets.map(asset => ({
+    // Convert to TrackedAsset format
+    const trackedAssets: TrackedAsset[] = assetsToTrack.map(asset => ({
       id: asset.id,
       name: asset.name,
       symbol: asset.symbol,
-      type: asset.type, // This is already constrained by the Asset type
+      type: asset.type as 'crypto' | 'stocks' | 'forex' | 'commodities',
       price: asset.price,
-      change24h: asset.change24h,
-      priority: 'medium',
-      alertsEnabled: true, // הפעלת התראות כברירת מחדל
+      change24h: asset.change24h || 0,
+      priority: "high",
+      alertsEnabled: true,
       lastUpdated: Date.now(),
       isPinned: false
     }));
     
-    // הוספה לרשימת המעקב
-    saveTrackedAssets([...trackedAssets, ...newTrackedAssets]);
+    // Save to localStorage
+    saveAutoWatchlist(trackedAssets);
     
-    return newTrackedAssets.length;
+    return trackedAssets;
   } catch (error) {
-    console.error('Error creating automatic watchlist:', error);
-    return 0;
+    console.error('Error creating auto watchlist:', error);
+    toast.error('שגיאה ביצירת רשימת מעקב אוטומטית', {
+      description: 'לא ניתן היה ליצור רשימת מעקב אוטומטית'
+    });
+    return [];
   }
 };
 
 /**
- * מפעיל התראות אוטומטיות עבור כל הנכסים ברשימת המעקב
- * @returns מספר הנכסים שהופעלו עבורם התראות
+ * Save auto watchlist to localStorage
  */
-export const enableAlertsForAllWatchlist = (): number => {
+export const saveAutoWatchlist = (assets: TrackedAsset[]): void => {
+  localStorage.setItem(AUTO_WATCHLIST_KEY, JSON.stringify(assets));
+};
+
+/**
+ * Get auto watchlist from localStorage
+ */
+export const getAutoWatchlist = (): TrackedAsset[] => {
   try {
-    const trackedAssets = getTrackedAssets();
+    const savedAssets = localStorage.getItem(AUTO_WATCHLIST_KEY);
+    if (!savedAssets) return [];
     
-    if (trackedAssets.length === 0) {
-      return 0;
-    }
-    
-    // הפעלת התראות לכל הנכסים
-    const updatedAssets = trackedAssets.map(asset => ({
-      ...asset,
-      alertsEnabled: true
-    }));
-    
-    saveTrackedAssets(updatedAssets);
-    
-    return updatedAssets.length;
+    const parsedAssets = JSON.parse(savedAssets);
+    return Array.isArray(parsedAssets) ? parsedAssets : [];
   } catch (error) {
-    console.error('Error enabling alerts for watchlist:', error);
-    return 0;
+    console.error('Error getting auto watchlist:', error);
+    return [];
   }
 };
 
 /**
- * מייבא רשימת מעקב מקובץ חיצוני או API
- * @param source מקור הייבוא (לדוגמה: 'tradingview', 'csv', 'json')
- * @returns האם הייבוא הצליח
+ * Enable or disable auto watchlist
  */
-export const importWatchlist = async (source: string, data?: any): Promise<boolean> => {
-  // כאן ניתן להוסיף הגיון לייבוא מקובץ או API חיצוני
-  // כרגע זו פונקציית דוגמה
+export const setAutoWatchlistEnabled = (enabled: boolean): void => {
+  localStorage.setItem(AUTO_WATCHLIST_ENABLED_KEY, JSON.stringify(enabled));
   
-  toast.info(`ייבוא רשימת מעקב מ-${source} בתהליך...`);
-  
-  // דוגמה לייבוא נכסים מוגדרים מראש
-  const defaultAssets = [
-    { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', type: 'crypto' as const },
-    { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', type: 'crypto' as const },
-    { id: 'solana', name: 'Solana', symbol: 'SOL', type: 'crypto' as const },
-    { id: 'aapl', name: 'Apple Inc.', symbol: 'AAPL', type: 'stocks' as const },
-    { id: 'msft', name: 'Microsoft', symbol: 'MSFT', type: 'stocks' as const }
-  ];
-  
+  if (enabled) {
+    toast.success('רשימת מעקב אוטומטית הופעלה', {
+      description: 'הנכסים בעלי הביצועים הטובים ביותר יתווספו אוטומטית לרשימת המעקב'
+    });
+  } else {
+    toast.info('רשימת מעקב אוטומטית הופסקה');
+  }
+};
+
+/**
+ * Check if auto watchlist is enabled
+ */
+export const isAutoWatchlistEnabled = (): boolean => {
   try {
-    const trackedAssets = getTrackedAssets();
-    const trackedIds = trackedAssets.map(asset => asset.id);
-    
-    // הוספת נכסים חדשים שעוד לא במעקב
-    const newAssets: TrackedAsset[] = defaultAssets
-      .filter(asset => !trackedIds.includes(asset.id))
-      .map(asset => ({
-        id: asset.id,
-        name: asset.name,
-        symbol: asset.symbol,
-        type: asset.type, // Now constrained to the correct types
-        price: 0, // יתעדכן בסנכרון הבא
-        change24h: 0,
-        priority: 'medium' as const,
-        alertsEnabled: true,
-        lastUpdated: Date.now(),
-        isPinned: false
-      }));
-    
-    if (newAssets.length === 0) {
-      toast.info('כל הנכסים כבר נמצאים ברשימת המעקב');
-      return true;
-    }
-    
-    saveTrackedAssets([...trackedAssets, ...newAssets]);
-    
-    toast.success(`נוספו ${newAssets.length} נכסים לרשימת המעקב`);
-    return true;
+    const enabled = localStorage.getItem(AUTO_WATCHLIST_ENABLED_KEY);
+    return enabled ? JSON.parse(enabled) : false;
   } catch (error) {
-    console.error('Error importing watchlist:', error);
-    toast.error('שגיאה בייבוא רשימת המעקב');
+    console.error('Error checking auto watchlist status:', error);
     return false;
   }
 };
+
+/**
+ * Update auto watchlist with current asset data
+ */
+export const updateAutoWatchlist = async (): Promise<TrackedAsset[]> => {
+  if (!isAutoWatchlistEnabled()) return [];
+  
+  const currentWatchlist = getAutoWatchlist();
+  const updatedWatchlist = await createAutoWatchlist(currentWatchlist.length || 10);
+  
+  // Save the combined watchlist (keep existing assets plus new ones)
+  const combinedWatchlist = [
+    ...currentWatchlist.filter(asset => 
+      !updatedWatchlist.some(a => a.id === asset.id)
+    ),
+    ...updatedWatchlist
+  ];
+  
+  saveAutoWatchlist(combinedWatchlist);
+  return combinedWatchlist as TrackedAsset[];
+};
+
+/**
+ * Initialize auto watchlist
+ */
+export const initializeAutoWatchlist = async (): Promise<void> => {
+  const currentWatchlist = getAutoWatchlist();
+  
+  // If watchlist is enabled but empty, create initial watchlist
+  if (isAutoWatchlistEnabled() && currentWatchlist.length === 0) {
+    await createAutoWatchlist();
+  }
+};
+
+// Export the watchlist creation function
+export default createAutoWatchlist;
