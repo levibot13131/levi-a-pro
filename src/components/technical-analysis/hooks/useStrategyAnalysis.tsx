@@ -53,6 +53,11 @@ export const useStrategyAnalysis = (assetHistory: AssetHistoricalData | undefine
         const trendAnalysis = detectTrends(mockTradesData);
         const clusterAnalysis = analyzeTradeClusters(mockTradesData);
 
+        // Calculate average profit for all trades
+        const averageProfit = mockTradesData.length > 0 
+          ? mockTradesData.reduce((sum, t) => sum + (t.profitPercentage || 0), 0) / mockTradesData.length 
+          : 0;
+
         // Create a sample result structure
         const mockResult: BacktestResult = {
           id: 'sample-backtest',
@@ -86,7 +91,8 @@ export const useStrategyAnalysis = (assetHistory: AssetHistoricalData | undefine
             totalTrades: mockTradesData.length,
             winningTrades: mockTradesData.filter(t => (t.profit || 0) > 0).length,
             losingTrades: mockTradesData.filter(t => (t.profit || 0) <= 0).length,
-            averageTradeDuration: 5
+            averageTradeDuration: 5,
+            averageProfit: averageProfit
           },
           equity: assetHistory.prices.map((point, index) => ({
             date: new Date(point[0]).toISOString(),
@@ -100,7 +106,14 @@ export const useStrategyAnalysis = (assetHistory: AssetHistoricalData | undefine
             { period: '2025-03', return: 3.7, trades: 9 }
           ],
           assetPerformance: [
-            { assetId: 'sample-asset', assetName: 'מטבע לדוגמה', return: 3.5, trades: mockTradesData.length, winRate: 65.3 }
+            { 
+              assetId: 'sample-asset', 
+              assetName: 'מטבע לדוגמה', 
+              return: 3.5, 
+              trades: mockTradesData.length, 
+              winRate: 65.3, 
+              averageReturn: averageProfit 
+            }
           ],
           createdAt: Date.now()
         };
