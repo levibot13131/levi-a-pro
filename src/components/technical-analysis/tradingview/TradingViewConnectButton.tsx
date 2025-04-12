@@ -14,30 +14,46 @@ const TradingViewConnectButton: React.FC<TradingViewConnectButtonProps> = ({
   onConnectChange 
 }) => {
   const [isConnected, setIsConnected] = useState(false);
+  const [credentials, setCredentials] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-  const [credentials, setCredentials] = useState<any>(null);
 
-  // בדיקת סטטוס חיבור
+  // Check connection status on mount
   useEffect(() => {
     const connected = isTradingViewConnected();
     setIsConnected(connected);
+    
     if (connected) {
       setCredentials(getTradingViewCredentials());
     }
     
+    // Listen for storage changes (for when credentials are updated in another tab)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'tradingview_auth_credentials') {
+        const connected = isTradingViewConnected();
+        setIsConnected(connected);
+        setCredentials(connected ? getTradingViewCredentials() : null);
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+  
+  // Notify parent of connection changes
+  useEffect(() => {
     if (onConnectChange) {
-      onConnectChange(connected);
+      onConnectChange(isConnected);
     }
-  }, [onConnectChange]);
+  }, [isConnected, onConnectChange]);
 
   const handleConnectSuccess = () => {
-    setIsConnected(true);
-    setCredentials(getTradingViewCredentials());
-    
-    if (onConnectChange) {
-      onConnectChange(true);
-    }
+    const connected = isTradingViewConnected();
+    setIsConnected(connected);
+    setCredentials(connected ? getTradingViewCredentials() : null);
   };
 
   const handleDisconnect = () => {
@@ -45,10 +61,6 @@ const TradingViewConnectButton: React.FC<TradingViewConnectButtonProps> = ({
     setIsConnected(false);
     setCredentials(null);
     setIsConfirmDialogOpen(false);
-    
-    if (onConnectChange) {
-      onConnectChange(false);
-    }
   };
 
   return (
@@ -60,7 +72,7 @@ const TradingViewConnectButton: React.FC<TradingViewConnectButtonProps> = ({
           onClick={() => setIsConfirmDialogOpen(true)}
         >
           <UserCheck2 className="h-4 w-4" />
-          {credentials?.username ? `מחובר כ-${credentials.username}` : 'מחובר ל-TradingView'}
+          מחובר ל-TradingView
         </Button>
       ) : (
         <Button 
@@ -83,8 +95,7 @@ const TradingViewConnectButton: React.FC<TradingViewConnectButtonProps> = ({
           <AlertDialogHeader>
             <AlertDialogTitle className="text-right">ניתוק מ-TradingView</AlertDialogTitle>
             <AlertDialogDescription className="text-right">
-              האם אתה בטוח שברצונך להתנתק מחשבון TradingView?
-              {credentials?.username && ` (${credentials.username})`}
+              האם אתה בטוח שברצונך להתנתק מחשבון ה-TradingView שלך?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-row-reverse justify-start gap-2">

@@ -1,12 +1,12 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, Permission } from '@/types/user';
-import { 
-  getCurrentUser, 
-  loginUser, 
-  logoutUser,
-  hasPermission as checkPermission
-} from '@/services/auth/userService';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  isAdmin: boolean;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -14,87 +14,86 @@ interface AuthContextType {
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  hasPermission: (resource: string, permission: 'view' | 'edit' | 'delete') => boolean;
-  refreshUser: () => void;
 }
 
+// Create context with default values
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
   isAdmin: false,
   login: async () => false,
   logout: () => {},
-  hasPermission: () => false,
-  refreshUser: () => {}
 });
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
+// Custom hook to use auth context
+export const useAuth = () => useContext(AuthContext);
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+// Mock user data for development
+const MOCK_USERS = [
+  {
+    id: '1',
+    email: 'admin@example.com',
+    password: 'admin123',
+    name: 'מנהל מערכת',
+    isAdmin: true,
+  },
+  {
+    id: '2',
+    email: 'user@example.com',
+    password: 'user123',
+    name: 'משתמש רגיל',
+    isAdmin: false,
+  },
+];
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-
-  // Load user on mount
+  
+  // Check for existing session on mount
   useEffect(() => {
-    const storedUser = getCurrentUser();
+    const storedUser = localStorage.getItem('auth_user');
     if (storedUser) {
-      setUser(storedUser);
-      setIsAuthenticated(true);
-      setIsAdmin(storedUser.role === 'admin');
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+        localStorage.removeItem('auth_user');
+      }
     }
   }, []);
-
+  
+  // Login function
   const login = async (email: string, password: string): Promise<boolean> => {
-    const loggedInUser = loginUser(email, password);
-    if (loggedInUser) {
-      setUser(loggedInUser);
-      setIsAuthenticated(true);
-      setIsAdmin(loggedInUser.role === 'admin');
+    // In a real app, this would be an API call
+    const foundUser = MOCK_USERS.find(
+      (u) => u.email === email && u.password === password
+    );
+    
+    if (foundUser) {
+      const { password, ...userWithoutPassword } = foundUser;
+      setUser(userWithoutPassword);
+      localStorage.setItem('auth_user', JSON.stringify(userWithoutPassword));
       return true;
     }
+    
     return false;
   };
-
+  
+  // Logout function
   const logout = () => {
-    logoutUser();
     setUser(null);
-    setIsAuthenticated(false);
-    setIsAdmin(false);
+    localStorage.removeItem('auth_user');
   };
-
-  const hasPermission = (resource: string, permission: 'view' | 'edit' | 'delete'): boolean => {
-    return checkPermission(user, resource, permission);
+  
+  // Prepare context value
+  const value = {
+    user,
+    isAuthenticated: !!user,
+    isAdmin: user?.isAdmin || false,
+    login,
+    logout,
   };
-
-  const refreshUser = () => {
-    const storedUser = getCurrentUser();
-    if (storedUser) {
-      setUser(storedUser);
-      setIsAuthenticated(true);
-      setIsAdmin(storedUser.role === 'admin');
-    } else {
-      setUser(null);
-      setIsAuthenticated(false);
-      setIsAdmin(false);
-    }
-  };
-
-  return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isAuthenticated, 
-      isAdmin,
-      login, 
-      logout,
-      hasPermission,
-      refreshUser
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-
-export const useAuth = () => useContext(AuthContext);

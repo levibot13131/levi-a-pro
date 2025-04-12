@@ -20,6 +20,7 @@ import ComprehensiveAnalysis from './pages/ComprehensiveAnalysis';
 import BinanceIntegration from './pages/BinanceIntegration';
 import TrendingCoins from './pages/TrendingCoins';
 import CryptoSentiment from './pages/CryptoSentiment';
+import TradingViewIntegration from './pages/TradingViewIntegration';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ function App() {
                 <Route path="/binance-integration" element={<BinanceIntegration />} />
                 <Route path="/trending-coins" element={<TrendingCoins />} />
                 <Route path="/crypto-sentiment" element={<CryptoSentiment />} />
+                <Route path="/tradingview-integration" element={<TradingViewIntegration />} />
               </Routes>
             </div>
           </div>

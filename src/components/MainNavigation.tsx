@@ -12,7 +12,8 @@ import {
   Users,
   TrendingUp,
   Flame,
-  BarChart2
+  BarChart2,
+  ExternalLink
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -68,6 +69,11 @@ export const getRoutes = (isAdmin: boolean) => [
     title: 'אינטגרציית Binance',
     href: '/binance-integration',
     icon: Wallet,
+  },
+  {
+    title: 'אינטגרציית TradingView',
+    href: '/tradingview-integration',
+    icon: ExternalLink,
   },
 ];
 
