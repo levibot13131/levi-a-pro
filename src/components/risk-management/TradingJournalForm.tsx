@@ -21,7 +21,7 @@ export interface TradingJournalFormData {
   targetPrice: string;
   positionSize: string;
   notes: string;
-  strategy: string;
+  strategy: string; // Make sure this exists and is required
 }
 
 const TradingJournalForm = ({ onSubmit, onCancel }: TradingJournalFormProps) => {
@@ -34,7 +34,7 @@ const TradingJournalForm = ({ onSubmit, onCancel }: TradingJournalFormProps) => 
     targetPrice: '',
     positionSize: '',
     notes: '',
-    strategy: 'KSM'
+    strategy: 'KSM' // Default strategy value
   });
   
   const handleChange = (field: string, value: any) => {

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getTradeSignals } from '@/services/mockTradingService';
@@ -31,7 +30,8 @@ const CustomSignals: React.FC<CustomSignalsProps> = ({ assetId }) => {
   });
   
   // שליפת איתותים בזמן אמת מהמערכת החדשה
-  const { data: realTimeSignals = [], isLoading: realTimeSignalsLoading } = useStoredSignals(assetId);
+  const { data: realTimeSignals = [], refetch: refetchRealTime } = useStoredSignals(assetId);
+  const realTimeSignalsLoading = false;
   
   // פונקציה לשליחת איתות לערוצי התקשורת (טלגרם/וואטסאפ)
   const sendSignal = (signalId: string) => {

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getTrackedAssets } from '@/services/assetTracking';
-import { toggleAssetPin, toggleAssetAlerts, setAssetPriority } from '@/services/assetTracking/assetManagement';
+import { toggleAssetPin, toggleAssetAlerts, setAssetPriority, getAssetById } from '@/services/assetTracking';
 import TrackedAssetList from './TrackedAssetList';
 import MarketInformation from './MarketInformation';
 import SocialMonitoring from './SocialMonitoring';

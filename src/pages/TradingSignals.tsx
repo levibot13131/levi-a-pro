@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { TradeSignal, MarketAnalysis } from '@/types/asset';
@@ -82,7 +81,7 @@ const TradingSignals = () => {
     if (!hasActiveDestinations && !realTimeActive) {
       setShowSettings(true);
       toast.warning('לא הוגדרו יעדי התראות פעילים', {
-        description: 'הגדר לפחות יעד אחד לקבלת התראות לפני הפעלת ניתוח בזמן אמת'
+        description: 'הגדר לפחות יעד אחד לקב��ת התראות לפני הפעלת ניתוח בזמן אמת'
       });
       return;
     }

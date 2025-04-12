@@ -21,6 +21,7 @@ export interface TrackedAsset {
   lastChecked?: number;
   addedAt?: number;
   tags?: string[];
+  strategy?: string; // Add this to ensure compatibility with TradingJournalEntry
 }
 
 // Storage key for tracked assets

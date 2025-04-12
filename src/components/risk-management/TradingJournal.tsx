@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,14 +6,14 @@ import { BookOpen, Plus } from 'lucide-react';
 import { addTradingJournalEntry } from '@/services/customTradingStrategyService';
 import { toast } from "sonner";
 import { TradeJournalEntry } from '@/types/asset';
-import TradingJournalForm, { TradingJournalFormData } from './TradingJournalForm';
-import TradingJournalEntryList from './TradingJournalEntryList';
+import TradingJournalForm from './TradingJournalForm';
 
 interface TradingJournalProps {
   initialEntries?: TradeJournalEntry[];
 }
 
-interface TradingJournalFormData {
+// Rename to resolve the conflict with imported TradingJournalFormData
+interface JournalFormData {
   assetId: string;
   date: string;
   direction: string;
@@ -29,7 +30,7 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
   const [entries, setEntries] = useState<TradeJournalEntry[]>(initialEntries);
   const [showForm, setShowForm] = useState(false);
   
-  const handleAddEntry = async (formData: TradingJournalFormData) => {
+  const handleAddEntry = async (formData: JournalFormData) => {
     try {
       const entryPrice = parseFloat(formData.entryPrice);
       const stopLoss = parseFloat(formData.stopLoss);
@@ -55,7 +56,7 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
         positionSize,
         risk,
         notes: formData.notes,
-        strategy: formData.strategy,
+        strategy: formData.strategy, // Make sure strategy is included
         tags: [],
         outcome: 'open'
       };
