@@ -40,4 +40,4 @@ export {
 };
 
 // Also export types for easy importing
-export type { MarketInfluencer, FinancialDataSource, MarketEvent } from '@/types/marketInformation';
+export type { MarketInfluencer, FinancialDataSource, MarketEvent, MarketSource } from '@/types/marketInformation';

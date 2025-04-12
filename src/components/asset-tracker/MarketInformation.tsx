@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getUpcomingEvents } from '@/services/marketInformation/eventsService';
@@ -24,7 +23,7 @@ const MarketInformation: React.FC<MarketInformationProps> = ({ selectedAsset }) 
   const { data: events, isLoading: eventsLoading, refetch } = useQuery({
     queryKey: ['marketEvents', selectedTimeRange, selectedAsset?.id],
     queryFn: async () => {
-      const result = await getUpcomingEvents(parseInt(selectedTimeRange));
+      const result = await getUpcomingEvents(selectedTimeRange);
       return result as MarketEvent[];
     },
     refetchInterval: autoRefresh ? 60000 : false, // Auto refresh every minute if enabled
@@ -42,15 +41,12 @@ const MarketInformation: React.FC<MarketInformationProps> = ({ selectedAsset }) 
   }, [autoRefresh, refetch]);
 
   const handleSetReminder = (eventId: string, reminder: boolean) => {
-    // In a real app, we would call the setEventReminder service
     toast.success(`${reminder ? 'הגדרת' : 'ביטלת'} תזכורת לאירוע`);
     
-    // Update the local state to reflect the change
     if (events) {
       const updatedEvents = events.map(event => 
         event.id === eventId ? { ...event, reminder } : event
       );
-      // In a real implementation, this would update the server and then the query cache
     }
   };
 
@@ -176,7 +172,7 @@ const MarketInformation: React.FC<MarketInformationProps> = ({ selectedAsset }) 
             ) : (
               <div className="text-center py-6">
                 <Calendar className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                <p>אין אירועים צפויים בטווח הזמן שנבחר</p>
+                <p>אין אירו��ים צפויים בטווח הזמן שנבחר</p>
                 <Button onClick={handleRefresh} variant="outline" className="mt-4">
                   <RefreshCw className="h-4 w-4 mr-2" />
                   רענן נתונים

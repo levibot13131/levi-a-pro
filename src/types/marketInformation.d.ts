@@ -7,8 +7,17 @@ export interface MarketInfluencer {
   description: string;
   topics: string[];
   isFollowed: boolean;
-  influence: number;  // הוספת שדה שחסר
-  avatarUrl: string;  // הוספת שדה שחסר
+  influence: number;
+  avatarUrl: string;
+  // These are from the older type but might be needed
+  username?: string;
+  reliability?: number;
+  expertise?: string[];
+  bio?: string;
+  profileUrl?: string;
+  isVerified?: boolean;
+  imageUrl?: string;
+  assetsDiscussed?: string[];
 }
 
 export interface FinancialDataSource {
@@ -20,12 +29,13 @@ export interface FinancialDataSource {
   reliability: number;
   isPaid: boolean;
   frequencyUpdate: string;
-  imageUrl: string;  // הוספת שדה שחסר
+  imageUrl: string;
   languages: string[];
   categories: string[];
   isFeatured: boolean;
   rating: number;
   platform: string;
+  category?: string | string[];
 }
 
 export interface MarketEvent {
@@ -36,9 +46,15 @@ export interface MarketEvent {
   category: string;
   impact: 'high' | 'medium' | 'low';
   source: string;
+  time: string;
+  link: string;
   hasReminder: boolean;
-  time: string;  // הוספת שדה שחסר
-  link: string;  // הוספת שדה שחסר
+  // These are from the older type but might be needed
+  reminder?: boolean;
+  importance?: string;
+  type?: string;
+  relatedAssets?: string[];
+  expectedImpact?: string;
 }
 
 export type MarketSource = FinancialDataSource;

@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { MarketEvent } from '@/types/marketInformation';  // שינוי הייבוא למיקום הנכון
+import { MarketEvent } from '@/types/marketInformation';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, ExternalLink, Bell, BellOff } from 'lucide-react';
-import { setEventReminder } from '@/services/marketInformation';
+import { setEventReminder } from '@/services/marketInformation/eventsService';
 
 interface EventsTabProps {
   events: MarketEvent[];

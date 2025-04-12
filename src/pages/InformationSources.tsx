@@ -4,14 +4,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   getSources, 
   getInfluencers, 
-  toggleSourceFavorite,
-  toggleInfluencerFollow,
   getUpcomingMarketEvents,
-  setEventReminder,
   MarketInfluencer,
   MarketEvent,
   FinancialDataSource
 } from '@/services/marketInformation/index';
+import { toggleSourceFavorite } from '@/services/marketInformation/sourcesService';
+import { toggleInfluencerFollow } from '@/services/marketInformation/influencersService';
+import { setEventReminder } from '@/services/marketInformation/eventsService';
 import InfluencersTab from '@/components/information-sources/InfluencersTab';
 import SourcesTab from '@/components/information-sources/SourcesTab';
 import EventsTab from '@/components/information-sources/EventsTab';
@@ -26,44 +26,26 @@ const InformationSources = () => {
   
   // Influencers state
   const [influencers, setInfluencers] = useState<MarketInfluencer[]>([]);
-  const [followedInfluencerIds, setFollowedInfluencerIds] = useState<Set<string>>(new Set());
+  const [focusedInfluencerIds, setFocusedInfluencerIds] = useState<Set<string>>(new Set());
   
   // Events state
   const [events, setEvents] = useState<MarketEvent[]>([]);
-  const [setReminders, setRemindEvents] = useState<Set<string>>(new Set());
+  const [focusedEventIds, setFocusedEventIds] = useState<Set<string>>(new Set());
   
   // Fetch initial data
   React.useEffect(() => {
     // Adapt the returned influencers to include required properties
-    const fetchedInfluencers = getInfluencers().map(inf => ({
-      ...inf, 
-      bio: inf.bio || inf.description || 'No bio available',
-      expertise: inf.expertise || inf.assetsDiscussed || ['cryptocurrency'],
-      username: inf.username || inf.name.toLowerCase().replace(/\s/g, ''), // Generate a username if missing
-      reliability: inf.reliability || 4, // Use existing reliability property
-    })) as MarketInfluencer[];
+    const fetchedInfluencers = getInfluencers();
     
     // Adapt the returned sources to include required properties
-    const fetchedSources = getSources().map(source => ({
-      ...source,
-      categories: source.categories || [source.type],
-      isFeatured: Math.random() > 0.7 // Randomly feature some sources for the demo
-    })) as FinancialDataSource[];
+    const fetchedSources = getSources();
     
     // Complete the market events with required fields
     const rawEvents = getUpcomingMarketEvents();
-    const completedEvents = rawEvents.map(event => ({
-      ...event,
-      relatedAssets: event.relatedAssets || [],
-      expectedImpact: event.expectedImpact || 'neutral',
-      source: event.source || 'system',
-      reminder: Boolean(event.reminder),
-      type: event.type || 'economic'
-    })) as MarketEvent[];
     
     setInfluencers(fetchedInfluencers);
     setSources(fetchedSources);
-    setEvents(completedEvents);
+    setEvents(rawEvents);
   }, []);
   
   // Handle focus source
@@ -80,33 +62,33 @@ const InformationSources = () => {
   
   // Handle follow influencer
   const handleFollowInfluencer = (influencerId: string) => {
-    const newFollowedInfluencers = new Set(followedInfluencerIds);
+    const newFollowedInfluencers = new Set(focusedInfluencerIds);
     if (newFollowedInfluencers.has(influencerId)) {
       newFollowedInfluencers.delete(influencerId);
     } else {
       newFollowedInfluencers.add(influencerId);
     }
-    setFollowedInfluencerIds(newFollowedInfluencers);
+    setFocusedInfluencerIds(newFollowedInfluencers);
     toggleInfluencerFollow(influencerId);
   };
   
   // Handle event reminder
   const handleEventReminder = (eventId: string) => {
-    const newRemindEvents = new Set(setReminders);
+    const newRemindEvents = new Set(focusedEventIds);
     if (newRemindEvents.has(eventId)) {
       newRemindEvents.delete(eventId);
     } else {
       newRemindEvents.add(eventId);
     }
-    setRemindEvents(newRemindEvents);
-    setEventReminder(eventId, 0);
+    setFocusedEventIds(newRemindEvents);
+    setEventReminder(eventId, true);
   };
   
   // Filter data based on search term
   const filteredInfluencers = influencers.filter(
     inf => 
       inf.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      inf.username.toLowerCase().includes(searchTerm.toLowerCase())
+      inf.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
   const filteredSources = sources.filter(
@@ -149,8 +131,8 @@ const InformationSources = () => {
       <TabsContent value="influencers" className={activeTab === 'influencers' ? 'block' : 'hidden'}>
         <InfluencersTab
           influencers={filteredInfluencers}
-          followedInfluencerIds={followedInfluencerIds}
-          onFollow={handleFollowInfluencer}
+          focusedInfluencerIds={focusedInfluencerIds}
+          onFocus={handleFollowInfluencer}
         />
       </TabsContent>
       
@@ -165,8 +147,8 @@ const InformationSources = () => {
       <TabsContent value="events" className={activeTab === 'events' ? 'block' : 'hidden'}>
         <EventsTab
           events={filteredEvents}
-          setReminders={setReminders}
-          onSetReminder={handleEventReminder}
+          focusedEventIds={focusedEventIds}
+          onFocus={handleEventReminder}
         />
       </TabsContent>
     </div>

@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { MarketInfluencer } from '@/types/marketInformation';  // שינוי הייבוא למיקום הנכון
+import { MarketInfluencer } from '@/types/marketInformation';
 import { Button } from '@/components/ui/button';
 import { ExternalLink, User, Users } from 'lucide-react';
-import { toggleInfluencerFollow } from '@/services/marketInformation';
+import { toggleInfluencerFollow } from '@/services/marketInformation/influencersService';
 
 interface InfluencersTabProps {
   influencers: MarketInfluencer[];
