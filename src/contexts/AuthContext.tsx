@@ -2,9 +2,11 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export interface User {
+  id: string;  // Added missing property
   email?: string;
   displayName?: string;
   photoURL?: string;
+  isAdmin?: boolean;  // Added missing property
   // Add other properties as needed
 }
 
@@ -15,6 +17,7 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   register: (email: string, password: string, displayName: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  refreshUser: () => void;  // Added missing method
 }
 
 const defaultAuthContext: AuthContextType = {
@@ -23,7 +26,8 @@ const defaultAuthContext: AuthContextType = {
   isAdmin: false,
   login: async () => false,
   register: async () => false,
-  logout: async () => {}
+  logout: async () => {},
+  refreshUser: () => {}  // Added implementation
 };
 
 const AuthContext = createContext<AuthContextType>(defaultAuthContext);
@@ -40,9 +44,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Mock implementation
     if (email && password) {
       setUser({
+        id: '1',  // Added ID
         email,
         displayName: 'Test User',
         photoURL: '',
+        isAdmin: email === 'admin@example.com'  // Set isAdmin property
       });
       return true;
     }
@@ -53,9 +59,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Mock implementation
     if (email && password && displayName) {
       setUser({
+        id: '2',  // Added ID
         email,
         displayName,
         photoURL: '',
+        isAdmin: false
       });
       return true;
     }
@@ -66,8 +74,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
   };
   
+  const refreshUser = () => {
+    // In a real app, this would fetch the latest user data
+    if (user) {
+      setUser({ ...user });
+    }
+  };
+  
   const isAuthenticated = !!user;
-  const isAdmin = isAuthenticated && user?.email === 'admin@example.com';
+  const isAdmin = isAuthenticated && user?.isAdmin === true;
 
   return (
     <AuthContext.Provider value={{ 
@@ -76,7 +91,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       isAdmin,
       login, 
       register,
-      logout 
+      logout,
+      refreshUser
     }}>
       {children}
     </AuthContext.Provider>

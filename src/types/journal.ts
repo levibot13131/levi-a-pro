@@ -44,7 +44,7 @@ export interface TradingJournalEntry {
   notes?: string;
   tags?: string[];
   strategy: string;
-  date?: string;
+  date: string;  // Changed to required
   symbol?: string;
   direction?: 'long' | 'short';
   stopLoss?: number;

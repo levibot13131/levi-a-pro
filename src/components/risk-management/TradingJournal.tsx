@@ -52,6 +52,7 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
         assetName: formData.assetId, // Using assetId as name for simplicity
         direction: formData.direction as 'long' | 'short',
         entryPrice,
+        entryDate: Date.now(), // Added missing required field
         stopLoss,
         targetPrice: formData.targetPrice ? parseFloat(formData.targetPrice) : undefined,
         positionSize,
@@ -59,11 +60,13 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
         notes: formData.notes,
         strategy: formData.strategy || 'ידני', // Make sure strategy is always set
         tags: formData.tags || [],
-        outcome: 'open' as const
+        outcome: 'open' as const,
+        type: 'buy', // Added missing required field
+        quantity: positionSize / entryPrice // Added missing required field
       };
       
       const savedEntry = await addTradingJournalEntry(newEntry);
-      setEntries(prev => [savedEntry as TradeJournalEntry, ...prev]);
+      setEntries(prev => [savedEntry, ...prev]);
       setShowForm(false);
       
     } catch (err: any) {

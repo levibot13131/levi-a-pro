@@ -109,17 +109,15 @@ export interface TradeSignal {
   type: 'buy' | 'sell';
   price: number;
   timestamp: number;
-  strength: 'weak' | 'medium' | 'strong';
+  strength: 'strong' | 'medium' | 'weak';
   strategy: string;
   timeframe: string;
   targetPrice?: number;
   stopLoss?: number;
   riskRewardRatio?: number;
-  createdAt: number;
-  symbolName: string;
-  confidence: number;
-  indicator: string;
-  description?: string;
+  notes?: string;
+  source?: string;
+  createdAt?: number;
 }
 
 export interface MarketAnalysis {

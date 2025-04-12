@@ -1,4 +1,3 @@
-
 // This file exports all backtesting services for easier imports
 export * from './backtesting';
 export * from './backtesting/positionSizer';
@@ -33,3 +32,22 @@ export {
 // Re-export the types directly from the types module
 export type { MarketInfluencer, FinancialDataSource as MarketSource } from '@/types/marketInformation';
 export type { MarketEvent } from '@/types/marketInformation';
+
+import { TradeSignal } from '@/types/asset';
+import { addCustomEvent } from './marketInformation/index';
+
+export interface BacktestResult {
+  winRate: number;
+  profitFactor: number;
+  totalTrades: number;
+  profitableTrades: number;
+  unprofitableTrades: number;
+  maxDrawdown: number;
+  averageProfitPerTrade: number;
+  averageLossPerTrade: number;
+  expectancy: number;
+}
+
+export const addEventToAssetTimeline = (assetId: string, eventData: any) => {
+  return addCustomEvent(assetId, eventData);
+};

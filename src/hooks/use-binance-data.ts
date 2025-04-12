@@ -11,9 +11,20 @@ interface BinanceMarketData {
   lastUpdated: number;
 }
 
+// Add fundamental data interface
+interface BinanceFundamentalData {
+  marketCap: number;
+  totalSupply: number;
+  circulatingSupply: number;
+  maxSupply?: number;
+  launchDate?: string;
+  category: string;
+}
+
 // Types for hook return values
 interface UseBinanceDataReturn {
   marketData: Record<string, BinanceMarketData>;
+  fundamentalData?: Record<string, BinanceFundamentalData>;  // Added missing property
   isLoading: boolean;
   error: Error | null;
   refetch: () => void;
@@ -21,6 +32,7 @@ interface UseBinanceDataReturn {
 
 export const useBinanceData = (symbols: string[]): UseBinanceDataReturn => {
   const [marketData, setMarketData] = useState<Record<string, BinanceMarketData>>({});
+  const [fundamentalData, setFundamentalData] = useState<Record<string, BinanceFundamentalData>>({}); // Added state
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [refreshCounter, setRefreshCounter] = useState(0);
@@ -45,6 +57,7 @@ export const useBinanceData = (symbols: string[]): UseBinanceDataReturn => {
       try {
         // Simulate fetching data from Binance API
         const mockData: Record<string, BinanceMarketData> = {};
+        const mockFundamentalData: Record<string, BinanceFundamentalData> = {}; // Added fundamental data
         
         for (const symbol of symbols) {
           const basePrice = symbol.includes('BTC') ? 45000 : 
@@ -64,10 +77,24 @@ export const useBinanceData = (symbols: string[]): UseBinanceDataReturn => {
             low24h: price * 0.98,
             lastUpdated: Date.now()
           };
+          
+          // Add mock fundamental data
+          mockFundamentalData[symbol] = {
+            marketCap: price * (Math.random() * 10000000 + 1000000),
+            totalSupply: Math.round(Math.random() * 1000000000),
+            circulatingSupply: Math.round(Math.random() * 500000000),
+            maxSupply: symbol.includes('BTC') ? 21000000 : undefined,
+            launchDate: ['BTC', 'ETH', 'BNB'].includes(symbol.replace('USDT', '')) ? 
+              '2015-01-01' : '2020-01-01',
+            category: symbol.includes('BTC') ? 'Currency' : 
+                   symbol.includes('ETH') ? 'Smart Contract' : 
+                   symbol.includes('BNB') ? 'Exchange' : 'Other'
+          };
         }
 
         if (isMounted) {
           setMarketData(mockData);
+          setFundamentalData(mockFundamentalData); // Set fundamental data
           setIsLoading(false);
         }
       } catch (err) {
@@ -91,5 +118,5 @@ export const useBinanceData = (symbols: string[]): UseBinanceDataReturn => {
     };
   }, [symbols, refreshCounter]);
 
-  return { marketData, isLoading, error, refetch };
+  return { marketData, fundamentalData, isLoading, error, refetch };
 };
