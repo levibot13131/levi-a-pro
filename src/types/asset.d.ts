@@ -118,7 +118,7 @@ export interface TradeSignal {
   notes?: string;
   source?: string;
   createdAt: number;
-  // Add missing properties needed by CustomSignals component
+  // Additional properties needed by CustomSignals component
   symbolName?: string;
   confidence?: number;
   indicator?: string;

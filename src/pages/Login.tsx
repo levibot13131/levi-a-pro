@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { LogIn, ChevronRight, Key } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -51,6 +52,11 @@ const Login = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Link to="/" className="absolute top-4 right-4 flex items-center text-muted-foreground hover:text-primary transition-colors">
+        <ChevronRight className="mr-1 h-4 w-4" />
+        חזרה לדף הבית
+      </Link>
+      
       <div className="mb-8 text-center">
         <h1 className="text-4xl font-bold tracking-tight text-primary">
           Levi Bot
@@ -90,17 +96,25 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <div className="text-sm text-muted-foreground text-right">
-              <p className="font-semibold">Levi Bot - גישה מוגבלת בלבד</p>
-              <p>* לגישת מנהל:</p>
-              <p>מנהל מערכת: almogahronov1997@gmail.com / 1907900</p>
-              <p>* לגישת משתמש רגיל:</p>
-              <p>משתמש רגיל: user@example.com / user123</p>
+            <div className="text-sm text-muted-foreground text-right p-3 bg-muted rounded-md">
+              <div className="font-semibold flex items-center mb-2">
+                <Key className="h-4 w-4 ml-1" />
+                פרטי כניסה לדוגמה:
+              </div>
+              <p><strong>מנהל מערכת:</strong> almogahronov1997@gmail.com / 1907900</p>
+              <p><strong>משתמש רגיל:</strong> user@example.com / user123</p>
             </div>
           </CardContent>
           <CardFooter>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'מתחבר...' : 'התחבר ל-Levi Bot'}
+              {isLoading ? (
+                'מתחבר...'
+              ) : (
+                <>
+                  <LogIn className="ml-2 h-4 w-4" />
+                  התחבר ל-Levi Bot
+                </>
+              )}
             </Button>
           </CardFooter>
         </form>

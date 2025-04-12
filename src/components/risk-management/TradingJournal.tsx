@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,13 +56,13 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
         positionSize,
         risk,
         notes: formData.notes,
-        strategy: formData.strategy || 'ידני', // Make sure strategy is set
+        strategy: formData.strategy || 'ידני', // Make sure strategy is always set
         tags: formData.tags || [],
         outcome: 'open'
       };
       
       const savedEntry = await addTradingJournalEntry(newEntry);
-      setEntries(prev => [savedEntry as TradeJournalEntry, ...prev]);
+      setEntries(prev => [savedEntry, ...prev]);
       setShowForm(false);
       
     } catch (err: any) {

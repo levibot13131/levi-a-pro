@@ -1,63 +1,74 @@
 
-import { TradeSignal, TimeframeType } from '@/types/asset';
+import { TradeSignal } from '@/types/asset';
 
-/**
- * Generate a mock trade signal for testing
- */
-export const generateMockSignal = (assetId: string, strategy?: string): TradeSignal => {
-  const assetNames: Record<string, string> = {
-    'bitcoin': 'Bitcoin',
-    'ethereum': 'Ethereum',
-    'solana': 'Solana',
-    'aapl': 'Apple',
-    'amzn': 'Amazon',
-  };
-  
-  const assetName = assetNames[assetId] || 'Unknown Asset';
+// Asset name mapping for more readable signals
+const assetNameMap: Record<string, string> = {
+  'bitcoin': 'BTC',
+  'ethereum': 'ETH',
+  'binancecoin': 'BNB',
+  'solana': 'SOL',
+  'cardano': 'ADA',
+  'ripple': 'XRP',
+  'polkadot': 'DOT',
+  'avalanche': 'AVAX'
+};
+
+// Strategies
+const strategies = [
+  'RSI Divergence',
+  'MACD Crossover',
+  'Breakout',
+  'Support Bounce',
+  'EMA Cross',
+  'Bollinger Bounce',
+  'Volume Spike',
+  'Double Bottom',
+  'Triple Top'
+];
+
+// Timeframes
+const timeframes = ['5m', '15m', '1h', '4h', '1d'];
+
+// Random in range
+const randomInRange = (min: number, max: number) => {
+  return Math.random() * (max - min) + min;
+};
+
+// Random choice from array
+const randomChoice = <T>(array: T[]): T => {
+  return array[Math.floor(Math.random() * array.length)];
+};
+
+// Generate a mock signal for the given asset
+export const generateSignal = (assetId: string, strategy?: string): TradeSignal => {
+  const now = Date.now();
   const signalType = Math.random() > 0.5 ? 'buy' : 'sell';
-  const price = 1000 + Math.random() * 50000;
-  const currentTime = new Date();
-  const createdAtTime = currentTime.getTime();
+  const basePrice = 1000 + Math.random() * 50000;
+  const strengths = ['weak', 'medium', 'strong'] as const;
   
-  // Generate different reasons based on strategy
-  let strategyName = strategy || 'A.A';
-  let notes = '';
+  // Get symbol name from map or create one
+  const symbolName = assetNameMap[assetId] || assetId.substring(0, 3).toUpperCase();
   
-  if (strategyName === 'A.A') {
-    notes = signalType === 'buy' 
-      ? 'זוהתה פריצת רמת התנגדות משמעותית עם נפח מסחר גבוה. מומלץ להכנס לפוזיציית קנייה עם יחס סיכוי/סיכון 1:3.' 
-      : 'זוהתה שבירת רמת תמיכה משמעותית. מומלץ להכנס לפוזיציית מכירה או לצאת מפוזיציות קיימות.';
-  } else if (strategyName === 'SMC') {
-    notes = signalType === 'buy'
-      ? 'אזור ביקוש זוהה עם חזרה של המחיר לאזור. מומלץ להכנס לפוזיציית קנייה.'
-      : 'זוהה אזור היצע עם דחייה מהמחיר. מומלץ להכנס לפוזיציית מכירה.';
-  } else {
-    notes = signalType === 'buy'
-      ? 'זוהתה התכנסות בולינגר בנדס עם פריצה למעלה. נפח מסחר במגמת עלייה.'
-      : 'זוהתה חציית MACD כלפי מטה יחד עם RSI בקנייתיתר.';
-  }
-  
-  // Get a valid timeframe
-  const timeframeOptions: TimeframeType[] = ['1h', '4h', '1d', '1w'];
-  const timeframe = timeframeOptions[Math.floor(Math.random() * 4)];
-  
-  return {
-    id: `signal-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+  const signal: TradeSignal = {
+    id: `signal_${now}_${assetId}`,
     assetId,
+    symbolName,
     type: signalType,
-    price,
-    timestamp: currentTime.getTime(),
-    strength: Math.random() > 0.7 ? 'strong' : Math.random() > 0.5 ? 'medium' : 'weak',
-    strategy: strategyName,
-    timeframe,
-    targetPrice: signalType === 'buy' ? price * (1 + Math.random() * 0.2) : price * (1 - Math.random() * 0.2),
-    stopLoss: signalType === 'buy' ? price * (1 - Math.random() * 0.1) : price * (1 + Math.random() * 0.1),
-    riskRewardRatio: 1 + Math.random() * 3,
-    notes,
-    symbolName: assetName,
-    confidence: Math.floor(55 + Math.random() * 45),
+    price: basePrice,
+    timestamp: now,
+    strength: randomChoice(strengths),
+    strategy: strategy || randomChoice(strategies),
+    timeframe: randomChoice(timeframes),
+    targetPrice: signalType === 'buy' ? basePrice * 1.05 : basePrice * 0.95,
+    stopLoss: signalType === 'buy' ? basePrice * 0.98 : basePrice * 1.02,
+    riskRewardRatio: 2.5,
+    createdAt: now,
+    confidence: Math.floor(randomInRange(60, 95)),
     indicator: signalType === 'buy' ? 'פריצת התנגדות' : 'שבירת תמיכה',
-    description: notes,
-    createdAt: createdAtTime
+    description: signalType === 'buy' 
+      ? 'איתות קנייה בהתבסס על ניתוח טכני ומומנטום חיובי'
+      : 'איתות מכירה בהתבסס על היפוך מגמה ואינדיקטורים שליליים'
   };
+  
+  return signal;
 };

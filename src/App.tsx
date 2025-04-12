@@ -19,6 +19,7 @@ import BinanceIntegration from '@/pages/BinanceIntegration';
 import { initializeAllServices } from '@/services/initializationService';
 import RequireAuth from '@/components/auth/RequireAuth';
 import UserManagement from '@/pages/UserManagement';
+import RiskManagement from '@/pages/RiskManagement'; // Make sure this is imported
 
 function App() {
   // אתחול כל שירותי המערכת בטעינת האפליקציה
@@ -43,14 +44,11 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="/assets" element={<Assets />} />
             <Route path="/assets/:assetId" element={<AssetDetails />} />
-            <Route path="/news" element={<MarketNews />} />
+            <Route path="/market-news" element={<MarketNews />} />
             <Route path="/technical-analysis" element={<TechnicalAnalysis />} />
-            <Route path="/portfolio" element={
-              <RequireAuth>
-                <Portfolio />
-              </RequireAuth>
-            } />
+            <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/backtesting" element={<Backtesting />} />
+            <Route path="/risk-management" element={<RiskManagement />} />
             <Route path="/settings" element={
               <RequireAuth>
                 <Settings />

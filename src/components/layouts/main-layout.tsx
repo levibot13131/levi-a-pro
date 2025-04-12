@@ -2,22 +2,31 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { Toaster } from 'sonner';
+import AuthNavbar from '@/components/auth/AuthNavbar';
+import { MainNav } from '@/components/main-nav';
+import MainNavigation from '@/components/MainNavigation';
+import { useAuth } from '@/contexts/AuthContext';
 
-const MainLayout = () => {
+const MainLayout: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+
   return (
-    <div className="min-h-screen bg-background">
-      <Toaster richColors position="top-center" dir="rtl" closeButton={true} />
-      <div className="flex min-h-screen flex-col">
-        <header className="bg-primary text-primary-foreground py-2 px-4 text-center">
-          <h1 className="text-lg font-bold">Levi Bot - מערכת מסחר אלגוריתמית</h1>
-        </header>
-        <div className="flex-1">
+    <div className="min-h-screen flex flex-col">
+      <AuthNavbar />
+      
+      <div className="flex flex-1 overflow-hidden">
+        {isAuthenticated && (
+          <div className="hidden md:block w-64 overflow-y-auto">
+            <MainNavigation />
+          </div>
+        )}
+        
+        <div className="flex-1 overflow-y-auto p-4">
           <Outlet />
         </div>
-        <footer className="py-3 px-4 text-center text-sm text-muted-foreground border-t">
-          <p>Levi Bot &copy; 2025 - כל הזכויות שמורות</p>
-        </footer>
       </div>
+      
+      <Toaster position="top-center" richColors closeButton />
     </div>
   );
 };
