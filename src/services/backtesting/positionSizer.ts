@@ -1,50 +1,63 @@
 
+import { TradeSignal } from '@/types/asset';
 import { PositionSizingCalculation } from '@/services/customTradingStrategyService';
 
-export const calculatePositionSizeForBacktest = (
-  accountSize: number,
-  riskPercentage: number,
-  entryPrice: number,
-  stopLossPrice: number,
-  targetPrice?: number
-): PositionSizingCalculation => {
-  // Validate inputs
-  if (entryPrice <= 0) {
-    throw new Error('Entry price must be greater than zero');
-  }
-  
-  if (entryPrice === stopLossPrice) {
-    throw new Error('Entry price and stop loss cannot be the same');
-  }
+interface PositionSizeOptions {
+  accountSize: number;
+  riskPercentage: number;
+  customStopLoss?: number;
+  useFixedAmount?: boolean;
+  fixedAmount?: number;
+}
 
-  // Calculate risk amount
-  const maxRiskAmount = accountSize * (riskPercentage / 100);
+// Default options for position sizing
+const defaultOptions: PositionSizeOptions = {
+  accountSize: 10000,
+  riskPercentage: 1,
+  useFixedAmount: false
+};
+
+// Calculate position size based on signal and options
+export const calculatePositionSize = (
+  signal: TradeSignal,
+  options: Partial<PositionSizeOptions> = {}
+): PositionSizingCalculation => {
+  // Merge options with defaults
+  const mergedOptions = { ...defaultOptions, ...options };
+  
+  // Get values
+  const { accountSize, riskPercentage, useFixedAmount, fixedAmount } = mergedOptions;
+  const entryPrice = signal.price;
+  const stopLoss = mergedOptions.customStopLoss || signal.stopLoss || (signal.type === 'buy' 
+    ? entryPrice * 0.95 
+    : entryPrice * 1.05);
   
   // Calculate risk per unit
-  const isLong = entryPrice > stopLossPrice;
-  const riskPerUnit = Math.abs(entryPrice - stopLossPrice);
+  const direction = signal.type === 'buy' ? 'long' : 'short';
+  const riskPerUnit = Math.abs(entryPrice - stopLoss);
+  
+  // Calculate risk amount
+  const riskAmount = useFixedAmount && fixedAmount 
+    ? fixedAmount 
+    : (accountSize * (riskPercentage / 100));
   
   // Calculate position size
-  const positionSize = maxRiskAmount / riskPerUnit;
+  const units = riskAmount / riskPerUnit;
+  const positionSize = units * entryPrice;
   
-  // Calculate risk-reward ratio if target price is provided
-  let riskRewardRatio = 1.0;
-  if (targetPrice !== undefined && targetPrice > 0) {
-    const rewardPerUnit = isLong 
-      ? targetPrice - entryPrice 
-      : entryPrice - targetPrice;
-    
-    if (rewardPerUnit > 0 && riskPerUnit > 0) {
-      riskRewardRatio = rewardPerUnit / riskPerUnit;
-    }
-  }
+  // Calculate potential profit based on target price
+  const targetPrice = signal.targetPrice || (signal.type === 'buy' 
+    ? entryPrice + (riskPerUnit * 2) 
+    : entryPrice - (riskPerUnit * 2));
+  
+  const potentialProfit = units * Math.abs(targetPrice - entryPrice);
   
   return {
     positionSize,
-    maxLossAmount: maxRiskAmount,
-    riskRewardRatio,
+    riskAmount,
+    potentialProfit,
+    riskRewardRatio: potentialProfit / riskAmount,
+    maxLossAmount: riskAmount,
     takeProfitPrice: targetPrice
   };
 };
-
-export default calculatePositionSizeForBacktest;

@@ -8,7 +8,7 @@ export const getMarketEvents = (filter?: string): MarketEvent[] => {
   }
   
   return MARKET_EVENTS.filter(event => 
-    event.category === filter || 
+    (event.category && event.category === filter) || 
     event.importance === filter ||
     event.relatedAssets.includes(filter)
   );

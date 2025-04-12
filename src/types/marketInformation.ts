@@ -10,8 +10,9 @@ export interface MarketInfluencer {
   reliability: number;
   expertise: string[];
   bio: string;
-  profileUrl: string;  // Added required property
-  isVerified: boolean;  // Added required property
+  profileUrl: string;
+  isVerified: boolean;
+  imageUrl?: string; // Added property
 }
 
 export interface FinancialDataSource {
@@ -21,14 +22,14 @@ export interface FinancialDataSource {
   description: string;
   url: string;
   reliability: number;
-  category: string;
+  category: string | string[]; // Changed to accept both string and string[]
   rating: number;
   platform: string;
   isPaid: boolean;
   frequencyUpdate: string;
   languages: string[];
-  isFeatured: boolean;  // Added required property
-  categories: string[];  // Added required property
+  isFeatured: boolean;
+  categories: string[];
 }
 
 export interface MarketEvent {
@@ -38,9 +39,11 @@ export interface MarketEvent {
   importance: string;
   description: string;
   type: string;
-  relatedAssets: string[];  // Added required property
-  expectedImpact: string;   // Added required property
-  source: string;           // Added required property
+  relatedAssets: string[];
+  expectedImpact: string;
+  source: string;
+  reminder: boolean; // Added property
+  category?: string; // Added property
 }
 
 export interface EventReminder {

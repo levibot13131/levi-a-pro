@@ -52,7 +52,7 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
         assetName: formData.assetId, // Using assetId as name for simplicity
         direction: formData.direction as 'long' | 'short',
         entryPrice,
-        entryDate: Date.now(), // Added missing required field
+        entryDate: formData.date, // Changed to string per the updated interface
         stopLoss,
         targetPrice: formData.targetPrice ? parseFloat(formData.targetPrice) : undefined,
         positionSize,
@@ -61,13 +61,15 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
         strategy: formData.strategy || 'ידני', // Make sure strategy is always set
         tags: formData.tags || [],
         outcome: 'open' as const,
-        type: 'buy', // Added missing required field
-        quantity: positionSize / entryPrice // Added missing required field
+        type: 'buy', // Added required field
+        quantity: positionSize / entryPrice // Added required field
       };
       
       const savedEntry = await addTradingJournalEntry(newEntry);
-      setEntries(prev => [savedEntry, ...prev] as TradeJournalEntry[]); // Type cast to ensure correct typing
+      setEntries(prev => [savedEntry, ...prev]);
       setShowForm(false);
+      
+      toast.success("העסקה נוספה בהצלחה ליומן המסחר");
       
     } catch (err: any) {
       toast.error("שגיאה בהוספת העסקה ליומן", {
@@ -99,7 +101,7 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
           />
         )}
         
-        <TradingJournalEntryList entries={entries} />
+        <TradingJournalEntryList entries={entries as any} />
       </CardContent>
       <CardFooter className="flex justify-center">
         <Button variant="outline" className="w-1/2" disabled={entries.length === 0}>

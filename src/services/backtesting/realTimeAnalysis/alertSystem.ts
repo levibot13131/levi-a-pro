@@ -44,7 +44,7 @@ export const startRealTimeAnalysis = (
       signalCount++;
       
       // Notify user of new signal
-      toast.info(`איתות חדש: ${signal.type === 'buy' ? 'קנייה' : 'מכירה'} ${signal.symbolName}`, {
+      toast.info(`איתות חדש: ${signal.type === 'buy' ? 'קנייה' : 'מכירה'} ${signal.symbolName || signal.assetId}`, {
         description: signal.description || `מחיר: ${signal.price}, אסטרטגיה: ${signal.strategy}`
       });
     }

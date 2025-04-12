@@ -1,84 +1,106 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calculator } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { calculatePositionSize } from '@/services/customTradingStrategyService';
 import RiskCalculatorForm from './RiskCalculatorForm';
 import RiskCalculatorResults from './RiskCalculatorResults';
 import RiskCalculatorError from './RiskCalculatorError';
 
-interface RiskCalculatorProps {
-  accountSize?: number;
-  onCalculate?: (result: any) => void;
-}
-
-const RiskCalculator = ({ accountSize = 100000, onCalculate }: RiskCalculatorProps) => {
-  const [values, setValues] = useState({
-    accountSize,
-    riskPercentage: 1,
-    entryPrice: 0,
-    stopLossPrice: 0,
-    targetPrice: 0
-  });
-  
-  const [result, setResult] = useState<any>(null);
+const RiskCalculator = () => {
+  const [accountSize, setAccountSize] = useState<string>('10000');
+  const [entryPrice, setEntryPrice] = useState<string>('');
+  const [stopLoss, setStopLoss] = useState<string>('');
+  const [riskPercentage, setRiskPercentage] = useState<string>('1');
+  const [direction, setDirection] = useState<'long' | 'short'>('long');
+  const [calculationResult, setCalculationResult] = useState(null);
   const [error, setError] = useState<string | null>(null);
   
-  const handleChange = (field: string, value: number) => {
-    setValues(prev => ({ ...prev, [field]: value }));
-    setError(null);
-  };
-  
   const handleCalculate = () => {
+    // Clear previous results
+    setError(null);
+    setCalculationResult(null);
+    
+    // Validate inputs
+    if (!accountSize || !entryPrice || !stopLoss || !riskPercentage) {
+      setError('יש למלא את כל השדות');
+      return;
+    }
+    
+    const parsedAccountSize = parseFloat(accountSize);
+    const parsedEntryPrice = parseFloat(entryPrice);
+    const parsedStopLoss = parseFloat(stopLoss);
+    const parsedRiskPercentage = parseFloat(riskPercentage);
+    
+    // Validate parsed values
+    if (isNaN(parsedAccountSize) || isNaN(parsedEntryPrice) || isNaN(parsedStopLoss) || isNaN(parsedRiskPercentage)) {
+      setError('אחד או יותר מהערכים שהוכנסו אינם מספרים תקינים');
+      return;
+    }
+    
+    if (parsedAccountSize <= 0 || parsedEntryPrice <= 0 || parsedRiskPercentage <= 0) {
+      setError('יש להכניס ערכים חיוביים בלבד');
+      return;
+    }
+    
+    // For long positions, stop loss must be below entry price
+    if (direction === 'long' && parsedStopLoss >= parsedEntryPrice) {
+      setError('בעסקת לונג, הסטופ לוס חייב להיות נמוך ממחיר הכניסה');
+      return;
+    }
+    
+    // For short positions, stop loss must be above entry price
+    if (direction === 'short' && parsedStopLoss <= parsedEntryPrice) {
+      setError('בעסקת שורט, הסטופ לוס חייב להיות גבוה ממחיר הכניסה');
+      return;
+    }
+    
+    // Calculate position size
     try {
-      if (values.entryPrice === 0) {
-        throw new Error("מחיר כניסה חייב להיות גדול מאפס");
-      }
-      
-      if (values.entryPrice === values.stopLossPrice) {
-        throw new Error("מחיר כניסה וסטופ לוס לא יכולים להיות זהים");
-      }
-      
-      const calculationResult = calculatePositionSize(
-        values.accountSize,
-        values.riskPercentage,
-        values.entryPrice,
-        values.stopLossPrice,
-        values.targetPrice || undefined
+      const result = calculatePositionSize(
+        parsedAccountSize,
+        parsedRiskPercentage,
+        parsedEntryPrice,
+        parsedStopLoss,
+        direction
       );
-      
-      setResult(calculationResult);
-      
-      if (onCalculate) {
-        onCalculate(calculationResult);
-      }
+      setCalculationResult(result);
     } catch (err: any) {
-      setError(err.message);
-      setResult(null);
+      setError(err.message || 'אירעה שגיאה בחישוב גודל הפוזיציה');
     }
   };
   
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-right flex items-center justify-between">
-          <Calculator className="h-5 w-5" />
-          <div>חישוב גודל פוזיציה</div>
-        </CardTitle>
+        <CardTitle className="text-right">מחשבון גודל פוזיציה וניהול סיכונים</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <RiskCalculatorForm 
-          values={values}
-          handleChange={handleChange}
-          handleCalculate={handleCalculate}
+      <CardContent>
+        <RiskCalculatorForm
+          accountSize={accountSize}
+          setAccountSize={setAccountSize}
+          entryPrice={entryPrice}
+          setEntryPrice={setEntryPrice}
+          stopLoss={stopLoss}
+          setStopLoss={setStopLoss}
+          riskPercentage={riskPercentage}
+          setRiskPercentage={setRiskPercentage}
+          direction={direction}
+          setDirection={setDirection}
         />
         
-        <RiskCalculatorError error={error} />
+        <div className="mt-6 flex justify-end">
+          <Button onClick={handleCalculate}>חשב</Button>
+        </div>
         
-        <RiskCalculatorResults 
-          result={result} 
-          riskPercentage={values.riskPercentage} 
-        />
+        {error && <RiskCalculatorError error={error} />}
+        
+        {calculationResult && (
+          <RiskCalculatorResults 
+            result={calculationResult} 
+            riskPercentage={parseFloat(riskPercentage)}
+          />
+        )}
       </CardContent>
     </Card>
   );

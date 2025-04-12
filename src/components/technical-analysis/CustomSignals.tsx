@@ -32,12 +32,11 @@ const generateMockSignals = (assetId: string): TradeSignal[] => {
       stopLoss: 48000,
       riskRewardRatio: 2.5,
       createdAt: now - 2 * day,
-      // Additional properties 
+      notes: 'אפשר לנצל את ההזדמנות הזו לעמדה לטווח ארוך.',
       symbolName: 'BTC',
       confidence: 85,
       indicator: 'פריצת התנגדות',
-      description: 'פריצת התנגדות ארוכת טווח עם נפח גבוה',
-      notes: 'אפשר לנצל את ההזדמנות הזו לעמדה לטווח ארוך.'
+      description: 'פריצת התנגדות ארוכת טווח עם נפח גבוה'
     },
     {
       id: '2',
@@ -52,12 +51,11 @@ const generateMockSignals = (assetId: string): TradeSignal[] => {
       stopLoss: 53000,
       riskRewardRatio: 3.0,
       createdAt: now - day,
-      // Additional properties
+      notes: 'מומלץ לצמצם פוזיציות ולתת סטופ לוס מעל הרמה של 53,000.',
       symbolName: 'BTC',
       confidence: 70,
       indicator: 'דיברגנס RSI',
-      description: 'דיברגנס שלילי ב-RSI וירידה בנפח המסחר',
-      notes: 'מומלץ לצמצם פוזיציות ולתת סטופ לוס מעל הרמה של 53,000.'
+      description: 'דיברגנס שלילי ב-RSI וירידה בנפח המסחר'
     },
     {
       id: '3',
@@ -72,12 +70,11 @@ const generateMockSignals = (assetId: string): TradeSignal[] => {
       stopLoss: 48500,
       riskRewardRatio: 1.5,
       createdAt: now - 12 * 60 * 60 * 1000,
-      // Additional properties
+      notes: 'אפשרות לעסקה קצרת טווח עם סטופ לוס מתחת לממוצע הנע.',
       symbolName: 'BTC',
       confidence: 65,
       indicator: 'התמיכה בממוצע נע',
-      description: 'ניתור מרמת תמיכה של ממוצע נע 200',
-      notes: 'אפשרות לעסקה קצרת טווח עם סטופ לוס מתחת לממוצע הנע.'
+      description: 'ניתור מרמת תמיכה של ממוצע נע 200'
     }
   ];
 };

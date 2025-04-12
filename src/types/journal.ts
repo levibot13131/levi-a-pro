@@ -5,7 +5,7 @@ export interface TradeJournalEntry {
   assetName: string;
   type: 'buy' | 'sell';
   entryPrice: number;
-  entryDate: number;
+  entryDate: string; // Changed from number to string
   exitPrice?: number;
   exitDate?: number;
   quantity: number;
@@ -32,7 +32,7 @@ export interface TradingJournalEntry {
   assetName: string;
   type?: 'buy' | 'sell';
   entryPrice: number;
-  entryDate?: number;
+  entryDate?: string; // Changed from number to string
   exitPrice?: number;
   exitDate?: number;
   quantity?: number;

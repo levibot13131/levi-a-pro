@@ -1,3 +1,4 @@
+
 import { MarketEvent, MarketInfluencer, FinancialDataSource } from '@/types/marketInformation';
 
 export const MARKET_EVENTS: MarketEvent[] = [
@@ -14,7 +15,6 @@ export const MARKET_EVENTS: MarketEvent[] = [
     reminder: false,
     type: "technical"
   },
-  // Add more events as needed
   {
     id: "event2",
     title: "Federal Reserve Meeting",
@@ -34,23 +34,32 @@ export const MARKET_INFLUENCERS: MarketInfluencer[] = [
   {
     id: "inf1",
     name: "Crypto Expert",
+    username: "crypto_expert",
     platform: "Twitter",
     followers: 500000,
     reliability: 80,
+    assetsDiscussed: ["Bitcoin", "Ethereum", "DeFi"],
+    description: "Leading crypto analyst with accurate price predictions",
+    bio: "Leading crypto analyst with accurate price predictions",
     expertise: ["Bitcoin", "Ethereum", "DeFi"],
-    imageUrl: "https://example.com/expert1.jpg",
-    description: "Leading crypto analyst with accurate price predictions"
+    profileUrl: "https://twitter.com/crypto_expert",
+    isVerified: true,
+    imageUrl: "https://example.com/expert1.jpg"
   },
-  // Add more influencers as needed
   {
     id: "inf2",
     name: "Market Guru",
+    username: "market_guru",
     platform: "YouTube",
     followers: 1000000,
     reliability: 75,
+    assetsDiscussed: ["Technical Analysis", "Trend Analysis"],
+    description: "Technical analysis expert focusing on chart patterns",
+    bio: "Technical analysis expert focusing on chart patterns",
     expertise: ["Technical Analysis", "Trend Analysis"],
-    imageUrl: "https://example.com/expert2.jpg",
-    description: "Technical analysis expert focusing on chart patterns"
+    profileUrl: "https://youtube.com/market_guru",
+    isVerified: true,
+    imageUrl: "https://example.com/expert2.jpg"
   }
 ];
 
@@ -60,22 +69,31 @@ export const FINANCIAL_DATA_SOURCES: FinancialDataSource[] = [
     name: "CryptoCompare",
     type: "API",
     reliability: 95,
-    category: ["Crypto", "Market Data"],
+    category: "Crypto",
+    categories: ["Crypto", "Market Data"],
     url: "https://cryptocompare.com",
     description: "Comprehensive crypto data source",
     isPaid: false,
-    frequencyUpdate: "real-time"
+    frequencyUpdate: "real-time",
+    languages: ["en"],
+    isFeatured: true,
+    rating: 4.5,
+    platform: "Web"
   },
-  // Add more sources as needed
   {
     id: "src2",
     name: "TradingView",
     type: "Platform",
     reliability: 90,
-    category: ["Stocks", "Crypto", "Forex"],
+    category: "Financial",
+    categories: ["Stocks", "Crypto", "Forex"],
     url: "https://tradingview.com",
     description: "Advanced charting and analysis platform",
     isPaid: true,
-    frequencyUpdate: "real-time"
+    frequencyUpdate: "real-time",
+    languages: ["en", "es", "ru"],
+    isFeatured: true,
+    rating: 4.8,
+    platform: "Web"
   }
 ];

@@ -1,21 +1,6 @@
 
 import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import { showProductionWarningIfNeeded } from './services/environment/productionFallbacks';
-import './index.css';
+// Redirecting to main.tsx
+import './main.tsx';
 
-// Initialize production notifications
-showProductionWarningIfNeeded();
-
-const rootElement = document.getElementById('root');
-if (rootElement) {
-  const root = ReactDOM.createRoot(rootElement);
-  root.render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
-} else {
-  console.error('Root element not found');
-}
+console.log('Redirecting to main.tsx - this file is kept for backward compatibility');

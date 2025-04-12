@@ -1,3 +1,4 @@
+
 export interface Asset {
   id: string;
   name: string;
@@ -109,13 +110,13 @@ export interface MarketAnalysis {
 
 export interface TradeJournalEntry {
   id: string;
-  date: string; // Making this required to match with journal.ts
+  date: string; // Required in both types
   assetId: string;
   assetName: string;
   type?: 'buy' | 'sell';
   quantity?: number;
   direction: 'long' | 'short';
-  entryDate?: string;
+  entryDate?: string; // Changed to string to match with journal.ts
   entryPrice: number;
   exitDate?: string;
   exitPrice?: number;

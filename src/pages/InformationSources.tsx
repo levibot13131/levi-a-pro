@@ -148,7 +148,7 @@ const InformationSources = () => {
       newRemindEvents.add(eventId);
     }
     setRemindEvents(newRemindEvents);
-    setEventReminder(eventId);
+    setEventReminder(eventId, 0);
   };
   
   // Filter data based on search term

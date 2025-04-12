@@ -26,6 +26,9 @@ import RequireAuth from './components/auth/RequireAuth';
 import Unauthorized from './pages/Unauthorized';
 import Missing from './pages/Missing';
 import LinkPage from './pages/LinkPage';
+import Index from './pages/Index';
+import MarketData from './pages/MarketData';
+import NotFound from './pages/NotFound';
 
 function App() {
   return (
@@ -33,7 +36,7 @@ function App() {
       <EnvironmentBanner />
       <Routes>
         <Route path="/" element={<MainLayout />}>
-          <Route index element={<Backtesting />} />
+          <Route index element={<Index />} />
           <Route path="/linkpage" element={<LinkPage />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
 
@@ -54,9 +57,10 @@ function App() {
             <Route path="/information-sources" element={<InformationSources />} />
             <Route path="/journal" element={<Journal />} />
             <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/market-data" element={<MarketData />} />
           </Route>
 
-          <Route path="*" element={<Missing />} />
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
       <Toaster />

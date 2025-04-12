@@ -11,7 +11,7 @@ interface TradingRulesProps {
 }
 
 const TradingRules = ({ showDetails = true }: TradingRulesProps) => {
-  // Categorize rules - using rule property instead of missing category
+  // Categorize rules - using rule property in the riskManagementRules objects
   const stopLossRules = riskManagementRules.filter(rule => rule.rule.includes('סטופ') || rule.rule.includes('stop'));
   const positionRules = riskManagementRules.filter(rule => rule.rule.includes('פוזיציה') || rule.rule.includes('גודל'));
   const psychologyRules = riskManagementRules.filter(rule => rule.rule.includes('פסיכולוגיה') || rule.rule.includes('רגש'));

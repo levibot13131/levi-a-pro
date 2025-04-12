@@ -52,7 +52,6 @@ export const generateSignal = (assetId: string, strategy?: string): TradeSignal 
   const signal: TradeSignal = {
     id: `signal_${now}_${assetId}`,
     assetId,
-    symbolName,
     type: signalType,
     price: basePrice,
     timestamp: now,
@@ -63,6 +62,7 @@ export const generateSignal = (assetId: string, strategy?: string): TradeSignal 
     stopLoss: signalType === 'buy' ? basePrice * 0.98 : basePrice * 1.02,
     riskRewardRatio: 2.5,
     createdAt: now,
+    symbolName: symbolName,
     confidence: Math.floor(randomInRange(60, 95)),
     indicator: signalType === 'buy' ? 'פריצת התנגדות' : 'שבירת תמיכה',
     description: signalType === 'buy' 
