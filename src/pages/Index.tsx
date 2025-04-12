@@ -1,7 +1,6 @@
 
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MainNavigation from '@/components/MainNavigation';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -13,7 +12,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <MainNavigation />
       <div className="container mx-auto py-12 px-4">
         <div className="flex flex-col items-center justify-center text-center">
           <h1 className="text-4xl font-bold mb-6">ברוכים הבאים למערכת הניתוח והמסחר האוטומטית</h1>

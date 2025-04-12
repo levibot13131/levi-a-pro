@@ -1,5 +1,5 @@
 
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import MainNavigation from './components/MainNavigation';
 import { Toaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -29,33 +29,31 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter>
-          <div className="min-h-screen flex">
-            <div className="flex-none">
-              <MainNavigation />
-            </div>
-            <div className="flex-1 overflow-auto">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/market-data" element={<MarketData />} />
-                <Route path="/asset-tracker" element={<AssetTracker />} />
-                <Route path="/market-news" element={<MarketNews />} />
-                <Route path="/trading-signals" element={<TradingSignals />} />
-                <Route path="/risk-management" element={<RiskManagement />} />
-                <Route path="/backtesting" element={<Backtesting />} />
-                <Route path="/user-management" element={<UserManagement />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/information-sources" element={<InformationSources />} />
-                <Route path="/comprehensive-analysis" element={<ComprehensiveAnalysis />} />
-                <Route path="/binance-integration" element={<BinanceIntegration />} />
-                <Route path="/trending-coins" element={<TrendingCoins />} />
-                <Route path="/crypto-sentiment" element={<CryptoSentiment />} />
-                <Route path="/tradingview-integration" element={<TradingViewIntegration />} />
-              </Routes>
-            </div>
+        <div className="min-h-screen flex">
+          <div className="flex-none">
+            <MainNavigation />
           </div>
-          <Toaster dir="rtl" position="top-center" />
-        </BrowserRouter>
+          <div className="flex-1 overflow-auto">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/market-data" element={<MarketData />} />
+              <Route path="/asset-tracker" element={<AssetTracker />} />
+              <Route path="/market-news" element={<MarketNews />} />
+              <Route path="/trading-signals" element={<TradingSignals />} />
+              <Route path="/risk-management" element={<RiskManagement />} />
+              <Route path="/backtesting" element={<Backtesting />} />
+              <Route path="/user-management" element={<UserManagement />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/information-sources" element={<InformationSources />} />
+              <Route path="/comprehensive-analysis" element={<ComprehensiveAnalysis />} />
+              <Route path="/binance-integration" element={<BinanceIntegration />} />
+              <Route path="/trending-coins" element={<TrendingCoins />} />
+              <Route path="/crypto-sentiment" element={<CryptoSentiment />} />
+              <Route path="/tradingview-integration" element={<TradingViewIntegration />} />
+            </Routes>
+          </div>
+        </div>
+        <Toaster dir="rtl" position="top-center" />
       </AuthProvider>
     </QueryClientProvider>
   );
