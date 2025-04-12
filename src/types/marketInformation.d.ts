@@ -11,6 +11,9 @@ export interface MarketEvent {
   link: string;
   reminder: boolean;
   importance: string;
+  type?: string;
+  relatedAssets?: string[];
+  expectedImpact?: string;
 }
 
 export interface MarketInfluencer {
