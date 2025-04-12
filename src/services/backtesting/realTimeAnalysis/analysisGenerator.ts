@@ -10,11 +10,23 @@ export interface SignalAnalysisResult {
   topAssets: string[];
   marketSentiment: 'bullish' | 'bearish' | 'neutral';
   signalStrength: number;
-  // Add missing properties
   summary: string;
   recommendation: string;
   buyToSellRatio?: string;
   mostCommonStrategy?: string;
+  
+  // נוסיף את השדות שחסרים לפי ההשתמשות בקוד
+  signalId?: string;
+  assetId?: string;
+  type?: "buy" | "sell";
+  timestamp?: number;
+  timeframe?: string;
+  confidence?: number;
+  analysis?: string;
+  supportingFactors?: string[];
+  riskFactors?: string[];
+  alternativeScenarios?: string[];
+  conclusion?: string;
 }
 
 export const generateSignalAnalysis = (assetId?: string): SignalAnalysisResult => {

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { AssetHistoricalData } from '@/types/asset';
 import { BacktestTrade, BacktestResult } from '@/services/backtesting/types';
-import { detectMarketTrends, analyzeTradeClusters, analyzeMarketRegimes } from '@/services/backtestingService';
+import { detectTrends, analyzeTradeClusters, analyzeMarketRegimes } from '@/services/backtestingService';
 import { toast } from 'sonner';
 
 export const useStrategyAnalysis = (assetHistory: AssetHistoricalData | undefined) => {
@@ -50,7 +50,7 @@ export const useStrategyAnalysis = (assetHistory: AssetHistoricalData | undefine
           } as BacktestTrade;
         });
 
-        const trendAnalysis = detectMarketTrends(mockTradesData);
+        const trendAnalysis = detectTrends(mockTradesData);
         const clusterAnalysis = analyzeTradeClusters(mockTradesData);
 
         // Create a sample result structure

@@ -1,3 +1,4 @@
+
 import { generateSignalAnalysis } from './analysisGenerator';
 
 /**
@@ -16,9 +17,13 @@ export const generateComprehensiveAnalysis = (assetId: string, timeframe: string
   return {
     signalAnalysis,
     historical: {
-      keyEvents: [],
+      keyEvents: [
+        { event: "מחיר הגיע לשיא היסטורי", date: "2025-02-15", impact: "High" }
+      ],
       trends: [],
-      cyclicalPatterns: []
+      cyclicalPatterns: [
+        { name: "מחזור שבועי", description: "תבנית מחזורית על בסיס שבועי" }
+      ]
     },
     current: {
       marketCondition: 'sideways',

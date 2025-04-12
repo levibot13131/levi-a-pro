@@ -1,50 +1,56 @@
 
-import { TradingViewAlert, createTradingViewAlert } from '../alerts/types';
+import { WebhookData } from './types';
+import { createTradingViewAlert } from '../alerts/types';
 
 /**
- * Create a sample alert for testing
+ * Generate a sample webhook data object for testing
  */
-export const createSampleAlert = (action: 'buy' | 'sell' | 'info' = 'info'): TradingViewAlert => {
-  const symbols = ['BTCUSD', 'ETHUSD', 'AAPL', 'AMZN', 'TSLA'];
-  const timeframes = ['5m', '15m', '1h', '4h', '1d'];
-  const indicators = ['RSI', 'MACD', 'MA Cross', 'Bollinger Bands', 'Volume Profile'];
-  const strategies = ['Wyckoff', 'magic_triangle', 'quarters'];
+export function createSampleWebhookData(type: 'buy' | 'sell' | 'info' = 'info'): WebhookData {
+  const timestamp = Date.now();
   
-  const symbol = symbols[Math.floor(Math.random() * symbols.length)];
-  const price = symbol.includes('USD') ? 
-    (symbol === 'BTCUSD' ? 55000 + Math.random() * 10000 : 2500 + Math.random() * 1000) : 
-    100 + Math.random() * 200;
+  const baseData: WebhookData = {
+    symbol: 'BTC/USDT',
+    message: `Sample ${type} signal generated for testing`,
+    price: 50000,
+    time: timestamp,
+    timeframe: '1h'
+  };
   
-  const selectedStrategy = strategies[Math.floor(Math.random() * strategies.length)];
-  let message = '';
-  
-  switch(selectedStrategy) {
-    case 'Wyckoff':
-      message = action === 'buy' ? 
-        'זוהה שלב מצבר (accumulation) בדפוס Wyckoff' : 
-        'זוהה שלב חלוקה (distribution) בדפוס Wyckoff';
-      break;
-    case 'magic_triangle':
-      message = action === 'buy' ? 
-        'פריצת משולש הקסם כלפי מעלה' : 
-        'שבירת משולש הקסם כלפי מטה';
-      break;
-    case 'quarters':
-      message = action === 'buy' ? 
-        'השלמת תיקון 3/4 והתחלת מהלך עולה' : 
-        'שבירת רמת 1/4 והתחלת מהלך יורד';
-      break;
+  if (type === 'buy') {
+    return {
+      ...baseData,
+      action: 'buy',
+      signal: 'BUY',
+      details: 'This is a sample BUY signal for testing purposes'
+    };
+  } else if (type === 'sell') {
+    return {
+      ...baseData,
+      action: 'sell',
+      signal: 'SELL',
+      details: 'This is a sample SELL signal for testing purposes'
+    };
+  } else {
+    return {
+      ...baseData,
+      action: 'info',
+      details: 'This is a sample INFO alert for testing purposes'
+    };
   }
-  
-  return createTradingViewAlert(
-    symbol,
-    action,
-    price,
-    timeframes[Math.floor(Math.random() * timeframes.length)],
-    message,
-    [indicators[Math.floor(Math.random() * indicators.length)]],
-    `איתות שנוצר ע"י אסטרטגיית ${selectedStrategy}`,
-    selectedStrategy,
-    `https://www.tradingview.com/chart/?symbol=${symbol}`
-  );
-};
+}
+
+/**
+ * Generate a sample webhook payload (stringified JSON) for testing
+ */
+export function createSampleWebhookPayload(type: 'buy' | 'sell' | 'info' = 'info'): string {
+  const data = createSampleWebhookData(type);
+  return JSON.stringify(data);
+}
+
+/**
+ * Create a sample webhook request body
+ */
+export function createSampleWebhookBody(type: 'buy' | 'sell' | 'info' = 'info'): any {
+  const data = createSampleWebhookData(type);
+  return data;
+}

@@ -1,109 +1,112 @@
 
 import { AlertDestination } from './types';
 
-const DESTINATIONS_STORAGE_KEY = 'levi-bot-alert-destinations';
-
-// Initial default destinations
-const defaultDestinations: AlertDestination[] = [
+// רשימת יעדי ההתראות המוגדרים במערכת
+const ALERT_DESTINATIONS: AlertDestination[] = [
   {
-    id: 'telegram-default',
-    name: 'טלגרם',
+    id: 'telegram-1',
     type: 'telegram',
-    active: false,
-    config: {
-      botToken: '',
-      chatId: ''
-    }
-  },
-  {
-    id: 'webhook-default',
-    name: 'Webhook',
-    type: 'webhook',
+    name: 'Personal Telegram',
     active: true,
-    endpoint: 'https://api.example.com/tradingview-webhook',
-    headers: { 'Content-Type': 'application/json' },
     config: {
-      method: 'POST',
-      format: 'json'
+      chatId: '123456789',
+      token: 'sample-token-123'
     }
   },
   {
-    id: 'whatsapp-default',
-    name: 'וואטסאפ',
-    type: 'whatsapp',
+    id: 'telegram-2',
+    type: 'telegram',
+    name: 'Trading Group',
     active: false,
     config: {
-      phone: '',
-      template: 'Signal: {{type}} {{symbol}} at {{price}}'
+      chatId: '-100123456789',
+      token: 'sample-token-123'
+    }
+  },
+  {
+    id: 'webhook-1',
+    type: 'webhook',
+    name: 'Trading Bot Webhook',
+    active: true,
+    endpoint: 'https://example.com/webhook/trading-alerts',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-Key': 'sample-api-key-123'
+    }
+  },
+  {
+    id: 'email-1',
+    type: 'email',
+    name: 'Personal Email',
+    active: false,
+    config: {
+      email: 'sample@example.com'
     }
   }
 ];
 
-// Get alert destinations
-export const getAlertDestinations = (): AlertDestination[] => {
-  try {
-    const stored = localStorage.getItem(DESTINATIONS_STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-    return defaultDestinations;
-  } catch (error) {
-    console.error('Error loading alert destinations:', error);
-    return defaultDestinations;
-  }
-};
+/**
+ * Get all alert destinations
+ */
+export function getAlertDestinations(): AlertDestination[] {
+  return ALERT_DESTINATIONS;
+}
 
-// Save alert destinations
-export const saveAlertDestinations = (destinations: AlertDestination[]): void => {
-  try {
-    localStorage.setItem(DESTINATIONS_STORAGE_KEY, JSON.stringify(destinations));
-  } catch (error) {
-    console.error('Error saving alert destinations:', error);
-  }
-};
+/**
+ * Get alert destination by ID
+ */
+export function getAlertDestinationById(id: string): AlertDestination | undefined {
+  return ALERT_DESTINATIONS.find(dest => dest.id === id);
+}
 
-// Add a new alert destination
-export const addAlertDestination = (destination: Omit<AlertDestination, 'id'>): AlertDestination => {
-  const destinations = getAlertDestinations();
-  const newDestination: AlertDestination = {
-    ...destination,
-    id: `destination-${Date.now()}-${Math.floor(Math.random() * 1000)}`
-  };
-  
-  destinations.push(newDestination);
-  saveAlertDestinations(destinations);
-  
-  return newDestination;
-};
-
-// Update an existing alert destination
-export const updateAlertDestination = (id: string, updates: Partial<AlertDestination>): boolean => {
-  const destinations = getAlertDestinations();
-  const index = destinations.findIndex(d => d.id === id);
-  
-  if (index !== -1) {
-    destinations[index] = { ...destinations[index], ...updates };
-    saveAlertDestinations(destinations);
+/**
+ * Toggle destination active status
+ */
+export function toggleDestinationActive(id: string, active: boolean): boolean {
+  const destination = ALERT_DESTINATIONS.find(dest => dest.id === id);
+  if (destination) {
+    destination.active = active;
     return true;
   }
-  
   return false;
-};
+}
 
-// Delete an alert destination
-export const deleteAlertDestination = (id: string): boolean => {
-  const destinations = getAlertDestinations();
-  const newDestinations = destinations.filter(d => d.id !== id);
-  
-  if (newDestinations.length !== destinations.length) {
-    saveAlertDestinations(newDestinations);
+/**
+ * Add new destination
+ */
+export function addAlertDestination(destination: AlertDestination): AlertDestination {
+  // In a real app, we'd validate the destination here
+  ALERT_DESTINATIONS.push(destination);
+  return destination;
+}
+
+/**
+ * Update destination
+ */
+export function updateAlertDestination(id: string, updates: Partial<AlertDestination>): AlertDestination | null {
+  const index = ALERT_DESTINATIONS.findIndex(dest => dest.id === id);
+  if (index >= 0) {
+    ALERT_DESTINATIONS[index] = { ...ALERT_DESTINATIONS[index], ...updates };
+    return ALERT_DESTINATIONS[index];
+  }
+  return null;
+}
+
+/**
+ * Delete destination
+ */
+export function deleteAlertDestination(id: string): boolean {
+  const index = ALERT_DESTINATIONS.findIndex(dest => dest.id === id);
+  if (index >= 0) {
+    ALERT_DESTINATIONS.splice(index, 1);
     return true;
   }
-  
   return false;
-};
+}
 
-// Enable or disable a destination
-export const toggleDestinationStatus = (id: string, active: boolean): boolean => {
-  return updateAlertDestination(id, { active });
-};
+/**
+ * Get active destinations
+ */
+export function getActiveDestinations(): AlertDestination[] {
+  return ALERT_DESTINATIONS.filter(dest => dest.active);
+}

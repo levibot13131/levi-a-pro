@@ -28,7 +28,7 @@ export async function sendAlertToDestinations(
       }
       
       try {
-        const message = formatAlertMessage(alert, destination);
+        const message = formatAlertMessage(alert);
         console.log(`Sending to ${destination.type}: ${destination.name}`);
         
         // Different handling based on destination type

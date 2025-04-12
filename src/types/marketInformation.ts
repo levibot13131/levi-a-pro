@@ -1,39 +1,45 @@
 
-export interface MarketEvent {
+export interface FinancialDataSource {
   id: string;
-  title: string;
+  name: string;
   description: string;
-  date: string;
-  importance: 'critical' | 'high' | 'medium' | 'low';
-  reminder: boolean;
-  type: 'economic' | 'regulatory' | 'project' | 'other';
-  relatedAssets?: string[];
-  category?: string;
-  expectedImpact?: 'positive' | 'negative' | 'neutral';
-  source?: string;
+  url: string;
+  category: 'news' | 'data' | 'analysis' | 'social';
+  reliability: number;
+  accessType?: 'free' | 'paid' | 'freemium' | 'api'; // עשיתי אופציונלי + הוספתי אפשרויות חדשות
+  languages?: string[]; // אופציונלי
+  updateFrequency?: string;
+  focused?: boolean; // אופציונלי
 }
 
 export interface MarketInfluencer {
   id: string;
   name: string;
-  handle: string;
-  platform: string;
-  followers: number;
-  influence: number;
   description: string;
-  topics: string[];
+  platform?: string; // שימו לב שזה השדה המקורי
+  platforms?: { // הוספתי כאפשרות חדשה
+    type: string;
+    url: string;
+    followers: number;
+  }[];
+  specialty?: string[]; // אופציונלי
   reliability: number;
-  imageUrl?: string;
+  sentiment?: 'bullish' | 'bearish' | 'neutral' | 'variable'; // אופציונלי עם משתנה נוסף
+  followStatus?: 'following' | 'not-following'; // אופציונלי
 }
 
-export interface FinancialDataSource {
+export interface MarketEvent {
   id: string;
-  name: string;
-  url: string;
-  type: string;
-  reliability: number;
-  category: string;
+  title: string;
   description: string;
-  isPremium: boolean;
-  updateFrequency: string;
+  date: string;
+  category: string;
+  importance: 'critical' | 'high' | 'medium' | 'low';
+  relatedAssets: string[];
+  expectedImpact: 'positive' | 'negative' | 'neutral' | 'variable'; // הוספתי 'variable'
+  source: string;
+  reminder: boolean;
+  type?: string; // אופציונלי - נדרש לפי השגיאות
 }
+
+// יתכן שיש לנו טיפוסים נוספים כאן...

@@ -1,4 +1,3 @@
-
 import { TradingBot, TradeSignal, MarketAnalysis, TradeJournalEntry } from "@/types/asset";
 
 // נתונים סטטיים לדוגמה עבור בוטים מסחר
@@ -14,7 +13,9 @@ const MOCK_TRADING_BOTS: TradingBot[] = [
       averageProfit: 2.8,
       averageLoss: -1.2,
       sharpeRatio: 2.4,
-      maxDrawdown: -18.5
+      maxDrawdown: -18.5,
+      totalTrades: 450,
+      profitLoss: 8750
     },
     supportedAssets: ["crypto"],
     monthlyReturns: [
@@ -38,7 +39,9 @@ const MOCK_TRADING_BOTS: TradingBot[] = [
       averageProfit: 5.2,
       averageLoss: -2.3,
       sharpeRatio: 1.8,
-      maxDrawdown: -22.1
+      maxDrawdown: -22.1,
+      totalTrades: 320,
+      profitLoss: 6520
     },
     supportedAssets: ["stock"],
     monthlyReturns: [
@@ -62,7 +65,9 @@ const MOCK_TRADING_BOTS: TradingBot[] = [
       averageProfit: 3.6,
       averageLoss: -1.8,
       sharpeRatio: 1.6,
-      maxDrawdown: -15.8
+      maxDrawdown: -15.8,
+      totalTrades: 280,
+      profitLoss: 4230
     },
     supportedAssets: ["forex"],
     monthlyReturns: [
@@ -86,7 +91,9 @@ const MOCK_TRADING_BOTS: TradingBot[] = [
       averageProfit: 4.8,
       averageLoss: -1.9,
       sharpeRatio: 2.6,
-      maxDrawdown: -24.3
+      maxDrawdown: -24.3,
+      totalTrades: 520,
+      profitLoss: 11260
     },
     supportedAssets: ["crypto", "stock"],
     monthlyReturns: [
@@ -110,7 +117,9 @@ const MOCK_TRADING_BOTS: TradingBot[] = [
       averageProfit: 4.2,
       averageLoss: -1.7,
       sharpeRatio: 2.2,
-      maxDrawdown: -21.8
+      maxDrawdown: -21.8,
+      totalTrades: 480,
+      profitLoss: 9570
     },
     supportedAssets: ["forex", "crypto"],
     monthlyReturns: [
@@ -139,7 +148,8 @@ const MOCK_TRADE_SIGNALS: TradeSignal[] = [
     targetPrice: 71500.00,
     stopLoss: 65200.00,
     riskRewardRatio: 2.5,
-    notes: "נצפית תבנית אקומולציה וויקוף ברורה עם הצטברות נפח משמעותית באזור התמיכה."
+    notes: "נצפית תבנית אקומולציה וויקוף ברורה עם הצטברות נפח משמעותית באזור התמיכה.",
+    createdAt: Date.now() - 3600000 // חובה להוסיף
   },
   {
     id: "signal2",
@@ -153,7 +163,8 @@ const MOCK_TRADE_SIGNALS: TradeSignal[] = [
     targetPrice: 3600.00,
     stopLoss: 3200.00,
     riskRewardRatio: 1.8,
-    notes: "פריצה של רמת התנגדות מרכזית עם עלייה בנפח המסחר."
+    notes: "פריצה של רמת התנגדות מרכזית עם עלייה בנפח המסחר.",
+    createdAt: Date.now() - 7200000 // חובה להוסיף
   },
   {
     id: "signal3",
@@ -167,7 +178,8 @@ const MOCK_TRADE_SIGNALS: TradeSignal[] = [
     targetPrice: 168.00,
     stopLoss: 178.50,
     riskRewardRatio: 2.1,
-    notes: "דחייה חזקה מרמת התנגדות היסטורית, בשילוב דיברגנס שלילי ב-RSI."
+    notes: "דחייה חזקה מרמת התנגדות היסטורית, בשילוב דיברגנס שלילי ב-RSI.",
+    createdAt: Date.now() - 10800000 // חובה להוסיף
   },
   {
     id: "signal4",
@@ -181,7 +193,8 @@ const MOCK_TRADE_SIGNALS: TradeSignal[] = [
     targetPrice: 1.0820,
     stopLoss: 1.0730,
     riskRewardRatio: 1.9,
-    notes: "מחיר חוזר לאזור הנזילות (liquidity) לאחר הפעלת אסטרטגיית SMC."
+    notes: "מחיר חוזר לאזור הנזילות (liquidity) לאחר הפעלת אסטרטגיית SMC.",
+    createdAt: Date.now() - 14400000 // חובה להוסיף
   }
 ];
 
@@ -203,7 +216,12 @@ const MOCK_MARKET_ANALYSES: MarketAnalysis[] = [
       "נפח מסחר הולך וגובר מצביע על המשך מומנטום חיובי"
     ],
     conclusion: "התחזית היא להמשך מגמה חיובית עם יעד מחיר של $80,000 עד סוף הרבעון",
-    sentiment: "bullish"
+    sentiment: "bullish",
+    // הוספת שדות חסרים שנדרשים לפי הממשק
+    timeframe: "1d",
+    timestamp: Date.now() - 24 * 60 * 60 * 1000,
+    source: "TradingView",
+    confidence: 0.8
   },
   {
     id: "analysis2",
@@ -221,7 +239,12 @@ const MOCK_MARKET_ANALYSES: MarketAnalysis[] = [
       "מכפילי רווח גבוהים מהממוצע ההיסטורי"
     ],
     conclusion: "למרות הערכה הגבוהה, סקטור הטכנולוגיה צפוי להמשיך לצמוח בקצב מהיר מהשוק הכללי",
-    sentiment: "bullish"
+    sentiment: "bullish",
+    // הוספת שדות חסרים שנדרשים לפי הממשק
+    timeframe: "1w",
+    timestamp: Date.now() - 7 * 24 * 60 * 60 * 1000,
+    source: "Bloomberg",
+    confidence: 0.9
   },
   {
     id: "analysis3",
@@ -239,7 +262,12 @@ const MOCK_MARKET_ANALYSES: MarketAnalysis[] = [
       "אימוץ צפוי ע\"י יותר פרויקטים בזכות העלויות הנמוכות"
     ],
     conclusion: "העדכון הקרוב צפוי לתמוך בעליית מחיר האתריום בטווח הבינוני-ארוך",
-    sentiment: "bullish"
+    sentiment: "bullish",
+    // הוספת שדות חסרים שנדרשים לפי הממשק
+    timeframe: "1M",
+    timestamp: Date.now() - 30 * 24 * 60 * 60 * 1000,
+    source: "CoinDesk",
+    confidence: 0.7
   }
 ];
 
