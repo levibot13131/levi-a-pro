@@ -70,20 +70,10 @@ export interface BacktestTrade {
   strategyUsed?: string;
 }
 
-export interface BacktestSignal {
-  id: string;
-  type: 'buy' | 'sell';
-  price: number;
-  date: number;
-  strategy: string;
-  strength: 'strong' | 'medium' | 'weak';
-  executed: boolean;
-}
-
 export interface EquityPoint {
   date: number | string;
+  value: number; 
   equity?: number;
-  value: number;
   drawdown: number;
 }
 

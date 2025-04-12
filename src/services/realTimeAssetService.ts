@@ -15,6 +15,13 @@ export const getAsset = async (assetId: string): Promise<Asset> => {
   return asset;
 };
 
+// Synchronous version of getAsset (for places that can't use async)
+export const getAssetById = (assetId: string): Asset | null => {
+  // Use the synchronous assets as a fallback
+  const assets = getAllAssetsSync();
+  return assets.find(a => a.id === assetId) || null;
+};
+
 // Get assets by type
 export const getAssetsByType = async (type: string): Promise<Asset[]> => {
   const assets = await getMockAssets();

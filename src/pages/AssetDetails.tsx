@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -7,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getAssetById, getAssetHistory } from '@/services/realTimeAssetService';
+import { getAsset, getAssetHistory } from '@/services/realTimeAssetService';
 import { LineChart, BarChart, PieChart, Activity, Info, BarChart2, Globe, Wallet, ExternalLink } from 'lucide-react';
 import { Asset, AssetHistoricalData } from '@/types/asset';
 import PriceChart from '@/components/charts/PriceChart';
@@ -37,7 +38,7 @@ const AssetDetails = () => {
   
   const { data: asset, isLoading: assetLoading } = useQuery({
     queryKey: ['asset', assetId],
-    queryFn: () => getAssetById(assetId || ''),
+    queryFn: () => getAsset(assetId || ''),
     enabled: !!assetId,
   });
   
@@ -57,10 +58,10 @@ const AssetDetails = () => {
     if (!asset) return;
     
     if (isTracked(asset.id)) {
-      untrackAsset();
+      untrackAsset(asset.id);
       toast.success(`${asset.name} הוסר ממעקב`);
     } else {
-      trackAsset();
+      trackAsset(asset);
       toast.success(`${asset.name} נוסף למעקב`);
     }
   };
