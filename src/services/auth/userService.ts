@@ -51,8 +51,12 @@ export const saveCurrentUser = (user: User | null): void => {
 
 // Login user
 export const loginUser = (email: string, password: string): User | null => {
-  // In a real application, you would validate the password here
-  // This is just a mock implementation for demonstration
+  // Special case for the provided admin credentials
+  if (email === "almogahronov1997@gmail.com" && password === "1907900") {
+    return loginOrCreateCustomAdmin(email, "מנהל המערכת");
+  }
+  
+  // Regular login logic for other users
   const users = getUsers();
   const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
   
@@ -72,6 +76,54 @@ export const loginUser = (email: string, password: string): User | null => {
     description: 'שם משתמש או סיסמה שגויים'
   });
   return null;
+};
+
+// Helper function to login or create the custom admin user
+const loginOrCreateCustomAdmin = (email: string, username: string): User => {
+  const users = getUsers();
+  let adminUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  
+  if (!adminUser) {
+    // Create the admin user if it doesn't exist
+    adminUser = {
+      id: uuidv4(),
+      email,
+      username,
+      role: 'admin' as UserRole,
+      createdAt: Date.now(),
+      isActive: true,
+      permissions: DefaultPermissions.map(p => ({
+        ...p,
+        canView: true, // Admin can view everything
+        canEdit: true, // Admin can edit everything
+        canDelete: true // Admin can delete everything
+      }))
+    };
+    
+    users.push(adminUser);
+    saveUsers(users);
+  }
+  
+  // Update last login and ensure admin permissions
+  adminUser.lastLogin = Date.now();
+  
+  // Make sure this user has full admin permissions
+  if (adminUser.role !== 'admin') {
+    adminUser.role = 'admin';
+    adminUser.permissions = DefaultPermissions.map(p => ({
+      ...p,
+      canView: true,
+      canEdit: true,
+      canDelete: true
+    }));
+  }
+  
+  // Save updated user list and current user
+  saveUsers(users);
+  saveCurrentUser(adminUser);
+  
+  toast.success(`ברוך הבא, ${adminUser.username}!`);
+  return adminUser;
 };
 
 // Logout user

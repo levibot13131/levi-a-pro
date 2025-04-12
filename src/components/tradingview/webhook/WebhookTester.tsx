@@ -19,7 +19,7 @@ const WebhookTester: React.FC = () => {
   // Get current destinations status
   const destinations = getAlertDestinations();
   
-  const handleSimulateSignal = async (type: 'buy' | 'sell' | 'info') => {
+  const handleSimulateSignal = async (type: 'buy' | 'sell' | 'info'): Promise<boolean> => {
     setIsTesting(true);
     try {
       const result = await simulateWebhookSignal(type);
@@ -28,12 +28,16 @@ const WebhookTester: React.FC = () => {
         type,
         time: new Date()
       });
+      return result;
+    } catch (error) {
+      console.error('Error simulating webhook signal:', error);
+      return false;
     } finally {
       setIsTesting(false);
     }
   };
   
-  const handleTestWebhookFlow = async (type: 'buy' | 'sell' | 'info') => {
+  const handleTestWebhookFlow = async (type: 'buy' | 'sell' | 'info'): Promise<boolean> => {
     setIsTesting(true);
     try {
       const result = await testWebhookSignalFlow(type);
@@ -42,6 +46,10 @@ const WebhookTester: React.FC = () => {
         type,
         time: new Date()
       });
+      return result;
+    } catch (error) {
+      console.error('Error testing webhook flow:', error);
+      return false;
     } finally {
       setIsTesting(false);
     }

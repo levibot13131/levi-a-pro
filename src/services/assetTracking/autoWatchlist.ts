@@ -1,5 +1,6 @@
+
 import { Asset } from '@/types/asset';
-import { getAssets, getTrendingAssets } from '@/services/mockDataService';
+import { getAssets } from '@/services/mockDataService';
 import { toast } from 'sonner';
 
 // Type for tracked assets
@@ -25,11 +26,27 @@ const AUTO_WATCHLIST_ENABLED_KEY = 'auto_watchlist_enabled';
  */
 export const sortAssetsByVolume = (assets: Asset[]): Asset[] => {
   return [...assets].sort((a, b) => {
-    // Use volume24h if available, otherwise use a default comparison
-    const volumeA = (a as any).volume24h || (a as any).volume || 0;
-    const volumeB = (b as any).volume24h || (b as any).volume || 0;
+    // Use volume24h if available, otherwise use market cap or just price as fallback
+    const volumeA = (a as any).volume24h || 0;
+    const volumeB = (b as any).volume24h || 0;
     return volumeB - volumeA;
   });
+};
+
+/**
+ * Get trending assets (top performing by price change)
+ */
+const getTrendingAssets = async (count: number = 10): Promise<Asset[]> => {
+  try {
+    const assets = await getAssets();
+    // Sort by change24h (descending) to get the best performing assets
+    return [...assets]
+      .sort((a, b) => b.change24h - a.change24h)
+      .slice(0, count);
+  } catch (error) {
+    console.error('Error getting trending assets:', error);
+    return [];
+  }
 };
 
 /**

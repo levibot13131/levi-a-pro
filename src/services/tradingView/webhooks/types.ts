@@ -16,6 +16,7 @@ export interface WebhookData {
   strategy?: string;
   bar_close?: string | number;
   chartUrl?: string;
-  automatic?: boolean;
-  source?: string;
+  automatic?: boolean;  // Flag indicating if the signal was generated automatically
+  source?: string;      // Source of the alert (e.g., 'tradingview', 'binance', 'manual')
 }
+
