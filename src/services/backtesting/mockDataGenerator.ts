@@ -42,7 +42,7 @@ export async function generateHistoricalData(
     const asset = await getAssetById(assetId);
     if (asset) {
       // Adjust volatility based on asset type
-      switch (asset.type.toLowerCase()) {
+      switch (asset.type?.toLowerCase()) {
         case 'crypto':
           volatility = 0.03; // Higher volatility for crypto
           break;
@@ -89,6 +89,10 @@ export async function generateHistoricalData(
       volume
     });
   }
+
+  // Convert the data into price points format required by the AssetHistoricalData interface
+  const pricePoints = data.map(item => [item.timestamp, item.price]);
+  const volumePoints = data.map(item => [item.timestamp, item.volume || 0]);
   
   return {
     id: assetId,
@@ -96,6 +100,9 @@ export async function generateHistoricalData(
     symbol: assetId.toUpperCase(),
     timeframe,
     data,
+    prices: pricePoints,
+    market_caps: pricePoints.map(p => [p[0], basePrice * dataPoints * 1000000]),
+    total_volumes: volumePoints,
     firstDate: data[0].timestamp,
     lastDate: data[data.length - 1].timestamp
   };

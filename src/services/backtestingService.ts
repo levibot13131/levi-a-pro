@@ -53,3 +53,6 @@ export const analyzeMarketRegimes = (result: BacktestResult): RegimeAnalysisResu
     bestRegime: 'Bull Market'
   };
 };
+
+// Re-export type for Trade to fix BacktestResults.tsx import error
+export type { BacktestTrade as Trade } from './backtesting/types';

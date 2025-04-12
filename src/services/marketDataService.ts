@@ -9,7 +9,7 @@ export const fetchTrendingCoins = async (): Promise<Asset[]> => {
       id: 'bitcoin',
       name: 'Bitcoin',
       symbol: 'BTC',
-      type: 'cryptocurrency',
+      type: 'crypto',
       price: 65000,
       change24h: 2.5,
       marketCap: 1250000000000,
@@ -20,7 +20,7 @@ export const fetchTrendingCoins = async (): Promise<Asset[]> => {
       id: 'ethereum',
       name: 'Ethereum',
       symbol: 'ETH',
-      type: 'cryptocurrency',
+      type: 'crypto',
       price: 3400,
       change24h: 1.8,
       marketCap: 420000000000,
@@ -31,7 +31,7 @@ export const fetchTrendingCoins = async (): Promise<Asset[]> => {
       id: 'binancecoin',
       name: 'Binance Coin',
       symbol: 'BNB',
-      type: 'cryptocurrency',
+      type: 'crypto',
       price: 580,
       change24h: 0.5,
       marketCap: 89000000000,
@@ -42,9 +42,9 @@ export const fetchTrendingCoins = async (): Promise<Asset[]> => {
 };
 
 // Fetch market data for specific coins
-export const fetchMarketData = async (coinIds: string[]): Promise<Record<string, MarketData>> => {
+export const fetchMarketData = async (coinIds: string[]): Promise<Record<string, any>> => {
   // Mock implementation - would be replaced with actual API call
-  const result: Record<string, MarketData> = {};
+  const result: Record<string, any> = {};
   
   coinIds.forEach(id => {
     result[id] = {

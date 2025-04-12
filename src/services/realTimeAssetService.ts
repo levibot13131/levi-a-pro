@@ -1,4 +1,3 @@
-
 import { Asset, AssetHistoricalData, TimeframeType } from '@/types/asset';
 import { getAssets as getMockAssets } from '@/services/mockDataService';
 
@@ -119,7 +118,7 @@ export const getAssetHistory = async (
   }
   
   // Generate price data points
-  const data = [];
+  const dataPoints = [];
   let price = asset.price;
   let lastChange = 0;
   
@@ -140,21 +139,28 @@ export const getAssetHistory = async (
     // Add some random volume
     const volume = asset.volume24h ? (asset.volume24h / 24) * (0.7 + Math.random() * 0.6) : undefined;
     
-    data.push({
+    dataPoints.push({
       timestamp,
       price: Math.max(0, price), // Make sure price never goes negative
       volume
     });
   }
+
+  // Convert to price arrays format needed by AssetHistoricalData
+  const pricePoints = dataPoints.map(item => [item.timestamp, item.price]);
+  const volumePoints = dataPoints.map(item => [item.timestamp, item.volume || 0]);
   
   return {
     id: asset.id,
     symbol: asset.symbol,
     name: asset.name,
     timeframe,
-    data,
-    firstDate: data[0].timestamp,
-    lastDate: data[data.length - 1].timestamp
+    data: dataPoints,
+    prices: pricePoints,
+    market_caps: pricePoints.map(p => [p[0], asset.marketCap || 0]),
+    total_volumes: volumePoints,
+    firstDate: dataPoints[0].timestamp,
+    lastDate: dataPoints[dataPoints.length - 1].timestamp
   };
 };
 

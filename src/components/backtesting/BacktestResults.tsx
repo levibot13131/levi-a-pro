@@ -9,7 +9,7 @@ import {
   Legend, PieChart, Pie, Cell, Scatter, ScatterChart, ZAxis
 } from 'recharts';
 import { ChartContainer, ChartTooltipContent, ChartTooltip } from '@/components/ui/chart';
-import { BacktestResults as BacktestResultsType, Trade } from '@/services/backtestingService';
+import { BacktestingResult, Trade } from '@/services/backtestingService';
 import { format } from 'date-fns';
 import { 
   ArrowDown, 
@@ -32,7 +32,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Separator } from '@/components/ui/separator';
 
 interface BacktestResultsProps {
-  results: BacktestResultsType;
+  results: BacktestingResult;
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];

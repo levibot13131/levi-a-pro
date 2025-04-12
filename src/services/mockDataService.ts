@@ -129,7 +129,7 @@ export const getAssetHistory = async (
   if (!asset) return null;
   
   const now = Date.now();
-  const data: PricePoint[] = [];
+  const pricePoints = [];
   let price = asset.price;
   
   // Generate historical price data
@@ -163,12 +163,12 @@ export const getAssetHistory = async (
     price = price * (1 + change);
     
     // Push data point
-    data.push({
+    pricePoints.push([
       timestamp,
       price,
       // Only include volume for some timeframes
-      volume: ['1d', '1h'].includes(timeframe) ? (asset.volume24h || 0) * (0.8 + Math.random() * 0.4) / days : undefined
-    });
+      ['1d', '1h'].includes(timeframe) ? (asset.volume24h || 0) * (0.8 + Math.random() * 0.4) / days : 0
+    ]);
   }
   
   return {
@@ -176,8 +176,15 @@ export const getAssetHistory = async (
     symbol: asset.symbol,
     name: asset.name,
     timeframe,
-    data,
-    firstDate: data[0].timestamp,
-    lastDate: data[data.length - 1].timestamp
+    prices: pricePoints,
+    market_caps: pricePoints.map(p => [p[0], (asset.marketCap || 0) * (0.9 + Math.random() * 0.2)]),
+    total_volumes: pricePoints.map(p => [p[0], p[2]]),
+    data: pricePoints.map(p => ({
+      timestamp: p[0],
+      price: p[1],
+      volume: p[2]
+    })),
+    firstDate: pricePoints[0][0],
+    lastDate: pricePoints[pricePoints.length - 1][0]
   };
 };
