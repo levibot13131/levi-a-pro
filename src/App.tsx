@@ -2,12 +2,12 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { ThemeProvider } from '@/components/theme-provider';
-import MainLayout from '@/components/layouts/main-layout';
+import { ThemeProvider } from './components/ui/theme-provider';
+import MainLayout from './components/layouts/main-layout';
 import Dashboard from '@/pages/Dashboard';
 import Login from '@/pages/Login';
-import Assets from '@/pages/Assets';
-import AssetDetails from '@/pages/AssetDetails';
+import Assets from './pages/Assets';
+import AssetDetails from './pages/AssetDetails';
 import MarketNews from '@/pages/MarketNews';
 import TradingSignals from '@/pages/TradingSignals';
 import Backtesting from '@/pages/Backtesting';
@@ -15,7 +15,7 @@ import TradingViewIntegration from '@/pages/TradingViewIntegration';
 import BinanceIntegration from '@/pages/BinanceIntegration';
 import { AuthProvider } from '@/contexts/AuthContext';
 import RequireAuth from '@/components/auth/RequireAuth';
-import Settings from '@/pages/Settings';
+import Settings from './pages/Settings';
 import { initializeTradingViewServices } from '@/services/tradingView/startup';
 import GuideModal from '@/components/GuideModal';
 

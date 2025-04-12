@@ -1,18 +1,31 @@
 
 import React from 'react';
-import { NewsItem } from '@/types/asset';
+import { NewsItem } from '@/hooks/use-market-news';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
+import { formatTimeAgo } from '@/hooks/use-market-news';
 
 interface NewsCardProps {
   item: NewsItem;
-  getSentimentBadge: (sentiment?: 'positive' | 'neutral' | 'negative') => React.ReactNode;
-  formatDate: (dateStr: string) => string;
 }
 
-const NewsCard: React.FC<NewsCardProps> = ({ item, getSentimentBadge, formatDate }) => {
+const NewsCard: React.FC<NewsCardProps> = ({ item }) => {
+  // Helper function to get badge based on sentiment
+  const getSentimentBadge = (sentiment?: 'positive' | 'neutral' | 'negative') => {
+    switch (sentiment) {
+      case 'positive':
+        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">חיובי</Badge>;
+      case 'negative':
+        return <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">שלילי</Badge>;
+      case 'neutral':
+        return <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">ניטרלי</Badge>;
+      default:
+        return null;
+    }
+  };
+
   return (
     <Card key={item.id} className="overflow-hidden flex flex-col">
       {item.imageUrl && (
@@ -30,7 +43,7 @@ const NewsCard: React.FC<NewsCardProps> = ({ item, getSentimentBadge, formatDate
           {getSentimentBadge(item.sentiment)}
         </div>
         <CardTitle className="text-xl">{item.title}</CardTitle>
-        <CardDescription>{formatDate(item.publishedAt)}</CardDescription>
+        <CardDescription>{formatTimeAgo(item.publishedAt)}</CardDescription>
       </CardHeader>
       <CardContent className="text-right flex-grow">
         <p>{item.summary}</p>

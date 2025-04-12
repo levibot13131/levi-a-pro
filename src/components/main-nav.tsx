@@ -2,7 +2,7 @@
 import * as React from "react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { QuestionMarkCircledIcon } from "@radix-ui/react-icons";
+import { HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import GuideModal from "./GuideModal";
 
@@ -113,7 +113,7 @@ export function MainNav({ className }: MainNavProps) {
           className="flex items-center justify-center h-8 w-8 p-0 rounded-full"
           onClick={() => setGuideOpen(true)}
         >
-          <QuestionMarkCircledIcon className="h-5 w-5" />
+          <HelpCircle className="h-5 w-5" />
           <span className="sr-only">מדריך התחברות</span>
         </Button>
       </nav>

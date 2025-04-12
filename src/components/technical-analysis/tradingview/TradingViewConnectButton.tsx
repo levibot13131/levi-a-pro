@@ -8,10 +8,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 interface TradingViewConnectButtonProps {
   onConnectChange?: (isConnected: boolean) => void;
+  onConnectSuccess?: () => void;
 }
 
 const TradingViewConnectButton: React.FC<TradingViewConnectButtonProps> = ({ 
-  onConnectChange 
+  onConnectChange,
+  onConnectSuccess
 }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [credentials, setCredentials] = useState(null);
@@ -54,6 +56,10 @@ const TradingViewConnectButton: React.FC<TradingViewConnectButtonProps> = ({
     const connected = isTradingViewConnected();
     setIsConnected(connected);
     setCredentials(connected ? getTradingViewCredentials() : null);
+    
+    if (connected && onConnectSuccess) {
+      onConnectSuccess();
+    }
   };
 
   const handleDisconnect = () => {

@@ -1,90 +1,40 @@
 
-import { v4 as uuidv4 } from 'uuid';
+// Alert destination types
+export type AlertDestinationType = 'webhook' | 'telegram' | 'whatsapp' | 'email';
 
-// Local storage key for alert destinations
-export const LOCAL_STORAGE_KEY = 'tradingview-alert-destinations';
-
-// Alert action type (buy, sell, info)
-export type AlertAction = 'buy' | 'sell' | 'info';
-
-// TradingView alert data structure
-export interface TradingViewAlert {
-  symbol: string;
-  message: string;
-  indicators: string[];
-  timeframe: string;
-  timestamp: number;
-  price: number;
-  action: AlertAction;
-  details?: string;
-  strength?: number;
-  strategy?: string;
-  chartUrl?: string;
-}
-
-// Alert destination type
-export type AlertDestinationType = 'telegram' | 'whatsapp' | 'email' | 'sms' | 'webhook';
-
-// Alert destination structure
+// Alert destination interface
 export interface AlertDestination {
   id: string;
   name: string;
   type: AlertDestinationType;
   active: boolean;
-  endpoint?: string;
-  headers?: Record<string, string>;
+  endpoint?: string;  // URL for webhooks
+  headers?: Record<string, string>;  // Headers for webhook requests
 }
 
-// Create a new alert destination
-export const createAlertDestination = (
-  name: string,
-  type: AlertDestinationType,
-  active: boolean = false
-): AlertDestination => ({
-  id: uuidv4(),
-  name,
-  type,
-  active
-});
+// Alert message interface
+export interface AlertMessage {
+  id: string;
+  symbol: string;
+  price: number;
+  action: 'buy' | 'sell' | 'info';
+  message: string;
+  timestamp: number;
+  source: string;
+}
 
-// Get destination type name
-export const getDestinationTypeName = (type: AlertDestinationType): string => {
-  switch (type) {
-    case 'telegram':
-      return 'טלגרם';
-    case 'whatsapp':
-      return 'וואטסאפ';
-    case 'email':
-      return 'אימייל';
-    case 'sms':
-      return 'SMS';
-    case 'webhook':
-      return 'Webhook';
-    default:
-      return type;
-  }
-};
+// Alert result interface
+export interface AlertResult {
+  success: boolean;
+  destinationId: string;
+  destinationType: AlertDestinationType;
+  error?: string;
+  timestamp: number;
+}
 
-// Create a new TradingView alert
-export const createTradingViewAlert = (
-  symbol: string,
-  action: AlertAction,
-  price: number,
-  timeframe: string = '1d',
-  message: string = '',
-  indicators: string[] = [],
-  details?: string,
-  strategy?: string,
-  chartUrl?: string
-): TradingViewAlert => ({
-  symbol,
-  message,
-  indicators,
-  timeframe,
-  timestamp: Date.now(),
-  price,
-  action,
-  details,
-  strategy,
-  chartUrl
-});
+// Alert status interface
+export interface AlertStatus {
+  message: AlertMessage;
+  results: AlertResult[];
+  timestamp: number;
+}

@@ -1,15 +1,13 @@
-
 import React, { useState } from 'react';
 import { Container } from '@/components/ui/container';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { News, InfoIcon, Newspaper, LineChart, AlertTriangle, Zap, ChevronDown, HelpCircle } from 'lucide-react';
+import { InfoIcon, Newspaper, LineChart, AlertTriangle, Zap, ChevronDown, HelpCircle } from 'lucide-react';
 import NewsGrid from '@/components/market-news/NewsGrid';
 import SimpleTable from '@/components/ui/simple-table';
 import MarketQuickStats from '@/components/market-news/MarketQuickStats';
-import useMarketNews from '@/hooks/use-market-news';
-import { formatTimeAgo } from '@/lib/utils';
+import useMarketNews, { formatTimeAgo } from '@/hooks/use-market-news';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -39,7 +37,6 @@ const MarketNews = () => {
     lastUpdate
   } = useMarketNews({ externalFetch: isConnected ? fetchNews : undefined });
 
-  // Filter news
   const filteredNews = filter 
     ? latestNews.filter(news => 
         news.title.toLowerCase().includes(filter.toLowerCase()) || 
