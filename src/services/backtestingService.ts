@@ -14,26 +14,11 @@ import {
   getSources,
   getInfluencers,
   toggleSourceFavorite,
-  toggleInfluencerFollow
+  toggleInfluencerFollow,
+  getUpcomingMarketEvents,
+  setEventReminder,
+  addCustomEvent
 } from './marketInformation/index';
-
-// Mock function for upcoming events
-const getUpcomingMarketEvents = () => [
-  { id: '1', title: 'Event 1', date: '2025-04-15', importance: 'high', category: 'economic', description: 'Description 1' },
-  { id: '2', title: 'Event 2', date: '2025-04-20', importance: 'medium', category: 'earnings', description: 'Description 2' }
-];
-
-// Mock function for setting event reminders
-const setEventReminder = (eventId: string) => {
-  console.log(`Setting reminder for event ${eventId}`);
-  return true;
-};
-
-// Mock function for adding custom events
-const addCustomEvent = (eventData: any) => {
-  console.log('Adding custom event:', eventData);
-  return { id: Date.now().toString(), ...eventData };
-};
 
 export {
   getSources as getInformationSources,

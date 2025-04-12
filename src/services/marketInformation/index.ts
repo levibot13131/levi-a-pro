@@ -34,7 +34,11 @@ export const getUpcomingMarketEvents = () => {
       date: '2025-05-01',
       importance: 'high',
       category: 'economic',
-      description: 'הודעת הריבית הפדרלית לחודש מאי 2025'
+      description: 'הודעת הריבית הפדרלית לחודש מאי 2025',
+      relatedAssets: ['bitcoin', 'ethereum'],
+      expectedImpact: 'high',
+      source: 'Federal Reserve',
+      type: 'monetary policy'
     },
     {
       id: '2',
@@ -42,7 +46,11 @@ export const getUpcomingMarketEvents = () => {
       date: '2025-04-20',
       importance: 'medium',
       category: 'earnings',
-      description: 'פרסום דוחות רבעוניים של חברות מרכזיות בשוק הקריפטו'
+      description: 'פרסום דוחות רבעוניים של חברות מרכזיות בשוק הקריפטו',
+      relatedAssets: ['bitcoin', 'ethereum'],
+      expectedImpact: 'medium',
+      source: 'Companies Reports',
+      type: 'earnings'
     }
   ];
 };
@@ -56,7 +64,11 @@ export const addCustomEvent = (eventData: any) => {
   console.log('Custom event added:', eventData);
   return {
     id: Date.now().toString(),
-    ...eventData
+    ...eventData,
+    relatedAssets: eventData.relatedAssets || [],
+    expectedImpact: eventData.expectedImpact || 'medium',
+    source: eventData.source || 'User',
+    type: eventData.type || 'custom'
   };
 };
 

@@ -1,6 +1,9 @@
 
 import { AnalysisData } from '@/components/backtesting/analysis/types';
 
+/**
+ * Generate a comprehensive analysis for an asset
+ */
 export const generateComprehensiveAnalysis = (assetId: string, timeframe: string): AnalysisData => {
   return {
     historical: {

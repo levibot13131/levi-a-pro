@@ -5,7 +5,7 @@ import { TradeSignal } from '@/types/asset';
 import { getTradeSignals, getMarketAnalyses } from '@/services/mockTradingService';
 import { getAssets } from '@/services/mockDataService';
 import { startRealTimeAnalysis } from '@/services/backtesting/realTimeAnalysis';
-import { useStoredSignals } from '@/services/backtesting/realTimeAnalysis/signalStorage';
+import { useStoredSignals } from '@/services/backtesting/realTimeAnalysis';
 import { toast } from 'sonner';
 
 export const useTradingSignals = () => {
