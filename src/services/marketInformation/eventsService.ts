@@ -1,105 +1,86 @@
 
 import { MarketEvent } from '@/types/marketInformation';
-import { toast } from 'sonner';
 
-// Demo data for market events
-const mockEvents: MarketEvent[] = [
+// מערך של אירועי שוק לדוגמה
+const marketEvents: MarketEvent[] = [
   {
     id: '1',
-    title: 'דוח מלאי נפט שבועי',
-    date: new Date(Date.now() + 86400000 * 2).toISOString(), // 2 days from now
-    importance: 'medium',
-    category: 'economic',
-    description: 'פרסום דוח מלאי הנפט השבועי על ידי המכון האמריקאי לנפט (API)',
-    reminder: false,
-    relatedAssets: ['oil', 'usoil'],
-    expectedImpact: 'שוק הנפט עשוי להגיב בתנודתיות',
-    source: 'API',
-    type: 'economic'
+    title: 'פגישת הפד',
+    description: 'ישיבת הפד לקביעת ריבית בארה"ב',
+    date: '2023-11-15',
+    time: '19:00',
+    category: 'כלכלי',
+    impact: 'high',
+    source: 'FederalReserve',
+    hasReminder: false,
+    link: 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm'
   },
   {
     id: '2',
-    title: 'החלטת ריבית הפד',
-    date: new Date(Date.now() + 86400000 * 7).toISOString(), // 7 days from now
-    importance: 'high',
-    category: 'economic',
-    description: 'הכרזה על החלטת ריבית הפד לחודש הקרוב',
-    reminder: false,
-    relatedAssets: ['usd', 'gold', 'sp500'],
-    expectedImpact: 'השווקים צפויים להגיב בהתאם לציפיות לגבי העלאת/הורדת ריבית',
-    source: 'Federal Reserve',
-    type: 'economic'
+    title: 'התחזית הכלכלית האירופאית',
+    description: 'פרסום תחזית כלכלית רבעונית של האיחוד האירופי',
+    date: '2023-11-20',
+    time: '11:00',
+    category: 'כלכלי',
+    impact: 'medium',
+    source: 'ECB',
+    hasReminder: false,
+    link: 'https://www.ecb.europa.eu/pub/projections/html/index.en.html'
   },
   {
     id: '3',
-    title: 'הצגת דוחות רבעוניים של Apple',
-    date: new Date(Date.now() + 86400000 * 14).toISOString(), // 14 days from now
-    importance: 'high',
-    category: 'earnings',
-    description: 'Apple תפרסם את הדוחות הרבעוניים שלה לרבעון האחרון',
-    reminder: false,
-    relatedAssets: ['aapl', 'nasdaq'],
-    expectedImpact: 'מניית אפל והמדדים הרלוונטיים צפויים לתנודתיות',
-    source: 'Apple Inc.',
-    type: 'company'
+    title: 'חצייה של ביטקוין',
+    description: 'אירוע חציית התגמול הבא של ביטקוין',
+    date: '2024-04-10',
+    time: '12:00',
+    category: 'קריפטו',
+    impact: 'high',
+    source: 'Bitcoin',
+    hasReminder: true,
+    link: 'https://www.bitcoinblockhalf.com/'
   },
   {
     id: '4',
-    title: 'כנס מפתחים Bitcoin',
-    date: new Date(Date.now() + 86400000 * 21).toISOString(), // 21 days from now
-    importance: 'medium',
-    category: 'crypto',
-    description: 'כנס מפתחים עולמי של Bitcoin שבו יוצגו חידושים ועדכונים',
-    reminder: false,
-    relatedAssets: ['btc', 'crypto'],
-    expectedImpact: 'עשוי להשפיע על מחיר ה-Bitcoin ומטבעות קריפטו נוספים',
-    source: 'Bitcoin Foundation',
-    type: 'conference'
+    title: 'שחרור דוחות רבעון אפל',
+    description: 'פרסום דוחות כספיים של אפל לרבעון האחרון',
+    date: '2023-12-01',
+    time: '22:30',
+    category: 'מניות',
+    impact: 'medium',
+    source: 'Apple',
+    hasReminder: false,
+    link: 'https://investor.apple.com/investor-relations/default.aspx'
   },
   {
     id: '5',
-    title: 'הצהרת נשיא הבנק המרכזי של האיחוד האירופאי',
-    date: new Date(Date.now() + 86400000 * 3).toISOString(), // 3 days from now
-    importance: 'high',
-    category: 'economic',
-    description: 'נאום של נשיאת הבנק המרכזי האירופאי לגבי מדיניות מוניטרית',
-    reminder: false,
-    relatedAssets: ['eur', 'eurusd', 'dax'],
-    expectedImpact: 'עשוי להשפיע על שער האירו והשווקים האירופאיים',
-    source: 'ECB',
-    type: 'economic'
+    title: 'פרסום נתוני אבטלה',
+    description: 'נתוני שוק העבודה החודשיים',
+    date: '2023-11-10',
+    time: '15:30',
+    category: 'כלכלי',
+    impact: 'medium',
+    source: 'BLS',
+    hasReminder: false,
+    link: 'https://www.bls.gov/news.release/empsit.toc.htm'
   }
 ];
 
-// Get all upcoming market events
+// קבלת כל אירועי השוק הקרובים
 export const getUpcomingMarketEvents = (): MarketEvent[] => {
-  return [...mockEvents];
+  return [...marketEvents];
 };
 
-// Get upcoming events within a specified number of days
-export const getUpcomingEvents = (days: number = 30): MarketEvent[] => {
-  const now = new Date();
-  const futureDate = new Date(now.getTime() + (days * 24 * 60 * 60 * 1000));
-  
-  return mockEvents.filter(event => {
-    const eventDate = new Date(event.date);
-    return eventDate <= futureDate && eventDate >= now;
-  });
+// קבלת אירועים לפי קטגוריה
+export const getUpcomingEvents = (category?: string): MarketEvent[] => {
+  if (!category) return [...marketEvents];
+  return marketEvents.filter(event => event.category === category);
 };
 
-// Set a reminder for an event
-export const setEventReminder = (eventId: string, reminderTime: number): boolean => {
-  const eventIndex = mockEvents.findIndex(event => event.id === eventId);
+// הגדרת תזכורת לאירוע
+export const setEventReminder = (id: string, hasReminder: boolean): boolean => {
+  const eventIndex = marketEvents.findIndex(event => event.id === id);
   if (eventIndex === -1) return false;
   
-  mockEvents[eventIndex].reminder = !mockEvents[eventIndex].reminder;
-  
-  if (mockEvents[eventIndex].reminder) {
-    toast.success('תזכורת הוגדרה בהצלחה');
-  } else {
-    toast.info('תזכורת בוטלה בהצלחה');
-  }
-  
+  marketEvents[eventIndex].hasReminder = hasReminder;
   return true;
 };
-

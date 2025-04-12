@@ -1,33 +1,14 @@
 
-export interface MarketEvent {
-  id: string;
-  title: string;
-  date: string;
-  importance: 'low' | 'medium' | 'high';
-  category: string;
-  description: string;
-  reminder: boolean;
-  relatedAssets: string[];
-  expectedImpact: string;
-  source: string;
-  type: string;
-}
-
 export interface MarketInfluencer {
   id: string;
   name: string;
-  username: string;
   platform: string;
-  profileUrl: string;
-  avatarUrl: string;
   followers: number;
-  assetsDiscussed: string[];
-  influence: number;
-  verified: boolean;
-  description?: string;
-  isFollowing?: boolean;
-  bio: string;
-  expertise: string[];
+  description: string;
+  topics: string[];
+  isFollowed: boolean;
+  influence: number;  // הוספת שדה שחסר
+  avatarUrl: string;  // הוספת שדה שחסר
 }
 
 export interface FinancialDataSource {
@@ -37,30 +18,27 @@ export interface FinancialDataSource {
   url: string;
   description: string;
   reliability: number;
-  isPremium: boolean;
-  imageUrl: string;
-  apiAvailable: boolean;
+  isPaid: boolean;
+  frequencyUpdate: string;
+  imageUrl: string;  // הוספת שדה שחסר
   languages: string[];
   categories: string[];
-  category: string;
+  isFeatured: boolean;
   rating: number;
   platform: string;
 }
 
-export interface EventsTabProps {
-  events: MarketEvent[];
-  setReminders: Set<string>;
-  onSetReminder: (eventId: string) => void;
+export interface MarketEvent {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  category: string;
+  impact: 'high' | 'medium' | 'low';
+  source: string;
+  hasReminder: boolean;
+  time: string;  // הוספת שדה שחסר
+  link: string;  // הוספת שדה שחסר
 }
 
-export interface InfluencersTabProps {
-  influencers: MarketInfluencer[];
-  followedInfluencerIds: Set<string>;
-  onFollow: (influencerId: string) => void;
-}
-
-export interface SourcesTabProps {
-  sources: FinancialDataSource[];
-  focusedSourceIds: Set<string>;
-  onFocus: (sourceId: string) => void;
-}
+export type MarketSource = FinancialDataSource;

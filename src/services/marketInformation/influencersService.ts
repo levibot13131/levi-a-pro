@@ -1,113 +1,80 @@
 
 import { MarketInfluencer } from '@/types/marketInformation';
 
-// Mock data for market influencers
-const mockInfluencers: MarketInfluencer[] = [
+// מערך של משפיענים פיננסיים לדוגמה
+const influencers: MarketInfluencer[] = [
   {
     id: '1',
-    name: 'מייקל סיילור',
-    username: 'michael_saylor',
-    platform: 'twitter',
-    profileUrl: 'https://twitter.com/saylor',
-    followers: 2900000,
-    assetsDiscussed: ['bitcoin', 'crypto'],
-    reliability: 95,
-    description: 'מייסד ויו״ר של MicroStrategy, תומך נלהב של ביטקוין',
-    bio: 'מייסד ויו״ר של MicroStrategy, תומך נלהב של ביטקוין',
-    expertise: ['bitcoin', 'crypto'],
-    isVerified: true,
-    imageUrl: 'https://example.com/saylor.jpg'
+    name: 'סת׳ מרקסון',
+    platform: 'twitter.com',
+    followers: 1200000,
+    description: 'יזם ומשקיע בתחום הקריפטו, מייסד משותף של מספר פרויקטים בולטים',
+    topics: ['קריפטו', 'בלוקצ׳יין', 'השקעות'],
+    isFollowed: false,
+    influence: 85,
+    avatarUrl: 'https://example.com/avatars/seth.jpg'
   },
   {
     id: '2',
-    name: 'קתי ווד',
-    username: 'cathiedwood',
-    platform: 'twitter',
-    profileUrl: 'https://twitter.com/cathiedwood',
-    followers: 1500000,
-    assetsDiscussed: ['tesla', 'ark', 'innovation', 'tech'],
-    reliability: 90,
-    description: 'מייסדת ומנכ״לית של ARK Invest, מתמחה בהשקעות חדשניות וטכנולוגיה',
-    bio: 'מייסדת ומנכ״לית של ARK Invest, מתמחה בהשקעות חדשניות וטכנולוגיה',
-    expertise: ['innovation', 'tech'],
-    isVerified: true,
-    imageUrl: 'https://example.com/cathie.jpg'
+    name: 'שרה טרייד',
+    platform: 'youtube.com',
+    followers: 850000,
+    description: 'מנתחת טכנית וותיקה עם יותר מ-10 שנות ניסיון בשוק ההון',
+    topics: ['אנליזה טכנית', 'מט״ח', 'מניות'],
+    isFollowed: true,
+    influence: 75,
+    avatarUrl: 'https://example.com/avatars/sarah.jpg'
   },
   {
     id: '3',
-    name: 'ויטליק בוטרין',
-    username: 'VitalikButerin',
-    platform: 'telegram',
-    profileUrl: 'https://t.me/vitalikbuterin',
-    followers: 3200000,
-    assetsDiscussed: ['ethereum', 'crypto', 'defi'],
-    reliability: 98,
-    description: 'מייסד אתריום ומפתח בלוקצ׳יין',
-    bio: 'מייסד אתריום ומפתח בלוקצ׳יין',
-    expertise: ['ethereum', 'crypto', 'defi'],
-    isVerified: true,
-    imageUrl: 'https://example.com/vitalik.jpg'
+    name: 'דניאל אלפא',
+    platform: 'substack.com',
+    followers: 320000,
+    description: 'כותב ניוזלטר פופולרי על השקעות ארוכות טווח ואסטרטגיות שוק',
+    topics: ['השקעות', 'קרנות מדד', 'תיק השקעות'],
+    isFollowed: false,
+    influence: 65,
+    avatarUrl: 'https://example.com/avatars/daniel.jpg'
   },
   {
     id: '4',
-    name: 'ריי דאליו',
-    username: 'RayDalio',
-    platform: 'youtube',
-    profileUrl: 'https://youtube.com/raydalio',
-    followers: 850000,
-    assetsDiscussed: ['gold', 'bonds', 'macroeconomics'],
-    reliability: 92,
-    description: 'מייסד קרן הגידור Bridgewater Associates, מומחה למאקרו-כלכלה',
-    bio: 'מייסד קרן הגידור Bridgewater Associates, מומחה למאקרו-כלכלה',
-    expertise: ['gold', 'bonds', 'macroeconomics'],
-    isVerified: true,
-    imageUrl: 'https://example.com/ray.jpg'
+    name: 'טל כהן',
+    platform: 'twitter.com',
+    followers: 560000,
+    description: 'סוחר מט״ח מקצועי ומנהל קרן גידור בעל ניסיון עשיר',
+    topics: ['מט״ח', 'סחר יומי', 'ניהול סיכונים'],
+    isFollowed: false,
+    influence: 70,
+    avatarUrl: 'https://example.com/avatars/tal.jpg'
   },
   {
     id: '5',
-    name: 'אנטוני פומפליאנו',
-    username: 'pomp',
-    platform: 'twitter',
-    profileUrl: 'https://twitter.com/apompliano',
-    followers: 1800000,
-    assetsDiscussed: ['bitcoin', 'crypto', 'entrepreneurship'],
-    reliability: 85,
-    description: 'יזם, משקיע ומארח פודקאסט, מומחה לביטקוין',
-    bio: 'יזם, משקיע ומארח פודקאסט, מומחה לביטקוין',
-    expertise: ['bitcoin', 'crypto', 'entrepreneurship'],
-    isVerified: true,
-    imageUrl: 'https://example.com/pomp.jpg'
+    name: 'מאיה סקאל',
+    platform: 'instagram.com',
+    followers: 970000,
+    description: 'יוצרת תוכן פיננסי נגיש ומרצה על חינוך פיננסי וצמיחה אישית',
+    topics: ['חינוך פיננסי', 'FIRE', 'השקעות פסיביות'],
+    isFollowed: true,
+    influence: 80,
+    avatarUrl: 'https://example.com/avatars/maya.jpg'
   }
 ];
 
-// Save followed status
-const followedInfluencers = new Set<string>();
-
-// Get all market influencers
+// קבלת כל המשפיענים
 export const getInfluencers = (): MarketInfluencer[] => {
-  return mockInfluencers.map(influencer => ({
-    ...influencer,
-    isFollowing: followedInfluencers.has(influencer.id)
-  }));
+  return [...influencers];
 };
 
-// Get influencers by platform
+// קבלת משפיענים לפי פלטפורמה
 export const getInfluencersByPlatform = (platform: string): MarketInfluencer[] => {
-  return mockInfluencers
-    .filter(influencer => influencer.platform === platform)
-    .map(influencer => ({
-      ...influencer,
-      isFollowing: followedInfluencers.has(influencer.id)
-    }));
+  return influencers.filter(influencer => influencer.platform === platform);
 };
 
-// Toggle follow status for an influencer
-export const toggleInfluencerFollow = (influencerId: string): boolean => {
-  if (followedInfluencers.has(influencerId)) {
-    followedInfluencers.delete(influencerId);
-  } else {
-    followedInfluencers.add(influencerId);
-  }
+// שינוי מצב מעקב אחרי משפיען
+export const toggleInfluencerFollow = (id: string): boolean => {
+  const influencerIndex = influencers.findIndex(influencer => influencer.id === id);
+  if (influencerIndex === -1) return false;
   
-  return followedInfluencers.has(influencerId);
+  influencers[influencerIndex].isFollowed = !influencers[influencerIndex].isFollowed;
+  return true;
 };

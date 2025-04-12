@@ -1,86 +1,79 @@
 
 import React from 'react';
-import { MarketInfluencer } from '@/types/marketInformation';
 import { Card, CardContent } from '@/components/ui/card';
+import { MarketInfluencer } from '@/types/marketInformation';  // שינוי הייבוא למיקום הנכון
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Check, Twitter, Youtube, MessageCircle, Star, ExternalLink } from 'lucide-react';
+import { ExternalLink, User, Users } from 'lucide-react';
+import { toggleInfluencerFollow } from '@/services/marketInformation';
 
 interface InfluencersTabProps {
   influencers: MarketInfluencer[];
-  followedInfluencerIds: Set<string>;
-  onFollow: (id: string) => void;
+  focusedInfluencerIds: Set<string>;
+  onFocus: (id: string) => void;
 }
 
 const InfluencersTab: React.FC<InfluencersTabProps> = ({
   influencers,
-  followedInfluencerIds,
-  onFollow
+  focusedInfluencerIds,
+  onFocus
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {influencers.map(influencer => (
         <Card key={influencer.id}>
           <CardContent className="pt-6">
-            <div className="flex items-start justify-between mb-4">
-              <Avatar className="h-16 w-16">
-                <AvatarImage src={influencer.avatarUrl} />
-                <AvatarFallback>{influencer.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="text-right">
-                <div className="flex items-center gap-2 mb-1">
-                  <h3 className="font-bold text-lg">{influencer.name}</h3>
-                  {influencer.isVerified && (
-                    <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">@{influencer.username}</p>
-                <div className="flex items-center gap-1 mt-1">
-                  {influencer.platform === 'twitter' && <Twitter className="h-4 w-4 text-blue-400" />}
-                  {influencer.platform === 'youtube' && <Youtube className="h-4 w-4 text-red-500" />}
-                  {influencer.platform === 'telegram' && <MessageCircle className="h-4 w-4 text-blue-500" />}
-                  <span className="text-xs text-muted-foreground">
-                    {influencer.followers.toLocaleString()} followers
-                  </span>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="h-12 w-12 rounded-full overflow-hidden bg-primary/10">
+                {influencer.avatarUrl ? (
+                  <img src={influencer.avatarUrl} alt={influencer.name} className="h-full w-full object-cover" />
+                ) : (
+                  <User className="h-6 w-6 m-3 text-primary" />
+                )}
+              </div>
+              <div>
+                <h3 className="font-bold text-lg">{influencer.name}</h3>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Users className="h-3.5 w-3.5 mr-1" />
+                  <span>{influencer.followers.toLocaleString()} עוקבים</span>
                 </div>
               </div>
             </div>
             
-            <p className="text-sm text-muted-foreground mb-4">{influencer.bio}</p>
+            <p className="text-sm text-muted-foreground mb-4">{influencer.description}</p>
             
-            <div className="flex flex-wrap gap-2 mb-4">
-              {influencer.expertise.map(tag => (
-                <span key={tag} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-                  {tag}
+            <div className="flex flex-wrap gap-1 mb-4">
+              {influencer.topics.map(topic => (
+                <span 
+                  key={topic} 
+                  className="text-xs bg-muted px-2 py-0.5 rounded"
+                >
+                  {topic}
                 </span>
               ))}
             </div>
             
             <div className="flex justify-between gap-2">
               <Button
-                variant={followedInfluencerIds.has(influencer.id) ? "default" : "outline"}
+                variant={influencer.isFollowed ? "default" : "outline"}
                 size="sm"
                 className="flex-1"
-                onClick={() => onFollow(influencer.id)}
+                onClick={() => {
+                  toggleInfluencerFollow(influencer.id);
+                  onFocus(influencer.id);
+                }}
               >
-                {followedInfluencerIds.has(influencer.id) ? (
-                  <>
-                    <Check className="h-4 w-4 mr-2" />
-                    עוקב
-                  </>
-                ) : (
-                  'עקוב'
-                )}
+                <Users className="h-4 w-4 mr-2" />
+                {influencer.isFollowed ? 'מפסיק לעקוב' : 'עוקב'}
               </Button>
               
               <Button
                 variant="outline"
                 size="sm"
                 className="flex-1"
-                onClick={() => window.open(influencer.profileUrl, '_blank')}
+                onClick={() => window.open(`https://${influencer.platform}/${influencer.name.toLowerCase().replace(/\s/g, '')}`, '_blank')}
               >
                 <ExternalLink className="h-4 w-4 mr-2" />
-                פתח פרופיל
+                לפרופיל
               </Button>
             </div>
           </CardContent>
