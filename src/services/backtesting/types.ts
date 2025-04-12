@@ -2,8 +2,8 @@
 import { TimeframeType } from '@/types/asset';
 
 export interface BacktestSettings {
-  startDate: Date;
-  endDate: Date;
+  startDate: string;  // Changed from Date to string
+  endDate: string;    // Changed from Date to string
   strategy: string;
   timeframe: TimeframeType;
   initialCapital: number;
@@ -27,20 +27,27 @@ export interface BacktestResult {
   id: string;
   assetId: string;
   settings: BacktestSettings;
-  totalTrades: number;
-  winningTrades: number;
-  losingTrades: number;
-  winRate: number;
-  profitLoss: number;
-  profitLossPercentage: number;
-  maxDrawdown: number;
-  maxDrawdownPercentage: number;
-  sharpeRatio: number;
-  volatility: number;
-  finalCapital: number;
   trades: BacktestTrade[];
-  signals: BacktestSignal[];
   equity: EquityPoint[];
+  monthly?: MonthlyPerformance[];
+  assetPerformance?: AssetPerformance[];
+  performance?: {
+    totalReturn: number;
+    totalReturnPercentage: number;
+    winRate: number;
+    averageWin: number;
+    averageLoss: number;
+    largestWin: number;
+    largestLoss: number;
+    profitFactor: number;
+    maxDrawdown: number;
+    sharpeRatio: number;
+    totalTrades: number;
+    winningTrades: number;
+    losingTrades: number;
+    averageTradeDuration: number;
+  };
+  enhancedAnalysis?: any;
   createdAt: number;
 }
 
@@ -55,6 +62,12 @@ export interface BacktestTrade {
   profit: number;
   profitPercentage: number;
   signal?: string;
+  assetId?: string;
+  assetName?: string;
+  direction?: 'long' | 'short';
+  status?: 'open' | 'closed' | 'target' | 'stopped' | 'canceled';
+  duration?: number;
+  strategyUsed?: string;
 }
 
 export interface BacktestSignal {
@@ -68,8 +81,24 @@ export interface BacktestSignal {
 }
 
 export interface EquityPoint {
-  date: number;
-  equity: number;
+  date: number | string;
+  equity?: number;
+  value: number;
+  drawdown: number;
+}
+
+export interface MonthlyPerformance {
+  period: string;
+  return: number;
+  trades: number;
+}
+
+export interface AssetPerformance {
+  assetId: string;
+  assetName: string;
+  return: number;
+  trades: number;
+  winRate: number;
 }
 
 export type Trade = BacktestTrade;

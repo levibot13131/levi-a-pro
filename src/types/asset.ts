@@ -84,7 +84,7 @@ export interface TradeSignal {
   type: 'buy' | 'sell' | 'hold';
   price: number;
   timestamp: number;
-  strength: 'high' | 'medium' | 'low';
+  strength: 'high' | 'medium' | 'low' | 'strong' | 'weak'; // Added 'strong' and 'weak' to make compatible
   timeframe: TimeframeType;
   source: string;
   description?: string;
@@ -145,6 +145,8 @@ export interface TradeJournalEntry {
   duration?: number;
 }
 
+export interface TradingJournalEntry extends TradeJournalEntry {}
+
 export interface TradingBot {
   id: string;
   name: string;
@@ -161,6 +163,7 @@ export interface TradingBot {
     profitLoss: number;
     totalReturn?: number;
     averageProfit?: number;
+    averageLoss?: number; // Added for compatibility
   };
   riskLevel: 'high' | 'medium' | 'low';
   creator: string;
@@ -232,4 +235,53 @@ export interface BacktestTrade {
   assetName: string;
   strategyUsed: string;
   duration: number;
+}
+
+// Define types for financial data sources
+export interface FinancialDataSource {
+  id: string;
+  name: string;
+  url: string;
+  description: string;
+  category: string;
+  tags: string[];
+  rating: number;
+  isPremium: boolean;
+  isRecommended: boolean;
+  platform: string;
+  accessType?: 'free' | 'premium' | 'subscription'; // Added for compatibility
+  focused?: boolean; // Added for compatibility
+  languages?: string[]; // Added for compatibility
+}
+
+// Define type for market events
+export interface MarketEvent {
+  id: string;
+  title: string;
+  description: string;
+  date: string;
+  type: string;
+  category: string;
+  importance: 'high' | 'medium' | 'low' | 'critical';
+  relatedAssets: string[];
+  expectedImpact: 'positive' | 'negative' | 'neutral' | 'variable'; // Added 'variable' for compatibility
+  source: string;
+  reminder?: boolean;
+}
+
+// Define type for market influencers
+export interface MarketInfluencer {
+  id: string;
+  name: string;
+  platform: string;
+  platformId: string;
+  followers: number;
+  description: string;
+  profileImage: string;
+  url: string;
+  reliability: number;
+  specialty?: string; // Added for compatibility
+  sentiment?: 'bullish' | 'bearish' | 'neutral'; // Added for compatibility
+  followStatus?: 'following' | 'not-following'; // Added for compatibility
+  platforms?: string[]; // Added for compatibility
 }

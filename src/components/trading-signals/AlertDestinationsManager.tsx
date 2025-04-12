@@ -1,207 +1,165 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Trash2, Save, ExternalLink, Webhook } from 'lucide-react';
-import { 
-  getAlertDestinations, 
-  addAlertDestination, 
-  updateAlertDestination, 
-  removeAlertDestination, 
-  toggleAlertDestination 
+import { Send, BellRing, Globe, Trash2 } from 'lucide-react';
+import {
+  getAlertDestinations,
+  addAlertDestination,
+  updateAlertDestination,
+  deleteAlertDestination
 } from '@/services/tradingView/alerts/destinations';
-import { toast } from 'sonner';
 import { AlertDestination } from '@/services/tradingView/alerts/types';
+import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 
-const AlertDestinationsManager: React.FC = () => {
-  const [destinations, setDestinations] = useState<AlertDestination[]>([]);
-  const [newDestName, setNewDestName] = useState('');
-  const [newDestUrl, setNewDestUrl] = useState('');
+const AlertDestinationsManager = () => {
+  const [destinations, setDestinations] = useState<AlertDestination[]>(getAlertDestinations);
+  const [newEndpoint, setNewEndpoint] = useState('');
+  const [newName, setNewName] = useState('');
   
-  // טעינת יעדים קיימים
-  useEffect(() => {
-    const loadDestinations = () => {
-      const currentDestinations = getAlertDestinations();
-      setDestinations(currentDestinations);
-    };
+  const handleAddWebhook = () => {
+    if (!newEndpoint || !newName) {
+      toast.error('יש למלא את כל השדות');
+      return;
+    }
     
-    loadDestinations();
-    
-    // רענון כל 5 שניות למקרה שיש שינויים מרכיבים אחרים
-    const interval = setInterval(loadDestinations, 5000);
-    return () => clearInterval(interval);
-  }, []);
-  
-  // הוספת יעד חדש
-  const handleAddDestination = () => {
-    if (!newDestName.trim() || !newDestUrl.trim()) {
-      toast.error('שדות חובה', {
-        description: 'אנא הזן שם ו-URL ליעד ההתראות'
-      });
+    if (!newEndpoint.startsWith('http')) {
+      toast.error('כתובת לא חוקית, יש להתחיל עם http:// או https://');
       return;
     }
     
     try {
-      // בדיקה בסיסית של תקינות ה-URL
-      new URL(newDestUrl);
-      
-      addAlertDestination({
-        name: newDestName,
-        type: 'webhook' as const,
-        endpoint: newDestUrl,
+      const destination = addAlertDestination({
+        name: newName,
+        type: 'webhook',
+        endpoint: newEndpoint,
         active: true,
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json' },
+        config: { method: 'POST', format: 'json' }
       });
       
-      // איפוס השדות
-      setNewDestName('');
-      setNewDestUrl('');
-      
-      // רענון הרשימה
       setDestinations(getAlertDestinations());
+      setNewEndpoint('');
+      setNewName('');
+      
+      toast.success('נוסף Webhook חדש');
     } catch (error) {
-      toast.error('URL לא תקין', {
-        description: 'אנא הזן כתובת URL תקינה'
-      });
+      toast.error('שגיאה בהוספת Webhook');
     }
   };
   
-  // הסרת יעד
-  const handleRemoveDestination = (id: string) => {
-    removeAlertDestination(id);
-    setDestinations(getAlertDestinations());
+  const handleToggleStatus = (id: string, newStatus: boolean) => {
+    try {
+      updateAlertDestination(id, { active: newStatus });
+      setDestinations(getAlertDestinations());
+      
+      toast.success(
+        newStatus ? 'היעד הופעל בהצלחה' : 'היעד הושבת בהצלחה'
+      );
+    } catch (error) {
+      toast.error('שגיאה בעדכון יעד');
+    }
   };
   
-  // הפעלה/כיבוי של יעד
-  const handleToggleDestination = (id: string, active: boolean) => {
-    toggleAlertDestination(id, active);
-    setDestinations(getAlertDestinations());
+  const handleDeleteDestination = (id: string) => {
+    try {
+      deleteAlertDestination(id);
+      setDestinations(getAlertDestinations());
+      
+      toast.success('היעד נמחק בהצלחה');
+    } catch (error) {
+      toast.error('שגיאה במחיקת יעד');
+    }
   };
-  
-  // עדכון יעד קיים
-  const handleUpdateDestination = (id: string, updates: Partial<AlertDestination>) => {
-    updateAlertDestination(id, updates);
-    setDestinations(getAlertDestinations());
-  };
-  
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-right">יעדי התראות</CardTitle>
+        <CardTitle className="text-right">הגדרת יעדים להתראות</CardTitle>
         <CardDescription className="text-right">
-          הגדר לאן יישלחו ההתראות כאשר המערכת מזהה איתותי מסחר
+          הגדר לאן יישלחו ההתראות כאשר מתקבל איתות
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {/* מדריך מהיר */}
-        {destinations.length === 0 && (
-          <div className="bg-blue-50 p-4 mb-6 rounded-md text-right">
-            <h3 className="font-medium text-blue-800 mb-2">מדריך מהיר: יצירת Webhook לקבלת התראות</h3>
-            <ol className="list-decimal list-inside space-y-2 text-sm text-blue-700">
-              <li>צור חשבון בשירות כמו <a href="https://pipedream.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Pipedream</a> או <a href="https://webhook.site" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Webhook.site</a></li>
-              <li>צור webhook חדש וקבל את כתובת ה-URL שלו</li>
-              <li>העתק את כתובת ה-URL והדבק אותה בשדה למטה</li>
-              <li>המערכת תשלח התראות לכתובת זו בכל פעם שמזוהה איתות מסחר</li>
-            </ol>
-          </div>
-        )}
-        
-        {/* רשימת יעדים קיימים */}
-        {destinations.length > 0 ? (
-          <div className="space-y-4 mb-6">
-            {destinations.map(dest => (
-              <div key={dest.id} className="flex flex-col space-y-2 p-3 border rounded-md">
-                <div className="flex justify-between items-center">
+        <div className="space-y-4">
+          <div className="grid gap-4">
+            {destinations.map((destination) => (
+              <div 
+                key={destination.id} 
+                className="flex items-center justify-between p-3 border rounded-md"
+              >
+                <div className="flex space-x-2 rtl:space-x-reverse">
                   <Switch 
-                    checked={dest.active}
-                    onCheckedChange={(checked) => handleToggleDestination(dest.id, checked)}
+                    checked={destination.active}
+                    onCheckedChange={(checked) => handleToggleStatus(destination.id, checked)}
                   />
-                  <div className="font-medium">{dest.name}</div>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    onClick={() => handleDeleteDestination(destination.id)}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
                 </div>
                 
-                <Input 
-                  value={dest.endpoint}
-                  onChange={(e) => handleUpdateDestination(dest.id, { endpoint: e.target.value })}
-                  className="text-left dir-ltr text-xs"
-                />
-                
-                <div className="flex justify-between items-center">
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleRemoveDestination(dest.id)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" /> הסר
-                  </Button>
-                  
-                  <div className="flex items-center gap-2">
-                    <div className="text-xs text-muted-foreground">
-                      {dest.active ? 'פעיל' : 'לא פעיל'}
-                    </div>
-                    <a 
-                      href={dest.endpoint} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-xs text-blue-600 hover:underline flex items-center"
-                    >
-                      פתח <ExternalLink className="h-3 w-3 ml-1" />
-                    </a>
+                <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                  <div className="text-right">
+                    <p className="text-sm font-medium">{destination.name}</p>
+                    <p className="text-xs text-muted-foreground truncate max-w-[200px]">
+                      {destination.endpoint || `${destination.type} integration`}
+                    </p>
                   </div>
+                  
+                  <Badge 
+                    variant={destination.active ? "default" : "outline"}
+                    className="ml-2"
+                  >
+                    {destination.type === 'webhook' ? (
+                      <Globe className="h-3 w-3 mr-1" />
+                    ) : destination.type === 'telegram' ? (
+                      <Send className="h-3 w-3 mr-1" />
+                    ) : (
+                      <BellRing className="h-3 w-3 mr-1" />
+                    )}
+                    {destination.type}
+                  </Badge>
                 </div>
               </div>
             ))}
           </div>
-        ) : (
-          <div className="text-center py-4 mb-6">
-            <Webhook className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-            <p className="text-muted-foreground mb-2">לא הוגדרו יעדים להתראות</p>
-            <p className="text-xs text-muted-foreground">הוסף יעד למטה כדי להתחיל לקבל התראות</p>
-          </div>
-        )}
-        
-        {/* טופס הוספת יעד חדש */}
-        <div className="space-y-4 border-t pt-4">
-          <h3 className="text-sm font-medium text-right">הוסף יעד חדש</h3>
           
-          <div className="grid gap-2">
-            <Label htmlFor="destName" className="text-right">שם היעד</Label>
-            <Input
-              id="destName"
-              value={newDestName}
-              onChange={(e) => setNewDestName(e.target.value)}
-              placeholder="למשל: Webhook שלי"
-              className="text-right"
-            />
+          <div className="pt-4">
+            <h3 className="text-sm font-medium mb-2 text-right">הוסף Webhook חדש</h3>
+            <div className="grid gap-3">
+              <div>
+                <Label htmlFor="destination-name" className="text-right block mb-1">שם</Label>
+                <Input 
+                  id="destination-name"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="שם תיאורי"
+                  className="text-right"
+                />
+              </div>
+              <div>
+                <Label htmlFor="webhook-url" className="text-right block mb-1">כתובת Webhook</Label>
+                <Input 
+                  id="webhook-url"
+                  value={newEndpoint}
+                  onChange={(e) => setNewEndpoint(e.target.value)}
+                  placeholder="https://example.com/webhook"
+                  className="text-right"
+                />
+              </div>
+              <Button onClick={handleAddWebhook}>הוסף Webhook</Button>
+            </div>
           </div>
-          
-          <div className="grid gap-2">
-            <Label htmlFor="destUrl" className="text-right">כתובת Webhook</Label>
-            <Input
-              id="destUrl"
-              value={newDestUrl}
-              onChange={(e) => setNewDestUrl(e.target.value)}
-              placeholder="https://your-webhook-url.com"
-              className="text-left dir-ltr"
-            />
-          </div>
-          
-          <Button 
-            onClick={handleAddDestination}
-            className="w-full"
-          >
-            <Plus className="h-4 w-4 mr-2" /> הוסף יעד
-          </Button>
         </div>
       </CardContent>
-      <CardFooter className="flex-col space-y-2 text-xs text-muted-foreground text-right border-t pt-4">
-        <p>💡 טיפ: השתמש ב-<a href="https://pipedream.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Pipedream</a> או <a href="https://webhook.site" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Webhook.site</a> כדי לקבל כתובת Webhook בחינם.</p>
-        <p>⚠️ שים לב: השתמש רק בשירותים מהימנים לקבלת התראות.</p>
-      </CardFooter>
     </Card>
   );
 };

@@ -1,124 +1,109 @@
 
 import { AlertDestination, AlertDestinationType } from './types';
-import { toast } from 'sonner';
 
-// קבוע לשמירת המזהה ב-localStorage
-const LOCAL_STORAGE_KEY = 'tradingview-alert-destinations';
+const DESTINATIONS_STORAGE_KEY = 'levi-bot-alert-destinations';
 
-// יעדי הודעות מוגדרים - כאן ניתן להוסיף יעדים נוספים
-let alertDestinations: AlertDestination[] = [
-  // יעד ברירת מחדל מוגדר מראש לנוחות המשתמש
+// Initial default destinations
+const defaultDestinations: AlertDestination[] = [
   {
-    id: 'default-destination',
-    name: 'Webhook ברירת מחדל',
-    type: 'webhook' as AlertDestinationType,
-    active: true, // שינינו ל-true כדי שיהיה פעיל כברירת מחדל
-    endpoint: 'https://eobyanldxae2fi5.m.pipedream.net',
-    headers: {
-      'Content-Type': 'application/json'
+    id: 'telegram-default',
+    name: 'טלגרם',
+    type: 'telegram',
+    active: false,
+    config: {
+      botToken: '',
+      chatId: ''
+    }
+  },
+  {
+    id: 'webhook-default',
+    name: 'Webhook',
+    type: 'webhook',
+    active: true,
+    endpoint: 'https://api.example.com/tradingview-webhook',
+    headers: { 'Content-Type': 'application/json' },
+    config: {
+      method: 'POST',
+      format: 'json'
+    }
+  },
+  {
+    id: 'whatsapp-default',
+    name: 'וואטסאפ',
+    type: 'whatsapp',
+    active: false,
+    config: {
+      phone: '',
+      template: 'Signal: {{type}} {{symbol}} at {{price}}'
     }
   }
 ];
 
-// בדיקה אם יש יעדים שמורים ב-localStorage
-const loadSavedDestinations = (): void => {
-  try {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        alertDestinations = parsed;
-        console.log('נטענו יעדים שמורים:', alertDestinations.length);
-      }
-    }
-  } catch (error) {
-    console.error('שגיאה בטעינת יעדים שמורים:', error);
-  }
-};
-
-// שמירת יעדים ל-localStorage
-const saveDestinations = (): void => {
-  try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(alertDestinations));
-  } catch (error) {
-    console.error('שגיאה בשמירת יעדים:', error);
-  }
-};
-
-// קבלת רשימת היעדים
+// Get alert destinations
 export const getAlertDestinations = (): AlertDestination[] => {
-  // טעינת יעדים שמורים בפעם הראשונה
-  if (alertDestinations.length === 1 && !alertDestinations[0].active) {
-    loadSavedDestinations();
+  try {
+    const stored = localStorage.getItem(DESTINATIONS_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+    return defaultDestinations;
+  } catch (error) {
+    console.error('Error loading alert destinations:', error);
+    return defaultDestinations;
   }
-  return [...alertDestinations];
 };
 
-// הוספת יעד חדש
+// Save alert destinations
+export const saveAlertDestinations = (destinations: AlertDestination[]): void => {
+  try {
+    localStorage.setItem(DESTINATIONS_STORAGE_KEY, JSON.stringify(destinations));
+  } catch (error) {
+    console.error('Error saving alert destinations:', error);
+  }
+};
+
+// Add a new alert destination
 export const addAlertDestination = (destination: Omit<AlertDestination, 'id'>): AlertDestination => {
-  const id = crypto.randomUUID();
+  const destinations = getAlertDestinations();
   const newDestination: AlertDestination = {
-    id,
-    ...destination
+    ...destination,
+    id: `destination-${Date.now()}-${Math.floor(Math.random() * 1000)}`
   };
   
-  alertDestinations.push(newDestination);
-  saveDestinations();
-  
-  toast.success('יעד התראות חדש נוסף', {
-    description: `היעד ${newDestination.name} נוסף בהצלחה`
-  });
+  destinations.push(newDestination);
+  saveAlertDestinations(destinations);
   
   return newDestination;
 };
 
-// עדכון יעד קיים
+// Update an existing alert destination
 export const updateAlertDestination = (id: string, updates: Partial<AlertDestination>): boolean => {
-  const index = alertDestinations.findIndex(d => d.id === id);
-  if (index === -1) return false;
+  const destinations = getAlertDestinations();
+  const index = destinations.findIndex(d => d.id === id);
   
-  alertDestinations[index] = { ...alertDestinations[index], ...updates };
-  saveDestinations();
+  if (index !== -1) {
+    destinations[index] = { ...destinations[index], ...updates };
+    saveAlertDestinations(destinations);
+    return true;
+  }
   
-  toast.success('יעד התראות עודכן', {
-    description: `היעד ${alertDestinations[index].name} עודכן בהצלחה`
-  });
-  
-  return true;
+  return false;
 };
 
-// הסרת יעד
-export const removeAlertDestination = (id: string): boolean => {
-  const index = alertDestinations.findIndex(d => d.id === id);
-  if (index === -1) return false;
+// Delete an alert destination
+export const deleteAlertDestination = (id: string): boolean => {
+  const destinations = getAlertDestinations();
+  const newDestinations = destinations.filter(d => d.id !== id);
   
-  const name = alertDestinations[index].name;
-  alertDestinations.splice(index, 1);
-  saveDestinations();
+  if (newDestinations.length !== destinations.length) {
+    saveAlertDestinations(newDestinations);
+    return true;
+  }
   
-  toast.info('יעד התראות הוסר', {
-    description: `היעד ${name} הוסר בהצלחה`
-  });
-  
-  return true;
+  return false;
 };
 
-// הפעלה/כיבוי של יעד
-export const toggleAlertDestination = (id: string, active?: boolean): boolean => {
-  const index = alertDestinations.findIndex(d => d.id === id);
-  if (index === -1) return false;
-  
-  const newState = active !== undefined ? active : !alertDestinations[index].active;
-  alertDestinations[index].active = newState;
-  saveDestinations();
-  
-  toast.success(
-    newState ? 'יעד התראות הופעל' : 'יעד התראות הושבת',
-    { description: `היעד ${alertDestinations[index].name} ${newState ? 'הופעל' : 'הושבת'} בהצלחה` }
-  );
-  
-  return true;
+// Enable or disable a destination
+export const toggleDestinationStatus = (id: string, active: boolean): boolean => {
+  return updateAlertDestination(id, { active });
 };
-
-// טעינה ראשונית של יעדים
-loadSavedDestinations();

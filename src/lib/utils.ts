@@ -70,6 +70,16 @@ export function formatRelativeTime(date: Date): string {
 }
 
 /**
+ * Format time ago for news and social posts
+ * @param dateString - ISO date string
+ * @returns Formatted time ago string
+ */
+export function formatTimeAgo(dateString: string): string {
+  const date = new Date(dateString);
+  return formatRelativeTime(date);
+}
+
+/**
  * Generate a random color hex code
  * @returns Random color hex code
  */
@@ -100,4 +110,24 @@ export function safeJsonParse<T>(value: string, fallback: T): T {
 export function truncateText(text: string, length: number): string {
   if (text.length <= length) return text;
   return `${text.substring(0, length)}...`;
+}
+
+/**
+ * Format a price number with currency symbol
+ * @param price - Price to format
+ * @returns Formatted price string
+ */
+export function formatPrice(price: number): string {
+  return `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/**
+ * Get color class based on percentage value
+ * @param value - Percentage value
+ * @returns CSS color class
+ */
+export function getPercentageColor(value: number): string {
+  if (value > 0) return 'text-green-500';
+  if (value < 0) return 'text-red-500';
+  return 'text-gray-500';
 }
