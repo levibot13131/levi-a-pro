@@ -1,4 +1,3 @@
-
 export interface MarketEvent {
   id: string;
   title: string;
@@ -6,12 +5,11 @@ export interface MarketEvent {
   importance: 'low' | 'medium' | 'high';
   category: string;
   description: string;
-  reminder?: boolean;
-  // Additional properties to resolve type errors
-  relatedAssets?: string[];
-  expectedImpact?: string;
-  source?: string;
-  type?: string;
+  reminder: boolean;
+  relatedAssets: string[];
+  expectedImpact: string;
+  source: string;
+  type: string;
 }
 
 export interface MarketInfluencer {
@@ -48,14 +46,12 @@ export interface FinancialDataSource {
   platform: string;
 }
 
-// Update the EventsTabProps to include setReminders property
 export interface EventsTabProps {
   events: MarketEvent[];
   setReminders: Set<string>;
   onSetReminder: (eventId: string) => void;
 }
 
-// Add missing props interfaces for other tabs
 export interface InfluencersTabProps {
   influencers: MarketInfluencer[];
   followedInfluencerIds: Set<string>;

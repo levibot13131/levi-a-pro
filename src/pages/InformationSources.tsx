@@ -5,40 +5,14 @@ import {
   getSources, 
   getInfluencers, 
   toggleSourceFavorite,
-  toggleInfluencerFollow
+  toggleInfluencerFollow,
+  getUpcomingMarketEvents,
+  setEventReminder
 } from '@/services/marketInformation/index';
 import { MarketInfluencer, FinancialDataSource, MarketEvent } from '@/types/marketInformation';
 import InfluencersTab from '@/components/information-sources/InfluencersTab';
 import SourcesTab from '@/components/information-sources/SourcesTab';
 import EventsTab from '@/components/information-sources/EventsTab';
-
-// Mock function for upcoming events
-const getUpcomingMarketEvents = () => {
-  return [
-    {
-      id: '1',
-      title: 'הודעת ריבית פדרלית',
-      date: '2025-05-01',
-      importance: 'high',
-      category: 'economic',
-      description: 'הודעת הריבית הפדרלית לחודש מאי 2025'
-    },
-    {
-      id: '2',
-      title: 'פרסום דוחות רבעון ראשון',
-      date: '2025-04-20',
-      importance: 'medium',
-      category: 'earnings',
-      description: 'פרסום דוחות רבעוניים של חברות מרכזיות בשוק הקריפטו'
-    }
-  ];
-};
-
-// Mock function for setting event reminders
-const setEventReminder = (eventId: string) => {
-  console.log(`Setting reminder for event ${eventId}`);
-  return true;
-};
 
 const InformationSources = () => {
   const [activeTab, setActiveTab] = useState('influencers');
@@ -62,20 +36,32 @@ const InformationSources = () => {
     const fetchedInfluencers = getInfluencers().map(inf => ({
       ...inf, 
       bio: inf.description || 'No bio available',
-      expertise: inf.assetsDiscussed || ['cryptocurrency']
+      expertise: inf.assetsDiscussed || ['cryptocurrency'],
+      username: inf.name.toLowerCase().replace(/\s/g, '') // Generate a username if missing
     }));
     
     // Adapt the returned sources to include required properties
     const fetchedSources = getSources().map(source => ({
       ...source,
       category: source.type,
-      rating: source.reliability,
+      rating: source.reliability || 3,
       platform: source.type
+    }));
+    
+    // Complete the market events with required fields
+    const rawEvents = getUpcomingMarketEvents();
+    const completedEvents = rawEvents.map(event => ({
+      ...event,
+      relatedAssets: event.relatedAssets || [],
+      expectedImpact: event.expectedImpact || 'neutral',
+      source: event.source || 'system',
+      reminder: false,
+      type: event.type || 'economic'
     }));
     
     setInfluencers(fetchedInfluencers as MarketInfluencer[]);
     setSources(fetchedSources as FinancialDataSource[]);
-    setEvents(getUpcomingMarketEvents());
+    setEvents(completedEvents as MarketEvent[]);
   }, []);
   
   // Handle focus source

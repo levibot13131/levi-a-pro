@@ -1,12 +1,13 @@
-
 import React, { useEffect, useState } from 'react';
-import { useStoredSignals, startRealTimeAnalysis, clearStoredSignals } from '@/services/backtesting/realTimeAnalysis';
 import { toast } from 'sonner';
 import { BacktestSettings } from '@/services/backtesting/types';
 import { getTrackedAssets } from '@/services/assetTracking/storage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBinanceConnection } from '@/hooks/use-binance-connection';
 import { useBinanceData } from '@/hooks/use-binance-data';
+
+import { useStoredSignals, clearStoredSignals } from '@/services/backtesting/realTimeAnalysis/signalStorage';
+import { startRealTimeAnalysis } from '@/services/backtesting/realTimeAnalysis/alertSystem';
 
 interface RealTimeAlertsServiceProps {
   assetIds: string[];
@@ -34,10 +35,8 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
   const { data: signals = [], refetch } = useStoredSignals();
   const [autoAlertsEnabled, setAutoAlertsEnabled] = useState(false);
   
-  // Binance integration
   const { isConnected: isBinanceConnected } = useBinanceConnection();
   const mappedAssetIds = assetIds.map(id => {
-    // Convert our internal asset IDs to Binance symbols
     switch(id.toLowerCase()) {
       case 'bitcoin': return 'BTCUSDT';
       case 'ethereum': return 'ETHUSDT';
@@ -48,9 +47,7 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
   
   const { marketData: binanceMarketData } = useBinanceData(isBinanceConnected ? mappedAssetIds : []);
   
-  // למצוא נכסים במעקב באופן אוטומטי
   useEffect(() => {
-    // אם לא הוגדרו נכסים ויש נכסים במעקב, נשתמש בהם
     if (assetIds.length === 0) {
       const trackedAssets = getTrackedAssets();
       
@@ -59,7 +56,6 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
           .filter(asset => asset.alertsEnabled)
           .map(asset => asset.id);
         
-        // אם מצאנו נכסים עם התראות פעילות, נפעיל את הניתוח עליהם
         if (trackedIds.length > 0 && autoAlertsEnabled && !isActive) {
           console.log('Auto-starting alerts for tracked assets:', trackedIds);
           startAutomaticAlerts(trackedIds);
@@ -69,14 +65,12 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
   }, [autoAlertsEnabled, assetIds.length]);
   
   useEffect(() => {
-    // Refetch signals periodically
     const interval = setInterval(() => {
       refetch();
     }, 5000);
     
     return () => {
       clearInterval(interval);
-      // Cleanup any active instance on unmount
       if (alertInstance) {
         alertInstance.stop();
       }
@@ -84,7 +78,6 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
   }, [alertInstance, refetch]);
   
   const startAutomaticAlerts = (assets: string[]) => {
-    // Verify that the user has permission
     if (!user) {
       toast.error("יש להתחבר כדי להפעיל התראות אוטומטיות");
       return;
@@ -105,20 +98,17 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
   };
   
   const toggleRealTimeAlerts = () => {
-    // Verify that the user has permission
     if (!user) {
       toast.error("יש להתחבר כדי להפעיל התראות");
       return;
     }
     
     if (isActive && alertInstance) {
-      // Stop current analysis
       alertInstance.stop();
       setAlertInstance(null);
       setIsActive(false);
       toast.info("ניתוח בזמן אמת הופסק");
     } else {
-      // Start new analysis
       const instance = startRealTimeAnalysis(assetIds, settings);
       setAlertInstance(instance);
       setIsActive(true);
@@ -135,7 +125,6 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
   };
   
   const enableAutomaticAlerts = () => {
-    // Verify that the user has permission
     if (!user) {
       toast.error("יש להתחבר כדי להפעיל התראות אוטומטיות");
       return;

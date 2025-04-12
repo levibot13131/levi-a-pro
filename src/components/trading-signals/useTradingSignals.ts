@@ -1,12 +1,12 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { TradeSignal } from '@/types/asset';
 import { getTradeSignals, getMarketAnalyses } from '@/services/mockTradingService';
 import { getAssets } from '@/services/mockDataService';
-import { startRealTimeAnalysis } from '@/services/backtesting/realTimeAnalysis';
-import { useStoredSignals } from '@/services/backtesting/realTimeAnalysis';
 import { toast } from 'sonner';
+
+import { startRealTimeAnalysis } from '@/services/backtesting/realTimeAnalysis/alertSystem';
+import { useStoredSignals } from '@/services/backtesting/realTimeAnalysis/signalStorage';
 
 export const useTradingSignals = () => {
   const [selectedAssetId, setSelectedAssetId] = useState<string>('all');
@@ -15,16 +15,13 @@ export const useTradingSignals = () => {
   const [alertInstance, setAlertInstance] = useState<{ stop: () => void } | null>(null);
   const [showSettings, setShowSettings] = useState<boolean>(false);
   
-  // Data fetching for mock signals
   const { data: mockSignals, isLoading: mockSignalsLoading } = useQuery({
     queryKey: ['tradeSignals', selectedAssetId],
     queryFn: () => getTradeSignals(selectedAssetId !== 'all' ? selectedAssetId : undefined),
   });
   
-  // Real-time signals
   const { data: realTimeSignals = [], refetch: refetchRealTimeSignals } = useStoredSignals();
   
-  // Analyses data
   const { data: analyses, isLoading: analysesLoading } = useQuery({
     queryKey: ['marketAnalyses', selectedAssetId, selectedAnalysisType],
     queryFn: () => getMarketAnalyses(
@@ -33,20 +30,16 @@ export const useTradingSignals = () => {
     ),
   });
   
-  // Assets data
   const { data: assets } = useQuery({
     queryKey: ['assets'],
     queryFn: getAssets,
   });
   
-  // Combined signals
   const allSignals: TradeSignal[] = (() => {
     const combined = [...(mockSignals || []), ...realTimeSignals];
-    // Sort by timestamp (newest first)
     return combined.sort((a, b) => b.timestamp - a.timestamp);
   })();
   
-  // Periodic refresh of real-time signals
   useEffect(() => {
     const interval = setInterval(() => {
       refetchRealTimeSignals();
@@ -60,7 +53,6 @@ export const useTradingSignals = () => {
     };
   }, [refetchRealTimeSignals, alertInstance]);
   
-  // Function to toggle real-time analysis
   const toggleRealTimeAnalysis = () => {
     if (realTimeActive && alertInstance) {
       alertInstance.stop();
@@ -68,13 +60,12 @@ export const useTradingSignals = () => {
       setRealTimeActive(false);
       toast.info("ניתוח בזמן אמת הופסק");
     } else {
-      // Start real-time analysis for all assets or selected asset
       const assetsList = selectedAssetId !== 'all' 
         ? [selectedAssetId] 
-        : assets?.slice(0, 5).map(a => a.id) || []; // Limit to 5 assets
+        : assets?.slice(0, 5).map(a => a.id) || [];
       
       const instance = startRealTimeAnalysis(assetsList, {
-        strategy: "A.A", // Using a valid strategy
+        strategy: "A.A",
       });
       
       setAlertInstance(instance);
@@ -85,12 +76,10 @@ export const useTradingSignals = () => {
     }
   };
   
-  // Helper function to get asset name
   const getAssetName = (assetId: string) => {
     return assets?.find(a => a.id === assetId)?.name || assetId;
   };
   
-  // Helper function to format date
   const formatDate = (timestamp: number): string => {
     const date = new Date(timestamp);
     return date.toLocaleDateString('he-IL', { 

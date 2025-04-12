@@ -1,4 +1,3 @@
-
 export interface FinancialDataSource {
   id: string;
   name: string;
@@ -8,7 +7,6 @@ export interface FinancialDataSource {
   category: string;
   rating: number;
   platform: string;
-  // Additional fields needed per errors
   focused?: boolean;
   accessType?: 'free' | 'freemium' | 'premium' | 'subscription';
   languages?: string[];
@@ -30,7 +28,7 @@ export interface MarketInfluencer {
   bio: string;
   profileUrl: string;
   expertise: string[];
-  // Additional fields needed per errors
+  username: string;
   followStatus?: boolean;
   specialty?: string[];
   sentiment?: 'positive' | 'negative' | 'neutral' | 'bullish' | 'bearish' | 'variable';
@@ -50,5 +48,5 @@ export interface MarketEvent {
   expectedImpact: 'positive' | 'negative' | 'neutral' | 'variable';
   source: string;
   reminder: boolean;
-  type: string; // Required field per error
+  type: string;
 }
