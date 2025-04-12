@@ -92,16 +92,16 @@ export const getAssetById = async (id: string): Promise<Asset | null> => {
 /**
  * Get historical price data for an asset
  */
-export const getHistoricalPriceData = async (
+export const getAssetHistory = async (
   assetId: string, 
   timeframe: TimeframeType = '1d',
   limit: number = 100
-): Promise<{ timestamp: number; price: number; volume?: number }[]> => {
+): Promise<{ id: string; symbol: string; name: string; timeframe: TimeframeType; data: any[]; firstDate: number; lastDate: number }> => {
   // In a real app, we would fetch this from an API
   // For demo purposes, we'll generate mock data
   
   const asset = await getAssetById(assetId);
-  if (!asset) return [];
+  if (!asset) throw new Error(`Asset not found: ${assetId}`);
   
   const now = Date.now();
   const data: { timestamp: number; price: number; volume?: number }[] = [];
@@ -133,7 +133,15 @@ export const getHistoricalPriceData = async (
     });
   }
   
-  return data;
+  return {
+    id: asset.id,
+    symbol: asset.symbol,
+    name: asset.name,
+    timeframe,
+    data,
+    firstDate: data[0].timestamp,
+    lastDate: data[data.length - 1].timestamp
+  };
 };
 
 /**

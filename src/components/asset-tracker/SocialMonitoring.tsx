@@ -124,10 +124,12 @@ const SocialMonitoring: React.FC<SocialMonitoringProps> = ({ selectedAsset }) =>
                           <ThumbsUp className="h-3 w-3 ml-1" />
                           {formatNumber(post.likes)}
                         </span>
-                        <span className="flex items-center">
-                          <MessageSquare className="h-3 w-3 ml-1" />
-                          {formatNumber(post.comments)}
-                        </span>
+                        {post.comments !== undefined && (
+                          <span className="flex items-center">
+                            <MessageSquare className="h-3 w-3 ml-1" />
+                            {formatNumber(post.comments)}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center">
                         <Calendar className="h-3 w-3 ml-1" />
@@ -159,7 +161,7 @@ const SocialMonitoring: React.FC<SocialMonitoringProps> = ({ selectedAsset }) =>
                       {getSentimentBadge(news.sentiment)}
                       <h3 className="font-medium">{news.title}</h3>
                     </div>
-                    <p className="text-sm my-2">{news.summary}</p>
+                    <p className="text-sm my-2">{news.summary || news.content}</p>
                     <div className="flex justify-between items-center mt-2">
                       <a href={news.url} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 flex items-center">
                         קרא עוד <ArrowUpRight className="h-3 w-3 mr-1" />

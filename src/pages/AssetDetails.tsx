@@ -10,12 +10,26 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getAssetById, getAssetHistory } from '@/services/realTimeAssetService';
 import { LineChart, BarChart, PieChart, Activity, Info, BarChart2, Globe, Wallet, ExternalLink } from 'lucide-react';
 import { Asset, AssetHistoricalData } from '@/types/asset';
-import { formatCurrency, formatPercentage } from '@/lib/utils';
 import PriceChart from '@/components/charts/PriceChart';
 import WhaleTracker from '@/components/technical-analysis/WhaleTracker';
 import SocialMonitoring from '@/components/asset-tracker/SocialMonitoring';
 import { useAssetTracking } from '@/hooks/use-asset-tracking';
 import { toast } from 'sonner';
+
+const formatCurrency = (value: number, decimals: number = 2): string => {
+  if (value >= 1000000000) {
+    return `$${(value / 1000000000).toFixed(decimals)}B`;
+  } else if (value >= 1000000) {
+    return `$${(value / 1000000).toFixed(decimals)}M`;
+  } else if (value >= 1000) {
+    return `$${(value / 1000).toFixed(decimals)}K`;
+  }
+  return `$${value.toFixed(decimals)}`;
+};
+
+const formatPercentage = (value: number): string => {
+  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+};
 
 const AssetDetails = () => {
   const { assetId } = useParams<{ assetId: string }>();
@@ -35,24 +49,20 @@ const AssetDetails = () => {
   
   const { 
     isTracked, 
-    addToTracking, 
-    removeFromTracking 
+    trackAsset,
+    untrackAsset
   } = useAssetTracking();
   
   const handleTrackAsset = () => {
     if (!asset) return;
     
     if (isTracked(asset.id)) {
-      removeFromTracking(asset.id);
+      untrackAsset();
       toast.success(`${asset.name} הוסר ממעקב`);
     } else {
-      addToTracking(asset);
+      trackAsset();
       toast.success(`${asset.name} נוסף למעקב`);
     }
-  };
-  
-  const formatPrice = (price: number) => {
-    return formatCurrency(price);
   };
   
   if (assetLoading) {
@@ -87,7 +97,7 @@ const AssetDetails = () => {
     <Container className="py-6">
       <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
         <div className="flex items-center">
-          {asset.icon && (
+          {asset?.icon && (
             <img 
               src={asset.icon} 
               alt={asset.name} 
@@ -96,29 +106,29 @@ const AssetDetails = () => {
           )}
           <div>
             <div className="flex items-center">
-              <h1 className="text-3xl font-bold tracking-tight">{asset.name}</h1>
-              <Badge variant="outline" className="ml-2">{asset.symbol}</Badge>
+              <h1 className="text-3xl font-bold tracking-tight">{asset?.name}</h1>
+              <Badge variant="outline" className="ml-2">{asset?.symbol}</Badge>
               <Badge 
                 variant="secondary" 
                 className="ml-2"
               >
-                {asset.type === 'crypto' ? 'קריפטו' : 
-                 asset.type === 'stocks' ? 'מניות' : 
-                 asset.type === 'forex' ? 'מט״ח' : 'סחורות'}
+                {asset?.type === 'crypto' ? 'קריפטו' : 
+                 asset?.type === 'stocks' ? 'מניות' : 
+                 asset?.type === 'forex' ? 'מט״ח' : 'סחורות'}
               </Badge>
             </div>
             <p className="text-muted-foreground">
-              דירוג: #{asset.rank || 'N/A'} • נפח מסחר: {formatCurrency(asset.volume24h || 0)}
+              דירוג: #{asset?.rank || 'N/A'} • נפח מסחר: {formatCurrency(asset?.volume24h || 0)}
             </p>
           </div>
         </div>
         
         <div className="mt-4 md:mt-0">
           <Button 
-            variant={isTracked(asset.id) ? "destructive" : "default"}
+            variant={isTracked(asset?.id || '') ? "destructive" : "default"}
             onClick={handleTrackAsset}
           >
-            {isTracked(asset.id) ? 'הסר ממעקב' : 'הוסף למעקב'}
+            {isTracked(asset?.id || '') ? 'הסר ממעקב' : 'הוסף למעקב'}
           </Button>
         </div>
       </div>
@@ -129,9 +139,9 @@ const AssetDetails = () => {
             <CardTitle className="text-right text-lg">מחיר נוכחי</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{formatPrice(asset.price)}</div>
-            <div className={`flex items-center mt-1 ${asset.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {asset.change24h >= 0 ? '▲' : '▼'} {formatPercentage(Math.abs(asset.change24h))}
+            <div className="text-3xl font-bold">{formatCurrency(asset?.price || 0)}</div>
+            <div className={`flex items-center mt-1 ${(asset?.change24h || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {(asset?.change24h || 0) >= 0 ? '▲' : '▼'} {formatPercentage(Math.abs(asset?.change24h || 0))}
             </div>
           </CardContent>
         </Card>
@@ -141,9 +151,9 @@ const AssetDetails = () => {
             <CardTitle className="text-right text-lg">שווי שוק</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{formatCurrency(asset.marketCap || 0)}</div>
+            <div className="text-3xl font-bold">{formatCurrency(asset?.marketCap || 0)}</div>
             <div className="text-muted-foreground mt-1">
-              נפח מסחר: {formatCurrency(asset.volume24h || 0)}
+              נפח מסחר: {formatCurrency(asset?.volume24h || 0)}
             </div>
           </CardContent>
         </Card>
@@ -154,11 +164,11 @@ const AssetDetails = () => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">
-              {asset.supply?.circulating ? formatCurrency(asset.supply.circulating, 0) : 'N/A'}
+              {asset?.supply?.circulating ? formatCurrency(asset.supply.circulating, 0) : 'N/A'}
             </div>
             <div className="text-muted-foreground mt-1">
-              {asset.supply?.max ? `מקסימלי: ${formatCurrency(asset.supply.max, 0)}` : 
-               asset.supply?.total ? `סה״כ: ${formatCurrency(asset.supply.total, 0)}` : ''}
+              {asset?.supply?.max ? `מקסימלי: ${formatCurrency(asset.supply.max, 0)}` : 
+               asset?.supply?.total ? `סה״כ: ${formatCurrency(asset.supply.total, 0)}` : ''}
             </div>
           </CardContent>
         </Card>
@@ -199,7 +209,6 @@ const AssetDetails = () => {
           ) : (
             <PriceChart 
               data={historicalData?.data || []} 
-              timeframe={timeframe}
               height={400}
             />
           )}
@@ -207,7 +216,7 @@ const AssetDetails = () => {
       </Card>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <WhaleTracker assetId={asset.id} formatPrice={formatPrice} />
+        <WhaleTracker assetId={asset?.id || ''} formatPrice={formatCurrency} />
         <SocialMonitoring selectedAsset={asset} />
       </div>
       
@@ -215,7 +224,7 @@ const AssetDetails = () => {
         <CardHeader>
           <CardTitle className="text-right">מידע נוסף</CardTitle>
           <CardDescription className="text-right">
-            פרטים נוספים על {asset.name}
+            פרטים נוספים על {asset?.name}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -240,9 +249,9 @@ const AssetDetails = () => {
             </TabsList>
             
             <TabsContent value="about" className="text-right mt-4">
-              <p>{asset.description || 'אין תיאור זמין עבור נכס זה.'}</p>
+              <p>{asset?.description || 'אין תיאור זמין עבור נכס זה.'}</p>
               
-              {asset.tags && asset.tags.length > 0 && (
+              {asset?.tags && asset.tags.length > 0 && (
                 <div className="mt-4">
                   <h3 className="font-semibold mb-2">תגיות:</h3>
                   <div className="flex flex-wrap gap-2">
@@ -258,39 +267,39 @@ const AssetDetails = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="border rounded-md p-3 text-right">
                   <div className="text-sm text-muted-foreground">מחיר נוכחי</div>
-                  <div className="text-lg font-semibold">{formatPrice(asset.price)}</div>
+                  <div className="text-lg font-semibold">{formatCurrency(asset?.price || 0)}</div>
                 </div>
                 <div className="border rounded-md p-3 text-right">
                   <div className="text-sm text-muted-foreground">שינוי 24 שעות</div>
-                  <div className={`text-lg font-semibold ${asset.change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    {formatPercentage(asset.change24h)}
+                  <div className={`text-lg font-semibold ${(asset?.change24h || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                    {formatPercentage(asset?.change24h || 0)}
                   </div>
                 </div>
                 <div className="border rounded-md p-3 text-right">
                   <div className="text-sm text-muted-foreground">שווי שוק</div>
-                  <div className="text-lg font-semibold">{formatCurrency(asset.marketCap || 0)}</div>
+                  <div className="text-lg font-semibold">{formatCurrency(asset?.marketCap || 0)}</div>
                 </div>
                 <div className="border rounded-md p-3 text-right">
                   <div className="text-sm text-muted-foreground">נפח מסחר 24 שעות</div>
-                  <div className="text-lg font-semibold">{formatCurrency(asset.volume24h || 0)}</div>
+                  <div className="text-lg font-semibold">{formatCurrency(asset?.volume24h || 0)}</div>
                 </div>
                 <div className="border rounded-md p-3 text-right">
                   <div className="text-sm text-muted-foreground">היצע במחזור</div>
                   <div className="text-lg font-semibold">
-                    {asset.supply?.circulating ? formatCurrency(asset.supply.circulating, 0) : 'N/A'}
+                    {asset?.supply?.circulating ? formatCurrency(asset.supply.circulating, 0) : 'N/A'}
                   </div>
                 </div>
                 <div className="border rounded-md p-3 text-right">
                   <div className="text-sm text-muted-foreground">היצע מקסימלי</div>
                   <div className="text-lg font-semibold">
-                    {asset.supply?.max ? formatCurrency(asset.supply.max, 0) : 'ללא הגבלה'}
+                    {asset?.supply?.max ? formatCurrency(asset.supply.max, 0) : 'ללא הגבלה'}
                   </div>
                 </div>
               </div>
             </TabsContent>
             
             <TabsContent value="social" className="mt-4 text-right">
-              {asset.socials ? (
+              {asset?.socials ? (
                 <div className="space-y-4">
                   {asset.socials.twitter && (
                     <div className="flex items-center">
@@ -332,7 +341,7 @@ const AssetDetails = () => {
             
             <TabsContent value="links" className="mt-4 text-right">
               <div className="space-y-4">
-                {asset.website && (
+                {asset?.website && (
                   <div className="flex items-center">
                     <span className="font-semibold ml-2">אתר רשמי:</span>
                     <a href={asset.website} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
@@ -340,7 +349,7 @@ const AssetDetails = () => {
                     </a>
                   </div>
                 )}
-                {asset.whitepaper && (
+                {asset?.whitepaper && (
                   <div className="flex items-center">
                     <span className="font-semibold ml-2">מסמך לבן:</span>
                     <a href={asset.whitepaper} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
@@ -350,10 +359,10 @@ const AssetDetails = () => {
                 )}
                 <div className="flex items-center">
                   <span className="font-semibold ml-2">מקורות מידע נוספים:</span>
-                  <a href={`https://www.coingecko.com/en/coins/${asset.id}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline ml-2">
+                  <a href={`https://www.coingecko.com/en/coins/${asset?.id}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline ml-2">
                     CoinGecko
                   </a>
-                  <a href={`https://coinmarketcap.com/currencies/${asset.id}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline ml-2">
+                  <a href={`https://coinmarketcap.com/currencies/${asset?.id}`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline ml-2">
                     CoinMarketCap
                   </a>
                 </div>

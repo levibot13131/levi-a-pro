@@ -16,12 +16,37 @@ export interface Asset {
   description?: string;
   imageUrl?: string;
   icon?: string;
+  rank?: number;
+  supply?: {
+    circulating?: number;
+    total?: number;
+    max?: number;
+  };
+  website?: string;
+  whitepaper?: string;
+  socials?: {
+    twitter?: string;
+    telegram?: string;
+    reddit?: string;
+    github?: string;
+  };
+  tags?: string[];
 }
 
 export interface PricePoint {
   timestamp: number;
   price: number;
   volume?: number;
+}
+
+export interface AssetHistoricalData {
+  id: string;
+  symbol: string;
+  name: string;
+  timeframe: TimeframeType;
+  data: PricePoint[];
+  firstDate: number;
+  lastDate: number;
 }
 
 export interface NewsItem {
@@ -34,6 +59,7 @@ export interface NewsItem {
   publishedAt: string;
   sentiment?: 'positive' | 'negative' | 'neutral';
   relatedAssets?: string[];
+  summary?: string;
 }
 
 export interface SocialPost {
@@ -47,6 +73,9 @@ export interface SocialPost {
   sentiment?: 'positive' | 'negative' | 'neutral';
   postUrl?: string;
   relatedAssets?: string[];
+  authorImageUrl?: string;
+  authorUsername?: string;
+  comments?: number;
 }
 
 export interface TradeSignal {
@@ -65,6 +94,9 @@ export interface TradeSignal {
   confidence?: number;
   indicator?: string;
   createdAt: number;
+  strategy?: string;
+  notes?: string;
+  riskRewardRatio?: number;
 }
 
 export interface MarketAnalysis {
@@ -83,6 +115,7 @@ export interface MarketAnalysis {
   marketSector?: string;
   conclusion?: string;
   publishedAt?: string;
+  summary?: string;
 }
 
 export interface TradeJournalEntry {
@@ -109,6 +142,7 @@ export interface TradeJournalEntry {
   tags?: string[];
   date?: string;
   outcome?: 'win' | 'loss' | 'break-even';
+  duration?: number;
 }
 
 export interface TradingBot {
@@ -126,6 +160,7 @@ export interface TradingBot {
     totalTrades: number;
     profitLoss: number;
     totalReturn?: number;
+    averageProfit?: number;
   };
   riskLevel: 'high' | 'medium' | 'low';
   creator: string;
@@ -143,6 +178,8 @@ export interface ChartArea {
   endTimestamp: number;
   color: string;
   strength: 'strong' | 'medium' | 'weak';
+  minPrice?: number;
+  maxPrice?: number;
 }
 
 export interface WhaleMovement {
@@ -171,4 +208,28 @@ export interface WhaleBehaviorPattern {
   lastOccurrence?: number;
   priceImpact?: number;
   recommendation?: string;
+}
+
+// Additional types for backtest results
+export interface EquityPoint {
+  date: string;
+  equity: number;
+  value: number;
+  drawdown: number;
+}
+
+export interface BacktestTrade {
+  id: string;
+  entryTime: number;
+  exitTime: number | null;
+  entryPrice: number;
+  exitPrice: number | null;
+  profit: number;
+  profitPercent: number;
+  direction: 'long' | 'short';
+  status: 'open' | 'closed' | 'canceled';
+  assetId: string;
+  assetName: string;
+  strategyUsed: string;
+  duration: number;
 }

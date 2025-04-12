@@ -37,7 +37,7 @@ const IntegrationStatusSection: React.FC<IntegrationStatusSectionProps> = ({
     
     try {
       // קבלת כל הנכסים הזמינים
-      const allAssets = getAllAssets();
+      const allAssets = getAllAssetsSync();
       // קבלת הנכסים שכבר במעקב
       const trackedAssets = getTrackedAssets();
       const trackedIds = trackedAssets.map(asset => asset.id);

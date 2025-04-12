@@ -1,4 +1,5 @@
-import { getAllAssets } from '@/services/realTimeAssetService';
+
+import { getAllAssetsSync } from '@/services/realTimeAssetService';
 import { TrackedAsset, MARKETS, MAX_ASSETS_PER_MARKET } from './types';
 import { getTrackedAssets, saveTrackedAssets } from './storage';
 
