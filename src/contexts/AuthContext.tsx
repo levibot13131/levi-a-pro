@@ -6,6 +6,7 @@ interface User {
   name: string;
   email: string;
   isAdmin: boolean;
+  role?: string; // Add role property to User interface
 }
 
 interface AuthContextType {
@@ -14,6 +15,7 @@ interface AuthContextType {
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  refreshUser: () => void; // Add refreshUser method
 }
 
 // Create context with default values
@@ -23,6 +25,7 @@ const AuthContext = createContext<AuthContextType>({
   isAdmin: false,
   login: async () => false,
   logout: () => {},
+  refreshUser: () => {}, // Add default implementation
 });
 
 // Custom hook to use auth context
@@ -36,6 +39,7 @@ const MOCK_USERS = [
     password: 'admin123',
     name: 'מנהל מערכת',
     isAdmin: true,
+    role: 'admin', // Add role
   },
   {
     id: '2',
@@ -43,6 +47,7 @@ const MOCK_USERS = [
     password: 'user123',
     name: 'משתמש רגיל',
     isAdmin: false,
+    role: 'viewer', // Add role
   },
 ];
 
@@ -86,6 +91,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('auth_user');
   };
   
+  // Add refreshUser function to reload user data from localStorage
+  const refreshUser = () => {
+    const storedUser = localStorage.getItem('auth_user');
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+        localStorage.removeItem('auth_user');
+      }
+    }
+  };
+  
   // Prepare context value
   const value = {
     user,
@@ -93,6 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isAdmin: user?.isAdmin || false,
     login,
     logout,
+    refreshUser, // Add refreshUser to context value
   };
   
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

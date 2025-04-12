@@ -80,7 +80,7 @@ const UserManagement = () => {
   };
 
   // Check if current user is admin
-  if (currentUser?.role !== 'admin') {
+  if (currentUser?.isAdmin !== true) {
     return (
       <Card>
         <CardHeader>

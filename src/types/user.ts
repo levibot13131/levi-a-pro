@@ -1,4 +1,3 @@
-
 export type UserRole = 'admin' | 'analyst' | 'trader' | 'viewer';
 
 export interface User {
@@ -10,6 +9,8 @@ export interface User {
   lastLogin?: number;
   isActive: boolean;
   permissions: Permission[];
+  isAdmin?: boolean;
+  name?: string;
 }
 
 export interface Permission {
@@ -36,7 +37,7 @@ export const AvailableResources = [
 
 export const DefaultPermissions: Permission[] = AvailableResources.map(resource => ({
   resource,
-  canView: resource !== 'users' && resource !== 'systemLogs', // By default users can't view these
+  canView: resource !== 'users' && resource !== 'systemLogs',
   canEdit: false,
   canDelete: false
 }));
@@ -48,6 +49,8 @@ export const adminUser: User = {
   role: 'admin',
   createdAt: Date.now(),
   isActive: true,
+  isAdmin: true,
+  name: 'מנהל מערכת',
   permissions: AvailableResources.map(resource => ({
     resource,
     canView: true,
