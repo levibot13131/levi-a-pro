@@ -9,8 +9,8 @@ let alertDestinations: AlertDestination[] = [
     id: 'default-destination',
     name: 'יעד ברירת מחדל (יש להגדיר)',
     type: 'webhook',
-    endpoint: '',
     active: false,
+    endpoint: '',
     headers: {
       'Content-Type': 'application/json'
     }

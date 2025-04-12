@@ -23,7 +23,7 @@ export interface TradingViewAlert {
 }
 
 // Alert destination type
-export type AlertDestinationType = 'telegram' | 'whatsapp' | 'email' | 'sms';
+export type AlertDestinationType = 'telegram' | 'whatsapp' | 'email' | 'sms' | 'webhook';
 
 // Alert destination structure
 export interface AlertDestination {
@@ -31,6 +31,8 @@ export interface AlertDestination {
   name: string;
   type: AlertDestinationType;
   active: boolean;
+  endpoint?: string;
+  headers?: Record<string, string>;
 }
 
 // Create a new alert destination
@@ -56,6 +58,8 @@ export const getDestinationTypeName = (type: AlertDestinationType): string => {
       return 'אימייל';
     case 'sms':
       return 'SMS';
+    case 'webhook':
+      return 'Webhook';
     default:
       return type;
   }

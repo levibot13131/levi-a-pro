@@ -74,7 +74,7 @@ const BinanceConnectionStatus: React.FC<BinanceConnectionStatusProps> = ({
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <Badge
-            variant={isConnected ? "success" : "destructive"}
+            variant={isConnected ? "default" : "destructive"}
             className={isConnected ? "bg-green-100 text-green-800" : ""}
           >
             {isConnected ? 'מחובר' : 'לא מחובר'}

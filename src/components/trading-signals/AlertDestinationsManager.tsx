@@ -50,7 +50,7 @@ const AlertDestinationsManager: React.FC = () => {
       
       addAlertDestination({
         name: newDestName,
-        type: 'webhook',
+        type: 'webhook' as const,
         endpoint: newDestUrl,
         active: true,
         headers: {

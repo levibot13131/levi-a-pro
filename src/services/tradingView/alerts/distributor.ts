@@ -62,6 +62,11 @@ const sendWebhookAlert = async (
   alert: TradingViewAlert
 ): Promise<boolean> => {
   try {
+    if (!destination.endpoint) {
+      console.error('❌ No endpoint defined for webhook destination');
+      return false;
+    }
+    
     console.log('📤 Sending webhook alert to:', destination.endpoint);
     
     // הכנת הנתונים לשליחה
@@ -93,6 +98,11 @@ const sendWebhookAlert = async (
     // נסיון שליחה ללא CORS עם mode: no-cors
     console.log('Using proxy approach to avoid CORS issues');
     try {
+      if (!destination.endpoint) {
+        console.error('❌ No endpoint defined for webhook destination');
+        return false;
+      }
+      
       const response = await fetch(destination.endpoint, {
         method: 'POST',
         mode: 'no-cors',
@@ -124,6 +134,11 @@ const sendTelegramAlert = async (
   alert: TradingViewAlert
 ): Promise<boolean> => {
   // מימוש בסיסי, יש להרחיב לפי הצורך
+  if (!destination.endpoint) {
+    console.error('❌ No endpoint defined for Telegram destination');
+    return false;
+  }
+  
   console.log('📱 Sending Telegram alert to:', destination.endpoint);
   
   try {
@@ -159,6 +174,11 @@ const sendWhatsAppAlert = async (
   message: string,
   alert: TradingViewAlert
 ): Promise<boolean> => {
+  if (!destination.endpoint) {
+    console.error('❌ No endpoint defined for WhatsApp destination');
+    return false;
+  }
+  
   console.log('📱 Sending WhatsApp alert to webhook:', destination.endpoint);
   console.log('📱 Sending WhatsApp message to webhook:', destination.endpoint);
   console.log('📝 Message content:', message);
