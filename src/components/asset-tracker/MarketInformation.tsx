@@ -153,11 +153,11 @@ const MarketInformation: React.FC<MarketInformationProps> = ({ selectedAsset }) 
                     <p className="text-sm text-muted-foreground mb-2">{event.description}</p>
                     <div className="flex justify-between items-center text-sm">
                       <Button 
-                        variant={event.reminder ? "outline" : "default"} 
+                        variant={event.hasReminder ? "outline" : "default"} 
                         size="sm"
-                        onClick={() => handleSetReminder(event.id, !event.reminder)}
+                        onClick={() => handleSetReminder(event.id, !event.hasReminder)}
                       >
-                        {event.reminder ? 'בטל תזכורת' : 'הגדר תזכורת'}
+                        {event.hasReminder ? 'בטל תזכורת' : 'הגדר תזכורת'}
                       </Button>
                       <div className="flex items-center">
                         <Calendar className="h-3 w-3 ml-1" />
@@ -170,7 +170,7 @@ const MarketInformation: React.FC<MarketInformationProps> = ({ selectedAsset }) 
             ) : (
               <div className="text-center py-6">
                 <Calendar className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                <p>אין אירו��ים צפויים בטווח הזמן שנבחר</p>
+                <p>אין אירועים צפויים בטווח הזמן שנבחר</p>
                 <Button onClick={handleRefresh} variant="outline" className="mt-4">
                   <RefreshCw className="h-4 w-4 mr-2" />
                   רענן נתונים
