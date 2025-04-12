@@ -46,6 +46,7 @@ export interface BacktestResult {
     winningTrades: number;
     losingTrades: number;
     averageTradeDuration: number;
+    averageProfit: number;  // Added this property
   };
   enhancedAnalysis?: any;
   createdAt: number;
@@ -89,6 +90,7 @@ export interface AssetPerformance {
   return: number;
   trades: number;
   winRate: number;
+  averageReturn: number;  // Added this property
 }
 
 export type Trade = BacktestTrade;

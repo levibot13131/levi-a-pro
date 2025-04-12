@@ -20,7 +20,8 @@ export function calculatePerformance(trades: BacktestTrade[], settings: Backtest
         totalTrades: 0,
         winningTrades: 0,
         losingTrades: 0,
-        averageTradeDuration: 0
+        averageTradeDuration: 0,
+        averageProfit: 0  // Added default value
       },
       equity: [],
       monthly: [],
@@ -49,6 +50,9 @@ export function calculatePerformance(trades: BacktestTrade[], settings: Backtest
   
   const averageWin = winningTradesArray.length > 0 ? totalWinAmount / winningTradesArray.length : 0;
   const averageLoss = losingTradesArray.length > 0 ? totalLossAmount / losingTradesArray.length : 0;
+  
+  // Calculate average profit (added)
+  const averageProfit = totalTrades > 0 ? totalProfit / totalTrades : 0;
   
   const largestWin = winningTradesArray.length > 0 
     ? Math.max(...winningTradesArray.map(trade => trade.profit || 0))
@@ -150,12 +154,16 @@ export function calculatePerformance(trades: BacktestTrade[], settings: Backtest
     const assetWinningTrades = assetTrades.filter(trade => (trade.profit || 0) > 0).length;
     const assetWinRate = (assetWinningTrades / assetTrades.length) * 100;
     
+    // Calculate average return for each asset (added)
+    const assetAverageReturn = assetTrades.length > 0 ? assetReturn / assetTrades.length : 0;
+    
     assetPerformance.push({
       assetId,
       assetName: assetTrades[0].assetName || assetId,
       return: assetReturn,
       trades: assetTrades.length,
-      winRate: assetWinRate
+      winRate: assetWinRate,
+      averageReturn: assetAverageReturn  // Added this property
     });
   });
   
@@ -182,7 +190,8 @@ export function calculatePerformance(trades: BacktestTrade[], settings: Backtest
       totalTrades,
       winningTrades,
       losingTrades,
-      averageTradeDuration
+      averageTradeDuration,
+      averageProfit // Added this property
     },
     equity,
     monthly,
