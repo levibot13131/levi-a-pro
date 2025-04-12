@@ -1,9 +1,9 @@
-
 import { toast } from 'sonner';
 import { processWebhook, testWebhookSignalFlow, sendTestAlert } from './tradingView/webhooks/processor';
 import { 
   getAlertDestinations, 
-  updateAlertDestination 
+  updateAlertDestination,
+  AlertDestination 
 } from './tradingView/tradingViewAlertService';
 import { WebhookSignal } from '@/types/webhookSignal';
 

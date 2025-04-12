@@ -1,5 +1,4 @@
-
-import { TradingViewAlert, createTradingViewAlert, AlertDestination } from './alerts/types';
+import { TradingViewAlert, createTradingViewAlert } from './alerts/types';
 import { sendAlertToDestinations } from './alerts/distributor';
 import { 
   getActiveDestinations, 
@@ -11,6 +10,7 @@ import {
   deleteAlertDestination
 } from './alerts/destinations';
 import { sendAlert } from './alerts/sender';
+import { AlertDestination } from './alerts/types';
 
 /**
  * Process and send a TradingView alert to configured destinations
@@ -85,8 +85,11 @@ export function createSampleAlert(type: 'buy' | 'sell' | 'info' = 'info'): Tradi
   }
 }
 
-// Re-export functions from destinations.ts
-export {
+// Use export type for type exports
+export type { AlertDestination };
+
+// Export functions
+export { 
   getActiveDestinations,
   getAlertDestinations,
   getAlertDestinationById,
@@ -94,9 +97,8 @@ export {
   addAlertDestination,
   updateAlertDestination,
   deleteAlertDestination,
-  AlertDestination
+  sendAlert,
+  createTradingViewAlert,
+  processAndSendAlert,
+  createSampleAlert
 };
-
-// Re-export functions from sender.ts
-export { sendAlert };
-
