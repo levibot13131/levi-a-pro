@@ -27,7 +27,7 @@ export function useAssetTracking() {
   // Track an asset
   const trackAssetMutation = useMutation({
     mutationFn: async (asset: Asset) => {
-      const success = addTrackedAsset(asset.id);
+      const success = await addTrackedAsset(asset.id);
       if (!success) {
         throw new Error('Failed to add asset to tracking list');
       }
@@ -36,7 +36,7 @@ export function useAssetTracking() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trackedAssets'] });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast.error('שגיאה בהוספת נכס למעקב', {
         description: error.message
       });
@@ -46,7 +46,7 @@ export function useAssetTracking() {
   // Untrack an asset
   const untrackAssetMutation = useMutation({
     mutationFn: async (assetId: string = '') => {
-      const success = removeTrackedAsset(assetId);
+      const success = await removeTrackedAsset(assetId);
       if (!success) {
         throw new Error('Failed to remove asset from tracking list');
       }
@@ -55,7 +55,7 @@ export function useAssetTracking() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trackedAssets'] });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast.error('שגיאה בהסרת נכס ממעקב', {
         description: error.message
       });
@@ -79,7 +79,7 @@ export function useAssetTracking() {
         toast.success(`${asset.name} נוסף למעקב`);
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast.error('שגיאה בעדכון מעקב', {
         description: error.message
       });

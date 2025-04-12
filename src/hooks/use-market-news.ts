@@ -105,8 +105,7 @@ export const useMarketNews = () => {
     nextNewsPage,
     prevNewsPage,
     nextSocialPage,
-    prevSocialPage,
-    formatTimeAgo
+    prevSocialPage
   };
 };
 

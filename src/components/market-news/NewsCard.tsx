@@ -1,11 +1,11 @@
 
 import React from 'react';
-import { NewsItem } from '@/hooks/use-market-news';
+import { NewsItem } from '@/types/asset';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ExternalLink } from 'lucide-react';
-import { formatTimeAgo } from '@/hooks/use-market-news';
+import { formatTimeAgo } from '@/lib/utils';
 
 interface NewsCardProps {
   item: NewsItem;

@@ -31,7 +31,7 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
       const mockAccountSize = 100000;
       const risk = (riskAmount / mockAccountSize) * 100;
       
-      const newEntry = await addTradingJournalEntry({
+      const newEntry: TradeJournalEntry = {
         id: '',
         date: formData.date,
         assetId: formData.assetId,
@@ -44,10 +44,12 @@ const TradingJournal = ({ initialEntries = [] }: TradingJournalProps) => {
         risk,
         notes: formData.notes,
         strategy: formData.strategy,
-        tags: []
-      });
+        tags: [],
+        outcome: 'open'
+      };
       
-      setEntries(prev => [newEntry, ...prev]);
+      const savedEntry = await addTradingJournalEntry(newEntry);
+      setEntries(prev => [savedEntry as TradeJournalEntry, ...prev]);
       setShowForm(false);
       
     } catch (err: any) {

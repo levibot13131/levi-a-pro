@@ -7,16 +7,16 @@ import { toast } from 'sonner';
 import { BacktestSettings } from '../types';
 import { TradingViewAlert, createTradingViewAlert } from '@/services/tradingView/alerts/types';
 
-// מאגר האיתותים
+// Signal storage
 let storedSignals: any[] = [];
 
-// סטטוס ריצה
+// Run status
 let isRunning = false;
 let analysisIntervalId: number | null = null;
 let checkingAssets: string[] = [];
 
 /**
- * התחלת ניתוח בזמן אמת
+ * Start real-time analysis
  */
 export const startRealTimeAnalysis = (
   assetIds: string[],
@@ -36,16 +36,16 @@ export const startRealTimeAnalysis = (
   isRunning = true;
   console.log('Starting real-time analysis for assets:', checkingAssets);
 
-  // הגדרות ברירת מחדל
+  // Default settings
   const defaultSettings = {
     strategy: settings.strategy || 'A.A',
     timeframe: settings.timeframe || '1d'
   };
 
-  // פונקציה לקבלת נתוני מחיר (מדמה API חיצוני)
+  // Function to fetch price data (simulating external API)
   const fetchPriceData = async (assetId: string): Promise<PricePoint[]> => {
-    // בפרויקט אמיתי, כאן היינו מתחברים ל-API אמיתי לקבלת נתונים
-    // כרגע נייצר נתונים אקראיים לצורך הדגמה
+    // In a real implementation, we would connect to a real API
+    // For now, generating random data for demonstration
     const now = Date.now();
     const priceData: PricePoint[] = [];
     
@@ -61,124 +61,121 @@ export const startRealTimeAnalysis = (
         basePrice = 100 + (Math.random() * 20);
     }
     
-    // ייצור נתוני מחיר אחרונים
+    // Generate recent price data
     for (let i = 30; i >= 0; i--) {
-      const timestamp = now - (i * 60 * 60 * 1000); // שעה אחת לכל נקודה
-      const random = Math.random() * 0.05 - 0.025; // תנודה של ±2.5%
+      const timestamp = now - (i * 60 * 60 * 1000); // 1 hour per point
+      const random = Math.random() * 0.05 - 0.025; // ±2.5% fluctuation
       const price = basePrice * (1 + random);
       
       priceData.push({
         timestamp,
-        price
+        price,
+        volume: basePrice * 1000 * (0.8 + Math.random() * 0.4) // Random volume
       });
     }
     
     return priceData;
   };
 
-  // הגדרת אינטרוול לבדיקה
-  analysisIntervalId = window.setInterval(async () => {
+  // Analysis function
+  const runAnalysis = async () => {
+    if (!isRunning) return;
+    
     for (const assetId of checkingAssets) {
       try {
-        // קבלת נתוני מחיר עדכניים
+        // Fetch price data
         const priceData = await fetchPriceData(assetId);
         
-        // ייצור איתותים מהנתונים
-        const signals = await generateSignalsFromHistory(
-          priceData,
-          defaultSettings.strategy,
-          assetId
-        );
+        // Generate signals
+        const signals = generateSignalsFromHistory(priceData, assetId);
         
-        // בדיקה אם יש איתותים חדשים
-        if (signals.length > 0) {
-          const latestSignals = signals.filter(s => {
-            // בדיקה אם האיתות כבר נשמר
-            const isNew = !storedSignals.some(
-              existing => existing.id === s.id
-            );
-            return isNew;
-          });
+        // Check for new signals
+        const newSignals = signals.filter(signal => {
+          const isNew = !storedSignals.some(
+            stored => stored.id === signal.id || 
+            (stored.timestamp === signal.timestamp && stored.type === signal.type)
+          );
+          return isNew && signal.timestamp > Date.now() - 24 * 60 * 60 * 1000; // Last 24 hours
+        });
+        
+        // Add new signals to stored signals
+        storedSignals = [...storedSignals, ...newSignals];
+        
+        // Prune old signals (older than 7 days)
+        const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        storedSignals = storedSignals.filter(signal => signal.timestamp > sevenDaysAgo);
+        
+        // Process new signals
+        if (newSignals.length > 0) {
+          console.log(`Found ${newSignals.length} new signals for ${assetId}`);
           
-          if (latestSignals.length > 0) {
-            // הוספת איתותים חדשים למאגר
-            storedSignals = [...latestSignals, ...storedSignals].slice(0, 100);
+          // Send alerts for high priority signals
+          const highPrioritySignals = newSignals.filter(signal => signal.strength === 'strong');
+          
+          for (const signal of highPrioritySignals) {
+            // Convert to TradingView alert format
+            const alert = createTradingViewAlert({
+              symbol: assetId,
+              message: `${signal.strategy}: ${signal.type.toUpperCase()} signal at ${signal.price}`,
+              timeframe: signal.timeframe,
+              timestamp: signal.timestamp,
+              price: signal.price,
+              action: signal.type as 'buy' | 'sell',
+              details: signal.notes || '',
+              strategy: signal.strategy,
+              type: 'indicator',
+              source: 'backtesting',
+              priority: 'medium'
+            });
             
-            // שליחת התראות על איתותים חזקים בלבד
-            for (const signal of latestSignals) {
-              if (signal.strength === 'strong') {
-                const alert = createTradingViewAlert({
-                  symbol: signal.assetId,
-                  message: signal.notes || 'איתות חדש זוהה',
-                  indicators: [signal.strategy],
-                  timeframe: signal.timeframe,
-                  timestamp: signal.timestamp,
-                  price: signal.price,
-                  type: signal.type === 'buy' ? 'buy' : 'sell',
-                  source: 'custom',
-                  priority: 'high'
-                });
-                
-                await sendAlert(alert);
-              }
+            // Send the alert
+            const alertSent = await sendAlert(alert);
+            if (alertSent) {
+              toast.success(`Alert sent for ${assetId}`);
             }
-            
-            console.log(`Found ${latestSignals.length} new signals for ${assetId}`);
           }
         }
       } catch (error) {
         console.error(`Error analyzing ${assetId}:`, error);
       }
     }
-  }, 30000); // בדיקה כל 30 שניות
+  };
+
+  // Run initial analysis
+  runAnalysis();
   
-  toast.success("ניתוח בזמן אמת הופעל", {
-    description: `מנטר ${checkingAssets.length} נכסים. התראות ישלחו לערוצים המוגדרים.`
-  });
+  // Set up interval for ongoing analysis
+  analysisIntervalId = window.setInterval(runAnalysis, 60 * 1000); // Run every minute
   
+  // Return stop function
   return {
     stop: stopRealTimeAnalysis
   };
 };
 
 /**
- * עצירת ניתוח בזמן אמת
+ * Stop real-time analysis
  */
 export const stopRealTimeAnalysis = () => {
+  if (!isRunning) return;
+  
+  isRunning = false;
+  checkingAssets = [];
+  
   if (analysisIntervalId !== null) {
     clearInterval(analysisIntervalId);
     analysisIntervalId = null;
   }
-  isRunning = false;
-  checkingAssets = [];
+  
   console.log('Real-time analysis stopped');
-  return true;
 };
 
 /**
- * קבלת האיתותים השמורים
- * @param assetId אופציונלי - מזהה נכס לסינון
+ * Check if real-time analysis is active
  */
-export const useStoredSignals = (assetId?: string) => {
-  // הוספת isLoading property
-  return {
-    data: assetId 
-      ? storedSignals.filter(signal => signal.assetId === assetId) 
-      : storedSignals,
-    refetch: () => assetId 
-      ? storedSignals.filter(signal => signal.assetId === assetId)
-      : storedSignals,
-    isLoading: false,
-    isRunning
-  };
-};
+export const isRealTimeAnalysisActive = () => isRunning;
 
 /**
- * ניקוי כל האיתותים השמורים
+ * Get all current signals
  */
-export const clearStoredSignals = () => {
-  storedSignals = [];
-};
-
-export * from './comprehensiveAnalysis';
-export * from './analysisGenerator';
+export const getCurrentSignals = () => [...storedSignals];

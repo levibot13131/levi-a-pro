@@ -1,14 +1,9 @@
 
-// Export all the asset tracking functionality from a single entry point
-
-// Types
-export * from './types';
-
-// Core functionality
+// Re-export from storage
 export * from './storage';
-export * from './initialization';
-export * from './assetManagement';
+// Export asset management functions
+export { addTrackedAsset, removeTrackedAsset, updateTrackedAsset } from './assetManagement';
+// Export realtime sync functions
 export * from './realTimeSync';
-export * from './sentimentAnalysis';
-export * from './filtering';
-export * from './trackingSystem';
+// Export types
+export * from './types';

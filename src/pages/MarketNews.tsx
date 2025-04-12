@@ -1,167 +1,142 @@
 
-import React, { useState } from 'react';
-import { Container } from '@/components/ui/container';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Newspaper, Search, Filter, Rss } from 'lucide-react';
-import { useMarketNews, formatTimeAgo } from '@/hooks/use-market-news';
-import NewsTab from '@/components/market-news/NewsTab';
-import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/contexts/AuthContext';
-import { useTradingViewConnection } from '@/hooks/use-tradingview-connection';
-import TradingViewConnectButton from '@/components/tradingview/TradingViewConnectButton';
+import { ArrowLeft, ArrowRight, RefreshCw } from 'lucide-react';
+import useMarketNews from '@/hooks/use-market-news';
+import { formatTimeAgo } from '@/lib/utils';
+import NewsGrid from '@/components/market-news/NewsGrid';
+import SocialTab from '@/components/market-news/SocialTab';
 
 const MarketNews = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState<'all' | 'crypto' | 'stocks' | 'positive' | 'negative'>('all');
-  
-  const { news, isLoading: newsLoading } = useMarketNews({
-    limit: 12,
-    filter: filter
-  });
-  
-  const filteredNews = searchTerm 
-    ? news.filter(item => 
-        item.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        item.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.source.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : news;
-  
-  const { isConnected: isTradingViewConnected } = useTradingViewConnection();
-  
-  const getSentimentBadge = (sentiment?: 'positive' | 'neutral' | 'negative') => {
-    switch (sentiment) {
-      case 'positive':
-        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">חיובי</Badge>;
-      case 'negative':
-        return <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">שלילי</Badge>;
-      case 'neutral':
-        return <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">ניטרלי</Badge>;
-      default:
-        return null;
-    }
-  };
-  
-  const formatDate = (dateStr: string) => {
-    return formatTimeAgo(dateStr);
-  };
-  
-  const handleTradingViewConnectSuccess = () => {
-    // Reload news data when connected
-    // This would normally fetch news from TradingView
-  };
-  
+  const { 
+    selectedTab, setSelectedTab,
+    news, socialPosts,
+    currentNewsPage, totalNewsPages,
+    currentSocialPage, totalSocialPages,
+    selectedAsset, setSelectedAsset,
+    selectedSentiment, setSelectedSentiment,
+    nextNewsPage, prevNewsPage,
+    nextSocialPage, prevSocialPage
+  } = useMarketNews();
+
   return (
-    <Container className="py-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">חדשות שוק</h1>
-          <p className="text-muted-foreground">עדכוני שוק, חדשות וניתוחים אחרונים</p>
-        </div>
-        
-        <div className="mt-4 md:mt-0 flex items-center space-x-4 space-x-reverse rtl:space-x-reverse">
-          {!isTradingViewConnected && (
-            <TradingViewConnectButton onConnectSuccess={handleTradingViewConnectSuccess} />
-          )}
-          <Button variant="outline" size="sm" className="gap-2">
-            <Rss className="h-4 w-4" />
-            הירשם לעדכונים
-          </Button>
-        </div>
-      </div>
-      
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="חפש חדשות..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4"
-            />
+    <div className="container mx-auto py-8">
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="text-right">חדשות ועדכונים מהשוק</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-between items-center mb-6">
+            <Button variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 ml-2" />
+              רענן
+            </Button>
+            
+            <div className="flex gap-4">
+              <Select value={selectedSentiment} onValueChange={setSelectedSentiment}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="סנטימנט" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">כל הסנטימנטים</SelectItem>
+                  <SelectItem value="positive">חיובי</SelectItem>
+                  <SelectItem value="negative">שלילי</SelectItem>
+                  <SelectItem value="neutral">ניטרלי</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={selectedAsset} onValueChange={setSelectedAsset}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="נכס" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">כל הנכסים</SelectItem>
+                  <SelectItem value="bitcoin">ביטקוין</SelectItem>
+                  <SelectItem value="ethereum">אתריום</SelectItem>
+                  <SelectItem value="solana">סולנה</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button 
-              variant={filter === 'all' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setFilter('all')}
-            >
-              הכל
-            </Button>
-            <Button 
-              variant={filter === 'crypto' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setFilter('crypto')}
-            >
-              קריפטו
-            </Button>
-            <Button 
-              variant={filter === 'stocks' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setFilter('stocks')}
-            >
-              מניות
-            </Button>
-            <Button 
-              variant={filter === 'positive' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setFilter('positive')}
-            >
-              חיובי
-            </Button>
-            <Button 
-              variant={filter === 'negative' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setFilter('negative')}
-            >
-              שלילי
-            </Button>
-          </div>
-        </div>
-      </div>
-      
-      <Tabs defaultValue="news">
-        <TabsList className="mb-6">
-          <TabsTrigger value="news" className="flex items-center gap-2">
-            <Newspaper className="h-4 w-4" />
-            חדשות
-          </TabsTrigger>
-          <TabsTrigger value="analysis" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            ניתוחים
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="news">
-          <NewsTab 
-            newsLoading={newsLoading}
-            filteredNews={filteredNews}
-            getSentimentBadge={getSentimentBadge}
-            formatDate={formatDate}
-          />
-        </TabsContent>
-        
-        <TabsContent value="analysis">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right">ניתוחי שוק</CardTitle>
-              <CardDescription className="text-right">
-                ניתוחים מעמיקים על מגמות שוק ונכסים מרכזיים
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-center py-12 text-muted-foreground">
-                תוכן ניתוחי השוק יופיע כאן בקרוב
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </Container>
+          
+          <Tabs defaultValue={selectedTab} onValueChange={(value) => setSelectedTab(value as 'news' | 'social')}>
+            <TabsList className="grid grid-cols-2 w-full mb-8">
+              <TabsTrigger value="news">חדשות</TabsTrigger>
+              <TabsTrigger value="social">רשתות חברתיות</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="news">
+              <NewsGrid 
+                news={news} 
+                isLoading={false}
+              />
+              
+              {totalNewsPages > 1 && (
+                <div className="flex justify-between mt-6">
+                  <Button
+                    variant="outline"
+                    onClick={prevNewsPage}
+                    disabled={currentNewsPage === 1}
+                  >
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                    הקודם
+                  </Button>
+                  
+                  <span className="flex items-center">
+                    עמוד {currentNewsPage} מתוך {totalNewsPages}
+                  </span>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={nextNewsPage}
+                    disabled={currentNewsPage === totalNewsPages}
+                  >
+                    הבא
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="social">
+              <SocialTab
+                posts={socialPosts}
+                isLoading={false}
+              />
+              
+              {totalSocialPages > 1 && (
+                <div className="flex justify-between mt-6">
+                  <Button
+                    variant="outline"
+                    onClick={prevSocialPage}
+                    disabled={currentSocialPage === 1}
+                  >
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                    הקודם
+                  </Button>
+                  
+                  <span className="flex items-center">
+                    עמוד {currentSocialPage} מתוך {totalSocialPages}
+                  </span>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={nextSocialPage}
+                    disabled={currentSocialPage === totalSocialPages}
+                  >
+                    הבא
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

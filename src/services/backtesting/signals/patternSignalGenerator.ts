@@ -1,85 +1,80 @@
 
-import { PricePoint, TradeSignal } from "@/types/asset";
-import { identifyReversalPatterns } from "../patterns/reversalPatterns";
-import { identifyContinuationPatterns } from "../patterns/continuationPatterns";
-import { identifyTrianglePatterns } from "../patterns/trianglePatterns";
+import { PricePoint, TradeSignal } from '@/types/asset';
 
-// יצירת סיגנלים מתבניות מחיר
-export const generatePatternSignals = (
+/**
+ * Generate trading signals based on price patterns
+ */
+export function generatePatternSignals(
   priceData: PricePoint[],
-  strategy: string
-): TradeSignal[] => {
+  assetId: string
+): TradeSignal[] {
+  if (!priceData || priceData.length < 20) {
+    return [];
+  }
+  
   const signals: TradeSignal[] = [];
   
-  // זיהוי תבניות היפוך
-  const reversalPatterns = identifyReversalPatterns(priceData);
-  const continuationPatterns = identifyContinuationPatterns(priceData);
-  const trianglePatterns = identifyTrianglePatterns(priceData);
-  
-  // איחוד כל התבניות
-  const patterns = [...reversalPatterns, ...continuationPatterns, ...trianglePatterns];
-  
-  // יצירת סיגנלים מתבניות
-  for (const pattern of patterns) {
-    const position = pattern.position;
-    if (position >= priceData.length) continue;
-    
-    const price = priceData[position].price;
-    const isBullish = 
-      pattern.type === 'double_bottom' || 
-      pattern.type === 'adam_and_eve' || 
-      pattern.type === 'ascending_triangle' ||
-      pattern.type === 'bull_flag' ||
-      (pattern.type === 'converging_triangle' && Math.random() > 0.5);
-    
-    const isBearish = 
-      pattern.type === 'double_top' || 
-      pattern.type === 'head_and_shoulders' || 
-      pattern.type === 'descending_triangle' ||
-      pattern.type === 'bear_flag' ||
-      (pattern.type === 'converging_triangle' && Math.random() <= 0.5);
-    
-    // הגדרת יחס סיכוי/סיכון
-    let riskRewardRatio = 2.0;
-    if (pattern.strength === 'strong') riskRewardRatio = 3.0;
-    else if (pattern.strength === 'weak') riskRewardRatio = 1.5;
-    
-    // הגדרת מטרות ורמות סטופ לוס
-    const stopLossPercent = isBullish ? 0.03 : 0.07;
-    const targetPercent = stopLossPercent * riskRewardRatio;
-    
-    if (isBullish) {
+  // Look for double bottom pattern (very simplified)
+  for (let i = 20; i < priceData.length - 1; i++) {
+    // Check for first bottom
+    if (
+      priceData[i - 10].price > priceData[i - 5].price &&
+      priceData[i - 5].price < priceData[i].price &&
+      // Second bottom around the same level
+      Math.abs(priceData[i - 5].price - priceData[i].price) / priceData[i - 5].price < 0.03 &&
+      // Price going up after second bottom
+      priceData[i].price < priceData[i + 1].price
+    ) {
+      // Double bottom: Potential buy signal
       signals.push({
-        id: `signal-${pattern.type}-${position}`,
-        assetId: 'mock-asset',
+        id: `pattern-buy-${i}`,
+        assetId,
         type: 'buy',
-        price: price,
-        timestamp: priceData[position].timestamp,
-        strength: pattern.strength,
-        strategy: strategy,
+        price: priceData[i + 1].price,
+        timestamp: priceData[i + 1].timestamp,
+        strength: 'strong',
+        strategy: 'Double Bottom',
         timeframe: '1d',
-        targetPrice: price * (1 + targetPercent),
-        stopLoss: price * (1 - stopLossPercent),
-        riskRewardRatio: riskRewardRatio,
-        notes: pattern.description
+        targetPrice: priceData[i + 1].price * 1.10,
+        stopLoss: priceData[i].price * 0.98,
+        riskRewardRatio: 5.0,
+        notes: 'Double bottom pattern detected',
+        source: 'system',
+        createdAt: Date.now()
       });
-    } else if (isBearish) {
+    }
+  }
+  
+  // Look for double top pattern (very simplified)
+  for (let i = 20; i < priceData.length - 1; i++) {
+    // Check for first top
+    if (
+      priceData[i - 10].price < priceData[i - 5].price &&
+      priceData[i - 5].price > priceData[i].price &&
+      // Second top around the same level
+      Math.abs(priceData[i - 5].price - priceData[i].price) / priceData[i - 5].price < 0.03 &&
+      // Price going down after second top
+      priceData[i].price > priceData[i + 1].price
+    ) {
+      // Double top: Potential sell signal
       signals.push({
-        id: `signal-${pattern.type}-${position}`,
-        assetId: 'mock-asset',
+        id: `pattern-sell-${i}`,
+        assetId,
         type: 'sell',
-        price: price,
-        timestamp: priceData[position].timestamp,
-        strength: pattern.strength,
-        strategy: strategy,
+        price: priceData[i + 1].price,
+        timestamp: priceData[i + 1].timestamp,
+        strength: 'strong',
+        strategy: 'Double Top',
         timeframe: '1d',
-        targetPrice: price * (1 - targetPercent),
-        stopLoss: price * (1 + stopLossPercent),
-        riskRewardRatio: riskRewardRatio,
-        notes: pattern.description
+        targetPrice: priceData[i + 1].price * 0.90,
+        stopLoss: priceData[i].price * 1.02,
+        riskRewardRatio: 5.0,
+        notes: 'Double top pattern detected',
+        source: 'system',
+        createdAt: Date.now()
       });
     }
   }
   
   return signals;
-};
+}

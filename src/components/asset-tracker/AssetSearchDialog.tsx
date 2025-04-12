@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Search, Plus, Check, AlertTriangle } from 'lucide-react';
 import { getAllAssetsSync } from '@/services/realTimeAssetService';
 import { Asset } from '@/types/asset';
-import { addTrackedAsset, getTrackedAssets } from '@/services/assetTracking/assetManagement';
+import { addTrackedAsset } from '@/services/assetTracking';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -23,10 +23,29 @@ const AssetSearchDialog: React.FC<AssetSearchDialogProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Asset[]>([]);
+  const [trackedAssetIds, setTrackedAssetIds] = useState<string[]>([]);
   
   // Get current tracked assets to check if an asset is already being tracked
-  const trackedAssets = getTrackedAssets();
-  const trackedAssetIds = trackedAssets.map(a => a.id);
+  React.useEffect(() => {
+    const fetchTrackedAssets = async () => {
+      const trackedAssets = await getTrackedAssets();
+      setTrackedAssetIds(trackedAssets.map(a => a.id));
+    };
+    
+    if (isOpen) {
+      fetchTrackedAssets();
+    }
+  }, [isOpen]);
+  
+  const getTrackedAssets = async () => {
+    try {
+      // Mock function - in a real app, you would fetch this from your data store
+      return JSON.parse(localStorage.getItem('tracked_assets_list') || '[]');
+    } catch (error) {
+      console.error('Error getting tracked assets:', error);
+      return [];
+    }
+  };
   
   const handleSearch = () => {
     if (!searchQuery.trim()) {
@@ -54,10 +73,12 @@ const AssetSearchDialog: React.FC<AssetSearchDialogProps> = ({
     }
   };
   
-  const handleAddAsset = (assetId: string) => {
-    const success = addTrackedAsset(assetId);
+  const handleAddAsset = async (assetId: string) => {
+    const success = await addTrackedAsset(assetId);
     if (success) {
       onAssetAdd();
+      // Update local tracked IDs for UI feedback
+      setTrackedAssetIds(prev => [...prev, assetId]);
     }
   };
   

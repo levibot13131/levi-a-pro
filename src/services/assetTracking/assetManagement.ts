@@ -1,3 +1,4 @@
+
 import { getAssetById } from '@/services/realTimeAssetService';
 import { TRACKED_ASSETS_KEY, TrackedAsset } from './types';
 import { Asset } from '@/types/asset';
@@ -20,7 +21,7 @@ export const getTrackedAssets = async (): Promise<TrackedAsset[]> => {
 };
 
 // Add a new asset to tracking list
-export const addAssetToTracking = async (assetId: string): Promise<boolean> => {
+export const addTrackedAsset = async (assetId: string): Promise<boolean> => {
   try {
     const existingAssets = await getTrackedAssets();
     
@@ -30,7 +31,7 @@ export const addAssetToTracking = async (assetId: string): Promise<boolean> => {
     }
     
     // Get asset details from the API
-    const asset = getAssetById(assetId);
+    const asset = await getAssetById(assetId);
     
     if (!asset) {
       throw new Error(`Asset not found: ${assetId}`);
@@ -64,7 +65,7 @@ export const addAssetToTracking = async (assetId: string): Promise<boolean> => {
 };
 
 // Remove an asset from tracking list
-export const removeAssetFromTracking = async (assetId: string): Promise<boolean> => {
+export const removeTrackedAsset = async (assetId: string): Promise<boolean> => {
   try {
     const existingAssets = await getTrackedAssets();
     const updatedAssets = existingAssets.filter(a => a.id !== assetId);

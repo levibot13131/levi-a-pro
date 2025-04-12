@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { AssetHistoricalData } from '@/types/asset';
-import { Trade, BacktestResults } from '@/services/backtesting/types';
+import { BacktestTrade, BacktestResult } from '@/services/backtesting/types';
 import { detectMarketTrends, analyzeTradeClusters, analyzeMarketRegimes } from '@/services/backtestingService';
 import { toast } from 'sonner';
 
@@ -21,7 +21,8 @@ export const useStrategyAnalysis = (assetHistory: AssetHistoricalData | undefine
 
     setTimeout(() => {
       try {
-        const mockTrades: Trade[] = assetHistory.data.slice(0, -5).map((point, index) => {
+        // Create mock trades for demonstration - in a real app, these would be actual backtest results
+        const mockTradesData = assetHistory.data.slice(0, -5).map((point, index) => {
           const futurePoints = assetHistory.data.slice(index + 1, index + 6);
           const direction = Math.random() > 0.5 ? 'long' : 'short';
           const entryPrice = point.price;
@@ -31,44 +32,50 @@ export const useStrategyAnalysis = (assetHistory: AssetHistoricalData | undefine
           
           return {
             id: `trade-${index}`,
-            assetId: 'sample-asset',
-            assetName: 'מטבע לדוגמה',
-            entryDate: new Date(point.timestamp).toISOString(),
-            exitDate: new Date(futurePoints[futurePoints.length - 1].timestamp).toISOString(),
+            type: direction === 'long' ? 'buy' : 'sell',
+            quantity: 100,
             entryPrice,
+            entryDate: point.timestamp,
             exitPrice,
-            direction,
-            stopLoss: entryPrice * (direction === 'long' ? 0.95 : 1.05),
-            takeProfit: entryPrice * (direction === 'long' ? 1.10 : 0.90),
-            positionSize: 100,
+            exitDate: futurePoints[futurePoints.length - 1].timestamp,
             profit,
             profitPercentage,
-            strategyUsed: ['פריצת התנגדות', 'זיהוי תמיכה', 'תבנית מחיר', 'אינדיקטור RSI'][Math.floor(Math.random() * 4)],
-            duration: 5,
+            assetId: 'sample-asset',
+            assetName: 'מטבע לדוגמה',
+            direction,
+            stopLoss: entryPrice * (direction === 'long' ? 0.95 : 1.05),
             status: Math.random() > 0.2 ? 'closed' : 'open',
-            marketCondition: ['bull', 'bear', 'sideways'][Math.floor(Math.random() * 3)],
-            entryReason: 'סימן היפוך מגמה',
-            exitReason: Math.random() > 0.5 ? 'הגעה למטרה' : 'סטופ לוס',
-            tradingSession: Math.random() > 0.66 ? 'asian' : Math.random() > 0.5 ? 'european' : 'american',
-            notes: 'עסקה לבדיקת אסטרטגיה'
-          };
+            strategyUsed: ['פריצת התנגדות', 'זיהוי תמיכה', 'תבנית מחיר', 'אינדיקטור RSI'][Math.floor(Math.random() * 4)],
+            duration: 5
+          } as BacktestTrade;
         });
 
-        const trendAnalysis = detectMarketTrends(mockTrades);
-        const clusterAnalysis = analyzeTradeClusters(mockTrades);
-        
-        const equityCurve = assetHistory.data.map((point, index) => ({
-          date: new Date(point.timestamp).toISOString(),
-          value: 1000 * (1 + (index * 0.01)),
-          drawdown: Math.random() * 5
-        }));
-        
-        const mockResults: BacktestResults = {
-          trades: mockTrades,
+        const trendAnalysis = detectMarketTrends(mockTradesData);
+        const clusterAnalysis = analyzeTradeClusters(mockTradesData);
+
+        // Create a sample result structure
+        const mockResult: BacktestResult = {
+          id: 'sample-backtest',
+          assetId: 'sample-asset',
+          settings: {
+            startDate: new Date(assetHistory.firstDate).toISOString(),
+            endDate: new Date(assetHistory.lastDate).toISOString(),
+            strategy: 'Sample Strategy',
+            timeframe: assetHistory.timeframe,
+            initialCapital: 10000,
+            takeProfit: 5,
+            stopLoss: 3,
+            riskPerTrade: 2,
+            tradeSize: 'percentage',
+            leverage: 1,
+            compounding: true,
+            fees: 0.1
+          },
+          trades: mockTradesData,
           performance: {
-            totalReturn: mockTrades.reduce((sum, t) => sum + (t.profit || 0), 0),
-            totalReturnPercentage: mockTrades.reduce((sum, t) => sum + (t.profitPercentage || 0), 0),
-            winRate: (mockTrades.filter(t => (t.profit || 0) > 0).length / mockTrades.length) * 100,
+            totalReturn: mockTradesData.reduce((sum, t) => sum + (t.profit || 0), 0),
+            totalReturnPercentage: mockTradesData.reduce((sum, t) => sum + (t.profitPercentage || 0), 0),
+            winRate: (mockTradesData.filter(t => (t.profit || 0) > 0).length / mockTradesData.length) * 100,
             averageWin: 2.5,
             averageLoss: -1.2,
             largestWin: 8.7,
@@ -76,31 +83,37 @@ export const useStrategyAnalysis = (assetHistory: AssetHistoricalData | undefine
             profitFactor: 2.1,
             maxDrawdown: 12.5,
             sharpeRatio: 1.8,
-            totalTrades: mockTrades.length,
-            winningTrades: mockTrades.filter(t => (t.profit || 0) > 0).length,
-            losingTrades: mockTrades.filter(t => (t.profit || 0) <= 0).length,
+            totalTrades: mockTradesData.length,
+            winningTrades: mockTradesData.filter(t => (t.profit || 0) > 0).length,
+            losingTrades: mockTradesData.filter(t => (t.profit || 0) <= 0).length,
             averageTradeDuration: 5
           },
-          equity: equityCurve,
+          equity: assetHistory.data.map((point, index) => ({
+            date: new Date(point.timestamp).toISOString(),
+            value: 1000 * (1 + (index * 0.01)),
+            drawdown: Math.random() * 5,
+            equity: 1000 * (1 + (index * 0.01))
+          })),
           monthly: [
             { period: '2025-01', return: 2.5, trades: 8 },
             { period: '2025-02', return: -1.2, trades: 6 },
             { period: '2025-03', return: 3.7, trades: 9 }
           ],
           assetPerformance: [
-            { assetId: 'sample-asset', assetName: 'מטבע לדוגמה', return: 3.5, trades: mockTrades.length, winRate: 65.3 }
-          ]
+            { assetId: 'sample-asset', assetName: 'מטבע לדוגמה', return: 3.5, trades: mockTradesData.length, winRate: 65.3 }
+          ],
+          createdAt: Date.now()
         };
         
-        const regimeAnalysis = analyzeMarketRegimes(mockResults);
+        const regimeAnalysis = analyzeMarketRegimes(mockResult);
 
         setStrategyAnalysisData({
           trendAnalysis,
           clusterAnalysis,
           regimeAnalysis,
           performanceSummary: {
-            winRate: mockResults.performance.winRate.toFixed(1) + '%',
-            profitFactor: mockResults.performance.profitFactor.toFixed(2),
+            winRate: mockResult.performance.winRate.toFixed(1) + '%',
+            profitFactor: mockResult.performance.profitFactor.toFixed(2),
             bestPerformingSetups: [
               { name: 'פריצת התנגדות', winRate: '78.5%', count: 28 },
               { name: 'תבנית דאבל בוטום', winRate: '72.3%', count: 15 },

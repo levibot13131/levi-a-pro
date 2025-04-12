@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { NewsItem } from '@/hooks/use-market-news';
+import { NewsItem } from '@/types/asset';
 import { Card, CardContent } from '@/components/ui/card';
 import { Newspaper } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';

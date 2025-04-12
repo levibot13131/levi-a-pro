@@ -1,231 +1,191 @@
-import { BacktestTrade, BacktestResult, EquityPoint, MonthlyPerformance, AssetPerformance } from './types';
 
-// Process trade data and calculate performance metrics
-export const calculatePerformance = (trades: BacktestTrade[], initialCapital: number = 10000) => {
-  // Basic metrics
-  const totalTrades = trades.length;
-  const winningTrades = trades.filter(t => t.profit > 0).length;
-  const losingTrades = trades.filter(t => t.profit <= 0).length;
-  const winRate = totalTrades > 0 ? (winningTrades / totalTrades) * 100 : 0;
+import { BacktestSettings, BacktestTrade, EquityPoint, MonthlyPerformance, AssetPerformance } from './types';
+
+// Calculate performance metrics from a list of trades
+export function calculatePerformance(trades: BacktestTrade[], settings: BacktestSettings) {
+  // If no trades, return empty metrics
+  if (!trades || trades.length === 0) {
+    return {
+      metrics: {
+        totalReturn: 0,
+        totalReturnPercentage: 0,
+        winRate: 0,
+        averageWin: 0,
+        averageLoss: 0,
+        largestWin: 0,
+        largestLoss: 0,
+        profitFactor: 0,
+        maxDrawdown: 0,
+        sharpeRatio: 0,
+        totalTrades: 0,
+        winningTrades: 0,
+        losingTrades: 0,
+        averageTradeDuration: 0
+      },
+      equity: [],
+      monthly: [],
+      assetPerformance: []
+    };
+  }
   
-  // Profit metrics
-  const totalProfit = trades.reduce((sum, t) => sum + t.profit, 0);
-  const totalReturn = totalProfit;
-  const totalReturnPercentage = (totalProfit / initialCapital) * 100;
+  // Sort trades by entry date
+  const sortedTrades = [...trades].sort((a, b) => a.entryDate - b.entryDate);
   
-  // Win/Loss metrics
-  const winningTradesData = trades.filter(t => t.profit > 0);
-  const losingTradesData = trades.filter(t => t.profit <= 0);
+  // Calculate basic metrics
+  const totalTrades = sortedTrades.length;
+  const winningTrades = sortedTrades.filter(trade => (trade.profit || 0) > 0).length;
+  const losingTrades = totalTrades - winningTrades;
+  const winRate = (winningTrades / totalTrades) * 100;
   
-  const totalWinAmount = winningTradesData.reduce((sum, t) => sum + t.profit, 0);
-  const totalLossAmount = losingTradesData.reduce((sum, t) => sum + t.profit, 0);
+  // Calculate profit metrics
+  const winningTradesArray = sortedTrades.filter(trade => (trade.profit || 0) > 0);
+  const losingTradesArray = sortedTrades.filter(trade => (trade.profit || 0) <= 0);
   
-  const averageWin = winningTradesData.length > 0 ? totalWinAmount / winningTradesData.length : 0;
-  const averageLoss = losingTradesData.length > 0 ? totalLossAmount / losingTradesData.length : 0;
+  const totalProfit = sortedTrades.reduce((sum, trade) => sum + (trade.profit || 0), 0);
+  const totalProfitPercentage = sortedTrades.reduce((sum, trade) => sum + (trade.profitPercentage || 0), 0);
   
-  const largestWin = winningTradesData.length > 0 
-    ? Math.max(...winningTradesData.map(t => t.profit))
+  const totalWinAmount = winningTradesArray.reduce((sum, trade) => sum + (trade.profit || 0), 0);
+  const totalLossAmount = losingTradesArray.reduce((sum, trade) => sum + (trade.profit || 0), 0);
+  
+  const averageWin = winningTradesArray.length > 0 ? totalWinAmount / winningTradesArray.length : 0;
+  const averageLoss = losingTradesArray.length > 0 ? totalLossAmount / losingTradesArray.length : 0;
+  
+  const largestWin = winningTradesArray.length > 0 
+    ? Math.max(...winningTradesArray.map(trade => trade.profit || 0))
     : 0;
     
-  const largestLoss = losingTradesData.length > 0 
-    ? Math.min(...losingTradesData.map(t => t.profit))
+  const largestLoss = losingTradesArray.length > 0 
+    ? Math.min(...losingTradesArray.map(trade => trade.profit || 0))
     : 0;
   
-  // Ratio metrics
-  const profitFactor = Math.abs(totalLossAmount) > 0 
-    ? Math.abs(totalWinAmount / totalLossAmount)
-    : totalWinAmount > 0 ? 999 : 0;
+  const profitFactor = totalLossAmount !== 0 ? Math.abs(totalWinAmount / totalLossAmount) : totalWinAmount > 0 ? Infinity : 0;
   
-  // Drawdown calculation
-  const equity = calculateEquityCurve(trades, initialCapital);
-  const maxDrawdown = calculateMaxDrawdown(equity);
+  // Calculate average trade duration (if available)
+  let averageTradeDuration = 0;
+  const tradesWithDuration = sortedTrades.filter(trade => trade.duration !== undefined);
+  if (tradesWithDuration.length > 0) {
+    averageTradeDuration = tradesWithDuration.reduce((sum, trade) => sum + (trade.duration || 0), 0) / tradesWithDuration.length;
+  }
   
-  // Time-based metrics
-  const averageTradeDuration = calculateAverageTradeDuration(trades);
+  // Build equity curve
+  const equity: EquityPoint[] = [];
+  let balance = settings.initialCapital;
+  let maxBalance = balance;
+  let currentDrawdown = 0;
+  let maxDrawdown = 0;
   
-  // Risk-adjusted return (simple Sharpe ratio)
-  const dailyReturns = calculateDailyReturns(equity);
-  const sharpeRatio = calculateSharpeRatio(dailyReturns);
+  // Start with initial balance
+  equity.push({
+    date: sortedTrades[0].entryDate,
+    value: balance,
+    equity: balance,
+    drawdown: 0
+  });
   
-  // Monthly performance breakdown
-  const monthly = calculateMonthlyPerformance(trades);
+  // Process each trade
+  sortedTrades.forEach(trade => {
+    balance += (trade.profit || 0);
+    
+    if (balance > maxBalance) {
+      maxBalance = balance;
+      currentDrawdown = 0;
+    } else {
+      currentDrawdown = (maxBalance - balance) / maxBalance * 100;
+      if (currentDrawdown > maxDrawdown) {
+        maxDrawdown = currentDrawdown;
+      }
+    }
+    
+    equity.push({
+      date: trade.exitDate,
+      value: balance,
+      equity: balance,
+      drawdown: currentDrawdown
+    });
+  });
   
-  // Asset performance breakdown
-  const assetPerformance = calculateAssetPerformance(trades);
+  // Calculate monthly performance
+  const monthly: MonthlyPerformance[] = [];
+  const tradesByMonth: { [key: string]: BacktestTrade[] } = {};
   
+  sortedTrades.forEach(trade => {
+    const date = new Date(trade.entryDate);
+    const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+    
+    if (!tradesByMonth[monthKey]) {
+      tradesByMonth[monthKey] = [];
+    }
+    
+    tradesByMonth[monthKey].push(trade);
+  });
+  
+  Object.keys(tradesByMonth).forEach(period => {
+    const monthTrades = tradesByMonth[period];
+    const monthReturn = monthTrades.reduce((sum, trade) => sum + (trade.profit || 0), 0);
+    
+    monthly.push({
+      period,
+      return: monthReturn,
+      trades: monthTrades.length
+    });
+  });
+  
+  // Calculate performance by asset
+  const assetPerformance: AssetPerformance[] = [];
+  const tradesByAsset: { [key: string]: BacktestTrade[] } = {};
+  
+  sortedTrades.forEach(trade => {
+    if (!trade.assetId) return;
+    
+    if (!tradesByAsset[trade.assetId]) {
+      tradesByAsset[trade.assetId] = [];
+    }
+    
+    tradesByAsset[trade.assetId].push(trade);
+  });
+  
+  Object.keys(tradesByAsset).forEach(assetId => {
+    const assetTrades = tradesByAsset[assetId];
+    const assetReturn = assetTrades.reduce((sum, trade) => sum + (trade.profit || 0), 0);
+    const assetWinningTrades = assetTrades.filter(trade => (trade.profit || 0) > 0).length;
+    const assetWinRate = (assetWinningTrades / assetTrades.length) * 100;
+    
+    assetPerformance.push({
+      assetId,
+      assetName: assetTrades[0].assetName || assetId,
+      return: assetReturn,
+      trades: assetTrades.length,
+      winRate: assetWinRate
+    });
+  });
+  
+  // Sharpe ratio calculation (simplified, using a risk-free rate of 0)
+  const returns = sortedTrades.map(trade => trade.profitPercentage || 0);
+  const mean = returns.reduce((sum, ret) => sum + ret, 0) / returns.length;
+  const variance = returns.reduce((sum, ret) => sum + Math.pow(ret - mean, 2), 0) / returns.length;
+  const stdDev = Math.sqrt(variance);
+  const sharpeRatio = stdDev !== 0 ? mean / stdDev : 0;
+  
+  // Return all calculated metrics
   return {
-    totalReturn,
-    totalReturnPercentage,
-    winRate,
-    averageWin,
-    averageLoss,
-    largestWin,
-    largestLoss,
-    profitFactor,
-    maxDrawdown,
-    sharpeRatio,
-    totalTrades,
-    winningTrades,
-    losingTrades,
-    averageTradeDuration,
+    metrics: {
+      totalReturn: totalProfit,
+      totalReturnPercentage: totalProfitPercentage,
+      winRate,
+      averageWin,
+      averageLoss,
+      largestWin,
+      largestLoss,
+      profitFactor,
+      maxDrawdown,
+      sharpeRatio,
+      totalTrades,
+      winningTrades,
+      losingTrades,
+      averageTradeDuration
+    },
     equity,
     monthly,
     assetPerformance
   };
-};
-
-// Calculate equity curve with drawdown
-export const calculateEquityCurve = (trades: BacktestTrade[], initialCapital: number): EquityPoint[] => {
-  let equity = initialCapital;
-  let peak = initialCapital;
-  const equityCurve: EquityPoint[] = [
-    { date: trades.length > 0 ? new Date(trades[0].entryDate).toISOString() : new Date().toISOString(), value: initialCapital, drawdown: 0 }
-  ];
-  
-  // Sort trades by exit date
-  const sortedTrades = [...trades].sort((a, b) => a.exitDate - b.exitDate);
-  
-  for (let i = 0; i < sortedTrades.length; i++) {
-    const trade = sortedTrades[i];
-    const exitDate = new Date(trade.exitDate).toISOString();
-    
-    // Update equity with trade profit/loss
-    equity += trade.profit;
-    
-    // Update peak if new high
-    if (equity > peak) {
-      peak = equity;
-    }
-    
-    // Calculate drawdown from peak
-    const drawdown = ((peak - equity) / peak) * 100;
-    
-    equityCurve.push({
-      date: exitDate,
-      value: equity,
-      drawdown
-    });
-  }
-  
-  return equityCurve;
-};
-
-// Calculate maximum drawdown from equity curve
-const calculateMaxDrawdown = (equityCurve: EquityPoint[]): number => {
-  return Math.max(...equityCurve.map(point => point.drawdown));
-};
-
-// Calculate daily returns from equity curve
-const calculateDailyReturns = (equityCurve: EquityPoint[]): number[] => {
-  const returns = [];
-  
-  for (let i = 1; i < equityCurve.length; i++) {
-    const previousValue = equityCurve[i-1].value;
-    const currentValue = equityCurve[i].value;
-    const dailyReturn = (currentValue - previousValue) / previousValue;
-    returns.push(dailyReturn);
-  }
-  
-  return returns;
-};
-
-// Calculate Sharpe ratio
-const calculateSharpeRatio = (returns: number[], riskFreeRate: number = 0.02/365): number => {
-  if (returns.length === 0) return 0;
-  
-  const meanReturn = returns.reduce((sum, r) => sum + r, 0) / returns.length;
-  const excessReturns = returns.map(r => r - riskFreeRate);
-  const variance = excessReturns.reduce((sum, r) => sum + Math.pow(r - meanReturn, 2), 0) / excessReturns.length;
-  const standardDeviation = Math.sqrt(variance);
-  
-  if (standardDeviation === 0) return 0;
-  
-  return (meanReturn - riskFreeRate) / standardDeviation * Math.sqrt(252); // Annualize
-};
-
-// Calculate monthly performance
-const calculateMonthlyPerformance = (trades: BacktestTrade[]): MonthlyPerformance[] => {
-  const monthlyData = {};
-  
-  trades.forEach(trade => {
-    // Use a string for the date to safely use substring
-    const exitDate = new Date(trade.exitDate);
-    const monthKey = `${exitDate.getFullYear()}-${String(exitDate.getMonth() + 1).padStart(2, '0')}`;
-    
-    if (!monthlyData[monthKey]) {
-      monthlyData[monthKey] = { profit: 0, trades: 0 };
-    }
-    
-    monthlyData[monthKey].profit += trade.profit;
-    monthlyData[monthKey].trades += 1;
-  });
-  
-  const monthlyPerformance: MonthlyPerformance[] = Object.keys(monthlyData)
-    .sort()
-    .map(month => ({
-      period: month,
-      return: monthlyData[month].profit,
-      trades: monthlyData[month].trades
-    }));
-  
-  return monthlyPerformance;
-};
-
-// Calculate performance by asset
-const calculateAssetPerformance = (trades: BacktestTrade[]): AssetPerformance[] => {
-  const assetData = {};
-  
-  trades.forEach(trade => {
-    const assetId = trade.assetId || 'unknown';
-    
-    if (!assetData[assetId]) {
-      assetData[assetId] = { 
-        profits: 0, 
-        trades: 0, 
-        wins: 0,
-        assetName: trade.assetName || assetId
-      };
-    }
-    
-    assetData[assetId].profits += trade.profit;
-    assetData[assetId].trades += 1;
-    if (trade.profit > 0) {
-      assetData[assetId].wins += 1;
-    }
-  });
-  
-  const assetPerformance: AssetPerformance[] = Object.keys(assetData)
-    .map(assetId => ({
-      assetId,
-      assetName: assetData[assetId].assetName,
-      return: assetData[assetId].profits,
-      trades: assetData[assetId].trades,
-      winRate: (assetData[assetId].wins / assetData[assetId].trades) * 100
-    }));
-  
-  return assetPerformance;
-};
-
-// Calculate average trade duration in days
-const calculateAverageTradeDuration = (trades: BacktestTrade[]): number => {
-  if (trades.length === 0) return 0;
-  
-  // Use the duration property if available
-  const tradesWithDuration = trades.filter(t => t.duration !== undefined);
-  if (tradesWithDuration.length > 0) {
-    return tradesWithDuration.reduce((sum, t) => sum + (t.duration || 0), 0) / tradesWithDuration.length;
-  }
-  
-  // Otherwise calculate from entry/exit dates
-  let totalDuration = 0;
-  
-  trades.forEach(trade => {
-    const entryDate = new Date(trade.entryDate);
-    const exitDate = new Date(trade.exitDate);
-    const durationMs = exitDate.getTime() - entryDate.getTime();
-    const durationDays = durationMs / (1000 * 60 * 60 * 24);
-    totalDuration += durationDays;
-  });
-  
-  return totalDuration / trades.length;
-};
+}

@@ -1,114 +1,105 @@
 
+import { formatMessage } from '../alerts/formatters';
+import { TradingViewAlert, createTradingViewAlert } from '../alerts/types';
 import { WebhookData } from './types';
-import { TradingViewAlert } from '../alerts/types';
 
 /**
- * Validate webhook data from TradingView
+ * Parse webhook data from various formats
  */
-export const validateWebhookData = (data: WebhookData): boolean => {
-  // Check if required fields exist
-  if (!data.symbol) {
-    console.error('Missing symbol in webhook data');
-    return false;
+export function parseWebhookData(data: any): WebhookData {
+  // Handle different formats of webhook data
+  
+  // TradingView format
+  if (data.strategy?.strategy_name || data.strategy_name) {
+    return parseTradingViewFormat(data);
   }
   
-  // Check if either action or signal exists
-  if (!data.action && !data.signal) {
-    console.error('Missing action or signal in webhook data');
-    return false;
+  // Binance format
+  if (data.symbol && (data.binanceOrderType || data.binanceQuantity)) {
+    return parseBinanceFormat(data);
   }
   
-  // Check if price info exists
-  if (!data.price && !data.close && !data.bar_close) {
-    console.error('Missing price information in webhook data');
-    return false;
-  }
-  
-  return true;
-};
+  // Generic format
+  return parseGenericFormat(data);
+}
 
 /**
- * Parse webhook data into a TradingView alert
+ * Parse TradingView format webhook data
  */
-export const parseWebhookData = (data: WebhookData): TradingViewAlert | null => {
-  try {
-    // Determine action type
-    let action: 'buy' | 'sell' | 'info' = 'info';
-    
-    if (data.action) {
-      if (data.action.toLowerCase() === 'buy') action = 'buy';
-      else if (data.action.toLowerCase() === 'sell') action = 'sell';
-      else action = 'info';
-    } else if (data.signal) {
-      const signal = data.signal.toLowerCase();
-      if (signal.includes('buy') || signal.includes('long')) action = 'buy';
-      else if (signal.includes('sell') || signal.includes('short')) action = 'sell';
-    }
-    
-    // Determine price
-    let price: number = 0;
-    if (typeof data.price === 'number') price = data.price;
-    else if (typeof data.price === 'string') price = parseFloat(data.price);
-    else if (typeof data.close === 'number') price = data.close;
-    else if (typeof data.close === 'string') price = parseFloat(data.close);
-    else if (typeof data.bar_close === 'number') price = data.bar_close;
-    else if (typeof data.bar_close === 'string') price = parseFloat(data.bar_close);
-    
-    // Determine message
-    const message = data.message || data.signal || `${action.toUpperCase()} signal for ${data.symbol}`;
-    
-    // Determine indicators
-    let indicators: string[] = [];
-    if (typeof data.indicators === 'string') {
-      indicators = data.indicators.split(',').map(i => i.trim());
-    } else if (Array.isArray(data.indicators)) {
-      indicators = data.indicators;
-    }
-    
-    // Create alert object
-    const alert: TradingViewAlert = {
-      symbol: data.symbol,
-      action,
-      message,
-      indicators,
-      timestamp: typeof data.time === 'number' ? data.time : Date.now(),
-      price,
-      timeframe: data.timeframe || '1D',
-      details: data.details || '',
-      strategy: data.strategy_name || data.strategy || ''
-    };
-    
-    return alert;
-  } catch (error) {
-    console.error('Error parsing webhook data:', error);
-    return null;
-  }
-};
+function parseTradingViewFormat(data: any): WebhookData {
+  return {
+    symbol: data.ticker || data.symbol || 'UNKNOWN',
+    action: data.action || data.strategy?.order_action || 'info',
+    message: data.message || data.strategy?.order_comment || `Signal for ${data.ticker || data.symbol}`,
+    price: data.strategy?.order_price || data.price || data.close,
+    indicators: data.indicators || [],
+    timeframe: data.timeframe || data.interval || '1d',
+    time: data.time || data.bar_time || Date.now(),
+    details: data.details || '',
+    strategy_name: data.strategy?.strategy_name || data.strategy_name || '',
+    chartUrl: data.chartUrl || ''
+  };
+}
 
 /**
- * Parse webhook data from string format (fallback)
- * Format: symbol, action, price, message
+ * Parse Binance format webhook data
  */
-export const parseWebhookString = (webhookString: string): WebhookData | null => {
-  try {
-    const parts = webhookString.split(',').map(part => part.trim());
-    
-    if (parts.length < 3) {
-      console.error('Invalid webhook string format. Expected at least 3 parts');
-      return null;
-    }
-    
-    const [symbol, action, price, ...messageParts] = parts;
-    const message = messageParts.join(', ');
-    
-    return {
-      symbol,
-      action: action as 'buy' | 'sell' | 'info',
-      price,
-      message
-    };
-  } catch (error) {
-    console.error('Error parsing webhook string:', error);
-    return null;
-  }
-};
+function parseBinanceFormat(data: any): WebhookData {
+  return {
+    symbol: data.symbol,
+    action: data.action || data.side?.toLowerCase() || 'info',
+    signal: data.signal || 'binance_order',
+    price: data.binancePrice || data.price || 0,
+    binanceOrderType: data.binanceOrderType,
+    binanceQuantity: data.binanceQuantity,
+    binancePrice: data.binancePrice,
+    binanceExecute: data.binanceExecute,
+    time: data.time || Date.now(),
+    timeframe: data.timeframe || '1d'
+  };
+}
+
+/**
+ * Parse generic format webhook data
+ */
+function parseGenericFormat(data: any): WebhookData {
+  return {
+    symbol: data.symbol || data.ticker || data.coin || 'UNKNOWN',
+    action: data.action || data.order || data.signal_type || 'info',
+    signal: data.signal || '',
+    message: data.message || data.text || '',
+    price: data.price || data.current_price || data.close || 0,
+    close: data.close || data.price || 0,
+    indicators: data.indicators || data.indicator || [],
+    timeframe: data.timeframe || data.time_frame || data.interval || '1d',
+    time: data.time || data.timestamp || Date.now(),
+    details: data.details || data.description || '',
+    strategy_name: data.strategy_name || data.strategy || '',
+    source: data.source || 'webhook'
+  };
+}
+
+/**
+ * Convert webhook data to TradingView alert
+ */
+export function webhookDataToAlert(data: WebhookData): TradingViewAlert {
+  // Build messages
+  const message = data.message || `Alert for ${data.symbol}`;
+  
+  // Create the alert object
+  return createTradingViewAlert({
+    symbol: data.symbol,
+    action: data.action as ('buy' | 'sell' | 'info'),
+    message,
+    indicators: Array.isArray(data.indicators) ? data.indicators : data.indicators ? [String(data.indicators)] : [],
+    timestamp: typeof data.time === 'number' ? data.time : Date.now(),
+    price: typeof data.price === 'number' ? data.price : parseFloat(String(data.price || 0)),
+    timeframe: data.timeframe || '1d',
+    details: data.details || '',
+    strategy: data.strategy_name || '',
+    type: 'custom',
+    source: data.source || 'webhook',
+    priority: 'medium',
+    chartUrl: data.chartUrl
+  });
+}

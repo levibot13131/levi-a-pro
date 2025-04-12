@@ -25,7 +25,7 @@ export interface Asset {
   website?: string;
   whitepaper?: string;
   icon?: string;
-  imageUrl?: string; // Added this property
+  imageUrl?: string;
 }
 
 export interface AssetHistoricalData {
@@ -42,7 +42,7 @@ export interface AssetHistoricalData {
   lastDate: number;
 }
 
-export type TimeframeType = '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w' | '3m' | '1y';
+export type TimeframeType = '1m' | '5m' | '15m' | '30m' | '1h' | '4h' | '1d' | '1w' | '1y' | '3m';
 
 export interface MarketData {
   marketCap: number;
@@ -61,7 +61,6 @@ export interface MarketData {
   priceChangePercentage30d?: number;
 }
 
-// Add the missing interface definitions
 export interface PricePoint {
   price: number;
   timestamp: number;
@@ -139,20 +138,26 @@ export interface MarketAnalysis {
 
 export interface TradeJournalEntry {
   id: string;
+  date: string;
   assetId: string;
-  type: 'buy' | 'sell';
-  quantity: number;
-  entryDate: string;
+  assetName: string;
+  type?: 'buy' | 'sell';
+  quantity?: number;
+  direction: 'long' | 'short';
+  entryDate?: string;
   entryPrice: number;
   exitDate?: string;
   exitPrice?: number;
-  reason: string;
+  stopLoss: number;
+  targetPrice?: number;
+  positionSize: number;
+  risk: number;
+  reason?: string;
   notes?: string;
-  status: 'open' | 'closed';
-  profitLoss?: number;
-  profitLossPercentage?: number;
-  screenshots?: string[];
+  status?: 'open' | 'closed';
+  strategy?: string;
   tags?: string[];
+  outcome?: 'win' | 'loss' | 'open';
 }
 
 export interface ChartArea {
@@ -181,6 +186,7 @@ export interface TradingBot {
     totalReturn?: number;
     averageProfit?: number;
     averageLoss?: number;
+    sharpeRatio?: number;
   };
   timeframe: TimeframeType;
   assets: string[];

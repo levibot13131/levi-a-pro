@@ -1,67 +1,63 @@
 
-import { PricePoint, TradeSignal } from "@/types/asset";
+import { PricePoint, TradeSignal } from '@/types/asset';
 
-// יצירת סיגנלים המבוססים על פעילות של "לווייתנים" (משקיעים גדולים)
-export const generateWhaleSignals = async (
+/**
+ * Generate trading signals based on "whale" activity (large volume spikes)
+ */
+export function generateWhaleSignals(
   priceData: PricePoint[],
-  assetId: string,
-  strategy: string
-): Promise<TradeSignal[]> => {
-  const signals: TradeSignal[] = [];
-  
-  if (!priceData || priceData.length < 20) {
-    console.log(`Not enough data points for whale signal analysis for ${assetId}`);
-    return signals;
-  }
-  
-  // למטרות הדגמה, נייצר סיגנלים אקראיים בנקודות ספציפיות
-  // במערכת אמיתית, יש להתחבר ל-API חיצוני שמספק מידע על פעילות לווייתנים
-  
-  try {
-    // נבחר נקודות אקראיות לסיגנלים של לווייתנים
-    const dataPoints = [...priceData];
-    const selectedPoints: number[] = [];
-    
-    // בחירת מספר אקראי של נקודות (בין 3 ל-7)
-    const numPoints = 3 + Math.floor(Math.random() * 5);
-    const dataLength = dataPoints.length;
-    
-    for (let i = 0; i < numPoints; i++) {
-      // וידוא שיש מספיק נקודות נתונים
-      const randomIndex = 10 + Math.floor(Math.random() * (dataLength - 20 > 0 ? dataLength - 20 : 1));
-      if (randomIndex < dataLength && !selectedPoints.includes(randomIndex)) {
-        selectedPoints.push(randomIndex);
-      }
-    }
-    
-    // יצירת סיגנלים בנקודות הנבחרות
-    for (const index of selectedPoints) {
-      if (index >= dataPoints.length) continue;
-      
-      const isBuy = Math.random() > 0.5;
-      const strength = Math.random() > 0.7 ? 'strong' : Math.random() > 0.4 ? 'medium' : 'weak';
-      
-      signals.push({
-        id: `whale-${assetId}-${index}-${Date.now()}`,
-        assetId: assetId,
-        type: isBuy ? 'buy' : 'sell',
-        price: dataPoints[index].price,
-        timestamp: dataPoints[index].timestamp,
-        strength: strength,
-        strategy: strategy,
-        timeframe: '1d',
-        targetPrice: isBuy ? dataPoints[index].price * 1.15 : dataPoints[index].price * 0.85,
-        stopLoss: isBuy ? dataPoints[index].price * 0.95 : dataPoints[index].price * 1.05,
-        riskRewardRatio: 3.0,
-        notes: isBuy 
-          ? 'זוהתה כניסה משמעותית של לווייתן לשוק' 
-          : 'זוהתה יציאה משמעותית של לווייתן מהשוק'
-      });
-    }
-    
-    return signals;
-  } catch (error) {
-    console.error(`Error generating whale signals for ${assetId}:`, error);
+  assetId: string
+): TradeSignal[] {
+  if (!priceData || priceData.length < 10) {
     return [];
   }
-};
+  
+  const signals: TradeSignal[] = [];
+  
+  // Need volume data to detect whale activity
+  const priceWithVolume = priceData.filter(point => point.volume !== undefined);
+  
+  if (priceWithVolume.length < 10) {
+    return signals;
+  }
+  
+  // Calculate average volume
+  const volumes = priceWithVolume.map(point => point.volume || 0);
+  const avgVolume = volumes.reduce((sum, vol) => sum + vol, 0) / volumes.length;
+  
+  // Look for significant volume spikes (3x average)
+  for (let i = 5; i < priceWithVolume.length - 1; i++) {
+    const currentVolume = priceWithVolume[i].volume || 0;
+    const previousVolume = priceWithVolume[i - 1].volume || 0;
+    
+    // Check if current volume is significantly higher than average
+    if (currentVolume > avgVolume * 3 && currentVolume > previousVolume * 2) {
+      // Determine if it's a buy or sell signal based on price action
+      const priceChange = priceWithVolume[i + 1].price - priceWithVolume[i - 1].price;
+      const signalType = priceChange > 0 ? 'buy' : 'sell';
+      
+      signals.push({
+        id: `whale-${signalType}-${i}`,
+        assetId,
+        type: signalType,
+        price: priceWithVolume[i].price,
+        timestamp: priceWithVolume[i].timestamp,
+        strength: 'strong',
+        strategy: 'Whale Volume Spike',
+        timeframe: '1d',
+        targetPrice: signalType === 'buy' 
+          ? priceWithVolume[i].price * 1.05 
+          : priceWithVolume[i].price * 0.95,
+        stopLoss: signalType === 'buy'
+          ? priceWithVolume[i].price * 0.98
+          : priceWithVolume[i].price * 1.02,
+        riskRewardRatio: 2.5,
+        notes: `Significant volume spike detected (${(currentVolume / avgVolume).toFixed(1)}x average)`,
+        source: 'system',
+        createdAt: Date.now()
+      });
+    }
+  }
+  
+  return signals;
+}

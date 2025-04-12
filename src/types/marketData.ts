@@ -23,9 +23,9 @@ export interface MarketInfluencer {
   followers: number;
   accuracy: number;
   lastPost: string;
-  specialty?: string; // Added missing property
-  sentiment?: 'bullish' | 'bearish' | 'neutral'; // Added missing property
-  followStatus?: 'following' | 'not-following'; // Added missing property
+  specialty?: string[];
+  sentiment?: 'bullish' | 'bearish' | 'neutral' | 'variable';
+  followStatus?: 'following' | 'not-following';
 }
 
 export interface FinancialDataSource {
@@ -39,7 +39,7 @@ export interface FinancialDataSource {
   logoUrl: string;
   isOfficial: boolean;
   reliability: number;
-  accessType?: string; // Added missing property
-  focused?: boolean; // Added missing property
-  languages?: string[]; // Added missing property
+  accessType?: string;
+  focused?: boolean;
+  languages?: string[];
 }

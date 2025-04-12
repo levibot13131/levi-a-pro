@@ -1,181 +1,102 @@
-import { BacktestSettings, BacktestResults } from './types';
-import { generateMockBacktestData } from './mockDataGenerator';
-import { calculatePerformanceMetrics } from './performanceCalculator';
-import { calculateOptimalPosition, calculatePositionWithVolatility, calculateKellyPosition } from './positionSizer';
-import { generateSignalsFromHistory } from './signals';
-import { 
-  detectMarketTrends, 
-  detectPatterns, 
-  analyzeTradeClusters,
-  analyzeMarketRegimes
-} from './patterns';
+
+import { BacktestResult, BacktestSettings, BacktestTrade } from './types';
+import { detectPatterns } from './patterns/patternDetection';
+import { calculatePerformance } from './performanceCalculator';
+import { detectTrends } from './patterns/trendAnalyzer';
+import { generateHistoricalData } from './mockDataGenerator';
 
 // Main function to run a backtest
-export const runBacktest = async (
-  settings: BacktestSettings
-): Promise<BacktestResults> => {
-  // Simulate waiting for calculation
-  await new Promise(resolve => setTimeout(resolve, 1500));
+export async function runBacktest(settings: BacktestSettings): Promise<BacktestResult> {
+  // In a real implementation, this would fetch actual market data and apply strategies
+  // For demo purposes, we're generating mock data
   
-  // Generate mock data for the backtest
-  const { mockTrades, mockEquity, mockPriceData } = generateMockBacktestData(settings);
+  const historicalData = await generateHistoricalData(settings.assetIds?.[0] || 'bitcoin', settings.timeframe);
+  
+  // Generate trades based on the strategy
+  const trades = generateMockTrades(historicalData.data, settings);
   
   // Calculate performance metrics
-  const results = calculatePerformanceMetrics(mockTrades, settings, mockEquity);
+  const performance = calculatePerformance(trades, settings);
   
-  // Enhanced analysis
-  if (mockPriceData && mockPriceData.length > 0) {
-    // Detect trading patterns
-    const patterns = detectPatterns(mockTrades, mockPriceData);
-    
-    // Detect market trends
-    const { trends, overallTrend } = detectMarketTrends(mockTrades);
-    
-    // Analyze trade clusters
-    const clusterAnalysis = analyzeTradeClusters(mockTrades);
-    
-    // Analyze market regimes
-    const regimeAnalysis = analyzeMarketRegimes(results);
-    
-    // Add enhanced analysis to results
-    results.enhancedAnalysis = {
-      patterns,
-      trends,
-      overallTrend,
-      tradeClusters: clusterAnalysis,
-      marketRegimes: regimeAnalysis
-    };
-  }
+  // Create and return the backtest result
+  const result: BacktestResult = {
+    id: `backtest-${Date.now()}`,
+    assetId: settings.assetIds?.[0] || 'bitcoin',
+    settings,
+    trades,
+    equity: performance.equity,
+    monthly: performance.monthly,
+    assetPerformance: performance.assetPerformance,
+    performance: performance.metrics,
+    enhancedAnalysis: {
+      patterns: detectPatterns(historicalData.data),
+      trends: detectTrends(trades)
+    },
+    createdAt: Date.now()
+  };
   
-  return results;
-};
+  return result;
+}
 
-// Calculate optimal position size for a new trade
-export const calculateOptimalTradePosition = (
-  settings: {
-    capital: number;
-    riskPerTrade: number;
-    entryPrice: number;
-    stopLossPrice: number;
-    takeProfitPrice?: number;
-    useVolatility?: boolean;
-    atrValue?: number;
-    useKelly?: boolean;
-    winRate?: number;
-    averageWin?: number;
-    averageLoss?: number;
-  }
-) => {
-  if (settings.useVolatility && settings.atrValue) {
-    return calculatePositionWithVolatility(
-      settings.capital,
-      settings.riskPerTrade,
-      settings.entryPrice,
-      settings.atrValue
-    );
-  } else if (settings.useKelly && settings.winRate && settings.averageWin && settings.averageLoss) {
-    const kellySize = calculateKellyPosition(
-      settings.capital,
-      settings.winRate,
-      settings.averageWin,
-      settings.averageLoss
-    );
-    
-    return {
-      accountSize: settings.capital,
-      riskPercentage: (kellySize / settings.capital) * 100,
-      entryPrice: settings.entryPrice,
-      stopLossPrice: settings.stopLossPrice,
-      takeProfitPrice: settings.takeProfitPrice,
-      positionSize: kellySize / settings.entryPrice,
-      maxLossAmount: kellySize,
-      potentialProfit: settings.takeProfitPrice 
-        ? Math.abs(settings.takeProfitPrice - settings.entryPrice) * (kellySize / settings.entryPrice)
-        : 0,
-      riskRewardRatio: settings.takeProfitPrice 
-        ? Math.abs(settings.takeProfitPrice - settings.entryPrice) / Math.abs(settings.stopLossPrice - settings.entryPrice)
-        : 0,
-    };
-  } else {
-    return calculateOptimalPosition(
-      settings.capital,
-      settings.riskPerTrade,
-      settings.entryPrice,
-      settings.stopLossPrice,
-      settings.takeProfitPrice
-    );
-  }
-};
-
-// Advanced backtest that runs multiple parameter combinations
-export const runParameterSweep = async (
-  baseSettings: BacktestSettings,
-  parameterRanges: {
-    parameter: keyof BacktestSettings;
-    values: any[];
-  }[]
-): Promise<{
-  results: { parameters: Record<string, any>; performance: BacktestResults }[];
-  bestParameters: Record<string, any>;
-  worstParameters: Record<string, any>;
-}> => {
-  // Generate all parameter combinations
-  const paramCombinations: Record<string, any>[] = [{}];
+// Helper function to generate mock trades
+function generateMockTrades(priceData: any[], settings: BacktestSettings): BacktestTrade[] {
+  const trades: BacktestTrade[] = [];
+  const startDate = new Date(settings.startDate).getTime();
+  const endDate = new Date(settings.endDate).getTime();
   
-  parameterRanges.forEach(range => {
-    const newCombinations: Record<string, any>[] = [];
-    
-    paramCombinations.forEach(existingCombo => {
-      range.values.forEach(value => {
-        newCombinations.push({
-          ...existingCombo,
-          [range.parameter]: value
-        });
-      });
-    });
-    
-    paramCombinations.length = 0;
-    paramCombinations.push(...newCombinations);
+  // Filter price data to the selected date range
+  const filteredData = priceData.filter(point => {
+    const timestamp = typeof point.timestamp === 'number' ? point.timestamp : new Date(point.timestamp).getTime();
+    return timestamp >= startDate && timestamp <= endDate;
   });
   
-  // Run backtest for each parameter combination
-  const results = await Promise.all(
-    paramCombinations.map(async (paramSet) => {
-      const settings = { ...baseSettings } as BacktestSettings;
-      
-      // Apply parameters from this combination
-      Object.entries(paramSet).forEach(([param, value]) => {
-        // Fixed the error here by using the proper type indexing
-        (settings as any)[param] = value;
-      });
-      
-      // Run backtest with these settings
-      const result = await runBacktest(settings);
-      
-      return {
-        parameters: paramSet,
-        performance: result
-      };
-    })
-  );
+  if (filteredData.length < 2) {
+    return trades;
+  }
   
-  // Find best and worst parameter sets
-  results.sort((a, b) => 
-    b.performance.performance.totalReturnPercentage - 
-    a.performance.performance.totalReturnPercentage
-  );
+  // Generate mock trades
+  // In a real implementation, this would apply the actual strategy
+  for (let i = 10; i < filteredData.length - 10; i += 20) {
+    const point = filteredData[i];
+    const futurePoint = filteredData[i + 10];
+    
+    const isBuy = Math.random() > 0.5;
+    const entryPrice = point.price;
+    const exitPrice = futurePoint.price;
+    const profit = isBuy ? exitPrice - entryPrice : entryPrice - exitPrice;
+    const profitPercentage = (profit / entryPrice) * 100;
+    
+    trades.push({
+      id: `trade-${i}`,
+      type: isBuy ? 'buy' : 'sell',
+      entryPrice,
+      entryDate: point.timestamp,
+      exitPrice,
+      exitDate: futurePoint.timestamp,
+      quantity: settings.initialCapital * (settings.riskPerTrade / 100) / entryPrice,
+      profit,
+      profitPercentage,
+      assetId: settings.assetIds?.[0],
+      assetName: settings.assetIds?.[0],
+      direction: isBuy ? 'long' : 'short',
+      status: 'closed',
+      duration: 10,
+      strategyUsed: settings.strategy
+    });
+  }
   
-  return {
-    results,
-    bestParameters: results[0].parameters,
-    worstParameters: results[results.length - 1].parameters
-  };
-};
+  return trades;
+}
 
-// Export types and all functions
+// Function to analyze backtesting trends
+export function analyzeBacktestTrends(result: BacktestResult) {
+  const trendAnalysis = detectTrends(result.trades);
+  return {
+    trends: trendAnalysis.trends,
+    monthlyPerformance: trendAnalysis.monthlyPerformance
+  };
+}
+
 export * from './types';
 export * from './signals';
-export * from './positionSizer';
-export * from './performanceCalculator';
-export * from './mockDataGenerator';
 export * from './patterns';

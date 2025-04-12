@@ -2,8 +2,8 @@
 import { TimeframeType } from '@/types/asset';
 
 export interface BacktestSettings {
-  startDate: string;  // Changed from Date to string
-  endDate: string;    // Changed from Date to string
+  startDate: string;
+  endDate: string;
   strategy: string;
   timeframe: TimeframeType;
   initialCapital: number;

@@ -5,7 +5,7 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 
 export const useMarketNews = () => {
-  // פונקציה לפילטור נתונים לפי נכס
+  // Function to filter data by asset
   const filterItems = <T extends { relatedAssets?: string[] }>(
     items: T[] | undefined, 
     selectedFilter: string
@@ -17,7 +17,7 @@ export const useMarketNews = () => {
     );
   };
   
-  // עיצוב תגית לפי סנטימנט
+  // Sentiment badge styling
   const getSentimentBadge = (sentiment?: 'positive' | 'neutral' | 'negative') => {
     switch (sentiment) {
       case 'positive':
@@ -31,7 +31,7 @@ export const useMarketNews = () => {
     }
   };
   
-  // פורמט למספר גדול
+  // Format large numbers
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {
       return (num / 1000000).toFixed(1) + 'M';
@@ -42,7 +42,7 @@ export const useMarketNews = () => {
     }
   };
   
-  // פורמט לתאריך
+  // Format dates
   const formatDate = (dateStr: string): string => {
     const date = new Date(dateStr);
     return date.toLocaleDateString('he-IL', { 
@@ -61,3 +61,5 @@ export const useMarketNews = () => {
     formatDate
   };
 };
+
+export default useMarketNews;

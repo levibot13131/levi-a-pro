@@ -43,6 +43,7 @@ export interface TradingViewAlert {
   type: 'price' | 'indicator' | 'pattern' | 'custom';
   source: string;
   priority: 'high' | 'medium' | 'low';
+  chartUrl?: string; // Added missing property
 }
 
 export function createTradingViewAlert(data: Partial<TradingViewAlert>): TradingViewAlert {
@@ -59,5 +60,6 @@ export function createTradingViewAlert(data: Partial<TradingViewAlert>): Trading
     type: data.type || 'custom',
     source: data.source || 'tradingview',
     priority: data.priority || 'medium',
+    chartUrl: data.chartUrl,
   };
 }
