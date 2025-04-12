@@ -1,94 +1,121 @@
 
+import { AlertDestination } from './types';
 import { toast } from 'sonner';
-import { v4 as uuidv4 } from 'uuid';
-import { AlertDestination, LOCAL_STORAGE_KEY, getDestinationTypeName } from './types';
 
-// Get defined alert destinations
-export const getAlertDestinations = (): AlertDestination[] => {
+// יעדי הודעות מוגדרים - כאן ניתן להוסיף יעדים נוספים
+let alertDestinations: AlertDestination[] = [
+  // נשתמש ביעד ריק שהמשתמש יוכל לשנות בקלות
+  {
+    id: 'default-destination',
+    name: 'יעד ברירת מחדל (יש להגדיר)',
+    type: 'webhook',
+    endpoint: '',
+    active: false,
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  }
+];
+
+// בדיקה אם יש יעדים שמורים ב-localStorage
+const loadSavedDestinations = (): void => {
   try {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+    const saved = localStorage.getItem('alert_destinations');
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        alertDestinations = parsed;
+        console.log('נטענו יעדים שמורים:', alertDestinations.length);
+      }
     }
   } catch (error) {
-    console.error('Error loading alert destinations:', error);
+    console.error('שגיאה בטעינת יעדים שמורים:', error);
   }
-  
-  // Default destinations
-  const defaultDestinations: AlertDestination[] = [
-    {
-      id: uuidv4(),
-      name: '{"botToken":"","chatId":""}',
-      type: 'telegram',
-      active: false
-    },
-    {
-      id: uuidv4(),
-      name: '',
-      type: 'whatsapp',
-      active: false
-    }
-  ];
-  
-  // Save default destinations
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultDestinations));
-  
-  return defaultDestinations;
 };
 
-// Save alert destinations
-export const saveAlertDestinations = (destinations: AlertDestination[]): void => {
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(destinations));
+// שמירת יעדים ל-localStorage
+const saveDestinations = (): void => {
+  try {
+    localStorage.setItem('alert_destinations', JSON.stringify(alertDestinations));
+  } catch (error) {
+    console.error('שגיאה בשמירת יעדים:', error);
+  }
 };
 
-// Add new alert destination
-export const addAlertDestination = (destination: Omit<AlertDestination, 'id'>): void => {
-  const destinations = getAlertDestinations();
-  const newDestination = {
-    ...destination,
-    id: uuidv4()
+// קבלת רשימת היעדים
+export const getAlertDestinations = (): AlertDestination[] => {
+  // טעינת יעדים שמורים בפעם הראשונה
+  if (alertDestinations.length === 1 && !alertDestinations[0].endpoint) {
+    loadSavedDestinations();
+  }
+  return [...alertDestinations];
+};
+
+// הוספת יעד חדש
+export const addAlertDestination = (destination: Omit<AlertDestination, 'id'>): AlertDestination => {
+  const id = crypto.randomUUID();
+  const newDestination: AlertDestination = {
+    id,
+    ...destination
   };
   
-  destinations.push(newDestination);
-  saveAlertDestinations(destinations);
+  alertDestinations.push(newDestination);
+  saveDestinations();
   
   toast.success('יעד התראות חדש נוסף', {
-    description: `יעד מסוג ${getDestinationTypeName(destination.type)} נוסף בהצלחה`
+    description: `היעד ${newDestination.name} נוסף בהצלחה`
   });
+  
+  return newDestination;
 };
 
-// Update alert destination
-export const updateAlertDestination = (type: AlertDestination['type'], updates: Partial<AlertDestination>): void => {
-  const destinations = getAlertDestinations();
-  const index = destinations.findIndex(d => d.type === type);
+// עדכון יעד קיים
+export const updateAlertDestination = (id: string, updates: Partial<AlertDestination>): boolean => {
+  const index = alertDestinations.findIndex(d => d.id === id);
+  if (index === -1) return false;
   
-  if (index !== -1) {
-    destinations[index] = { ...destinations[index], ...updates };
-    saveAlertDestinations(destinations);
-    
-    toast.success('יעד התראות עודכן', {
-      description: `יעד ${getDestinationTypeName(type)} עודכן בהצלחה`
-    });
-  } else {
-    // If destination doesn't exist, add it
-    addAlertDestination({
-      name: updates.name || type,
-      type,
-      active: updates.active || false
-    });
-  }
+  alertDestinations[index] = { ...alertDestinations[index], ...updates };
+  saveDestinations();
+  
+  toast.success('יעד התראות עודכן', {
+    description: `היעד ${alertDestinations[index].name} עודכן בהצלחה`
+  });
+  
+  return true;
 };
 
-// Delete alert destination
-export const deleteAlertDestination = (id: string): void => {
-  const destinations = getAlertDestinations();
-  const filtered = destinations.filter(d => d.id !== id);
+// הסרת יעד
+export const removeAlertDestination = (id: string): boolean => {
+  const index = alertDestinations.findIndex(d => d.id === id);
+  if (index === -1) return false;
   
-  if (filtered.length !== destinations.length) {
-    saveAlertDestinations(filtered);
-    
-    toast.success('יעד התראות נמחק', {
-      description: 'יעד ההתראות נמחק בהצלחה'
-    });
-  }
+  const name = alertDestinations[index].name;
+  alertDestinations.splice(index, 1);
+  saveDestinations();
+  
+  toast.info('יעד התראות הוסר', {
+    description: `היעד ${name} הוסר בהצלחה`
+  });
+  
+  return true;
 };
+
+// הפעלה/כיבוי של יעד
+export const toggleAlertDestination = (id: string, active?: boolean): boolean => {
+  const index = alertDestinations.findIndex(d => d.id === id);
+  if (index === -1) return false;
+  
+  const newState = active !== undefined ? active : !alertDestinations[index].active;
+  alertDestinations[index].active = newState;
+  saveDestinations();
+  
+  toast.success(
+    newState ? 'יעד התראות הופעל' : 'יעד התראות הושבת',
+    { description: `היעד ${alertDestinations[index].name} ${newState ? 'הופעל' : 'הושבת'} בהצלחה` }
+  );
+  
+  return true;
+};
+
+// טעינה ראשונית של יעדים
+loadSavedDestinations();

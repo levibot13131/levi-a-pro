@@ -7,7 +7,7 @@ import { getAssets } from '@/services/mockDataService';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Play, Target, BarChart4 } from 'lucide-react';
+import { Play, Target, BarChart4, Settings } from 'lucide-react';
 import { 
   useStoredSignals, 
   startRealTimeAnalysis, 
@@ -17,12 +17,14 @@ import { toast } from 'sonner';
 import SignalAnalysisSummary from '@/components/trading-signals/SignalAnalysisSummary';
 import SignalsTab from '@/components/trading-signals/SignalsTab';
 import AnalysesTab from '@/components/trading-signals/AnalysesTab';
+import AlertDestinationsManager from '@/components/trading-signals/AlertDestinationsManager';
 
 const TradingSignals = () => {
   const [selectedAssetId, setSelectedAssetId] = useState<string>('all');
   const [selectedAnalysisType, setSelectedAnalysisType] = useState<string>('all');
   const [realTimeActive, setRealTimeActive] = useState<boolean>(false);
   const [alertInstance, setAlertInstance] = useState<{ stop: () => void } | null>(null);
+  const [showSettings, setShowSettings] = useState<boolean>(false);
   
   // שליפת נתונים
   const { data: mockSignals, isLoading: mockSignalsLoading } = useQuery({
@@ -122,22 +124,40 @@ const TradingSignals = () => {
   return (
     <div className="container mx-auto py-6 px-4 md:px-6">
       <div className="flex justify-between items-center mb-6">
-        <Button 
-          onClick={toggleRealTimeAnalysis}
-          variant={realTimeActive ? "destructive" : "default"}
-          className="flex items-center gap-2"
-        >
-          {realTimeActive ? (
-            <>הפסק ניתוח בזמן אמת</>
-          ) : (
-            <>
-              <Play className="h-4 w-4" />
-              הפעל ניתוח בזמן אמת
-            </>
-          )}
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={toggleRealTimeAnalysis}
+            variant={realTimeActive ? "destructive" : "default"}
+            className="flex items-center gap-2"
+          >
+            {realTimeActive ? (
+              <>הפסק ניתוח בזמן אמת</>
+            ) : (
+              <>
+                <Play className="h-4 w-4" />
+                הפעל ניתוח בזמן אמת
+              </>
+            )}
+          </Button>
+          
+          <Button
+            variant="outline"
+            onClick={() => setShowSettings(!showSettings)}
+            className="flex items-center gap-2"
+          >
+            <Settings className="h-4 w-4" />
+            {showSettings ? 'הסתר הגדרות' : 'הגדרות התראות'}
+          </Button>
+        </div>
         <h1 className="text-3xl font-bold text-right">איתותי מסחר וניתוח שוק</h1>
       </div>
+      
+      {/* הגדרות התראות */}
+      {showSettings && (
+        <div className="mb-6">
+          <AlertDestinationsManager />
+        </div>
+      )}
       
       {/* סיכום הניתוח */}
       {signalAnalysis && (

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useBinanceConnection } from '@/hooks/use-binance-connection';
 import BinanceConnectButton from '@/components/binance/BinanceConnectButton';
+import BinanceConnectionStatus from '@/components/binance/BinanceConnectionStatus';
 import { useAuth } from '@/contexts/AuthContext';
 import RequireAuth from '@/components/auth/RequireAuth';
 import { LineChart, Wallet, ArrowUpDown, Clock, Settings } from 'lucide-react';
@@ -101,21 +102,25 @@ const BinanceIntegration = () => {
             </TabsList>
 
             <TabsContent value="overview">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-right">סקירת חשבון בינאנס</CardTitle>
-                  <CardDescription className="text-right">
-                    מבט כולל על חשבון הבינאנס שלך
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-muted p-4 rounded-md">
-                    <p className="text-center text-sm">
-                      החיבור לבינאנס הצליח! פיתוח תכונות בינאנס בתהליך...
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <BinanceConnectionStatus />
+                
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-right">סיכום חשבון</CardTitle>
+                    <CardDescription className="text-right">
+                      נתוני החשבון שלך בבינאנס
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-muted p-4 rounded-md">
+                      <p className="text-center text-sm">
+                        הנתונים יטענו כאשר החיבור לבינאנס יאומת
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </TabsContent>
 
             <TabsContent value="assets">

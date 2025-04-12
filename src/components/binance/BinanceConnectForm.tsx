@@ -1,155 +1,140 @@
 
 import React, { useState } from 'react';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { validateBinanceCredentials } from '@/services/binance/binanceService';
-import { Lock, Key } from 'lucide-react';
-
-const formSchema = z.object({
-  apiKey: z.string().min(5, { message: 'API Key חייב להיות באורך של לפחות 5 תווים' }),
-  apiSecret: z.string().min(5, { message: 'API Secret חייב להיות באורך של לפחות 5 תווים' }),
-});
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 interface BinanceConnectFormProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onConnectSuccess: () => void;
+  onConnectSuccess?: () => void;
 }
 
 const BinanceConnectForm: React.FC<BinanceConnectFormProps> = ({
   isOpen,
   onOpenChange,
-  onConnectSuccess,
+  onConnectSuccess
 }) => {
-  const [isLoading, setIsLoading] = useState(false);
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      apiKey: '',
-      apiSecret: '',
-    },
-  });
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setIsLoading(true);
+  const [apiKey, setApiKey] = useState('');
+  const [apiSecret, setApiSecret] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!apiKey.trim() || !apiSecret.trim()) {
+      toast.error('אנא הזן מפתח API וסיסמה', {
+        description: 'שני השדות הם חובה'
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
     try {
-      const isValid = await validateBinanceCredentials(values.apiKey, values.apiSecret);
+      console.log('מתחבר לחשבון בינאנס...', { apiKeyLength: apiKey.length, apiSecretLength: apiSecret.length });
       
-      if (isValid) {
-        onConnectSuccess();
+      const success = await validateBinanceCredentials(apiKey, apiSecret);
+      
+      if (success) {
+        toast.success('התחברת בהצלחה לבינאנס', {
+          description: 'המפתחות נשמרו מקומית במכשיר שלך. הנתונים יתחילו להתעדכן בקרוב.'
+        });
+        
+        // reset form
+        setApiKey('');
+        setApiSecret('');
         onOpenChange(false);
-        form.reset();
+        
+        // notify parent component
+        if (onConnectSuccess) {
+          onConnectSuccess();
+        }
+        
+        // בדיקת חיבור מיידית
+        console.log('בודק חיבור לבינאנס...');
+        // כאן אפשר להוסיף קריאה לפונקציה שתבדוק את החיבור
       } else {
-        form.setError('apiKey', { 
-          type: 'manual', 
-          message: 'API Keys לא תקינים. אנא בדוק את המפתחות ונסה שוב.' 
+        toast.error('החיבור לבינאנס נכשל', {
+          description: 'ייתכן שהמפתחות שהזנת אינם תקינים. אנא נסה שוב.'
         });
       }
     } catch (error) {
-      console.error('Error validating Binance credentials:', error);
-      form.setError('apiKey', { 
-        type: 'manual', 
-        message: 'אירעה שגיאה בעת אימות המפתחות. אנא נסה שוב.' 
+      console.error('שגיאה בחיבור לבינאנס:', error);
+      toast.error('שגיאה בחיבור לבינאנס', {
+        description: 'אירעה שגיאה בעת ניסיון להתחבר. אנא נסה שוב.'
       });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
-
+  
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-right">התחברות ל-Binance</DialogTitle>
-          <DialogDescription className="text-right">
-            הזן את מפתחות ה-API שלך מחשבון ה-Binance שלך
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="apiKey"
-              render={({ field }) => (
-                <FormItem dir="rtl">
-                  <FormLabel>API Key</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Key className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="הזן את ה-API Key שלך מ-Binance"
-                        className="pr-10"
-                        {...field}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="apiSecret"
-              render={({ field }) => (
-                <FormItem dir="rtl">
-                  <FormLabel>API Secret</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Lock className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="password"
-                        placeholder="הזן את ה-API Secret שלך מ-Binance"
-                        className="pr-10"
-                        {...field}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="pt-4 flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isLoading}
-              >
-                ביטול
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'מתחבר...' : 'התחבר'}
-              </Button>
+        <form onSubmit={handleSubmit}>
+          <DialogHeader>
+            <DialogTitle className="text-right">התחברות לחשבון בינאנס</DialogTitle>
+            <DialogDescription className="text-right">
+              הזן את מפתחות ה-API של חשבון הבינאנס שלך.
+              <br />
+              המפתחות נשמרים מקומית במכשיר שלך בלבד.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="apiKey" className="text-right">Binance API Key</Label>
+              <Input
+                id="apiKey"
+                placeholder="הזן את מפתח ה-API שלך"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                className="text-left dir-ltr"
+                autoComplete="off"
+                required
+              />
             </div>
-          </form>
-        </Form>
-        <div className="mt-4 text-sm text-muted-foreground text-right">
-          <p>
-            לבטיחות מירבית, אנו ממליצים ליצור API keys חדשים עם הרשאות קריאה בלבד.
-          </p>
-          <p className="mt-2">
-            המפתחות נשמרים מקומית במכשיר שלך ולא נשלחים לשרת.
-          </p>
-        </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="apiSecret" className="text-right">Binance API Secret</Label>
+              <Input
+                id="apiSecret"
+                placeholder="הזן את ה-Secret של ה-API שלך"
+                value={apiSecret}
+                onChange={(e) => setApiSecret(e.target.value)}
+                className="text-left dir-ltr"
+                type="password"
+                autoComplete="off"
+                required
+              />
+            </div>
+            
+            <p className="text-sm text-muted-foreground text-right">
+              שים לב: צור מפתח API בהגדרות בינאנס עם הרשאות קריאה בלבד לבטיחות מרבית.
+            </p>
+          </div>
+          
+          <DialogFooter className="flex sm:justify-start">
+            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
+              ביטול
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  מתחבר...
+                </>
+              ) : (
+                'התחבר'
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

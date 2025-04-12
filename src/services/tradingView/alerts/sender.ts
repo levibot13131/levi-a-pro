@@ -13,6 +13,9 @@ export { formatAlertMessage } from './formatters';
  * Send alert to all active destinations
  */
 export const sendAlert = async (alert: TradingViewAlert): Promise<boolean> => {
+  // בדיקת לוג נוסף לצורך דיבוג
+  console.log('🔔 Sending alert for ' + alert.symbol + ' to destinations:', alert);
+  
   // Get active destinations
   const destinations = getAlertDestinations().filter(d => d.active);
   
@@ -20,14 +23,14 @@ export const sendAlert = async (alert: TradingViewAlert): Promise<boolean> => {
     console.log('❗ No active alert destinations');
     // נשלח התראה למשתמש שאין יעדים פעילים
     toast.warning('אין יעדי התראות פעילים', {
-      description: 'הגדר לפחות יעד אחד (טלגרם או וואטסאפ) כדי לקבל התראות'
+      description: 'הגדר לפחות יעד אחד (Webhook) כדי לקבל התראות'
     });
     return false;
   }
   
+  console.log('🔔 Sending alert to ' + destinations.length + ' destinations:', alert);
+  
   try {
-    console.log(`🔔 Sending alert for ${alert.symbol} to ${destinations.length} destinations:`, alert);
-    
     // שליחת ההתראות ליעדים
     const successCount = await sendAlertToDestinations(alert, destinations);
     
@@ -38,7 +41,7 @@ export const sendAlert = async (alert: TradingViewAlert): Promise<boolean> => {
       return true;
     } else {
       toast.error('שליחת התראה נכשלה', {
-        description: 'אירעה שגיאה בשליחת ההתראה, אנא נסה שנית'
+        description: 'אירעה שגיאה בשליחת ההתראה, אנא בדוק את היעדים ונסה שנית'
       });
       return false;
     }
