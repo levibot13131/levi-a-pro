@@ -7,25 +7,25 @@ import SocialPostCard from './SocialPostCard';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 interface SocialTabProps {
-  postsLoading: boolean;
-  filteredPosts: SocialPost[];
-  getSentimentBadge: (sentiment?: 'positive' | 'neutral' | 'negative') => React.ReactNode;
-  formatDate: (dateStr: string) => string;
-  formatNumber: (num: number) => string;
+  socialPosts: SocialPost[];
+  isLoading: boolean;
+  getSentimentBadge?: (sentiment?: 'positive' | 'neutral' | 'negative') => React.ReactNode;
+  formatDate?: (dateStr: string) => string;
+  formatNumber?: (num: number) => string;
 }
 
 const SocialTab: React.FC<SocialTabProps> = ({ 
-  postsLoading, 
-  filteredPosts, 
+  socialPosts, 
+  isLoading, 
   getSentimentBadge, 
   formatDate,
   formatNumber 
 }) => {
-  if (postsLoading) {
+  if (isLoading) {
     return <LoadingSpinner />;
   }
   
-  if (filteredPosts.length === 0) {
+  if (socialPosts.length === 0) {
     return (
       <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
@@ -38,7 +38,7 @@ const SocialTab: React.FC<SocialTabProps> = ({
   
   return (
     <div className="space-y-4">
-      {filteredPosts.map(post => (
+      {socialPosts.map(post => (
         <SocialPostCard 
           key={post.id}
           post={post}

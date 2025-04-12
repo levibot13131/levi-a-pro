@@ -21,7 +21,8 @@ const MarketNews = () => {
     selectedAsset, setSelectedAsset,
     selectedSentiment, setSelectedSentiment,
     nextNewsPage, prevNewsPage,
-    nextSocialPage, prevSocialPage
+    nextSocialPage, prevSocialPage,
+    isLoading
   } = useMarketNews();
 
   // Type-safe handler for sentiment change
@@ -78,7 +79,7 @@ const MarketNews = () => {
             <TabsContent value="news">
               <NewsGrid 
                 news={news} 
-                isLoading={false}
+                isLoading={isLoading}
               />
               
               {totalNewsPages > 1 && (
@@ -111,7 +112,7 @@ const MarketNews = () => {
             <TabsContent value="social">
               <SocialTab
                 socialPosts={socialPosts}
-                isLoading={false}
+                isLoading={isLoading}
               />
               
               {totalSocialPages > 1 && (
