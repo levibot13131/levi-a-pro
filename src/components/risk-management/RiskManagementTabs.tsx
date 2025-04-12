@@ -48,7 +48,7 @@ const RiskManagementTabs = ({ performanceStats, trendStats }: RiskManagementTabs
       <TabsContent value="calculator" className="mt-6">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div className="md:col-span-7">
-            <RiskCalculator accountSize={100000} />
+            <RiskCalculator />
           </div>
           <div className="md:col-span-5">
             <Card>

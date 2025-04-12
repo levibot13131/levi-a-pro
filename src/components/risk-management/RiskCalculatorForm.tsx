@@ -1,88 +1,105 @@
 
 import React from 'react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
-interface RiskCalculatorFormProps {
-  values: {
-    accountSize: number;
-    riskPercentage: number;
-    entryPrice: number;
-    stopLossPrice: number;
-    targetPrice: number;
-  };
-  handleChange: (field: string, value: number) => void;
-  handleCalculate: () => void;
+export interface RiskCalculatorFormProps {
+  accountSize: string;
+  setAccountSize: React.Dispatch<React.SetStateAction<string>>;
+  entryPrice: string;
+  setEntryPrice: React.Dispatch<React.SetStateAction<string>>;
+  stopLoss: string;
+  setStopLoss: React.Dispatch<React.SetStateAction<string>>;
+  riskPercentage: string;
+  setRiskPercentage: React.Dispatch<React.SetStateAction<string>>;
+  direction: 'long' | 'short';
+  setDirection: React.Dispatch<React.SetStateAction<'long' | 'short'>>;
 }
 
-const RiskCalculatorForm = ({ values, handleChange, handleCalculate }: RiskCalculatorFormProps) => {
+const RiskCalculatorForm: React.FC<RiskCalculatorFormProps> = ({
+  accountSize,
+  setAccountSize,
+  entryPrice,
+  setEntryPrice,
+  stopLoss,
+  setStopLoss,
+  riskPercentage,
+  setRiskPercentage,
+  direction,
+  setDirection
+}) => {
   return (
-    <div className="space-y-4 text-right">
-      <div>
-        <label className="text-sm font-medium mb-1 block">גודל החשבון</label>
-        <Input
-          type="number"
-          value={values.accountSize}
-          onChange={(e) => handleChange('accountSize', Number(e.target.value))}
-          className="text-right"
-          min={1000}
-        />
-      </div>
-      
-      <div>
-        <div className="flex justify-between items-center mb-1">
-          <div className="text-sm font-medium">{values.riskPercentage}%</div>
-          <label className="text-sm font-medium">אחוז סיכון</label>
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="accountSize" className="text-right block">גודל חשבון (₪)</Label>
+          <Input
+            id="accountSize"
+            type="text"
+            value={accountSize}
+            onChange={(e) => setAccountSize(e.target.value)}
+            dir="ltr"
+            className="text-right"
+          />
         </div>
-        <Slider
-          value={[values.riskPercentage]}
-          min={0.1}
-          max={3}
-          step={0.1}
-          onValueChange={(values) => handleChange('riskPercentage', values[0])}
-        />
+        
+        <div className="space-y-2">
+          <Label htmlFor="riskPercentage" className="text-right block">אחוז סיכון (%)</Label>
+          <Input
+            id="riskPercentage"
+            type="text"
+            value={riskPercentage}
+            onChange={(e) => setRiskPercentage(e.target.value)}
+            dir="ltr"
+            className="text-right"
+          />
+        </div>
       </div>
       
-      <div>
-        <label className="text-sm font-medium mb-1 block">מחיר כניסה</label>
-        <Input
-          type="number"
-          value={values.entryPrice === 0 ? '' : values.entryPrice}
-          onChange={(e) => handleChange('entryPrice', Number(e.target.value))}
-          className="text-right"
-          placeholder="הזן מחיר כניסה"
-          step="0.01"
-        />
+      <div className="space-y-2">
+        <Label className="text-right block">כיוון העסקה</Label>
+        <RadioGroup
+          value={direction}
+          onValueChange={(value) => setDirection(value as 'long' | 'short')}
+          className="flex justify-end space-x-4 rtl:space-x-reverse"
+        >
+          <div className="flex items-center">
+            <RadioGroupItem value="short" id="short" />
+            <Label htmlFor="short" className="mr-2">שורט</Label>
+          </div>
+          <div className="flex items-center">
+            <RadioGroupItem value="long" id="long" />
+            <Label htmlFor="long" className="mr-2">לונג</Label>
+          </div>
+        </RadioGroup>
       </div>
       
-      <div>
-        <label className="text-sm font-medium mb-1 block">מחיר סטופ לוס</label>
-        <Input
-          type="number"
-          value={values.stopLossPrice === 0 ? '' : values.stopLossPrice}
-          onChange={(e) => handleChange('stopLossPrice', Number(e.target.value))}
-          className="text-right"
-          placeholder="הזן מחיר סטופ"
-          step="0.01"
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="entryPrice" className="text-right block">מחיר כניסה</Label>
+          <Input
+            id="entryPrice"
+            type="text"
+            value={entryPrice}
+            onChange={(e) => setEntryPrice(e.target.value)}
+            dir="ltr"
+            className="text-right"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="stopLoss" className="text-right block">מחיר סטופ לוס</Label>
+          <Input
+            id="stopLoss"
+            type="text"
+            value={stopLoss}
+            onChange={(e) => setStopLoss(e.target.value)}
+            dir="ltr"
+            className="text-right"
+          />
+        </div>
       </div>
-      
-      <div>
-        <label className="text-sm font-medium mb-1 block">מחיר יעד (אופציונלי)</label>
-        <Input
-          type="number"
-          value={values.targetPrice === 0 ? '' : values.targetPrice}
-          onChange={(e) => handleChange('targetPrice', Number(e.target.value))}
-          className="text-right"
-          placeholder="הזן מחיר יעד"
-          step="0.01"
-        />
-      </div>
-      
-      <Button onClick={handleCalculate} className="w-full mt-2">
-        חשב גודל פוזיציה
-      </Button>
     </div>
   );
 };

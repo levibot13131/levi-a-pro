@@ -2,7 +2,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
-import { Toaster as SonnerToaster } from 'sonner';
 import { ThemeProvider } from "@/components/ui/theme-provider";
 import MainLayout from '@/components/layouts/main-layout';
 import { EnvironmentBanner } from '@/components/ui/environment-banner';
@@ -29,6 +28,8 @@ import LinkPage from './pages/LinkPage';
 import Index from './pages/Index';
 import MarketData from './pages/MarketData';
 import NotFound from './pages/NotFound';
+import RiskManagement from './pages/RiskManagement';
+import ProxyGuide from './pages/ProxyGuide';
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/proxy-guide" element={<ProxyGuide />} />
 
           <Route element={<RequireAuth />}>
             <Route path="/asset-tracker" element={<AssetTracker />} />
@@ -58,13 +60,13 @@ function App() {
             <Route path="/journal" element={<Journal />} />
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/market-data" element={<MarketData />} />
+            <Route path="/risk-management" element={<RiskManagement />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
       <Toaster />
-      <SonnerToaster position="top-right" richColors />
     </ThemeProvider>
   );
 }

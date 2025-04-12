@@ -2,7 +2,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getTradingPerformanceStats, getTrendTradingStats } from '@/services/customTradingStrategyService';
-import MainNavigation from '@/components/MainNavigation';
 import StrategyAlert from '@/components/risk-management/StrategyAlert';
 import RiskManagementTabs from '@/components/risk-management/RiskManagementTabs';
 
@@ -18,19 +17,15 @@ const RiskManagement = () => {
   });
   
   return (
-    <div>
-      <MainNavigation />
+    <div className="container mx-auto py-6 px-4 md:px-6">
+      <h1 className="text-3xl font-bold mb-6 text-right">ניהול סיכונים</h1>
       
-      <div className="container mx-auto py-6 px-4 md:px-6">
-        <h1 className="text-3xl font-bold mb-6 text-right">ניהול סיכונים</h1>
-        
-        <StrategyAlert />
-        
-        <RiskManagementTabs 
-          performanceStats={performanceStats} 
-          trendStats={trendStats} 
-        />
-      </div>
+      <StrategyAlert />
+      
+      <RiskManagementTabs 
+        performanceStats={performanceStats} 
+        trendStats={trendStats} 
+      />
     </div>
   );
 };

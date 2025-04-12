@@ -1,151 +1,184 @@
 
-// Custom trading strategy service exports
+import { TradeJournalEntry } from '@/types/journal';
 
 export interface PositionSizingCalculation {
   positionSize: number;
   riskAmount: number;
   potentialProfit: number;
   riskRewardRatio: number;
-  maxLossAmount: number; // Added property
-  takeProfitPrice?: number; // Added property
+  maxLossAmount: number;
+  takeProfitPrice: number;
 }
 
 export interface TradingPerformanceStats {
   winRate: number;
-  averageProfit: number;
   profitFactor: number;
-  maxDrawdown: number;
-  sharpeRatio: number;
+  averageWin: number;
+  averageLoss: number;
+  expectancy: number;
+  totalTrades: number;
+  consecutiveWins: number;
+  consecutiveLosses: number;
 }
 
 export interface TrendTradingStats {
-  trendStrength: number;
-  averageTrendDuration: number;
-  winRateInTrend: number;
-  firstTargetSuccessRate: number; // Added property
-  secondTargetSuccessRate: number; // Added property
-  thirdTargetSuccessRate: number; // Added property
+  trendAccuracy: number;
+  avgTrendDuration: number;
+  majorTrendsIdentified: number;
+  falseBreakouts: number;
+  successfulTrades: number;
 }
 
-// Extended trading approach with keyPrinciples
-export const tradingApproach = {
-  name: "Trend Following",
-  description: "Strategy focusing on identifying and following established market trends",
-  timeframes: ["1h", "4h", "1d"],
-  indicators: ["Moving Averages", "MACD", "RSI"],
-  rules: [
-    "Enter when price breaks above/below key moving averages",
-    "Use RSI to confirm trend strength",
-    "Set stop-loss at recent swing high/low"
-  ],
-  keyPrinciples: [
-    "סחור בכיוון המגמה הראשית",
-    "השתמש בזמני כניסה מדויקים",
-    "הגדר יעדי רווח וסטופ לוס לפני כניסה",
-    "נהל את הסיכון באופן מדוייק בכל עסקה",
-    "התאם את גודל הפוזיציה לתנודתיות המכשיר"
-  ]
-};
-
-// Extended risk management rules with additional properties
-export const riskManagementRules = [
-  {
-    id: "rule1",
-    rule: "לעולם אל תסכן יותר מ-1-2% מהחשבון בעסקה בודדת",
-    priority: "critical",
-    explanation: "הגבלת הסיכון לאחוז קטן מהחשבון מבטיחה שגם סדרת הפסדים לא תחסל את החשבון."
-  },
-  {
-    id: "rule2",
-    rule: "תמיד השתמש בסטופ לוס",
-    priority: "critical",
-    explanation: "סטופ לוס הוא כלי ניהול סיכונים הכרחי שמגדיר את מקסימום ההפסד שלך בעסקה."
-  },
-  {
-    id: "rule3",
-    rule: "ודא יחס סיכוי לסיכון של לפחות 1:2",
-    priority: "high",
-    explanation: "יחס של לפחות 1:2 מאפשר לך להרוויח גם אם הצלחת רק ב-40% מהעסקאות שלך."
-  },
-  {
-    id: "rule4",
-    rule: "הימנע ממסחר בזמן פרסום חדשות כלכליות",
-    priority: "medium",
-    explanation: "תנודתיות גבוהה בזמן פרסום חדשות יכולה לגרום להפסדים בלתי צפויים."
-  },
-  {
-    id: "rule5",
-    rule: "הקטן גודל פוזיציה בתקופות של תנודתיות גבוהה",
-    priority: "medium",
-    explanation: "תנודתיות גבוהה מגדילה את הסיכוי לתזוזות קיצוניות ולהפעלת סטופים."
-  }
-];
-
+// Calculate position size based on risk parameters
 export const calculatePositionSize = (
   accountSize: number,
   riskPercentage: number,
   entryPrice: number,
-  stopLossPrice: number,
-  direction: 'long' | 'short' = 'long'
+  stopLoss: number,
+  direction: 'long' | 'short'
 ): PositionSizingCalculation => {
-  const riskPerUnit = Math.abs(entryPrice - stopLossPrice);
+  // Calculate risk amount based on account size and risk percentage
   const riskAmount = accountSize * (riskPercentage / 100);
-  const shares = riskAmount / riskPerUnit;
   
-  const positionSize = shares * entryPrice;
-  const takeProfitPrice = direction === 'long' 
-    ? entryPrice + (riskPerUnit * 2) 
-    : entryPrice - (riskPerUnit * 2);
+  // Calculate risk per unit (difference between entry and stop loss)
+  const riskPerUnit = Math.abs(entryPrice - stopLoss);
   
-  const potentialProfit = shares * Math.abs(takeProfitPrice - entryPrice);
-  const maxLossAmount = riskAmount;
+  if (riskPerUnit === 0) {
+    throw new Error('Entry price cannot be the same as stop loss');
+  }
+  
+  // Calculate position size in units
+  const units = riskAmount / riskPerUnit;
+  
+  // Calculate total position value
+  const positionSize = units * entryPrice;
+  
+  // Calculate target price based on risk-reward ratio of 2:1
+  const targetPriceDistance = riskPerUnit * 2;
+  const targetPrice = direction === 'long' 
+    ? entryPrice + targetPriceDistance 
+    : entryPrice - targetPriceDistance;
+  
+  // Calculate potential profit
+  const potentialProfit = units * targetPriceDistance;
   
   return {
     positionSize,
     riskAmount,
     potentialProfit,
     riskRewardRatio: potentialProfit / riskAmount,
-    maxLossAmount,
-    takeProfitPrice
+    maxLossAmount: riskAmount,
+    takeProfitPrice: targetPrice
   };
 };
 
+// Get trading performance stats
 export const getTradingPerformanceStats = (): TradingPerformanceStats => {
+  // In a real app, this would fetch data from an API or calculate from trade history
   return {
-    winRate: 62.5,
-    averageProfit: 1.8,
-    profitFactor: 2.1,
-    maxDrawdown: 12.3,
-    sharpeRatio: 1.45
+    winRate: 58.5,
+    profitFactor: 1.85,
+    averageWin: 2.3,
+    averageLoss: 1.0,
+    expectancy: 0.75,
+    totalTrades: 142,
+    consecutiveWins: 7,
+    consecutiveLosses: 3
   };
 };
 
+// Get trend trading stats
 export const getTrendTradingStats = (): TrendTradingStats => {
+  // In a real app, this would fetch data from an API or calculate from trend analysis
   return {
-    trendStrength: 7.2,
-    averageTrendDuration: 14.5,
-    winRateInTrend: 78.3,
-    firstTargetSuccessRate: 68.5,
-    secondTargetSuccessRate: 42.3,
-    thirdTargetSuccessRate: 28.7
+    trendAccuracy: 72.4,
+    avgTrendDuration: 14.2,
+    majorTrendsIdentified: 18,
+    falseBreakouts: 7,
+    successfulTrades: 26
   };
 };
 
-// Mock function to add trading journal entry
-export const addTradingJournalEntry = async (entry: any): Promise<any> => {
-  // In a real app, this would send the entry to a backend service
-  console.log("Adding entry to trading journal:", entry);
-  
-  // Create a copy with a generated ID
-  const savedEntry = {
-    ...entry,
-    id: `entry_${Date.now()}`
-  };
-  
-  // Simulate async operation
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve(savedEntry);
-    }, 300);
-  });
+// Get mock journal entries
+export const getJournalEntries = (): TradeJournalEntry[] => {
+  return [
+    {
+      id: "1",
+      assetId: "bitcoin",
+      assetName: "Bitcoin",
+      type: "buy",
+      entryPrice: 50000,
+      entryDate: "2023-09-15",
+      exitPrice: 55000,
+      exitDate: 1692979200000,
+      quantity: 0.5,
+      leverage: 1,
+      fees: 25,
+      profit: 2500,
+      profitPercentage: 5,
+      outcome: "win",
+      notes: "נכנסתי לאחר פריצת התנגדות ב-50K עם נפח גבוה. יציאה מוקדמת מדי.",
+      tags: ["breakout", "bitcoin", "trend-following"],
+      strategy: "breakout",
+      date: "2023-09-15",
+      symbol: "BTC/USD",
+      direction: "long",
+      stopLoss: 48000,
+      targetPrice: 58000,
+      positionSize: 25000,
+      risk: 1
+    },
+    {
+      id: "2",
+      assetId: "ethereum",
+      assetName: "Ethereum",
+      type: "sell",
+      entryPrice: 3200,
+      entryDate: "2023-08-22",
+      exitPrice: 2800,
+      exitDate: 1692376800000,
+      quantity: 3,
+      leverage: 1,
+      fees: 15,
+      profit: 1200,
+      profitPercentage: 12.5,
+      outcome: "win",
+      notes: "שורט בעקבות דיברגנס ב-RSI והיפוך ב-4H. הוספתי לפוזיציה בירידה.",
+      tags: ["divergence", "ethereum", "reversal"],
+      strategy: "technical",
+      date: "2023-08-22",
+      symbol: "ETH/USD",
+      direction: "short",
+      stopLoss: 3350,
+      targetPrice: 2600,
+      positionSize: 9600,
+      risk: 1.2
+    },
+    {
+      id: "3",
+      assetId: "solana",
+      assetName: "Solana",
+      type: "buy",
+      entryPrice: 85,
+      entryDate: "2023-10-05",
+      exitPrice: 82,
+      exitDate: 1696550400000,
+      quantity: 25,
+      leverage: 1,
+      fees: 8,
+      profit: -75,
+      profitPercentage: -3.5,
+      outcome: "loss",
+      notes: "כניסה מוקדמת מדי לפני אימות התבנית. הפעם הבאה אחכה לאימות נוסף.",
+      tags: ["cup-and-handle", "solana"],
+      strategy: "pattern",
+      date: "2023-10-05",
+      symbol: "SOL/USD",
+      direction: "long",
+      stopLoss: 80,
+      targetPrice: 95,
+      positionSize: 2125,
+      risk: 0.8
+    }
+  ];
 };

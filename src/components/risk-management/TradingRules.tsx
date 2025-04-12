@@ -1,139 +1,79 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { ShieldCheck, AlertTriangle, CheckCircle, Info } from 'lucide-react';
-import { riskManagementRules } from '@/services/customTradingStrategyService';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 
 interface TradingRulesProps {
   showDetails?: boolean;
 }
 
-const TradingRules = ({ showDetails = true }: TradingRulesProps) => {
-  // Categorize rules - using rule property in the riskManagementRules objects
-  const stopLossRules = riskManagementRules.filter(rule => rule.rule.includes('סטופ') || rule.rule.includes('stop'));
-  const positionRules = riskManagementRules.filter(rule => rule.rule.includes('פוזיציה') || rule.rule.includes('גודל'));
-  const psychologyRules = riskManagementRules.filter(rule => rule.rule.includes('פסיכולוגיה') || rule.rule.includes('רגש'));
-  const generalRules = riskManagementRules.filter(rule => !stopLossRules.includes(rule) && 
-                                                       !positionRules.includes(rule) && 
-                                                       !psychologyRules.includes(rule));
-  
-  const getPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case 'critical':
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      case 'high':
-        return <Info className="h-4 w-4 text-amber-500" />;
-      default:
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-    }
-  };
-  
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'critical':
-        return <Badge variant="destructive">קריטי</Badge>;
-      case 'high':
-        return <Badge variant="secondary">חשוב</Badge>;
-      case 'medium':
-        return <Badge variant="outline">בינוני</Badge>;
-      default:
-        return <Badge variant="outline">רגיל</Badge>;
-    }
-  };
-  
+const TradingRules: React.FC<TradingRulesProps> = ({ showDetails = false }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-right flex items-center justify-between">
-          <ShieldCheck className="h-5 w-5" />
-          <div>כללי המסחר וניהול הסיכונים</div>
-        </CardTitle>
+        <CardTitle className="text-right">כללי מסחר Levi Bot</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="text-right space-y-6">
-          {/* Stop Loss Rules */}
-          <div>
-            <h3 className="font-semibold text-lg mb-2 flex justify-end items-center">
-              <span>כללי סטופ לוס</span>
-              <AlertTriangle className="h-5 w-5 ml-2 text-red-500" />
-            </h3>
-            <div className="space-y-2">
-              {stopLossRules.map(rule => (
-                <div key={rule.id} className="border rounded-lg p-2">
-                  <div className="flex justify-between items-start">
-                    {getPriorityBadge(rule.priority)}
-                    <div className="text-right font-medium">{rule.rule}</div>
-                  </div>
-                </div>
-              ))}
+      <CardContent className="text-right">
+        <div className="space-y-4">
+          <div className="flex items-start space-x-2 rtl:space-x-reverse">
+            <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+            <div>
+              <h3 className="font-semibold text-lg">סיכון מרבי: 1% לעסקה</h3>
+              {showDetails && (
+                <p className="text-muted-foreground text-sm">
+                  לעולם אל תסכן יותר מ-1% מהתיק שלך בעסקה בודדת. זהו הכלל החשוב ביותר בניהול סיכונים.
+                </p>
+              )}
             </div>
           </div>
           
-          <Separator />
-          
-          {/* Position Size Rules */}
-          <div>
-            <h3 className="font-semibold text-lg mb-2 flex justify-end items-center">
-              <span>כללי גודל פוזיציה</span>
-              <Info className="h-5 w-5 ml-2 text-blue-500" />
-            </h3>
-            <div className="space-y-2">
-              {positionRules.map(rule => (
-                <div key={rule.id} className="border rounded-lg p-2">
-                  <div className="flex justify-between items-start">
-                    {getPriorityBadge(rule.priority)}
-                    <div className="text-right font-medium">{rule.rule}</div>
-                  </div>
-                </div>
-              ))}
+          <div className="flex items-start space-x-2 rtl:space-x-reverse">
+            <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+            <div>
+              <h3 className="font-semibold text-lg">יחס סיכוי-סיכון: לפחות 1:2</h3>
+              {showDetails && (
+                <p className="text-muted-foreground text-sm">
+                  בחר רק עסקאות עם יחס סיכוי-סיכון של לפחות 1:2, כלומר הרווח הפוטנציאלי הוא לפחות כפול מהסיכון שלך.
+                </p>
+              )}
             </div>
           </div>
           
-          <Separator />
-          
-          {/* Psychology Rules */}
-          <div>
-            <h3 className="font-semibold text-lg mb-2 flex justify-end items-center">
-              <span>כללי פסיכולוגיה</span>
-              <CheckCircle className="h-5 w-5 ml-2 text-green-500" />
-            </h3>
-            <div className="space-y-2">
-              {psychologyRules.map(rule => (
-                <div key={rule.id} className="border rounded-lg p-2">
-                  <div className="flex justify-between items-start">
-                    {getPriorityBadge(rule.priority)}
-                    <div className="text-right font-medium">{rule.rule}</div>
-                  </div>
-                </div>
-              ))}
+          <div className="flex items-start space-x-2 rtl:space-x-reverse">
+            <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+            <div>
+              <h3 className="font-semibold text-lg">תמיד השתמש בסטופ לוס</h3>
+              {showDetails && (
+                <p className="text-muted-foreground text-sm">
+                  הגדר סטופ לוס לכל עסקה לפני הכניסה אליה, ולעולם אל תזיז את הסטופ לוס כדי להגדיל את ההפסד שלך.
+                </p>
+              )}
             </div>
           </div>
           
-          {generalRules.length > 0 && (
-            <>
-              <Separator />
-              
-              {/* General Rules */}
-              <div>
-                <h3 className="font-semibold text-lg mb-2 flex justify-end items-center">
-                  <span>כללים כלליים</span>
-                  <Info className="h-5 w-5 ml-2 text-gray-500" />
-                </h3>
-                <div className="space-y-2">
-                  {generalRules.map(rule => (
-                    <div key={rule.id} className="border rounded-lg p-2">
-                      <div className="flex justify-between items-start">
-                        {getPriorityBadge(rule.priority)}
-                        <div className="text-right font-medium">{rule.rule}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
-          )}
+          <div className="flex items-start space-x-2 rtl:space-x-reverse">
+            <CheckCircle className="h-5 w-5 text-green-500 mt-0.5" />
+            <div>
+              <h3 className="font-semibold text-lg">הימנע מלהיכנס בחדשות</h3>
+              {showDetails && (
+                <p className="text-muted-foreground text-sm">
+                  אל תיכנס לעסקאות לפני אירועי חדשות גדולים, כגון הכרזות על ריבית או דו"חות תעסוקה.
+                </p>
+              )}
+            </div>
+          </div>
+          
+          <div className="flex items-start space-x-2 rtl:space-x-reverse">
+            <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
+            <div>
+              <h3 className="font-semibold text-lg">נהל יומן מסחר</h3>
+              {showDetails && (
+                <p className="text-muted-foreground text-sm">
+                  תעד כל עסקה ביומן המסחר שלך, כולל הסיבות לכניסה, אסטרטגיה, רגשות והלקחים שלמדת.
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

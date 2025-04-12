@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { LogIn, ChevronRight, Key } from 'lucide-react';
+import { LogIn, ChevronRight, Key, Server } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -52,12 +52,18 @@ const Login = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Link to="/" className="absolute top-4 right-4 flex items-center text-muted-foreground hover:text-primary transition-colors">
-        <ChevronRight className="mr-1 h-4 w-4" />
-        חזרה לדף הבית
-      </Link>
+      <div className="flex justify-between items-center w-full max-w-md px-4">
+        <Link to="/proxy-guide" className="flex items-center text-muted-foreground hover:text-primary transition-colors">
+          <Server className="mr-1 h-4 w-4" />
+          מדריך התחברות לפרוקסי
+        </Link>
+        <Link to="/" className="flex items-center text-muted-foreground hover:text-primary transition-colors">
+          <ChevronRight className="mr-1 h-4 w-4" />
+          חזרה לדף הבית
+        </Link>
+      </div>
       
-      <div className="mb-8 text-center">
+      <div className="mb-8 mt-8 text-center">
         <h1 className="text-4xl font-bold tracking-tight text-primary">
           Levi Bot
         </h1>
