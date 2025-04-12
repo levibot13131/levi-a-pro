@@ -1,12 +1,13 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
-  getSources as getInformationSources, 
-  getInfluencers as getMarketInfluencers, 
-  toggleSourceFavorite as toggleSourceFocus,
+  getSources, 
+  getInfluencers, 
+  toggleSourceFavorite,
   toggleInfluencerFollow
 } from '@/services/marketInformation/index';
-import { MarketInfluencer, MarketSource } from '@/types/market';
+import { MarketInfluencer, FinancialDataSource, MarketEvent } from '@/types/marketInformation';
 import InfluencersTab from '@/components/information-sources/InfluencersTab';
 import SourcesTab from '@/components/information-sources/SourcesTab';
 import EventsTab from '@/components/information-sources/EventsTab';
@@ -44,7 +45,7 @@ const InformationSources = () => {
   const [searchTerm, setSearchTerm] = useState('');
   
   // Sources state
-  const [sources, setSources] = useState<MarketSource[]>([]);
+  const [sources, setSources] = useState<FinancialDataSource[]>([]);
   const [focusedSourceIds, setFocusedSourceIds] = useState<Set<string>>(new Set());
   
   // Influencers state
@@ -52,13 +53,28 @@ const InformationSources = () => {
   const [followedInfluencerIds, setFollowedInfluencerIds] = useState<Set<string>>(new Set());
   
   // Events state
-  const [events, setEvents] = useState<any[]>([]);
-  const [remindEvents, setRemindEvents] = useState<Set<string>>(new Set());
+  const [events, setEvents] = useState<MarketEvent[]>([]);
+  const [setReminders, setRemindEvents] = useState<Set<string>>(new Set());
   
   // Fetch initial data
   React.useEffect(() => {
-    setInfluencers(getMarketInfluencers());
-    setSources(getInformationSources());
+    // Adapt the returned influencers to include required properties
+    const fetchedInfluencers = getInfluencers().map(inf => ({
+      ...inf, 
+      bio: inf.description || 'No bio available',
+      expertise: inf.assetsDiscussed || ['cryptocurrency']
+    }));
+    
+    // Adapt the returned sources to include required properties
+    const fetchedSources = getSources().map(source => ({
+      ...source,
+      category: source.type,
+      rating: source.reliability,
+      platform: source.type
+    }));
+    
+    setInfluencers(fetchedInfluencers as MarketInfluencer[]);
+    setSources(fetchedSources as FinancialDataSource[]);
     setEvents(getUpcomingMarketEvents());
   }, []);
   
@@ -71,7 +87,7 @@ const InformationSources = () => {
       newFocusedSources.add(sourceId);
     }
     setFocusedSourceIds(newFocusedSources);
-    toggleSourceFocus(sourceId);
+    toggleSourceFavorite(sourceId);
   };
   
   // Handle follow influencer
@@ -88,15 +104,14 @@ const InformationSources = () => {
   
   // Handle event reminder
   const handleEventReminder = (eventId: string) => {
-    const newRemindEvents = new Set(remindEvents);
+    const newRemindEvents = new Set(setReminders);
     if (newRemindEvents.has(eventId)) {
       newRemindEvents.delete(eventId);
-      setEventReminder(eventId);
     } else {
       newRemindEvents.add(eventId);
-      setEventReminder(eventId);
     }
     setRemindEvents(newRemindEvents);
+    setEventReminder(eventId);
   };
   
   // Filter data based on search term
@@ -162,8 +177,8 @@ const InformationSources = () => {
       <TabsContent value="events" className={activeTab === 'events' ? 'block' : 'hidden'}>
         <EventsTab
           events={filteredEvents}
-          remindEvents={remindEvents}
-          onRemind={handleEventReminder}
+          setReminders={setReminders}
+          onSetReminder={handleEventReminder}
         />
       </TabsContent>
     </div>

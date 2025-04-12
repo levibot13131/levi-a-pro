@@ -11,9 +11,9 @@ export * from './whaleTrackerService';
 // Import directly from the marketInformation directory services 
 // to avoid circular dependency and type conflicts
 import {
-  getSources as getInformationSources,
-  getInfluencers as getMarketInfluencers,
-  toggleSourceFavorite as toggleSourceFocus,
+  getSources,
+  getInfluencers,
+  toggleSourceFavorite,
   toggleInfluencerFollow
 } from './marketInformation/index';
 
@@ -36,15 +36,15 @@ const addCustomEvent = (eventData: any) => {
 };
 
 export {
-  getInformationSources,
-  getMarketInfluencers,
+  getSources as getInformationSources,
+  getInfluencers as getMarketInfluencers,
   getUpcomingMarketEvents,
-  toggleSourceFocus,
+  toggleSourceFavorite as toggleSourceFocus,
   toggleInfluencerFollow,
   setEventReminder,
   addCustomEvent
 };
 
 // Re-export the types directly from the types module
-export type { MarketInfluencer, MarketSource } from '@/types/market';
-export type { MarketEvent } from '@/types/marketData';
+export type { MarketInfluencer, FinancialDataSource as MarketSource } from '@/types/marketInformation';
+export type { MarketEvent } from '@/types/marketInformation';

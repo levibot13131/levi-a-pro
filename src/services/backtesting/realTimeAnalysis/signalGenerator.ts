@@ -31,14 +31,6 @@ export const generateMockSignal = (assetId: string, strategy?: string): TradeSig
     notes = signalType === 'buy'
       ? 'אזור ביקוש זוהה עם חזרה של המחיר לאזור. מומלץ להכנס לפוזיציית קנייה.'
       : 'זוהה אזור היצע עם דחייה מהמחיר. מומלץ להכנס לפוזיציית מכירה.';
-  } else if (strategyName === 'Wyckoff') {
-    notes = signalType === 'buy'
-      ? 'זוהה שלב Phase C (Spring) במבנה Wyckoff. מומלץ להכנס לפוזיציית קנייה.'
-      : 'זוהה שלב Phase E (UPTHRUST) במבנה Wyckoff. מומלץ להכנס לפוזיציית מכירה.';
-  } else if (strategyName === 'אסטרטגיה משולבת') {
-    notes = signalType === 'buy'
-      ? 'התכנסות מספר אינדיקטורים טכניים יחד עם ניתוח מבני המצביע על המשך מגמה עולה.'
-      : 'שילוב של מספר אינדיקטורים טכניים יחד עם ניתוח מבני המצביע על מגמה יורדת.';
   } else {
     notes = signalType === 'buy'
       ? 'זוהתה התכנסות בולינגר בנדס עם פריצה למעלה. נפח מסחר במגמת עלייה.'
@@ -62,6 +54,10 @@ export const generateMockSignal = (assetId: string, strategy?: string): TradeSig
     stopLoss: signalType === 'buy' ? price * (1 - Math.random() * 0.1) : price * (1 + Math.random() * 0.1),
     riskRewardRatio: 1 + Math.random() * 3,
     notes,
-    createdAt: createdAtTime // Add required createdAt field
+    symbolName: assetName,
+    confidence: Math.floor(55 + Math.random() * 45),
+    indicator: signalType === 'buy' ? 'פריצת התנגדות' : 'שבירת תמיכה',
+    description: notes,
+    createdAt: createdAtTime
   };
 };

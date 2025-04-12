@@ -1,23 +1,18 @@
 
-// Add the following fields to TradeSignal interface
-export interface TradeSignal {
+// Add the TradeJournalEntry interface
+export interface TradeJournalEntry {
   id: string;
+  date: string;
   assetId: string;
-  type: 'buy' | 'sell';
-  price: number;
-  timestamp: number;
-  strength: 'weak' | 'medium' | 'strong';
-  strategy: string;
-  timeframe: string;
+  assetName: string;
+  direction: 'long' | 'short';
+  entryPrice: number;
+  stopLoss: number;
   targetPrice?: number;
-  stopLoss?: number;
-  riskRewardRatio?: number;
+  positionSize: number;
+  risk: number;
   notes?: string;
-  source?: string;
-  createdAt: number;
-  // Additional properties used in CustomSignals.tsx
-  symbolName?: string;
-  confidence?: number;
-  indicator?: string;
-  description?: string;
+  strategy: string; // Make this required
+  tags?: string[];
+  outcome: 'open' | 'closed' | 'win' | 'loss' | 'breakeven';
 }

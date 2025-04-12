@@ -1,71 +1,65 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
-interface SentimentAnalysisProps {
-  assetId: string;
-}
+const SentimentAnalysis = () => {
+  const sentimentData = {
+    overall: 65,
+    social: 78,
+    news: 55
+  };
 
-const SentimentAnalysis: React.FC<SentimentAnalysisProps> = ({ assetId }) => {
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-right text-sm">סנטימנט כללי</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-right space-y-4">
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm text-green-500">65</span>
-                <span className="text-sm">מדד פחד/חמדנות</span>
-              </div>
-              <Progress value={65} className="h-2 bg-gray-200" />
+    <Card className="w-full">
+      <CardContent className="py-6">
+        <h3 className="text-lg font-semibold mb-4 text-right">ניתוח סנטימנט</h3>
+        
+        <div className="space-y-6">
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-medium">{sentimentData.overall}%</span>
+              <span className="text-sm font-medium text-right">סנטימנט כללי</span>
             </div>
-            
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm text-green-500">72%</span>
-                <span className="text-sm">סנטימנט רשתות חברתיות</span>
-              </div>
-              <Progress value={72} className="h-2 bg-gray-200" />
-            </div>
-            
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm text-yellow-500">55%</span>
-                <span className="text-sm">סנטימנט חדשות</span>
-              </div>
-              <Progress value={55} className="h-2 bg-gray-200" />
-            </div>
+            <Progress 
+              value={sentimentData.overall} 
+              className="h-2 bg-gray-200"
+            />
           </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-right text-sm">מגמות שיחה</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-right space-y-2">
-            <p className="text-sm font-medium">מילות מפתח חיוביות:</p>
-            <div className="flex flex-wrap gap-2 justify-end">
-              <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">התאוששות</span>
-              <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">עליות</span>
-              <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">מומנטום</span>
-              <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">פריצה</span>
+          
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-medium">{sentimentData.social}%</span>
+              <span className="text-sm font-medium text-right">סנטימנט מרשתות חברתיות</span>
             </div>
-            
-            <p className="text-sm font-medium mt-2">מילות מפתח שליליות:</p>
-            <div className="flex flex-wrap gap-2 justify-end">
-              <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">רגולציה</span>
-              <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">תיקון</span>
-            </div>
+            <Progress 
+              value={sentimentData.social} 
+              className="h-2 bg-gray-200"
+            />
           </div>
-        </CardContent>
-      </Card>
-    </div>
+          
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-medium">{sentimentData.news}%</span>
+              <span className="text-sm font-medium text-right">סנטימנט חדשותי</span>
+            </div>
+            <Progress 
+              value={sentimentData.news} 
+              className="h-2 bg-gray-200"
+            />
+          </div>
+          
+          <div className="pt-4">
+            <h4 className="text-sm font-semibold mb-2 text-right">מקורות נוספים לניתוח סנטימנט:</h4>
+            <ul className="text-sm text-right space-y-1">
+              <li>• מדד הפחד והחמדנות: 65 (חמדנות)</li>
+              <li>• חיפושים בגוגל: עלייה של 15% בשבוע האחרון</li>
+              <li>• מדדי וויקס: רמות נמוכות</li>
+            </ul>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

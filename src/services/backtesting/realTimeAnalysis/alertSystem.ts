@@ -1,5 +1,5 @@
 
-import { Asset, TradeSignal } from '@/types/asset';
+import { TradeSignal } from '@/types/asset';
 import { toast } from 'sonner';
 import { BacktestSettings } from '../types';
 import { generateMockSignal } from './signalGenerator';

@@ -17,12 +17,15 @@ import {
   toggleSourceFavorite
 } from './sourcesService';
 
-// Export functions matching the names expected in InformationSources.tsx
-export const getMarketInfluencers = getInfluencers;
-export const getInformationSources = getSources;
-export const toggleSourceFocus = toggleSourceFavorite;
+// Export functions for InformationSources.tsx
+export {
+  getInfluencers,
+  getSources,
+  toggleSourceFavorite,
+  toggleInfluencerFollow
+};
 
-// Add missing functions expected by InformationSources.tsx
+// Add mock functions for events
 export const getUpcomingMarketEvents = () => {
   return [
     {
@@ -44,8 +47,8 @@ export const getUpcomingMarketEvents = () => {
   ];
 };
 
-export const setEventReminder = (eventId: string, enabled: boolean) => {
-  console.log(`Event reminder ${enabled ? 'enabled' : 'disabled'} for event ${eventId}`);
+export const setEventReminder = (eventId: string) => {
+  console.log(`Setting reminder for event ${eventId}`);
   return true;
 };
 
@@ -57,19 +60,16 @@ export const addCustomEvent = (eventData: any) => {
   };
 };
 
+// Export all other functions for completeness
 export {
   // Influencers
-  getInfluencers,
   getInfluencerById,
   getInfluencersByPlatform,
   getInfluencersByAsset,
-  toggleInfluencerFollow,
   searchInfluencers,
   
   // Sources
-  getSources,
   getSourceById,
   getSourcesByType,
-  searchSources,
-  toggleSourceFavorite
+  searchSources
 };
