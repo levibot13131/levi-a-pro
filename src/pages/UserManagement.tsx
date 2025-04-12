@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { UserManagement as UserManagementComponent } from '@/components/admin/UserManagement';
+import UserManagementComponent from '@/components/admin/UserManagement';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate } from 'react-router-dom';
