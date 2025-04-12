@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getTrackedAssets } from '@/services/assetTracking';
@@ -8,7 +9,7 @@ import SocialMonitoring from './SocialMonitoring';
 import ExternalSources from './ExternalSources';
 import TradingViewBanner from './TradingViewBanner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Globe, Activity, Link } from 'lucide-react';
+import { Globe, Activity, ExternalLink } from 'lucide-react';
 import { useTradingViewConnection } from '@/hooks/use-tradingview-connection';
 import { startAssetTracking, stopAssetTracking, isTrackingActive } from '@/services/assetTracking/realTimeSync';
 
@@ -27,6 +28,7 @@ const DashboardContent = () => {
     }
     
     return () => {
+      // Cleanup if needed
     };
   }, []);
 
@@ -76,27 +78,26 @@ const DashboardContent = () => {
                 מידע פונדמנטלי
               </TabsTrigger>
               <TabsTrigger value="externalSources" className="flex items-center gap-2">
-                <Link className="h-4 w-4" />
+                <ExternalLink className="h-4 w-4" />
                 מקורות חיצוניים
               </TabsTrigger>
+              <TabsTrigger value="social" className="flex items-center gap-2">
+                <Globe className="h-4 w-4" />
+                מדיה חברתית
+              </TabsTrigger>
             </TabsList>
-            
             <TabsContent value="marketInfo">
-              <MarketInformation />
+              <MarketInformation selectedAsset={selectedAsset} />
             </TabsContent>
-            
             <TabsContent value="externalSources">
-              <ExternalSources onUpdate={refetch} />
+              <ExternalSources selectedAsset={selectedAsset} />
+            </TabsContent>
+            <TabsContent value="social">
+              <SocialMonitoring selectedAsset={selectedAsset} />
             </TabsContent>
           </Tabs>
         </div>
       </div>
-      
-      {selectedAsset && (
-        <div className="mt-6">
-          <SocialMonitoring selectedAsset={selectedAsset} />
-        </div>
-      )}
     </div>
   );
 };

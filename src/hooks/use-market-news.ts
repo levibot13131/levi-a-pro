@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { getNewsByAssetId } from '@/services/mockNewsService';
 import { toast } from 'sonner';
@@ -15,10 +14,41 @@ export interface NewsItem {
   relatedAssets?: string[];
 }
 
-// סוגי פילטרים
+export const formatTimeAgo = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) {
+    return 'לפני פחות מדקה';
+  }
+  
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) {
+    return `לפני ${diffInMinutes} דקות`;
+  }
+  
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return `לפני ${diffInHours} שעות`;
+  }
+  
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 30) {
+    return `לפני ${diffInDays} ימים`;
+  }
+  
+  const diffInMonths = Math.floor(diffInDays / 30);
+  if (diffInMonths < 12) {
+    return `לפני ${diffInMonths} חודשים`;
+  }
+  
+  const diffInYears = Math.floor(diffInMonths / 12);
+  return `לפני ${diffInYears} שנים`;
+};
+
 export type NewsFilter = 'all' | 'positive' | 'negative' | 'neutral' | 'crypto' | 'stocks';
 
-// פרמטרים עבור שאילתת חדשות
 export interface NewsQueryParams {
   limit?: number;
   offset?: number;
@@ -27,7 +57,6 @@ export interface NewsQueryParams {
   search?: string;
 }
 
-// נתונים על תנועות לווייתנים
 export interface WhaleMovement {
   id: string;
   assetId: string;
@@ -37,9 +66,25 @@ export interface WhaleMovement {
   timestamp: string;
   transactionType: 'exchange_deposit' | 'exchange_withdrawal' | 'wallet_transfer';
   exchangeName?: string;
+  walletAddress: string;
+  walletLabel?: string;
+  source: string;
+  destination: string;
+  impact: {
+    significance: 'very-high' | 'high' | 'medium' | 'low';
+    priceImpact: number;
+  };
 }
 
-// הוק לקבלת חדשות שוק
+export interface WhaleBehaviorPattern {
+  pattern: string;
+  description: string;
+  confidence: number;
+  lastOccurrence: number;
+  priceImpact: string;
+  recommendation: string;
+}
+
 export function useMarketNews(params: NewsQueryParams = {}) {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -52,7 +97,6 @@ export function useMarketNews(params: NewsQueryParams = {}) {
   const assetId = params.assetId;
   const search = params.search || '';
   
-  // פונקציה לשליפת חדשות
   const fetchNews = async () => {
     setIsLoading(true);
     setError(null);
@@ -61,22 +105,18 @@ export function useMarketNews(params: NewsQueryParams = {}) {
       const offset = (page - 1) * limit;
       let newsItems: NewsItem[] = [];
       
-      // שליפת נתונים מהשירות
       const fetchedNews = await getNewsByAssetId(assetId || '');
       
-      // סינון לפי הפילטר הנבחר
       newsItems = fetchedNews.filter(item => {
         if (filter === 'all') {
           return true;
         } else if (filter === 'positive' || filter === 'negative' || filter === 'neutral') {
           return item.sentiment === filter;
         } else if (filter === 'crypto') {
-          // סינון לנכסי קריפטו (לפי המזהה או אחר)
           return item.relatedAssets?.some(asset => 
             ['bitcoin', 'ethereum', 'solana', 'cardano', 'polkadot'].includes(asset)
           );
         } else if (filter === 'stocks') {
-          // סינון למניות
           return item.relatedAssets?.some(asset => 
             ['aapl', 'amzn', 'googl', 'msft', 'tsla'].includes(asset)
           );
@@ -84,7 +124,6 @@ export function useMarketNews(params: NewsQueryParams = {}) {
         return true;
       });
       
-      // סינון לפי חיפוש אם יש
       if (search) {
         const searchLower = search.toLowerCase();
         newsItems = newsItems.filter(item => 
@@ -94,7 +133,6 @@ export function useMarketNews(params: NewsQueryParams = {}) {
         );
       }
       
-      // חיתוך לפי מגבלת העמוד
       const paginatedItems = newsItems.slice(offset, offset + limit);
       
       setNews(paginatedItems);
@@ -110,17 +148,14 @@ export function useMarketNews(params: NewsQueryParams = {}) {
     }
   };
   
-  // טעינה מחדש של החדשות
   const refetch = () => {
     fetchNews();
   };
   
-  // שינוי עמוד
   const changePage = (newPage: number) => {
     setPage(newPage);
   };
   
-  // אפקט לטעינת חדשות בטעינה ראשונית או שינוי פרמטרים
   useEffect(() => {
     fetchNews();
   }, [assetId, filter, search, page, limit]);
@@ -137,12 +172,9 @@ export function useMarketNews(params: NewsQueryParams = {}) {
   };
 }
 
-// פונקציה להשגת תנועות לווייתנים
 export const getWhaleMovements = async (assetId: string, limit: number = 5): Promise<WhaleMovement[]> => {
-  // מדמה API call לקבלת תנועות לווייתנים
   await new Promise(resolve => setTimeout(resolve, 800));
   
-  // מתאים את התנועות לפי סוג הנכס
   let mockMovements: WhaleMovement[] = [];
   
   if (assetId === 'bitcoin') {
@@ -155,7 +187,12 @@ export const getWhaleMovements = async (assetId: string, limit: number = 5): Pro
         toAddress: 'binance_wallet',
         timestamp: new Date(Date.now() - 3600000).toISOString(),
         transactionType: 'exchange_deposit',
-        exchangeName: 'Binance'
+        exchangeName: 'Binance',
+        walletAddress: '0x3a1b4C...e5f7',
+        walletLabel: 'Whale Wallet #1',
+        source: 'Unknown Wallet',
+        destination: 'Binance',
+        impact: { significance: 'high', priceImpact: 2.3 }
       },
       {
         id: '2',
@@ -165,60 +202,64 @@ export const getWhaleMovements = async (assetId: string, limit: number = 5): Pro
         toAddress: '0x7c2d3F...a1b2',
         timestamp: new Date(Date.now() - 7200000).toISOString(),
         transactionType: 'exchange_withdrawal',
-        exchangeName: 'Coinbase'
-      }
-    ];
-  } else if (assetId === 'ethereum') {
-    mockMovements = [
-      {
-        id: '3',
-        assetId: 'ethereum',
-        amount: 1205.67,
-        fromAddress: '0x1f4a3D...c9e2',
-        toAddress: 'kraken_wallet',
-        timestamp: new Date(Date.now() - 5400000).toISOString(),
-        transactionType: 'exchange_deposit',
-        exchangeName: 'Kraken'
-      }
-    ];
-  } else if (assetId === 'solana') {
-    mockMovements = [
-      {
-        id: '4',
-        assetId: 'solana',
-        amount: 8750.21,
-        fromAddress: 'ftx_wallet',
-        toAddress: '0x9e4b2D...f1e3',
-        timestamp: new Date(Date.now() - 10800000).toISOString(),
-        transactionType: 'exchange_withdrawal',
-        exchangeName: 'FTX'
+        exchangeName: 'Coinbase',
+        walletAddress: '0x7c2d3F...a1b2',
+        walletLabel: 'Whale Wallet #2',
+        source: 'Coinbase',
+        destination: 'Unknown Wallet',
+        impact: { significance: 'medium', priceImpact: 1.1 }
       }
     ];
   } else {
-    // לנכסים אחרים, נייצר תנועות אקראיות
-    const exchanges = ['Binance', 'Coinbase', 'Kraken', 'FTX', 'Huobi'];
-    for (let i = 0; i < Math.floor(Math.random() * 3) + 1; i++) {
-      const isDeposit = Math.random() > 0.5;
-      const exchangeName = exchanges[Math.floor(Math.random() * exchanges.length)];
-      mockMovements.push({
-        id: `generic-${assetId}-${i}`,
+    mockMovements = [
+      {
+        id: `${assetId}-1`,
         assetId,
-        amount: Math.floor(Math.random() * 1000) + 100,
-        fromAddress: isDeposit ? `0x${Math.random().toString(16).substring(2, 10)}...` : `${exchangeName.toLowerCase()}_wallet`,
-        toAddress: isDeposit ? `${exchangeName.toLowerCase()}_wallet` : `0x${Math.random().toString(16).substring(2, 10)}...`,
-        timestamp: new Date(Date.now() - (Math.random() * 86400000)).toISOString(),
-        transactionType: isDeposit ? 'exchange_deposit' : 'exchange_withdrawal',
-        exchangeName
-      });
-    }
+        amount: 100 + Math.random() * 500,
+        fromAddress: `0x${Math.random().toString(16).substring(2, 10)}`,
+        toAddress: `0x${Math.random().toString(16).substring(2, 10)}`,
+        timestamp: new Date(Date.now() - Math.random() * 86400000).toISOString(),
+        transactionType: 'exchange_deposit',
+        exchangeName: 'Generic Exchange',
+        walletAddress: `0x${Math.random().toString(16).substring(2, 10)}`,
+        walletLabel: `${assetId.charAt(0).toUpperCase() + assetId.slice(1)} Wallet`,
+        source: 'Unknown',
+        destination: 'Exchange',
+        impact: { 
+          significance: Math.random() > 0.5 ? 'high' : 'medium', 
+          priceImpact: Math.random() * 3
+        }
+      }
+    ];
   }
   
   return mockMovements.slice(0, limit);
 };
 
-// פונקציה להשגת נתוני נוזלות שוק
+export const getWhaleBehaviorPatterns = async (assetId: string): Promise<WhaleBehaviorPattern[]> => {
+  await new Promise(resolve => setTimeout(resolve, 600));
+  
+  return [
+    {
+      pattern: 'Accumulation Pattern',
+      description: 'Major holders are accumulating this asset quietly',
+      confidence: 75,
+      lastOccurrence: Date.now() - 172800000,
+      priceImpact: '+3.5% expected',
+      recommendation: 'Consider adding to position while price is stable'
+    },
+    {
+      pattern: 'Distribution to Exchanges',
+      description: 'Whales moving assets to exchanges - possible selling pressure',
+      confidence: 68,
+      lastOccurrence: Date.now() - 86400000,
+      priceImpact: '-2.8% expected',
+      recommendation: 'Monitor closely, consider reducing exposure temporarily'
+    }
+  ];
+};
+
 export const getLiquidityFlows = async (timeframe: string = '24h'): Promise<{ inflows: number[], outflows: number[], timeLabels: string[] }> => {
-  // מדמה API call לקבלת נתוני נוזלות
   await new Promise(resolve => setTimeout(resolve, 600));
   
   const now = new Date();
@@ -226,13 +267,12 @@ export const getLiquidityFlows = async (timeframe: string = '24h'): Promise<{ in
   const inflows: number[] = [];
   const outflows: number[] = [];
   
-  // יצירת נתונים מדומים לפי מסגרת הזמן
   let points = 0;
   let interval = 0;
   
   if (timeframe === '24h') {
     points = 24;
-    interval = 60 * 60 * 1000; // שעה
+    interval = 60 * 60 * 1000;
     for (let i = 0; i < points; i++) {
       const time = new Date(now.getTime() - (points - i) * interval);
       timeLabels.push(time.getHours().toString().padStart(2, '0') + ':00');
@@ -241,7 +281,7 @@ export const getLiquidityFlows = async (timeframe: string = '24h'): Promise<{ in
     }
   } else if (timeframe === '7d') {
     points = 7;
-    interval = 24 * 60 * 60 * 1000; // יום
+    interval = 24 * 60 * 60 * 1000;
     for (let i = 0; i < points; i++) {
       const time = new Date(now.getTime() - (points - i) * interval);
       timeLabels.push(time.toLocaleDateString('he-IL', { weekday: 'short' }));
@@ -250,7 +290,7 @@ export const getLiquidityFlows = async (timeframe: string = '24h'): Promise<{ in
     }
   } else if (timeframe === '30d') {
     points = 30;
-    interval = 24 * 60 * 60 * 1000; // יום
+    interval = 24 * 60 * 60 * 1000;
     for (let i = 0; i < points; i++) {
       const time = new Date(now.getTime() - (points - i) * interval);
       timeLabels.push(time.getDate().toString());

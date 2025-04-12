@@ -9,11 +9,13 @@ import { formatTimeAgo } from '@/hooks/use-market-news';
 
 interface NewsCardProps {
   item: NewsItem;
+  getSentimentBadge?: (sentiment?: 'positive' | 'neutral' | 'negative') => React.ReactNode;
+  formatDate?: (dateStr: string) => string;
 }
 
-const NewsCard: React.FC<NewsCardProps> = ({ item }) => {
-  // Helper function to get badge based on sentiment
-  const getSentimentBadge = (sentiment?: 'positive' | 'neutral' | 'negative') => {
+const NewsCard: React.FC<NewsCardProps> = ({ item, getSentimentBadge, formatDate }) => {
+  // Default getSentimentBadge if not provided
+  const defaultGetSentimentBadge = (sentiment?: 'positive' | 'neutral' | 'negative') => {
     switch (sentiment) {
       case 'positive':
         return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">חיובי</Badge>;
@@ -26,8 +28,14 @@ const NewsCard: React.FC<NewsCardProps> = ({ item }) => {
     }
   };
 
+  // Use provided function or default
+  const renderSentimentBadge = getSentimentBadge || defaultGetSentimentBadge;
+  
+  // Format date
+  const formattedDate = formatDate ? formatDate(item.publishedAt) : formatTimeAgo(item.publishedAt);
+
   return (
-    <Card key={item.id} className="overflow-hidden flex flex-col">
+    <Card className="overflow-hidden flex flex-col">
       {item.imageUrl && (
         <div className="h-48 overflow-hidden">
           <img 
@@ -40,21 +48,23 @@ const NewsCard: React.FC<NewsCardProps> = ({ item }) => {
       <CardHeader className="text-right">
         <div className="flex items-center justify-between mb-2">
           <Badge variant="outline">{item.source}</Badge>
-          {getSentimentBadge(item.sentiment)}
+          {renderSentimentBadge(item.sentiment)}
         </div>
         <CardTitle className="text-xl">{item.title}</CardTitle>
-        <CardDescription>{formatTimeAgo(item.publishedAt)}</CardDescription>
+        <CardDescription>{formattedDate}</CardDescription>
       </CardHeader>
       <CardContent className="text-right flex-grow">
         <p>{item.summary}</p>
       </CardContent>
       <CardFooter className="pt-0 flex justify-end">
-        <Button variant="ghost" size="sm" asChild>
-          <a href={item.url} target="_blank" rel="noopener noreferrer">
-            קרא עוד
-            <ExternalLink className="h-4 w-4 mr-2" />
-          </a>
-        </Button>
+        {item.url && (
+          <Button variant="ghost" size="sm" asChild>
+            <a href={item.url} target="_blank" rel="noopener noreferrer">
+              קרא עוד
+              <ExternalLink className="h-4 w-4 mr-2" />
+            </a>
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

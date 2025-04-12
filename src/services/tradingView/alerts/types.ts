@@ -1,40 +1,31 @@
 
-// Alert destination types
-export type AlertDestinationType = 'webhook' | 'telegram' | 'whatsapp' | 'email';
-
-// Alert destination interface
-export interface AlertDestination {
-  id: string;
-  name: string;
-  type: AlertDestinationType;
-  active: boolean;
-  endpoint?: string;  // URL for webhooks
-  headers?: Record<string, string>;  // Headers for webhook requests
-}
-
-// Alert message interface
-export interface AlertMessage {
+// Types for TradingView alerts
+export interface TradingViewAlert {
   id: string;
   symbol: string;
-  price: number;
-  action: 'buy' | 'sell' | 'info';
   message: string;
+  type: 'buy' | 'sell' | 'info';
+  timeframe: string;
+  price: number;
   timestamp: number;
-  source: string;
+  indicators: string[];
+  source: 'tradingview' | 'custom' | 'webhook';
+  priority: 'high' | 'medium' | 'low';
+  status: 'new' | 'delivered' | 'failed';
 }
 
-// Alert result interface
-export interface AlertResult {
-  success: boolean;
-  destinationId: string;
-  destinationType: AlertDestinationType;
-  error?: string;
-  timestamp: number;
-}
-
-// Alert status interface
-export interface AlertStatus {
-  message: AlertMessage;
-  results: AlertResult[];
-  timestamp: number;
-}
+export const createTradingViewAlert = (partial: Partial<TradingViewAlert>): TradingViewAlert => {
+  return {
+    id: partial.id || `alert-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    symbol: partial.symbol || 'UNKNOWN',
+    message: partial.message || 'No message provided',
+    type: partial.type || 'info',
+    timeframe: partial.timeframe || '1d',
+    price: partial.price || 0,
+    timestamp: partial.timestamp || Date.now(),
+    indicators: partial.indicators || [],
+    source: partial.source || 'custom',
+    priority: partial.priority || 'medium',
+    status: partial.status || 'new'
+  };
+};

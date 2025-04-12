@@ -1,19 +1,17 @@
 
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { MainNav } from '@/components/main-nav';
+import { Toaster } from 'sonner';
 
 const MainLayout = () => {
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b">
-        <div className="container flex items-center h-16 px-4">
-          <MainNav className="mx-6" />
+    <div className="min-h-screen bg-background">
+      <Toaster richColors position="top-center" dir="rtl" closeButton={true} />
+      <div className="flex min-h-screen flex-col">
+        <div className="flex-1">
+          <Outlet />
         </div>
-      </header>
-      <main className="flex-1">
-        <Outlet />
-      </main>
+      </div>
     </div>
   );
 };

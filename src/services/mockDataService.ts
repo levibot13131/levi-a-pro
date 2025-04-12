@@ -1,168 +1,183 @@
 
-import { Asset, AssetHistoricalData, AssetType, PricePoint, TimeframeType } from '@/types/asset';
+import { Asset, PricePoint, AssetHistoricalData, TimeframeType } from '@/types/asset';
 
-// Mock assets data
+// Mock assets
 const mockAssets: Asset[] = [
   {
     id: 'bitcoin',
-    name: 'Bitcoin',
     symbol: 'BTC',
-    price: 68423.12,
-    change24h: 2.35,
+    name: 'Bitcoin',
     type: 'crypto',
-    icon: '₿',
-    marketCap: 1342587450000,
-    volume24h: 42587450000,
+    price: 67850.42,
+    change24h: 2.14,
+    marketCap: 1322045000000,
+    volume24h: 42567000000,
+    supply: {
+      circulating: 19318750,
+      total: 21000000,
+      max: 21000000
+    },
+    rank: 1,
+    icon: '/assets/btc.png',
+    description: 'Bitcoin is a decentralized digital currency, without a central bank or single administrator.',
+    website: 'https://bitcoin.org',
+    whitepaper: 'https://bitcoin.org/bitcoin.pdf',
+    socials: {
+      twitter: 'https://twitter.com/bitcoin',
+      telegram: 'https://t.me/bitcoin',
+      reddit: 'https://reddit.com/r/bitcoin'
+    },
+    tags: ['cryptocurrency', 'store-of-value', 'pow']
   },
   {
     id: 'ethereum',
-    name: 'Ethereum',
     symbol: 'ETH',
-    price: 3342.87,
-    change24h: -0.75,
+    name: 'Ethereum',
     type: 'crypto',
-    icon: 'Ξ',
-    marketCap: 401235780000,
-    volume24h: 15789632400,
+    price: 3456.78,
+    change24h: -1.23,
+    marketCap: 415674000000,
+    volume24h: 18795000000,
+    supply: {
+      circulating: 120250000,
+      total: 120250000
+    },
+    rank: 2,
+    icon: '/assets/eth.png',
+    description: 'Ethereum is a decentralized, open-source blockchain with smart contract functionality.',
+    website: 'https://ethereum.org',
+    whitepaper: 'https://ethereum.org/whitepaper',
+    socials: {
+      twitter: 'https://twitter.com/ethereum',
+      reddit: 'https://reddit.com/r/ethereum',
+      github: 'https://github.com/ethereum'
+    },
+    tags: ['smart-contracts', 'defi', 'nft']
   },
   {
     id: 'solana',
-    name: 'Solana',
     symbol: 'SOL',
-    price: 143.21,
-    change24h: 5.23,
+    name: 'Solana',
     type: 'crypto',
-    icon: '◎',
-    marketCap: 65432789000,
-    volume24h: 3287496500,
+    price: 157.89,
+    change24h: 5.67,
+    marketCap: 68975000000,
+    volume24h: 3421000000,
+    supply: {
+      circulating: 436982000,
+      total: 536982000
+    },
+    rank: 5,
+    icon: '/assets/sol.png',
+    description: 'Solana is a high-performance blockchain supporting builders around the world.',
+    website: 'https://solana.com',
+    tags: ['layer-1', 'smart-contracts', 'high-performance']
   },
   {
     id: 'aapl',
-    name: 'Apple Inc.',
     symbol: 'AAPL',
-    price: 187.43,
-    change24h: 0.34,
-    type: 'stock',
-    icon: '🍎',
-    marketCap: 2987654320000,
-    volume24h: 4578923400,
+    name: 'Apple Inc.',
+    type: 'stocks',
+    price: 185.92,
+    change24h: 0.86,
+    marketCap: 2987000000000,
+    volume24h: 4672000000,
+    rank: 1,
+    description: 'Apple Inc. designs, manufactures and markets smartphones, personal computers, tablets, wearables and accessories.',
+    tags: ['technology', 'consumer-electronics', 'blue-chip']
   },
   {
     id: 'amzn',
-    name: 'Amazon.com, Inc.',
     symbol: 'AMZN',
-    price: 178.23,
-    change24h: -1.05,
-    type: 'stock',
-    icon: '📦',
-    marketCap: 1876543210000,
-    volume24h: 3897654320,
+    name: 'Amazon.com Inc.',
+    type: 'stocks',
+    price: 178.35,
+    change24h: -0.94,
+    marketCap: 1845000000000,
+    volume24h: 3285000000,
+    rank: 3,
+    description: 'Amazon.com, Inc. is an American multinational technology company focusing on e-commerce, cloud computing, online advertising, digital streaming, and artificial intelligence.',
+    tags: ['technology', 'e-commerce', 'cloud-services']
   }
 ];
 
 // Get all assets
 export const getAssets = async (): Promise<Asset[]> => {
-  // Simulate API call delay
+  // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 500));
   return mockAssets;
 };
 
 // Get asset by ID
-export const getAssetById = async (id: string): Promise<Asset | undefined> => {
-  // Simulate API call delay
+export const getAssetById = async (id: string): Promise<Asset | null> => {
+  // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 300));
-  return mockAssets.find(asset => asset.id === id);
+  const asset = mockAssets.find(a => a.id === id);
+  return asset || null;
 };
 
-// Generate mock historical data
+// Get asset historical data
 export const getAssetHistory = async (
   assetId: string,
   timeframe: TimeframeType = '1d',
   days: number = 30
-): Promise<AssetHistoricalData> => {
-  // Simulate API call delay
+): Promise<AssetHistoricalData | null> => {
+  // Simulate API delay
   await new Promise(resolve => setTimeout(resolve, 800));
   
-  // Get base asset price
   const asset = mockAssets.find(a => a.id === assetId);
-  if (!asset) {
-    throw new Error(`Asset with ID ${assetId} not found`);
-  }
+  if (!asset) return null;
   
-  const basePrice = asset.price;
-  
-  // Generate price points
   const now = Date.now();
   const data: PricePoint[] = [];
+  let price = asset.price;
   
-  // Timeframe in milliseconds
-  let timeStep: number;
-  switch (timeframe) {
-    case '5m': timeStep = 5 * 60 * 1000; days = 1; break;
-    case '15m': timeStep = 15 * 60 * 1000; days = 3; break;
-    case '1h': timeStep = 60 * 60 * 1000; days = 7; break;
-    case '4h': timeStep = 4 * 60 * 60 * 1000; days = 14; break;
-    case '1d': timeStep = 24 * 60 * 60 * 1000; break;
-    case '1w': timeStep = 7 * 24 * 60 * 60 * 1000; days = 52; break;
-    default: timeStep = 24 * 60 * 60 * 1000;
-  }
-  
-  // Number of points based on timeframe and days
-  const points = Math.floor((days * 24 * 60 * 60 * 1000) / timeStep);
-  
-  // Generate sine wave with random noise
-  for (let i = 0; i < points; i++) {
-    const timestamp = now - ((points - i) * timeStep);
-    
-    // Base trend: Sine wave with 1.5 cycles over the period
-    const trend = Math.sin((i / points) * Math.PI * 1.5) * 0.2;
-    
-    // Random walk component
-    const volatility = asset.id === 'bitcoin' ? 0.03 : asset.id === 'solana' ? 0.05 : 0.02;
-    let randomWalk = 0;
-    for (let j = 0; j <= i; j++) {
-      randomWalk += (Math.random() * 2 - 1) * volatility / Math.sqrt(points);
+  // Generate historical price data
+  for (let i = days; i >= 0; i--) {
+    // Get timestamp based on timeframe
+    let timestamp = 0;
+    switch (timeframe) {
+      case '1h':
+        timestamp = now - (i * 60 * 60 * 1000);
+        break;
+      case '4h':
+        timestamp = now - (i * 4 * 60 * 60 * 1000);
+        break;
+      case '1d':
+        timestamp = now - (i * 24 * 60 * 60 * 1000);
+        break;
+      case '1w':
+        timestamp = now - (i * 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '1m':
+        timestamp = now - (i * 30 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        timestamp = now - (i * 24 * 60 * 60 * 1000);
     }
     
-    // Combine components
-    const priceModifier = 1 + trend + randomWalk;
-    const price = basePrice * priceModifier;
+    // Generate price with some volatility
+    // Higher volatility for crypto, lower for stocks
+    const volatility = asset.type === 'crypto' ? 0.03 : 0.01;
+    const change = (Math.random() - 0.5) * 2 * volatility;
+    price = price * (1 + change);
     
-    // Random volume
-    const volume = Math.random() * basePrice * 10000 * (1 + Math.sin((i / points) * Math.PI * 3) * 0.5);
-    
+    // Push data point
     data.push({
       timestamp,
       price,
-      volume
+      // Only include volume for some timeframes
+      volume: ['1d', '1h'].includes(timeframe) ? (asset.volume24h || 0) * (0.8 + Math.random() * 0.4) / days : undefined
     });
   }
   
   return {
-    assetId,
+    id: asset.id,
+    symbol: asset.symbol,
+    name: asset.name,
     timeframe,
-    data
+    data,
+    firstDate: data[0].timestamp,
+    lastDate: data[data.length - 1].timestamp
   };
-};
-
-// Function to find assets by type
-export const getAssetsByType = async (type: AssetType): Promise<Asset[]> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return mockAssets.filter(asset => asset.type === type);
-};
-
-// Search assets by name or symbol
-export const searchAssets = async (query: string): Promise<Asset[]> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  if (!query) return [];
-  
-  const searchTerm = query.toLowerCase();
-  return mockAssets.filter(
-    asset => 
-      asset.name.toLowerCase().includes(searchTerm) || 
-      asset.symbol.toLowerCase().includes(searchTerm)
-  );
 };

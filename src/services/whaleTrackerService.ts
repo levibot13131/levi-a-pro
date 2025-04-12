@@ -1,162 +1,147 @@
 
-// Mock whale data service
+import { WhaleMovement, WhaleBehaviorPattern } from '@/hooks/use-market-news';
 
-export interface WhaleMovement {
-  id: string;
-  timestamp: number;
-  fromAddress: string;
-  toAddress: string;
-  amount: number;
-  transactionType: 'transfer' | 'buy' | 'sell' | 'stake' | 'unstake';
-  asset: string;
-  usdValue: number;
-  transactionHash: string;
-}
-
-export interface WhaleBehaviorPattern {
-  id: string;
-  name: string;
-  description: string;
-  confidence: number;
-  impact: 'high' | 'medium' | 'low';
-  timeframe: string;
-  affectedAssets: string[];
-}
-
-// Get whale movements for an asset
+// Get whale movements for a specific asset
 export const getWhaleMovements = async (assetId: string, days: number = 7): Promise<WhaleMovement[]> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 600));
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
   
-  // Generate mock whale movements
+  // Generate mock whale movements based on asset ID and days
   const movements: WhaleMovement[] = [];
-  const now = Date.now();
-  const daysInMs = days * 24 * 60 * 60 * 1000;
   
-  // Base amount depends on the asset
-  let baseAmount = 10;
-  let baseUsdValue = 500000;
-  
-  if (assetId === 'bitcoin') {
-    baseAmount = 10;
-    baseUsdValue = 500000;
-  } else if (assetId === 'ethereum') {
-    baseAmount = 100;
-    baseUsdValue = 300000;
-  } else if (assetId === 'solana') {
-    baseAmount = 5000;
-    baseUsdValue = 700000;
-  } else {
-    baseAmount = 1000;
-    baseUsdValue = 200000;
-  }
-  
-  // Generate 5-15 random whale movements
-  const count = 5 + Math.floor(Math.random() * 10);
+  // Number of movements to generate
+  const count = Math.min(10, Math.max(3, days));
   
   for (let i = 0; i < count; i++) {
-    // Random timestamp within the specified days
-    const timestamp = now - Math.random() * daysInMs;
+    // Random transaction type
+    const transactionTypes = ['exchange_deposit', 'exchange_withdrawal', 'wallet_transfer'] as const;
+    const transactionType = transactionTypes[Math.floor(Math.random() * transactionTypes.length)];
     
-    // Random transaction type with weighted distribution
-    const typeRandom = Math.random();
-    let transactionType: 'transfer' | 'buy' | 'sell' | 'stake' | 'unstake';
-    
-    if (typeRandom < 0.4) {
-      transactionType = 'transfer';
-    } else if (typeRandom < 0.7) {
-      transactionType = Math.random() > 0.5 ? 'buy' : 'sell';
+    // Random amount based on asset
+    let amount = 0;
+    if (assetId === 'bitcoin') {
+      amount = 100 + Math.random() * 900;
+    } else if (assetId === 'ethereum') {
+      amount = 500 + Math.random() * 4500;
     } else {
-      transactionType = Math.random() > 0.5 ? 'stake' : 'unstake';
+      amount = 1000 + Math.random() * 9000;
     }
     
-    // Random amount scaling
-    const amountScale = 0.5 + Math.random() * 2.5;
-    const amount = baseAmount * amountScale;
-    const usdValue = baseUsdValue * amountScale;
+    // Random timestamp within the specified days
+    const timestamp = new Date(
+      Date.now() - Math.random() * days * 24 * 60 * 60 * 1000
+    ).toISOString();
     
-    // Random addresses
-    const fromAddress = `0x${Math.random().toString(16).substring(2, 14)}...${Math.random().toString(16).substring(2, 6)}`;
-    const toAddress = `0x${Math.random().toString(16).substring(2, 14)}...${Math.random().toString(16).substring(2, 6)}`;
+    // Random exchanges
+    const exchanges = ['Binance', 'Coinbase', 'Kraken', 'FTX', 'Huobi'];
+    const exchange = exchanges[Math.floor(Math.random() * exchanges.length)];
+    
+    // Create wallet address
+    const walletAddress = `0x${Math.random().toString(16).substring(2, 10)}...${Math.random().toString(16).substring(2, 6)}`;
+    
+    // Determine source and destination based on transaction type
+    let source = '';
+    let destination = '';
+    if (transactionType === 'exchange_deposit') {
+      source = 'Unknown Wallet';
+      destination = exchange;
+    } else if (transactionType === 'exchange_withdrawal') {
+      source = exchange;
+      destination = 'Unknown Wallet';
+    } else {
+      source = `Wallet ${Math.floor(Math.random() * 100)}`;
+      destination = `Wallet ${Math.floor(Math.random() * 100)}`;
+    }
+    
+    // Random significance
+    const significances = ['very-high', 'high', 'medium', 'low'] as const;
+    const significance = significances[Math.floor(Math.random() * significances.length)];
+    
+    // Random price impact based on significance
+    let priceImpact = 0;
+    if (significance === 'very-high') priceImpact = 3 + Math.random() * 2;
+    else if (significance === 'high') priceImpact = 1.5 + Math.random() * 1.5;
+    else if (significance === 'medium') priceImpact = 0.5 + Math.random() * 1;
+    else priceImpact = Math.random() * 0.5;
     
     movements.push({
-      id: `movement-${i}-${Date.now()}`,
-      timestamp,
-      fromAddress,
-      toAddress,
+      id: `${assetId}-${i}`,
+      assetId,
       amount,
+      fromAddress: source.toLowerCase().includes('wallet') ? walletAddress : `${source.toLowerCase()}_wallet`,
+      toAddress: destination.toLowerCase().includes('wallet') ? walletAddress : `${destination.toLowerCase()}_wallet`,
+      timestamp,
       transactionType,
-      asset: assetId,
-      usdValue,
-      transactionHash: `0x${Math.random().toString(16).substring(2, 42)}`
+      exchangeName: exchange,
+      walletAddress,
+      walletLabel: Math.random() > 0.7 ? `Whale Wallet #${i+1}` : undefined,
+      source,
+      destination,
+      impact: { 
+        significance, 
+        priceImpact
+      }
     });
   }
   
   // Sort by timestamp (newest first)
-  return movements.sort((a, b) => b.timestamp - a.timestamp);
+  return movements.sort((a, b) => 
+    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
 };
 
-// Get whale behavior patterns
+// Get whale behavior patterns for a specific asset
 export const getWhaleBehaviorPatterns = async (assetId: string): Promise<WhaleBehaviorPattern[]> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 700));
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 600));
   
-  // Generate 1-3 behavior patterns
-  const patterns: WhaleBehaviorPattern[] = [];
-  const count = 1 + Math.floor(Math.random() * 3);
-  
-  const patternTemplates = [
+  // Common patterns
+  const commonPatterns: WhaleBehaviorPattern[] = [
     {
-      name: 'אקומולציה מוסדית',
-      description: 'זוהתה תבנית של צבירת מטבעות על ידי ארנקים גדולים, המתרחשת במקביל לירידות מחיר קלות. התנהגות זו מרמזת על ציפייה למגמה חיובית בטווח הבינוני.',
-      impact: 'high' as const
+      pattern: 'Accumulation Pattern',
+      description: 'Major holders are accumulating this asset quietly',
+      confidence: 75,
+      lastOccurrence: Date.now() - 172800000, // 2 days ago
+      priceImpact: '+3.5% expected',
+      recommendation: 'Consider adding to position while price is stable'
     },
     {
-      name: 'הפצה שקטה',
-      description: 'נצפתה פעילות של חלוקת מטבעות ממספר ארנקים גדולים לארנקים קטנים יותר, לרוב סימן להקטנת חשיפה לקראת תיקון אפשרי.',
-      impact: 'medium' as const
-    },
-    {
-      name: 'העברות בין בורסות',
-      description: 'נצפו העברות משמעותיות בין בורסות, מה שיכול להצביע על הכנות למסחר אגרסיבי או לקיחת רווחים.',
-      impact: 'low' as const
-    },
-    {
-      name: 'הסטת נזילות',
-      description: 'ארנקים גדולים מעבירים נכסים מחוזים חכמים של DeFi, מה שעלול להשפיע על נזילות הפרוטוקולים.',
-      impact: 'medium' as const
-    },
-    {
-      name: 'מומנטום קנייה',
-      description: 'זוהתה התכנסות של פעילות קנייה מארנקים גדולים, המעידה על אמון במחיר הנוכחי.',
-      impact: 'high' as const
+      pattern: 'Distribution to Exchanges',
+      description: 'Whales moving assets to exchanges - possible selling pressure',
+      confidence: 68,
+      lastOccurrence: Date.now() - 86400000, // 1 day ago
+      priceImpact: '-2.8% expected',
+      recommendation: 'Monitor closely, consider reducing exposure temporarily'
     }
   ];
   
-  // Select random patterns
-  const selectedIndices = new Set<number>();
-  while (selectedIndices.size < count) {
-    const index = Math.floor(Math.random() * patternTemplates.length);
-    selectedIndices.add(index);
-  }
+  // Asset-specific patterns
+  const specificPatterns: Record<string, WhaleBehaviorPattern[]> = {
+    'bitcoin': [
+      {
+        pattern: 'Miner Distribution',
+        description: 'Bitcoin miners are selling more than usual',
+        confidence: 82,
+        lastOccurrence: Date.now() - 43200000, // 12 hours ago
+        priceImpact: '-4.2% expected',
+        recommendation: 'Short-term bearish signal, consider hedging positions'
+      }
+    ],
+    'ethereum': [
+      {
+        pattern: 'ETH 2.0 Staking Increase',
+        description: 'Major holders increasing ETH 2.0 staking positions',
+        confidence: 79,
+        lastOccurrence: Date.now() - 129600000, // 36 hours ago
+        priceImpact: '+5.1% expected',
+        recommendation: 'Bullish mid-term signal as supply is locked'
+      }
+    ]
+  };
   
-  let i = 0;
-  for (const index of selectedIndices) {
-    const template = patternTemplates[index];
-    const confidence = 60 + Math.floor(Math.random() * 35);
-    
-    patterns.push({
-      id: `pattern-${i}-${Date.now()}`,
-      name: template.name,
-      description: template.description,
-      confidence,
-      impact: template.impact,
-      timeframe: ['24h', '7d', '30d'][Math.floor(Math.random() * 3)],
-      affectedAssets: [assetId]
-    });
-    
-    i++;
-  }
-  
-  return patterns;
+  // Combine common patterns with asset-specific ones if they exist
+  return [
+    ...commonPatterns,
+    ...(specificPatterns[assetId] || [])
+  ];
 };

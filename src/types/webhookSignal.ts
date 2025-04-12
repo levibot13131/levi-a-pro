@@ -1,5 +1,6 @@
 
 export interface WebhookSignal {
+  id?: string; // Added id property
   symbol: string;
   message: string;
   indicators: string[];

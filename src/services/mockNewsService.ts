@@ -1,135 +1,117 @@
 
-import { NewsItem } from '@/hooks/use-market-news';
+import { NewsItem, SocialPost } from '@/types/asset';
 
-// Mock news data with asset relations
-const mockNewsItems: NewsItem[] = [
+// Helper function to generate mock data
+const generateMockData = <T>(template: T, count: number): T[] => {
+  return Array.from({ length: count }, (_, i) => ({
+    ...template,
+    id: `mock-${i + 1}`
+  }));
+};
+
+// Mock social posts data
+const mockSocialPosts: SocialPost[] = [
   {
-    id: '1',
-    title: 'ביטקוין חצה את רף ה-$50,000',
-    summary: 'לאחר עליות משמעותיות, ביטקוין חצה את רף ה-$50,000 לראשונה מאז ינואר.',
+    id: 'post1',
+    author: 'קריפטו אנליסט',
+    authorUsername: '@cryptoanalyst',
+    authorImageUrl: 'https://via.placeholder.com/40',
+    content: 'ביטקוין שובר שיאים חדשים! נראה שיש מומנטום חזק בשוק.',
     publishedAt: new Date(Date.now() - 3600000).toISOString(),
-    source: 'Crypto News',
-    url: '#',
-    imageUrl: 'https://picsum.photos/seed/crypto1/800/600',
+    likes: 1245,
+    comments: 89,
+    sentiment: 'positive'
+  },
+  {
+    id: 'post2',
+    author: 'מומחה מסחר',
+    authorUsername: '@tradingexpert',
+    authorImageUrl: 'https://via.placeholder.com/40',
+    content: 'אתריום מתכונן לירידה? נראה תבנית דובית בגרף היומי.',
+    publishedAt: new Date(Date.now() - 7200000).toISOString(),
+    likes: 742,
+    comments: 56,
+    sentiment: 'negative'
+  },
+  {
+    id: 'post3',
+    author: 'אנליסט פיננסי',
+    authorUsername: '@financialanalyst',
+    authorImageUrl: 'https://via.placeholder.com/40',
+    content: 'המניות הטכנולוגיות מתאוששות אחרי הירידה של אתמול. אפל ומיקרוסופט מובילות את העליות.',
+    publishedAt: new Date(Date.now() - 10800000).toISOString(),
+    likes: 932,
+    comments: 124,
+    sentiment: 'positive'
+  }
+];
+
+// Mock news data
+const mockNews: NewsItem[] = [
+  {
+    id: 'news1',
+    title: 'ביטקוין חוצה את רף ה-60,000 דולר',
+    summary: 'מטבע הביטקוין עלה ל-62,000 דולר, שיא של 3 חודשים, על רקע אישור ה-ETF.',
+    source: 'CryptoNews',
+    url: 'https://example.com/news1',
+    publishedAt: new Date(Date.now() - 86400000).toISOString(),
+    imageUrl: 'https://via.placeholder.com/400x200',
     sentiment: 'positive',
     relatedAssets: ['bitcoin']
   },
   {
-    id: '2',
-    title: 'אתריום מתקרב לשיא חדש',
-    summary: 'אתריום ממשיך במגמה חיובית ומתקרב לשיא היסטורי חדש, בעקבות התקדמות בעדכון הרשת.',
-    publishedAt: new Date(Date.now() - 7200000).toISOString(),
-    source: 'DeFi Times',
-    url: '#',
-    imageUrl: 'https://picsum.photos/seed/crypto2/800/600',
+    id: 'news2',
+    title: 'אפל מציגה תוצאות מעל המצופה',
+    summary: 'אפל הציגה תוצאות רבעוניות מעל הציפיות, עם עליה של 15% בהכנסות.',
+    source: 'MarketWatch',
+    url: 'https://example.com/news2',
+    publishedAt: new Date(Date.now() - 172800000).toISOString(),
+    imageUrl: 'https://via.placeholder.com/400x200',
     sentiment: 'positive',
-    relatedAssets: ['ethereum']
+    relatedAssets: ['aapl']
   },
   {
-    id: '3',
-    title: 'רגולטורים מחמירים את הפיקוח על בורסות קריפטו',
-    summary: 'רשויות רגולטוריות בארה"ב ובאירופה מודיעות על הידוק הפיקוח על בורסות קריפטו.',
-    publishedAt: new Date(Date.now() - 10800000).toISOString(),
-    source: 'Regulation Today',
-    url: '#',
+    id: 'news3',
+    title: 'מניית אמזון צונחת בעקבות תחזית מאכזבת',
+    summary: 'מניית אמזון ירדה ב-8% לאחר שהחברה פרסמה תחזית רבעונית נמוכה מהצפי.',
+    source: 'Bloomberg',
+    url: 'https://example.com/news3',
+    publishedAt: new Date(Date.now() - 259200000).toISOString(),
+    imageUrl: 'https://via.placeholder.com/400x200',
     sentiment: 'negative',
-    relatedAssets: ['bitcoin', 'ethereum', 'solana']
-  },
-  {
-    id: '4',
-    title: 'CBDC של ישראל: בנק ישראל בוחן אפשרות להנפיק שקל דיגיטלי',
-    summary: 'בנק ישראל פרסם נייר עמדה על האפשרות להנפיק מטבע דיגיטלי של הבנק המרכזי (CBDC).',
-    publishedAt: new Date(Date.now() - 14400000).toISOString(),
-    source: 'Banking News IL',
-    url: '#',
-    imageUrl: 'https://picsum.photos/seed/crypto4/800/600',
-    sentiment: 'neutral',
-    relatedAssets: []
-  },
-  {
-    id: '5',
-    title: 'חברת סולנה משיקה קרן לפיתוח אפליקציות DeFi',
-    summary: 'חברת סולנה הכריזה על הקמת קרן של 100 מיליון דולר לתמיכה בפיתוח אפליקציות DeFi על הפלטפורמה.',
-    publishedAt: new Date(Date.now() - 18000000).toISOString(),
-    source: 'DeFi Daily',
-    url: '#',
-    imageUrl: 'https://picsum.photos/seed/crypto5/800/600',
-    sentiment: 'positive',
-    relatedAssets: ['solana']
-  },
-  {
-    id: '6',
-    title: 'קרדנו משחררת עדכון משמעותי לרשת',
-    summary: 'קרדנו השיקה עדכון חדש לרשת שלה, שמטרתו לשפר את הביצועים והתמיכה בחוזים חכמים.',
-    publishedAt: new Date(Date.now() - 21600000).toISOString(),
-    source: 'ADA News',
-    url: '#',
-    sentiment: 'positive',
-    relatedAssets: ['cardano']
-  },
+    relatedAssets: ['amzn']
+  }
 ];
 
-/**
- * Get news related to a specific asset
- * @param assetId - The asset ID to get news for
- * @returns An array of news items
- */
+// Get news by asset ID
 export const getNewsByAssetId = async (assetId: string): Promise<NewsItem[]> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 700));
-  
   if (!assetId) {
-    return mockNewsItems;
+    return mockNews;
   }
   
-  // Filter news by asset ID
-  const filteredNews = mockNewsItems.filter(
-    item => !item.relatedAssets || item.relatedAssets.includes(assetId)
+  // Filter the mock news by related assets
+  return mockNews.filter(news => 
+    news.relatedAssets?.includes(assetId)
   );
-  
-  // Add some asset-specific news
-  let assetNews: NewsItem[] = [];
-  
-  if (assetId === 'bitcoin') {
-    assetNews = [
-      {
-        id: `btc-news-${Date.now()}`,
-        title: 'מיינרים של ביטקוין מגדילים אחזקות',
-        summary: 'נתונים חדשים מראים כי מיינרים של ביטקוין מגדילים את אחזקות הביטקוין שלהם במקום למכור אותן מיד.',
-        publishedAt: new Date(Date.now() - 5400000).toISOString(),
-        source: 'Mining Insights',
-        url: '#',
-        sentiment: 'positive',
-        relatedAssets: ['bitcoin']
-      }
-    ];
-  } else if (assetId === 'ethereum') {
-    assetNews = [
-      {
-        id: `eth-news-${Date.now()}`,
-        title: 'שדרוג חדש לאתריום צפוי החודש',
-        summary: 'הקהילה מתכוננת לשדרוג משמעותי ברשת האתריום שצפוי לשפר את הביצועים והפחתת עמלות.',
-        publishedAt: new Date(Date.now() - 8600000).toISOString(),
-        source: 'ETH Updates',
-        url: '#',
-        sentiment: 'positive',
-        relatedAssets: ['ethereum']
-      }
-    ];
-  } else if (assetId === 'solana') {
-    assetNews = [
-      {
-        id: `sol-news-${Date.now()}`,
-        title: 'סולנה מדווחת על שיא חדש בעסקאות',
-        summary: 'רשת סולנה עברה את רף ה-100 מיליון עסקאות יומיות לראשונה, מה שמדגיש את הביקוש הגובר לפלטפורמה.',
-        publishedAt: new Date(Date.now() - 12400000).toISOString(),
-        source: 'SOL Network News',
-        url: '#',
-        sentiment: 'positive',
-        relatedAssets: ['solana']
-      }
-    ];
+};
+
+// Get social posts by asset ID
+export const getSocialPostsByAssetId = async (assetId: string): Promise<SocialPost[]> => {
+  if (!assetId) {
+    return mockSocialPosts;
   }
   
-  return [...filteredNews, ...assetNews];
+  // Return a subset of posts based on asset ID
+  // In a real app, this would filter by posts mentioning the asset
+  return mockSocialPosts.filter((_, i) => i % (assetId.length % 3 + 1) === 0);
+};
+
+// Get latest news
+export const getLatestNews = async (limit: number = 5): Promise<NewsItem[]> => {
+  return mockNews.slice(0, limit);
+};
+
+// Get social posts
+export const getSocialPosts = async (limit: number = 5): Promise<SocialPost[]> => {
+  return mockSocialPosts.slice(0, limit);
 };

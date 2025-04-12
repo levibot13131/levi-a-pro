@@ -1,5 +1,4 @@
-
-import { Asset, AssetHistoricalData, AssetType, PricePoint, TimeframeType } from '@/types/asset';
+import { Asset, AssetHistoricalData, PricePoint, TimeframeType } from '@/types/asset';
 import { toast } from 'sonner';
 import { isTradingViewConnected } from './tradingView/tradingViewAuthService';
 import { isBinanceConnected } from './binance/binanceService';
@@ -38,7 +37,7 @@ const checkExternalConnections = async () => {
       
       if (updatedCount > 0) {
         toast.success(`עודכנו ${updatedCount} נכסים בזמן אמת`, {
-          description: 'הנתונים יתעדכנו אוטומטית כל 30 שניות'
+          description: 'הנתונים יתעדכנו אוטומatically כל 30 שניות'
         });
       }
     } catch (error) {
@@ -104,7 +103,7 @@ const updateAssetsFromLiveData = async (assetIds: string[]) => {
 
 // קבלת כל הנכסים
 export const getAllAssets = (): Asset[] => {
-  // אם אין נכסים או עבר זמן רב מהעדכון האחרון, נאתחל שוב
+  // א�� אין נכסים או עבר זמן רב מהעדכון האחרון, נאתחל שוב
   if (cachedAssets.length === 0 || Date.now() - lastUpdateTime > 5 * 60 * 1000) {
     initializeRealTimeAssets();
   }
@@ -120,7 +119,7 @@ export const getAssetById = (id: string): Asset | undefined => {
 };
 
 // קבלת נכסים לפי סוג
-export const getAssetsByType = (type: AssetType): Asset[] => {
+export const getAssetsByType = (type: string): Asset[] => {
   return getAllAssets().filter(asset => asset.type === type);
 };
 
@@ -162,4 +161,3 @@ setInterval(async () => {
     await updateAssetsFromLiveData(assetIds);
   }
 }, 30000); // עדכון כל 30 שניות
-
