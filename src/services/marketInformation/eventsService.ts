@@ -13,7 +13,8 @@ const marketEvents: MarketEvent[] = [
     impact: 'high',
     source: 'FederalReserve',
     hasReminder: false,
-    link: 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm'
+    link: 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm',
+    importance: 'high'
   },
   {
     id: '2',
@@ -25,7 +26,8 @@ const marketEvents: MarketEvent[] = [
     impact: 'medium',
     source: 'ECB',
     hasReminder: false,
-    link: 'https://www.ecb.europa.eu/pub/projections/html/index.en.html'
+    link: 'https://www.ecb.europa.eu/pub/projections/html/index.en.html',
+    importance: 'medium'
   },
   {
     id: '3',
@@ -37,7 +39,8 @@ const marketEvents: MarketEvent[] = [
     impact: 'high',
     source: 'Bitcoin',
     hasReminder: true,
-    link: 'https://www.bitcoinblockhalf.com/'
+    link: 'https://www.bitcoinblockhalf.com/',
+    importance: 'high'
   },
   {
     id: '4',
@@ -49,7 +52,8 @@ const marketEvents: MarketEvent[] = [
     impact: 'medium',
     source: 'Apple',
     hasReminder: false,
-    link: 'https://investor.apple.com/investor-relations/default.aspx'
+    link: 'https://investor.apple.com/investor-relations/default.aspx',
+    importance: 'medium'
   },
   {
     id: '5',
@@ -61,7 +65,8 @@ const marketEvents: MarketEvent[] = [
     impact: 'medium',
     source: 'BLS',
     hasReminder: false,
-    link: 'https://www.bls.gov/news.release/empsit.toc.htm'
+    link: 'https://www.bls.gov/news.release/empsit.toc.htm',
+    importance: 'medium'
   }
 ];
 

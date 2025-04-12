@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getUpcomingEvents } from '@/services/marketInformation';
+import { getUpcomingEvents, setEventReminder } from '@/services/marketInformation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Newspaper, Users, Calendar, RefreshCw } from 'lucide-react';
@@ -39,11 +39,12 @@ const MarketInformation: React.FC<MarketInformationProps> = ({ selectedAsset }) 
   }, [autoRefresh, refetch]);
 
   const handleSetReminder = (eventId: string, reminder: boolean) => {
+    setEventReminder(eventId, reminder);
     toast.success(`${reminder ? 'הגדרת' : 'ביטלת'} תזכורת לאירוע`);
     
     if (events) {
       const updatedEvents = events.map(event => 
-        event.id === eventId ? { ...event, reminder } : event
+        event.id === eventId ? { ...event, hasReminder: reminder } : event
       );
     }
   };

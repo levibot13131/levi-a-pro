@@ -12,7 +12,8 @@ const influencers: MarketInfluencer[] = [
     topics: ['קריפטו', 'בלוקצ׳יין', 'השקעות'],
     isFollowed: false,
     influence: 85,
-    avatarUrl: 'https://example.com/avatars/seth.jpg'
+    avatarUrl: 'https://example.com/avatars/seth.jpg',
+    username: 'sethmarcus'
   },
   {
     id: '2',
@@ -23,7 +24,8 @@ const influencers: MarketInfluencer[] = [
     topics: ['אנליזה טכנית', 'מט״ח', 'מניות'],
     isFollowed: true,
     influence: 75,
-    avatarUrl: 'https://example.com/avatars/sarah.jpg'
+    avatarUrl: 'https://example.com/avatars/sarah.jpg',
+    username: 'sarahtrade'
   },
   {
     id: '3',
@@ -34,7 +36,8 @@ const influencers: MarketInfluencer[] = [
     topics: ['השקעות', 'קרנות מדד', 'תיק השקעות'],
     isFollowed: false,
     influence: 65,
-    avatarUrl: 'https://example.com/avatars/daniel.jpg'
+    avatarUrl: 'https://example.com/avatars/daniel.jpg',
+    username: 'danielalpha'
   },
   {
     id: '4',
@@ -45,7 +48,8 @@ const influencers: MarketInfluencer[] = [
     topics: ['מט״ח', 'סחר יומי', 'ניהול סיכונים'],
     isFollowed: false,
     influence: 70,
-    avatarUrl: 'https://example.com/avatars/tal.jpg'
+    avatarUrl: 'https://example.com/avatars/tal.jpg',
+    username: 'talcohen'
   },
   {
     id: '5',
@@ -56,7 +60,8 @@ const influencers: MarketInfluencer[] = [
     topics: ['חינוך פיננסי', 'FIRE', 'השקעות פסיביות'],
     isFollowed: true,
     influence: 80,
-    avatarUrl: 'https://example.com/avatars/maya.jpg'
+    avatarUrl: 'https://example.com/avatars/maya.jpg',
+    username: 'mayascale'
   }
 ];
 
