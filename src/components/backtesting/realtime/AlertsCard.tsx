@@ -13,13 +13,17 @@ interface AlertsCardProps {
   isActive: boolean;
   toggleRealTimeAlerts: () => void;
   handleClearSignals: () => void;
+  enableAutomaticAlerts?: () => void; // Added as optional prop
+  areAutoAlertsEnabled?: boolean; // Added as optional prop
 }
 
 const AlertsCard: React.FC<AlertsCardProps> = ({
   signals,
   isActive,
   toggleRealTimeAlerts,
-  handleClearSignals
+  handleClearSignals,
+  enableAutomaticAlerts,
+  areAutoAlertsEnabled
 }) => {
   const renderSignalIcon = (type: 'buy' | 'sell' | string) => {
     switch (type) {

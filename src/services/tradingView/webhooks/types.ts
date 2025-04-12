@@ -16,4 +16,6 @@ export interface WebhookData {
   strategy?: string;
   bar_close?: string | number;
   chartUrl?: string;
+  automatic?: boolean; // Added missing property
+  source?: string; // Added missing property
 }

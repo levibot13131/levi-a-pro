@@ -21,7 +21,7 @@ export const createAutomaticWatchlist = (count: number = 5): number => {
     // מיון הנכסים לפי נפח מסחר (או מדד אחר שמעניין)
     const sortedAssets = [...allAssets].sort((a, b) => {
       // לדוגמה, מיון לפי נפח מסחר יומי
-      return b.volume - a.volume;
+      return b.volume24h - a.volume24h; // Changed from volume to volume24h which exists in Asset type
     });
     
     // בחירת הנכסים המובילים שעוד לא במעקב
@@ -38,7 +38,7 @@ export const createAutomaticWatchlist = (count: number = 5): number => {
       id: asset.id,
       name: asset.name,
       symbol: asset.symbol,
-      type: asset.type,
+      type: asset.type, // This is already constrained by the Asset type
       price: asset.price,
       change24h: asset.change24h,
       priority: 'medium',
@@ -97,11 +97,11 @@ export const importWatchlist = async (source: string, data?: any): Promise<boole
   
   // דוגמה לייבוא נכסים מוגדרים מראש
   const defaultAssets = [
-    { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', type: 'crypto' },
-    { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', type: 'crypto' },
-    { id: 'solana', name: 'Solana', symbol: 'SOL', type: 'crypto' },
-    { id: 'aapl', name: 'Apple Inc.', symbol: 'AAPL', type: 'stocks' },
-    { id: 'msft', name: 'Microsoft', symbol: 'MSFT', type: 'stocks' }
+    { id: 'bitcoin', name: 'Bitcoin', symbol: 'BTC', type: 'crypto' as const },
+    { id: 'ethereum', name: 'Ethereum', symbol: 'ETH', type: 'crypto' as const },
+    { id: 'solana', name: 'Solana', symbol: 'SOL', type: 'crypto' as const },
+    { id: 'aapl', name: 'Apple Inc.', symbol: 'AAPL', type: 'stocks' as const },
+    { id: 'msft', name: 'Microsoft', symbol: 'MSFT', type: 'stocks' as const }
   ];
   
   try {
@@ -109,16 +109,16 @@ export const importWatchlist = async (source: string, data?: any): Promise<boole
     const trackedIds = trackedAssets.map(asset => asset.id);
     
     // הוספת נכסים חדשים שעוד לא במעקב
-    const newAssets = defaultAssets
+    const newAssets: TrackedAsset[] = defaultAssets
       .filter(asset => !trackedIds.includes(asset.id))
       .map(asset => ({
         id: asset.id,
         name: asset.name,
         symbol: asset.symbol,
-        type: asset.type,
+        type: asset.type, // Now constrained to the correct types
         price: 0, // יתעדכן בסנכרון הבא
         change24h: 0,
-        priority: 'medium',
+        priority: 'medium' as const,
         alertsEnabled: true,
         lastUpdated: Date.now(),
         isPinned: false
