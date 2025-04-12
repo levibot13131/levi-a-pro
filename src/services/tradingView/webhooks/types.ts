@@ -27,4 +27,17 @@ export interface WebhookData {
   fundamentalReason?: string; // Fundamental analysis reason for the signal
   confidence?: number; // Confidence level (0-100)
   riskLevel?: 'low' | 'medium' | 'high';
+  
+  // Sentiment analysis fields
+  marketSentiment?: number; // Overall market sentiment (-100 to 100)
+  assetSentiment?: number; // Asset-specific sentiment (-100 to 100)
+  socialMentions?: number; // Number of social mentions in the last 24 hours
+  sentimentChange?: number; // Change in sentiment over the last 24 hours
+  
+  // Technical analysis enhancements
+  technicalScore?: number; // Technical score (0-100)
+  supportLevel?: number; // Nearest support level
+  resistanceLevel?: number; // Nearest resistance level
+  volatilityScore?: number; // Volatility score (0-100)
+  volumeAnalysis?: string; // Analysis of volume (e.g., "High", "Low", "Average")
 }

@@ -137,7 +137,7 @@ const AlertsCard: React.FC<AlertsCardProps> = ({
                 }`}
               >
                 <div className="flex justify-between items-start mb-2">
-                  <Badge variant={signal.type === 'buy' ? 'success' : 'destructive'}>
+                  <Badge variant={signal.type === 'buy' ? 'default' : 'destructive'} className={signal.type === 'buy' ? 'bg-green-500 hover:bg-green-600' : ''}>
                     {signal.type === 'buy' ? 'קנייה' : 'מכירה'}
                   </Badge>
                   <div className="text-sm text-right">{formatDate(signal.timestamp)}</div>

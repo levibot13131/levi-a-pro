@@ -40,6 +40,7 @@ export function useBinanceData(symbols: string[] = []) {
     }
     
     setIsLoading(true);
+    let stopFunction: (() => void) | null = null;
     
     // Fetch initial fundamental data for each symbol
     const fetchFundamental = async () => {
@@ -60,22 +61,34 @@ export function useBinanceData(symbols: string[] = []) {
     fetchFundamental();
     
     // Start real-time market data stream
-    const { stop } = startRealTimeMarketData(symbols, (data) => {
-      setMarketData(prev => ({
-        ...prev,
-        [data.symbol]: data
-      }));
-      
-      if (isLoading) {
+    const startStream = async () => {
+      try {
+        const result = await startRealTimeMarketData(symbols, (data) => {
+          setMarketData(prev => ({
+            ...prev,
+            [data.symbol]: data
+          }));
+          
+          if (isLoading) {
+            setIsLoading(false);
+          }
+        });
+        
+        stopFunction = result.stop;
+        setIsStreamActive(true);
+      } catch (error) {
+        console.error("Error starting real-time market data:", error);
         setIsLoading(false);
       }
-    });
+    };
     
-    setIsStreamActive(true);
+    startStream();
     
     // Clean up on unmount
     return () => {
-      stop();
+      if (stopFunction) {
+        stopFunction();
+      }
       setIsStreamActive(false);
     };
   }, [isConnected, symbols.join(',')]);

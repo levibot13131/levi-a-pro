@@ -1,160 +1,62 @@
 
-import React, { useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner';
-import { AuthProvider } from './contexts/AuthContext';
-
-import Index from './pages/Index';
-import Login from './pages/Login';
-import Admin from './pages/Admin';
-import AssetTracker from './pages/AssetTracker';
-import TechnicalAnalysis from './pages/TechnicalAnalysis';
-import Backtesting from './pages/Backtesting';
-import RiskManagement from './pages/RiskManagement';
-import MarketData from './pages/MarketData';
-import ComprehensiveAnalysis from './pages/ComprehensiveAnalysis';
-import Dashboard from './pages/Dashboard';
-import SocialMonitoring from './pages/SocialMonitoring';
-import InformationSources from './pages/InformationSources';
-import TradingSignals from './pages/TradingSignals';
-import TradingBots from './pages/TradingBots';
-import MarketNews from './pages/MarketNews';
-import FundamentalData from './pages/FundamentalData';
-import NotFound from './pages/NotFound';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import MainNavigation from './components/MainNavigation';
-import TradingViewIntegration from './pages/TradingViewIntegration';
+import { Toaster } from 'sonner';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@/contexts/AuthContext';
+
+// Pages
+import Home from './pages/Home';
+import MarketData from './pages/MarketData';
+import AssetTracker from './pages/AssetTracker';
+import MarketNews from './pages/MarketNews';
+import TradingSignals from './pages/TradingSignals';
+import RiskManagement from './pages/RiskManagement';
+import Backtesting from './pages/Backtesting';
+import UserManagement from './pages/UserManagement';
+import Login from './pages/Login';
+import InformationSources from './pages/InformationSources';
+import ComprehensiveAnalysis from './pages/ComprehensiveAnalysis';
 import BinanceIntegration from './pages/BinanceIntegration';
-import RequireAuth from './components/auth/RequireAuth';
+import TrendingCoins from './pages/TrendingCoins';
+import CryptoSentiment from './pages/CryptoSentiment';
 
-// Imports for initialization
-import { initializeUsers } from './services/auth/userService';
-import { initializeTradingViewServices } from './services/tradingView/startup';
-import initializeSocialMonitoring from './services/socialMonitoring/index';
-
+// Create a client
 const queryClient = new QueryClient();
 
-export default function App() {
-  // Initialize services when the app loads
-  useEffect(() => {
-    // Initialize user management
-    initializeUsers();
-    
-    // Initialize TradingView services
-    const tvInitialized = initializeTradingViewServices();
-    console.log('TradingView services initialized:', tvInitialized);
-    
-    // Initialize social monitoring
-    initializeSocialMonitoring();
-    console.log('Social monitoring initialized');
-    
-    // Add additional initializations here as needed
-  }, []);
-
+function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="app">
-          <div className="h-full relative bg-background">
-            <MainNavigation />
-            <main className="h-full pt-16">
+        <BrowserRouter>
+          <div className="min-h-screen flex">
+            <div className="flex-none">
+              <MainNavigation />
+            </div>
+            <div className="flex-1 overflow-auto">
               <Routes>
-                {/* Public routes */}
+                <Route path="/" element={<Home />} />
+                <Route path="/market-data" element={<MarketData />} />
+                <Route path="/asset-tracker" element={<AssetTracker />} />
+                <Route path="/market-news" element={<MarketNews />} />
+                <Route path="/trading-signals" element={<TradingSignals />} />
+                <Route path="/risk-management" element={<RiskManagement />} />
+                <Route path="/backtesting" element={<Backtesting />} />
+                <Route path="/user-management" element={<UserManagement />} />
                 <Route path="/login" element={<Login />} />
-                
-                {/* Protected routes */}
-                <Route path="/" element={
-                  <RequireAuth>
-                    <Index />
-                  </RequireAuth>
-                } />
-                <Route path="/admin" element={
-                  <RequireAuth resource="users" requiredPermission="view">
-                    <Admin />
-                  </RequireAuth>
-                } />
-                <Route path="/asset-tracker" element={
-                  <RequireAuth resource="assetTracker" requiredPermission="view">
-                    <AssetTracker />
-                  </RequireAuth>
-                } />
-                <Route path="/technical-analysis/:assetId?" element={
-                  <RequireAuth resource="technicalAnalysis" requiredPermission="view">
-                    <TechnicalAnalysis />
-                  </RequireAuth>
-                } />
-                <Route path="/backtesting" element={
-                  <RequireAuth resource="backtesting" requiredPermission="view">
-                    <Backtesting />
-                  </RequireAuth>
-                } />
-                <Route path="/risk-management" element={
-                  <RequireAuth resource="riskManagement" requiredPermission="view">
-                    <RiskManagement />
-                  </RequireAuth>
-                } />
-                <Route path="/market-data" element={
-                  <RequireAuth resource="marketData" requiredPermission="view">
-                    <MarketData />
-                  </RequireAuth>
-                } />
-                <Route path="/comprehensive-analysis" element={
-                  <RequireAuth resource="technicalAnalysis" requiredPermission="view">
-                    <ComprehensiveAnalysis />
-                  </RequireAuth>
-                } />
-                <Route path="/dashboard" element={
-                  <RequireAuth resource="dashboard" requiredPermission="view">
-                    <Dashboard />
-                  </RequireAuth>
-                } />
-                <Route path="/social-monitoring" element={
-                  <RequireAuth resource="socialMonitoring" requiredPermission="view">
-                    <SocialMonitoring />
-                  </RequireAuth>
-                } />
-                <Route path="/information-sources" element={
-                  <RequireAuth>
-                    <InformationSources />
-                  </RequireAuth>
-                } />
-                <Route path="/trading-signals" element={
-                  <RequireAuth resource="tradingSignals" requiredPermission="view">
-                    <TradingSignals />
-                  </RequireAuth>
-                } />
-                <Route path="/trading-bots" element={
-                  <RequireAuth>
-                    <TradingBots />
-                  </RequireAuth>
-                } />
-                <Route path="/market-news" element={
-                  <RequireAuth>
-                    <MarketNews />
-                  </RequireAuth>
-                } />
-                <Route path="/fundamental-data" element={
-                  <RequireAuth>
-                    <FundamentalData />
-                  </RequireAuth>
-                } />
-                <Route path="/tradingview-integration" element={
-                  <RequireAuth resource="tradingView" requiredPermission="view">
-                    <TradingViewIntegration />
-                  </RequireAuth>
-                } />
-                <Route path="/binance-integration" element={
-                  <RequireAuth>
-                    <BinanceIntegration />
-                  </RequireAuth>
-                } />
-                <Route path="*" element={<NotFound />} />
+                <Route path="/information-sources" element={<InformationSources />} />
+                <Route path="/comprehensive-analysis" element={<ComprehensiveAnalysis />} />
+                <Route path="/binance-integration" element={<BinanceIntegration />} />
+                <Route path="/trending-coins" element={<TrendingCoins />} />
+                <Route path="/crypto-sentiment" element={<CryptoSentiment />} />
               </Routes>
-            </main>
+            </div>
           </div>
-        </div>
-        <Toaster />
+          <Toaster dir="rtl" position="top-center" />
+        </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>
   );
 }
+
+export default App;
