@@ -27,6 +27,31 @@ export const initializeAssets = async () => {
 };
 
 /**
+ * Get all assets regardless of type
+ */
+export const getAllAssets = async (): Promise<Asset[]> => {
+  if (!isInitialized) {
+    await initializeAssets();
+  }
+  
+  return assets;
+};
+
+/**
+ * Get all assets (synchronous version)
+ */
+export const getAllAssetsSync = (): Asset[] => {
+  if (!isInitialized) {
+    // Initialize assets synchronously if not already done
+    // This is not ideal, but necessary for some use cases
+    console.warn('Accessing assets before initialization. Call initializeAssets() first for better performance.');
+    return [];
+  }
+  
+  return assets;
+};
+
+/**
  * Get all assets
  */
 export const getMarketAssets = async (type?: AssetType): Promise<Asset[]> => {

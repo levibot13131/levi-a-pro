@@ -14,7 +14,7 @@ export const initializeTrackedAssets = (): TrackedAsset[] => {
   // Otherwise initialize with top assets from each market
   trackedAssets = [];
   
-  const allAssets = getAllAssets();
+  const allAssets = getAllAssetsSync();
   
   // Group by market
   const assetsByMarket: Record<string, any[]> = {};

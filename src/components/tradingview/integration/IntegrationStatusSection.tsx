@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import TradingViewConnectionStatus from '../TradingViewConnectionStatus';
 import SyncStatusDisplay from './SyncStatusDisplay';
-import { getAllAssets } from '@/services/realTimeAssetService';
+import { getAllAssetsSync } from '@/services/realTimeAssetService';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { PlusCircle, Bell } from 'lucide-react';
@@ -28,7 +28,7 @@ const IntegrationStatusSection: React.FC<IntegrationStatusSectionProps> = ({
   toggleAutoSync
 }) => {
   // Get total assets count across all markets for display
-  const totalAssets = getAllAssets().length;
+  const totalAssets = getAllAssetsSync().length;
   const [isCreatingWatchlist, setIsCreatingWatchlist] = useState(false);
   
   // הוספת פונקציה ליצירת רשימת מעקב אוטומטית

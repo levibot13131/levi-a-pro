@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Plus, Check, AlertTriangle } from 'lucide-react';
-import { getAllAssets } from '@/services/realTimeAssetService';
+import { getAllAssetsSync } from '@/services/realTimeAssetService';
 import { Asset } from '@/types/asset';
 import { addTrackedAsset, getTrackedAssets } from '@/services/assetTracking/assetManagement';
 import { Badge } from '@/components/ui/badge';
@@ -34,7 +34,7 @@ const AssetSearchDialog: React.FC<AssetSearchDialogProps> = ({
       return;
     }
     
-    const allAssets = getAllAssets();
+    const allAssets = getAllAssetsSync();
     const filteredAssets = allAssets.filter(asset => 
       asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       asset.symbol.toLowerCase().includes(searchQuery.toLowerCase())
