@@ -1,5 +1,5 @@
 
-import { FinancialDataSource, MarketInfluencer, MarketEvent } from '@/types/marketInformation';
+import { FinancialDataSource, MarketInfluencer, MarketEvent, PlatformInfo } from '@/types/marketInformation';
 
 // Mock data for information sources
 export const INFORMATION_SOURCES: FinancialDataSource[] = [
@@ -8,7 +8,10 @@ export const INFORMATION_SOURCES: FinancialDataSource[] = [
     name: "CoinDesk",
     description: "Leading cryptocurrency news site covering Bitcoin, Ethereum, and blockchain tech",
     url: "https://www.coindesk.com/",
+    type: "news",
     category: "news",
+    rating: 8,
+    platform: "web",
     reliability: 8,
     accessType: "free",
     languages: ["English"],
@@ -20,7 +23,10 @@ export const INFORMATION_SOURCES: FinancialDataSource[] = [
     name: "CoinMarketCap",
     description: "Cryptocurrency market capitalization rankings and data",
     url: "https://coinmarketcap.com/",
+    type: "data",
     category: "data",
+    rating: 9,
+    platform: "web",
     reliability: 9,
     accessType: "freemium",
     languages: ["English", "Chinese", "Russian"],
@@ -32,9 +38,12 @@ export const INFORMATION_SOURCES: FinancialDataSource[] = [
     name: "Glassnode",
     description: "On-chain market intelligence platform for blockchain data",
     url: "https://glassnode.com/",
+    type: "analytics",
     category: "analysis",
+    rating: 9,
+    platform: "web",
     reliability: 9,
-    accessType: "paid",
+    accessType: "premium",
     languages: ["English"],
     updateFrequency: "Daily",
     focused: false
@@ -44,7 +53,10 @@ export const INFORMATION_SOURCES: FinancialDataSource[] = [
     name: "Crypto Twitter",
     description: "Twitter discussions about cryptocurrency",
     url: "https://twitter.com/explore",
+    type: "social",
     category: "social",
+    rating: 5,
+    platform: "twitter",
     reliability: 5,
     accessType: "free",
     languages: ["Multiple"],
@@ -56,7 +68,10 @@ export const INFORMATION_SOURCES: FinancialDataSource[] = [
     name: "TradingView",
     description: "Charting platform with social features and trading ideas",
     url: "https://www.tradingview.com/",
+    type: "charts",
     category: "analysis",
+    rating: 8,
+    platform: "web",
     reliability: 8,
     accessType: "freemium",
     languages: ["English", "Spanish", "Russian"],
@@ -71,6 +86,11 @@ export const MARKET_INFLUENCERS: MarketInfluencer[] = [
     id: "influencer-1",
     name: "Vitalik Buterin",
     description: "Co-founder of Ethereum and blockchain thought leader",
+    platform: "Twitter",
+    followers: 4200000,
+    bio: "Ethereum co-founder and blockchain visionary",
+    profileUrl: "https://twitter.com/VitalikButerin",
+    expertise: ["Ethereum", "Blockchain"],
     platforms: [
       {
         type: "twitter",
@@ -86,12 +106,17 @@ export const MARKET_INFLUENCERS: MarketInfluencer[] = [
     specialty: ["Ethereum", "Blockchain Technology", "Scaling Solutions"],
     reliability: 9,
     sentiment: "neutral",
-    followStatus: "following"
+    followStatus: true
   },
   {
     id: "influencer-2",
     name: "Michael Saylor",
     description: "MicroStrategy CEO and Bitcoin advocate",
+    platform: "Twitter",
+    followers: 2800000,
+    bio: "CEO of MicroStrategy, Bitcoin maximalist",
+    profileUrl: "https://twitter.com/saylor",
+    expertise: ["Bitcoin", "Corporate Treasury"],
     platforms: [
       {
         type: "twitter",
@@ -106,13 +131,18 @@ export const MARKET_INFLUENCERS: MarketInfluencer[] = [
     ],
     specialty: ["Bitcoin", "Corporate Treasury", "Macro Economics"],
     reliability: 7,
-    sentiment: "bullish",
-    followStatus: "following"
+    sentiment: "positive",
+    followStatus: true
   },
   {
     id: "influencer-3",
     name: "Cathie Wood",
     description: "CEO of Ark Invest and tech investment strategist",
+    platform: "LinkedIn",
+    followers: 1500000,
+    bio: "Founder and CEO of ARK Investment Management",
+    profileUrl: "https://www.linkedin.com/in/cathie-wood/",
+    expertise: ["Investment", "Innovation"],
     platforms: [
       {
         type: "twitter",
@@ -127,8 +157,8 @@ export const MARKET_INFLUENCERS: MarketInfluencer[] = [
     ],
     specialty: ["Tech Stocks", "Bitcoin", "Disruptive Innovation"],
     reliability: 8,
-    sentiment: "variable",
-    followStatus: "not-following"
+    sentiment: "neutral",
+    followStatus: false
   }
 ];
 
@@ -144,7 +174,8 @@ export const MARKET_EVENTS: MarketEvent[] = [
     relatedAssets: ["USD", "BTC", "Gold"],
     expectedImpact: "variable",
     source: "Federal Reserve",
-    reminder: true
+    reminder: true,
+    type: "economic"
   },
   {
     id: "event-2",
@@ -156,7 +187,8 @@ export const MARKET_EVENTS: MarketEvent[] = [
     relatedAssets: ["BTC", "Mining Stocks"],
     expectedImpact: "positive",
     source: "Bitcoin Network",
-    reminder: true
+    reminder: true,
+    type: "network"
   },
   {
     id: "event-3",
@@ -168,7 +200,8 @@ export const MARKET_EVENTS: MarketEvent[] = [
     relatedAssets: ["USD", "BTC", "ETH", "Gold"],
     expectedImpact: "variable",
     source: "Bureau of Labor Statistics",
-    reminder: false
+    reminder: false,
+    type: "economic-data"
   },
   {
     id: "event-4",
@@ -180,7 +213,8 @@ export const MARKET_EVENTS: MarketEvent[] = [
     relatedAssets: ["ETH"],
     expectedImpact: "positive",
     source: "Ethereum Foundation",
-    reminder: false
+    reminder: false,
+    type: "conference"
   },
   {
     id: "event-5",
@@ -192,6 +226,7 @@ export const MARKET_EVENTS: MarketEvent[] = [
     relatedAssets: ["BTC", "ETH", "Exchange Tokens"],
     expectedImpact: "positive",
     source: "SEC",
-    reminder: true
+    reminder: true,
+    type: "regulatory"
   }
 ];

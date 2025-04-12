@@ -47,24 +47,24 @@ const InfluencersTab: React.FC<InfluencersTabProps> = ({
           {influencers.map(influencer => {
             // Determine sentiment color
             const sentimentColor = 
-              influencer.sentiment === 'bullish' ? 'text-green-600' : 
-              influencer.sentiment === 'bearish' ? 'text-red-600' : 
+              influencer.sentiment === 'bullish' || influencer.sentiment === 'positive' ? 'text-green-600' : 
+              influencer.sentiment === 'bearish' || influencer.sentiment === 'negative' ? 'text-red-600' : 
               influencer.sentiment === 'variable' ? 'text-purple-600' : 'text-blue-600';
             
             return (
-              <Card key={influencer.id} className={influencer.followStatus === 'following' ? "border-primary" : ""}>
+              <Card key={influencer.id} className={influencer.followStatus ? "border-primary" : ""}>
                 <CardHeader className="flex flex-row items-start justify-between pb-2">
                   <div className="text-right">
                     <CardTitle className="text-xl">{influencer.name}</CardTitle>
                     <CardDescription className="mt-1">{influencer.description}</CardDescription>
                   </div>
                   <div className="flex items-center gap-2">
-                    {influencer.followStatus === 'following' && <Check className="h-5 w-5 text-green-500" />}
+                    {influencer.followStatus && <Check className="h-5 w-5 text-green-500" />}
                   </div>
                 </CardHeader>
                 <CardContent className="text-right">
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {influencer.specialty.map((spec, index) => (
+                    {Array.isArray(influencer.specialty) && influencer.specialty.map((spec, index) => (
                       <Badge key={index} variant="secondary">{spec}</Badge>
                     ))}
                   </div>
@@ -77,8 +77,8 @@ const InfluencersTab: React.FC<InfluencersTabProps> = ({
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-500">גישה כללית:</span>
                       <span className={`text-sm font-medium ${sentimentColor}`}>
-                        {influencer.sentiment === 'bullish' ? 'חיובית' : 
-                         influencer.sentiment === 'bearish' ? 'שלילית' :
+                        {influencer.sentiment === 'bullish' || influencer.sentiment === 'positive' ? 'חיובית' : 
+                         influencer.sentiment === 'bearish' || influencer.sentiment === 'negative' ? 'שלילית' :
                          influencer.sentiment === 'variable' ? 'משתנה' : 'ניטרלית'}
                       </span>
                     </div>
@@ -87,7 +87,7 @@ const InfluencersTab: React.FC<InfluencersTabProps> = ({
                   <div className="space-y-2">
                     <p className="text-sm font-medium">פלטפורמות:</p>
                     <div className="flex flex-wrap gap-3">
-                      {influencer.platforms.map((platform, idx) => (
+                      {Array.isArray(influencer.platforms) && influencer.platforms.map((platform, idx) => (
                         <Button key={idx} variant="outline" size="sm" asChild>
                           <a href={platform.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
                             {platform.type === 'twitter' && <Twitter className="h-4 w-4" />}
@@ -106,9 +106,9 @@ const InfluencersTab: React.FC<InfluencersTabProps> = ({
                 </CardContent>
                 <CardFooter className="flex justify-end pt-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm">{influencer.followStatus === 'following' ? "במעקב" : "הוסף למעקב"}</span>
+                    <span className="text-sm">{influencer.followStatus ? "במעקב" : "הוסף למעקב"}</span>
                     <Switch 
-                      checked={influencer.followStatus === 'following'} 
+                      checked={influencer.followStatus === true} 
                       onCheckedChange={(checked) => handleToggleInfluencer(influencer.id, checked)}
                     />
                   </div>

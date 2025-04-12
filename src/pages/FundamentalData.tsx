@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,9 +45,12 @@ const FundamentalData = () => {
       name: 'Glassnode',
       description: 'מספק מידע מקיף על-פי ניתוח שרשרת הבלוקים של ביטקוין ואתריום',
       url: 'https://glassnode.com',
+      type: 'analytics',
       category: 'data',
+      rating: 95,
+      platform: 'web',
       reliability: 95,
-      accessType: 'paid',
+      accessType: 'premium',
       languages: ['English', 'Hebrew'],
       updateFrequency: 'Daily',
       focused: true
@@ -58,7 +60,10 @@ const FundamentalData = () => {
       name: 'CoinMetrics',
       description: 'מתמחה בניתוח זרימת כספים בין בורסות וארנקים מוסדיים',
       url: 'https://coinmetrics.io',
+      type: 'data',
       category: 'data',
+      rating: 92,
+      platform: 'web',
       reliability: 92,
       accessType: 'freemium',
       languages: ['English'],
@@ -70,7 +75,10 @@ const FundamentalData = () => {
       name: 'The Block',
       description: 'אתר חדשות ומחקר מוביל בתחום הקריפטו עם דגש על דיוק ואמינות',
       url: 'https://www.theblockcrypto.com',
+      type: 'news',
       category: 'news',
+      rating: 90,
+      platform: 'web',
       reliability: 90,
       accessType: 'freemium',
       languages: ['English'],
@@ -82,9 +90,12 @@ const FundamentalData = () => {
       name: 'Bank of America',
       description: 'דוחות אנליסטים מהבנק עם דגש על השפעת הקריפטו על שווקים מסורתיים',
       url: 'https://www.bankofamerica.com',
+      type: 'financial-institution',
       category: 'analysis',
+      rating: 88,
+      platform: 'institutional',
       reliability: 88,
-      accessType: 'paid',
+      accessType: 'premium',
       languages: ['English', 'Spanish'],
       updateFrequency: 'Weekly',
       focused: false
@@ -94,9 +105,12 @@ const FundamentalData = () => {
       name: 'ארקייה ריסרץ׳',
       description: 'מחקרים מקיפים לגבי פוטנציאל הטכנולוגי והעסקי של פרויקטים בתחום',
       url: 'https://www.arkresearch.io',
+      type: 'research',
       category: 'analysis',
+      rating: 93,
+      platform: 'web',
       reliability: 93,
-      accessType: 'paid',
+      accessType: 'premium',
       languages: ['English', 'Hebrew'],
       updateFrequency: 'Monthly',
       focused: true
@@ -115,7 +129,8 @@ const FundamentalData = () => {
       relatedAssets: ['bitcoin', 'ethereum', 'stocks'],
       expectedImpact: 'variable',
       source: 'Federal Reserve',
-      reminder: false
+      reminder: false,
+      type: 'economic'
     },
     {
       id: 'event2',
@@ -127,7 +142,8 @@ const FundamentalData = () => {
       relatedAssets: ['bitcoin'],
       expectedImpact: 'positive',
       source: 'German Stock Exchange',
-      reminder: true
+      reminder: true,
+      type: 'regulatory'
     },
     {
       id: 'event3',
@@ -139,7 +155,8 @@ const FundamentalData = () => {
       relatedAssets: ['stocks'],
       expectedImpact: 'variable',
       source: 'Apple Inc.',
-      reminder: false
+      reminder: false,
+      type: 'earnings'
     },
     {
       id: 'event4',
@@ -151,7 +168,8 @@ const FundamentalData = () => {
       relatedAssets: ['ethereum'],
       expectedImpact: 'positive',
       source: 'Ethereum Foundation',
-      reminder: true
+      reminder: true,
+      type: 'network-update'
     }
   ];
   

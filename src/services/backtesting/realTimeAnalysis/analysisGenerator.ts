@@ -49,7 +49,7 @@ export const generateSignalAnalysis = (assetId?: string): SignalAnalysisResult =
     // Adding missing fields that are expected in some parts of the code
     signalId: assetId ? `signal_${assetId}` : 'unknown_signal',
     assetId: assetId || 'unknown_asset',
-    type: 'neutral',
+    type: "buy", // Changed from 'neutral' to 'buy' to match type constraints
     timestamp: Date.now(),
     timeframe: '1d',
     confidence: 0,

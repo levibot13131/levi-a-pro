@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { FinancialDataSource } from '@/types/marketInformation';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -70,7 +69,7 @@ const SourcesTab: React.FC<SourcesTabProps> = ({
                   <div className="flex gap-2 mt-1">
                     {getCategoryBadge(source.category)}
                     <Badge variant="outline" className={source.accessType === 'free' ? "bg-green-50" : ""}>
-                      {source.accessType === 'free' ? 'חינמי' : source.accessType === 'paid' ? 'בתשלום' : 'API'}
+                      {source.accessType === 'free' ? 'חינמי' : source.accessType === 'premium' ? 'פרימר' : 'API'}
                     </Badge>
                   </div>
                 </div>

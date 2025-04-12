@@ -58,3 +58,17 @@ export const generateComprehensiveAnalysis = (assetId: string, timeframe: string
     }
   };
 };
+
+// Adding the missing "analyzeMarketConditions" function
+export const analyzeMarketConditions = (assetId: string, timeframe: string) => {
+  return {
+    marketCondition: 'שוק צידי עם נטייה לעליות',
+    volatility: 'בינונית',
+    trend: 'חיובית ארוכת טווח',
+    support: [45000, 42000, 38000],
+    resistance: [52000, 55000, 58000],
+    keyEvents: [
+      { event: 'הודעת ריבית', date: '2023-07-28', potentialImpact: 'גבוהה' }
+    ]
+  };
+};

@@ -55,8 +55,9 @@ const InformationSources = () => {
     const matchesSearch = influencer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (influencer.description && influencer.description.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesFilter = influencerFilter === 'all' || 
-                        (influencerFilter === 'following' && influencer.followStatus === 'following') ||
+                        (influencerFilter === 'following' && influencer.followStatus === true) ||
                         (influencerFilter === 'specialty' && influencer.specialty && 
+                         Array.isArray(influencer.specialty) && 
                          influencer.specialty.some(s => s.toLowerCase().includes(searchTerm.toLowerCase())));
     return matchesSearch && matchesFilter;
   });
