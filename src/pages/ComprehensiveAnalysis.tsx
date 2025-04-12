@@ -131,7 +131,7 @@ const ComprehensiveAnalysis = () => {
     }
     
     return generateTradePlan(
-      selectedAsset,
+      selectedAsset.price, // Pass the price instead of the asset object
       technicalAnalysis,
       smcPatterns,
       assetHistory,
