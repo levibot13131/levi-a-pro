@@ -13,24 +13,24 @@ export { formatAlertMessage } from './formatters';
  * Send alert to all active destinations
  */
 export const sendAlert = async (alert: TradingViewAlert): Promise<boolean> => {
-  // בדיקת לוג נוסף לצורך דיבוג
-  console.log('🔔 Sending alert for ' + alert.symbol + ' to destinations:', alert);
-  
-  // Get active destinations
-  const destinations = getAlertDestinations().filter(d => d.active);
-  
-  if (destinations.length === 0) {
-    console.log('❗ No active alert destinations');
-    // נשלח התראה למשתמש שאין יעדים פעילים
-    toast.warning('אין יעדי התראות פעילים', {
-      description: 'הגדר לפחות יעד אחד (Webhook) כדי לקבל התראות'
-    });
-    return false;
-  }
-  
-  console.log('🔔 Sending alert to ' + destinations.length + ' destinations:', alert);
-  
   try {
+    // בדיקת לוג נוסף לצורך דיבוג
+    console.log('🔔 Sending alert for ' + alert.symbol + ' to destinations:', alert);
+    
+    // Get active destinations
+    const destinations = getAlertDestinations().filter(d => d.active);
+    
+    if (destinations.length === 0) {
+      console.log('❗ No active alert destinations');
+      // נשלח התראה למשתמש שאין יעדים פעילים
+      toast.warning('אין יעדי התראות פעילים', {
+        description: 'הגדר לפחות יעד אחד (Webhook) כדי לקבל התראות - לחץ על "הגדרות התראות"'
+      });
+      return false;
+    }
+    
+    console.log('🔔 Sending alert to ' + destinations.length + ' destinations:', alert);
+    
     // שליחת ההתראות ליעדים
     const successCount = await sendAlertToDestinations(alert, destinations);
     

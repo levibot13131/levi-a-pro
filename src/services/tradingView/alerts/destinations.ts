@@ -2,15 +2,18 @@
 import { AlertDestination } from './types';
 import { toast } from 'sonner';
 
+// קבוע לשמירת המזהה ב-localStorage
+const LOCAL_STORAGE_KEY = 'tradingview-alert-destinations';
+
 // יעדי הודעות מוגדרים - כאן ניתן להוסיף יעדים נוספים
 let alertDestinations: AlertDestination[] = [
-  // נשתמש ביעד ריק שהמשתמש יוכל לשנות בקלות
+  // יעד ברירת מחדל מוגדר מראש לנוחות המשתמש
   {
     id: 'default-destination',
-    name: 'יעד ברירת מחדל (יש להגדיר)',
+    name: 'Webhook ברירת מחדל',
     type: 'webhook',
     active: false,
-    endpoint: '',
+    endpoint: 'https://eobyanldxae2fi5.m.pipedream.net',
     headers: {
       'Content-Type': 'application/json'
     }
@@ -20,7 +23,7 @@ let alertDestinations: AlertDestination[] = [
 // בדיקה אם יש יעדים שמורים ב-localStorage
 const loadSavedDestinations = (): void => {
   try {
-    const saved = localStorage.getItem('alert_destinations');
+    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -36,7 +39,7 @@ const loadSavedDestinations = (): void => {
 // שמירת יעדים ל-localStorage
 const saveDestinations = (): void => {
   try {
-    localStorage.setItem('alert_destinations', JSON.stringify(alertDestinations));
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(alertDestinations));
   } catch (error) {
     console.error('שגיאה בשמירת יעדים:', error);
   }
@@ -45,7 +48,7 @@ const saveDestinations = (): void => {
 // קבלת רשימת היעדים
 export const getAlertDestinations = (): AlertDestination[] => {
   // טעינת יעדים שמורים בפעם הראשונה
-  if (alertDestinations.length === 1 && !alertDestinations[0].endpoint) {
+  if (alertDestinations.length === 1 && !alertDestinations[0].active) {
     loadSavedDestinations();
   }
   return [...alertDestinations];

@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Trash2, Save } from 'lucide-react';
+import { Plus, Trash2, Save, ExternalLink, Webhook } from 'lucide-react';
 import { 
   getAlertDestinations, 
   addAlertDestination, 
@@ -98,6 +98,19 @@ const AlertDestinationsManager: React.FC = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {/* מדריך מהיר */}
+        {destinations.length === 0 && (
+          <div className="bg-blue-50 p-4 mb-6 rounded-md text-right">
+            <h3 className="font-medium text-blue-800 mb-2">מדריך מהיר: יצירת Webhook לקבלת התראות</h3>
+            <ol className="list-decimal list-inside space-y-2 text-sm text-blue-700">
+              <li>צור חשבון בשירות כמו <a href="https://pipedream.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Pipedream</a> או <a href="https://webhook.site" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Webhook.site</a></li>
+              <li>צור webhook חדש וקבל את כתובת ה-URL שלו</li>
+              <li>העתק את כתובת ה-URL והדבק אותה בשדה למטה</li>
+              <li>המערכת תשלח התראות לכתובת זו בכל פעם שמזוהה איתות מסחר</li>
+            </ol>
+          </div>
+        )}
+        
         {/* רשימת יעדים קיימים */}
         {destinations.length > 0 ? (
           <div className="space-y-4 mb-6">
@@ -126,8 +139,18 @@ const AlertDestinationsManager: React.FC = () => {
                     <Trash2 className="h-4 w-4 mr-1" /> הסר
                   </Button>
                   
-                  <div className="text-xs text-muted-foreground">
-                    {dest.active ? 'פעיל' : 'לא פעיל'}
+                  <div className="flex items-center gap-2">
+                    <div className="text-xs text-muted-foreground">
+                      {dest.active ? 'פעיל' : 'לא פעיל'}
+                    </div>
+                    <a 
+                      href={dest.endpoint} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:underline flex items-center"
+                    >
+                      פתח <ExternalLink className="h-3 w-3 ml-1" />
+                    </a>
                   </div>
                 </div>
               </div>
@@ -135,7 +158,9 @@ const AlertDestinationsManager: React.FC = () => {
           </div>
         ) : (
           <div className="text-center py-4 mb-6">
-            <p className="text-muted-foreground">לא הוגדרו יעדים להתראות</p>
+            <Webhook className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+            <p className="text-muted-foreground mb-2">לא הוגדרו יעדים להתראות</p>
+            <p className="text-xs text-muted-foreground">הוסף יעד למטה כדי להתחיל לקבל התראות</p>
           </div>
         )}
         
@@ -173,6 +198,10 @@ const AlertDestinationsManager: React.FC = () => {
           </Button>
         </div>
       </CardContent>
+      <CardFooter className="flex-col space-y-2 text-xs text-muted-foreground text-right border-t pt-4">
+        <p>💡 טיפ: השתמש ב-<a href="https://pipedream.com" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Pipedream</a> או <a href="https://webhook.site" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Webhook.site</a> כדי לקבל כתובת Webhook בחינם.</p>
+        <p>⚠️ שים לב: השתמש רק בשירותים מהימנים לקבלת התראות.</p>
+      </CardFooter>
     </Card>
   );
 };

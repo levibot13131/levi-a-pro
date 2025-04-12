@@ -2,10 +2,11 @@
 import React from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Play, Target } from 'lucide-react';
+import { Play, Target, Settings } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { TradeSignal, Asset } from '@/types/asset';
 import SignalCard from './SignalCard';
+import { getAlertDestinations } from '@/services/tradingView/alerts/destinations';
 
 interface SignalsTabProps {
   selectedAssetId: string;
@@ -32,6 +33,8 @@ const SignalsTab: React.FC<SignalsTabProps> = ({
   realTimeActive,
   toggleRealTimeAnalysis
 }) => {
+  const hasActiveDestinations = getAlertDestinations().some(dest => dest.active);
+
   return (
     <div className="space-y-4">
       <div className="flex justify-end mb-4">
@@ -75,13 +78,23 @@ const SignalsTab: React.FC<SignalsTabProps> = ({
           <CardContent className="py-10 text-center">
             <Target className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
             <p className="text-lg font-medium">אין איתותי מסחר זמינים</p>
-            <p className="text-muted-foreground">נסה להחליף את הפילטר או להפעיל ניתוח בזמן אמת</p>
-            {!realTimeActive && (
-              <Button className="mt-4" onClick={toggleRealTimeAnalysis}>
-                <Play className="h-4 w-4 mr-2" />
-                הפעל ניתוח בזמן אמת
-              </Button>
-            )}
+            <p className="text-muted-foreground mb-4">נסה להחליף את הפילטר או להפעיל ניתוח בזמן אמת</p>
+            
+            <div className="flex flex-col gap-3 max-w-md mx-auto">
+              {!hasActiveDestinations && (
+                <Button variant="outline" onClick={() => window.dispatchEvent(new CustomEvent('show-alert-settings'))}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  הגדר יעדי התראות
+                </Button>
+              )}
+              
+              {!realTimeActive && (
+                <Button onClick={toggleRealTimeAnalysis}>
+                  <Play className="h-4 w-4 mr-2" />
+                  הפעל ניתוח בזמן אמת
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
