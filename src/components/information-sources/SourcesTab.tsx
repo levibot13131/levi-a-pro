@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FinancialDataSource } from '@/pages/InformationSources';
+import { FinancialDataSource } from '@/types/marketInformation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BookmarkIcon, ExternalLink, Globe, Info, Newspaper } from 'lucide-react';

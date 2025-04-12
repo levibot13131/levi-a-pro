@@ -40,18 +40,12 @@ const InformationSources = () => {
       bio: inf.bio || inf.description || 'No bio available',
       expertise: inf.expertise || inf.assetsDiscussed || ['cryptocurrency'],
       username: inf.username || inf.name.toLowerCase().replace(/\s/g, ''), // Generate a username if missing
-      reliability: inf.influence || 4, // Add missing property
+      reliability: inf.reliability || 4, // Use existing reliability property
     })) as MarketInfluencer[];
     
     // Adapt the returned sources to include required properties
     const fetchedSources = getSources().map(source => ({
       ...source,
-      category: source.category || source.type,
-      rating: source.reliability || 3,
-      platform: source.platform || source.type,
-      isPaid: source.isPremium || false,
-      frequencyUpdate: 'daily',
-      languages: source.languages || ['en'],
       categories: source.categories || [source.type],
       isFeatured: Math.random() > 0.7 // Randomly feature some sources for the demo
     })) as FinancialDataSource[];

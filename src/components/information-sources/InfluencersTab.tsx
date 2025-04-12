@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { MarketInfluencer } from '@/pages/InformationSources';
+import { MarketInfluencer } from '@/types/marketInformation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';

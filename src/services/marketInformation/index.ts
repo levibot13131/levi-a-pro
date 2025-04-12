@@ -2,7 +2,7 @@
 // Re-export all market information services
 
 import { getSources, getSourceById, getSourcesByType } from './sourcesService';
-import { getInfluencers, getInfluencersByPlatform } from './influencersService';
+import { getInfluencers, getInfluencersByPlatform, toggleInfluencerFollow } from './influencersService';
 import { getUpcomingMarketEvents, getUpcomingEvents, setEventReminder } from './eventsService';
 import { 
   getExternalSources, 
@@ -11,16 +11,21 @@ import {
   updateAssetsFromConnectedSources 
 } from './externalSourcesService';
 
+// Add export for toggleSourceFavorite
+import { toggleSourceFavorite } from './sourcesService';
+
 // Export all services
 export {
   // Sources
   getSources,
   getSourceById,
   getSourcesByType,
+  toggleSourceFavorite,
   
   // Influencers
   getInfluencers,
   getInfluencersByPlatform,
+  toggleInfluencerFollow,
   
   // Events
   getUpcomingMarketEvents,
@@ -36,4 +41,3 @@ export {
 
 // Also export types for easy importing
 export type { MarketInfluencer, FinancialDataSource, MarketEvent } from '@/types/marketInformation';
-
