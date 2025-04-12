@@ -101,3 +101,6 @@ export const formatAlertMessage = (alert: TradingViewAlert): string => {
   console.log('Formatted alert message:', message);
   return message;
 };
+
+// Export these functions
+export { formatAlertMessage as formatMessage };

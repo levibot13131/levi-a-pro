@@ -1,5 +1,4 @@
 
-import { formatMessage } from '../alerts/formatters';
 import { TradingViewAlert, createTradingViewAlert } from '../alerts/types';
 import { WebhookData } from './types';
 

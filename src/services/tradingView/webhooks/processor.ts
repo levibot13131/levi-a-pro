@@ -1,6 +1,6 @@
 
-import { formatMessage } from '../alerts/formatters';
-import { processAndSendAlert } from '../tradingViewAlertService';
+import { formatAlertMessage } from '../alerts/formatters';
+import { processAndSendAlert, createSampleAlert } from '../tradingViewAlertService';
 import { TradingViewAlert, createTradingViewAlert } from '../alerts/types';
 import { parseWebhookData, webhookDataToAlert } from './parser';
 import { WebhookData } from './types';
@@ -108,4 +108,15 @@ export async function sendTestAlert(symbol: string = 'BTC/USDT'): Promise<boolea
     console.error('Error sending test alert:', error);
     return false;
   }
+}
+
+// Export webhook processing functions for external use
+export function testWebhookSignalFlow(type: 'buy' | 'sell' | 'info'): Promise<boolean> {
+  const sampleAlert = createSampleAlert(type);
+  return processAndSendAlert(sampleAlert);
+}
+
+export function simulateWebhookSignal(type: 'buy' | 'sell' | 'info'): Promise<boolean> {
+  const sampleAlert = createSampleAlert(type);
+  return processAndSendAlert(sampleAlert);
 }

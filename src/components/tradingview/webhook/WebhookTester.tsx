@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { RefreshCw } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getAlertDestinations } from '@/services/tradingView/tradingViewAlertService';
-import { simulateWebhookSignal, testWebhookSignalFlow } from '@/services/tradingViewWebhookService';
+import { simulateWebhookSignal, testWebhookIntegration } from '@/services/tradingViewWebhookService';
 import WebhookSimulationTab from './WebhookSimulationTab';
 import WebhookTestingTab from './WebhookTestingTab';
 import WebhookDebugInfo from './WebhookDebugInfo';
@@ -40,7 +40,7 @@ const WebhookTester: React.FC = () => {
   const handleTestWebhookFlow = async (type: 'buy' | 'sell' | 'info'): Promise<boolean> => {
     setIsTesting(true);
     try {
-      const result = await testWebhookSignalFlow(type);
+      const result = await testWebhookIntegration();
       setLastTestResult({
         success: result,
         type,

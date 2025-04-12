@@ -15,6 +15,11 @@ interface IntegrationStatusSectionProps {
   hasNotifications?: boolean;
   isVisible?: boolean;
   onToggleVisibility?: () => void;
+  syncEnabled?: boolean;
+  refreshTimer?: number;
+  lastSyncTime?: Date | null;
+  formatLastSyncTime?: () => string;
+  toggleAutoSync?: () => void;
 }
 
 const IntegrationStatusSection: React.FC<IntegrationStatusSectionProps> = ({
@@ -25,7 +30,12 @@ const IntegrationStatusSection: React.FC<IntegrationStatusSectionProps> = ({
   onToggleNotifications,
   hasNotifications = false,
   isVisible = true,
-  onToggleVisibility
+  onToggleVisibility,
+  syncEnabled,
+  refreshTimer,
+  lastSyncTime,
+  formatLastSyncTime,
+  toggleAutoSync
 }) => {
   const handleTrackAsset = async () => {
     if (!assetId) return;
@@ -45,11 +55,11 @@ const IntegrationStatusSection: React.FC<IntegrationStatusSectionProps> = ({
   return (
     <div className="flex flex-col gap-2 border p-4 rounded-lg">
       <div className="flex justify-between items-center">
-        <Badge variant={isConnected ? "success" : "destructive"}>
+        <Badge variant={isConnected ? "default" : "destructive"} className={isConnected ? "bg-green-500 hover:bg-green-600" : ""}>
           {isConnected ? 'מחובר' : 'לא מחובר'}
         </Badge>
         <span className="text-sm text-muted-foreground">
-          {lastSync ? `עדכון אחרון: ${lastSync}` : 'אין נתונים'}
+          {lastSync ? `עדכון אחרון: ${lastSync}` : lastSyncTime && formatLastSyncTime ? formatLastSyncTime() : 'אין נתונים'}
         </span>
       </div>
       
@@ -112,6 +122,27 @@ const IntegrationStatusSection: React.FC<IntegrationStatusSectionProps> = ({
               <>
                 <Eye className="h-4 w-4 mr-2" />
                 הצג
+              </>
+            )}
+          </Button>
+        )}
+        
+        {toggleAutoSync && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={toggleAutoSync}
+            className="col-span-2"
+          >
+            {syncEnabled ? (
+              <>
+                <BellOff className="h-4 w-4 mr-2" />
+                בטל סנכרון אוטומטי
+              </>
+            ) : (
+              <>
+                <BellRing className="h-4 w-4 mr-2" />
+                הפעל סנכרון אוטומטי
               </>
             )}
           </Button>

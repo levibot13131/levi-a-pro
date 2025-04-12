@@ -1,138 +1,87 @@
 
-import { handleTradingViewWebhook, testWebhookFlow, simulateWebhook } from './tradingView/webhooks/processor';
-import { isTradingViewConnected } from './tradingView/tradingViewAuthService';
-import { getAlertDestinations } from './tradingView/tradingViewAlertService';
 import { toast } from 'sonner';
-import { WebhookSignal } from '@/types/webhookSignal';
+import { processWebhook, testWebhookSignalFlow, sendTestAlert } from './tradingView/webhooks/processor';
+import { getAlertDestinations, updateAlertDestination } from './tradingView/tradingViewAlertService';
 
-// Store for webhook signals
-let webhookSignals: WebhookSignal[] = [];
-const signalListeners: Array<() => void> = [];
-
-/**
- * Get stored webhook signals
- */
-export const getStoredWebhookSignals = (): WebhookSignal[] => {
-  return [...webhookSignals];
-};
-
-/**
- * Clear all stored webhook signals
- */
-export const clearStoredWebhookSignals = (): void => {
-  webhookSignals = [];
-  notifySignalListeners();
-};
-
-/**
- * Subscribe to webhook signal updates
- */
-export const subscribeToWebhookSignals = (callback: () => void): (() => void) => {
-  signalListeners.push(callback);
-  return () => {
-    const index = signalListeners.indexOf(callback);
-    if (index > -1) {
-      signalListeners.splice(index, 1);
-    }
-  };
-};
-
-/**
- * Notify all signal listeners of updates
- */
-const notifySignalListeners = (): void => {
-  signalListeners.forEach(listener => listener());
-};
-
-/**
- * Add a new webhook signal
- */
-export const addWebhookSignal = (signal: WebhookSignal): void => {
-  webhookSignals = [signal, ...webhookSignals].slice(0, 100); // Keep only the latest 100 signals
-  notifySignalListeners();
-};
-
-/**
- * Try to simulate a webhook signal and process it through the system
- */
-export const simulateWebhookSignal = async (type: 'buy' | 'sell' | 'info' = 'info'): Promise<boolean> => {
-  if (!checkIntegrationReady()) {
+// Process an incoming webhook from TradingView
+export async function handleTradingViewWebhook(data: any): Promise<boolean> {
+  try {
+    console.log('Received TradingView webhook:', data);
+    return await processWebhook(data);
+  } catch (error) {
+    console.error('Error handling TradingView webhook:', error);
+    toast.error('Error processing webhook from TradingView');
     return false;
   }
-  
+}
+
+// Simulate a webhook signal for testing
+export async function simulateWebhookSignal(type: 'buy' | 'sell' | 'info'): Promise<boolean> {
   try {
-    toast.info(`סימולציית Webhook מסוג ${getActionTypeName(type)}`, {
-      description: 'הסימולציה החלה, אנא המתן לתוצאות'
-    });
-    
-    const result = await simulateWebhook(type);
-    return result;
+    console.log(`Simulating ${type} webhook signal`);
+    toast.info(`Simulating ${type} webhook signal...`);
+    return await testWebhookSignalFlow(type);
   } catch (error) {
     console.error('Error simulating webhook signal:', error);
-    toast.error('שגיאה בסימולציית Webhook', {
-      description: 'אירעה שגיאה בלתי צפויה. בדוק את הקונסול לפרטים נוספים'
-    });
+    toast.error('Error simulating webhook signal');
     return false;
   }
-};
+}
 
-/**
- * Test the webhook flow with a test signal
- */
-export const testWebhookSignalFlow = async (type: 'buy' | 'sell' | 'info' = 'info'): Promise<boolean> => {
-  if (!checkIntegrationReady()) {
+// Test webhook integration with all configured destinations
+export async function testWebhookIntegration(): Promise<boolean> {
+  const destinations = getAlertDestinations();
+  const activeDestinations = destinations.filter(d => d.active);
+  
+  if (activeDestinations.length === 0) {
+    toast.warning('No active destinations configured for webhooks', {
+      description: 'Configure at least one destination to test webhook integration'
+    });
     return false;
   }
   
   try {
-    toast.info(`בדיקת Webhook מסוג ${getActionTypeName(type)}`, {
-      description: 'הבדיקה החלה, אנא המתן לתוצאות'
-    });
+    console.log('Testing webhook integration with destinations:', 
+      activeDestinations.map(d => d.type)
+    );
     
-    const result = await testWebhookFlow(type);
+    toast.info('Testing webhook integration with all destinations...');
+    
+    const result = await sendTestAlert();
+    
+    if (result) {
+      toast.success('Webhook test completed successfully');
+    } else {
+      toast.error('Webhook test failed');
+    }
+    
     return result;
   } catch (error) {
-    console.error('Error testing webhook flow:', error);
-    toast.error('שגיאה בבדיקת Webhook', {
-      description: 'אירעה שגיאה בלתי צפויה. בדוק את הקונסול לפרטים נוספים'
-    });
+    console.error('Error testing webhook integration:', error);
+    toast.error('Error testing webhook integration');
     return false;
   }
-};
+}
 
-/**
- * Helper function to check if the integration is ready
- */
-const checkIntegrationReady = (): boolean => {
-  if (!isTradingViewConnected()) {
-    toast.error('אינך מחובר ל-TradingView', {
-      description: 'חבר את המערכת ל-TradingView לפני ביצוע בדיקות'
+// Update webhook settings
+export function updateWebhookSettings(enabled: boolean): boolean {
+  try {
+    // Update 'webhook' destination
+    const result = updateAlertDestination('webhook', {
+      active: enabled,
+      name: 'TradingView Webhook',
     });
+    
+    if (result) {
+      toast.success(
+        enabled ? 'Webhook integration enabled' : 'Webhook integration disabled'
+      );
+    }
+    
+    return result;
+  } catch (error) {
+    console.error('Error updating webhook settings:', error);
+    toast.error('Error updating webhook settings');
     return false;
   }
-  
-  const destinations = getAlertDestinations().filter(d => d.active);
-  if (destinations.length === 0) {
-    toast.warning('אין יעדי התראות פעילים', {
-      description: 'הגדר לפחות יעד התראות אחד פעיל לפני ביצוע בדיקות'
-    });
-    return false;
-  }
-  
-  return true;
-};
-
-/**
- * Helper function to get the action type name in Hebrew
- */
-const getActionTypeName = (type: string): string => {
-  switch (type) {
-    case 'buy': return 'קנייה';
-    case 'sell': return 'מכירה';
-    case 'info': return 'מידע';
-    default: return type;
-  }
-};
-
-// Re-export some functions for direct use
-export { handleTradingViewWebhook };
+}

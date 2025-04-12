@@ -1,65 +1,43 @@
 
-export type AlertDestinationType = 'telegram' | 'webhook' | 'whatsapp' | 'email' | 'sms';
-
-export interface AlertDestination {
-  id: string;
-  name: string;
-  type: AlertDestinationType;
-  active: boolean;
-  endpoint?: string;
-  headers?: Record<string, string>;
-  config: {
-    method?: 'POST' | 'GET';
-    format?: 'json' | 'form';
-    botToken?: string;
-    chatId?: string;
-    phone?: string;
-    template?: string;
-  };
-}
-
-export interface AlertMessage {
-  title: string;
-  message: string;
-  timestamp: number;
-  symbol: string;
-  price: number;
-  action: 'buy' | 'sell' | 'info';
-  timeframe: string;
-  indicator?: string;
-  imageUrl?: string;
-}
-
 export interface TradingViewAlert {
+  id?: string;
   symbol: string;
-  action: 'buy' | 'sell' | 'info';
   message: string;
-  indicators?: string[];
+  action: 'buy' | 'sell' | 'info';
   timestamp: number;
   price: number;
   timeframe: string;
+  type: 'price' | 'indicator' | 'custom';
+  indicators?: string[];
   details?: string;
   strategy?: string;
-  type: 'price' | 'indicator' | 'pattern' | 'custom';
-  source: string;
-  priority: 'high' | 'medium' | 'low';
-  chartUrl?: string; // Added missing property
+  source?: string;
+  priority?: 'low' | 'medium' | 'high';
+  chartUrl?: string;
 }
 
-export function createTradingViewAlert(data: Partial<TradingViewAlert>): TradingViewAlert {
+export interface AlertDestination {
+  type: 'telegram' | 'whatsapp' | 'email' | 'webhook';
+  name: string;
+  active: boolean;
+  config?: Record<string, any>;
+}
+
+// Helper function to create a TradingView alert
+export function createTradingViewAlert(data: Partial<TradingViewAlert> & { symbol: string; message: string }): TradingViewAlert {
   return {
-    symbol: data.symbol || 'UNKNOWN',
+    symbol: data.symbol,
+    message: data.message,
     action: data.action || 'info',
-    message: data.message || '',
-    indicators: data.indicators || [],
     timestamp: data.timestamp || Date.now(),
     price: data.price || 0,
     timeframe: data.timeframe || '1d',
+    type: data.type || 'custom',
+    indicators: data.indicators || [],
     details: data.details || '',
     strategy: data.strategy || '',
-    type: data.type || 'custom',
-    source: data.source || 'tradingview',
+    source: data.source || 'system',
     priority: data.priority || 'medium',
-    chartUrl: data.chartUrl,
+    chartUrl: data.chartUrl
   };
 }
