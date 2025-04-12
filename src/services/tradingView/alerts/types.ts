@@ -24,6 +24,8 @@ export interface AlertDestination {
   type: AlertDestinationType;
   active: boolean;
   config: Record<string, any>;
+  endpoint?: string;
+  headers?: Record<string, string>;
 }
 
 export type AlertDestinationType = 'email' | 'telegram' | 'webhook' | 'notification' | 'sms' | 'whatsapp';
@@ -32,7 +34,7 @@ export function createTradingViewAlert(data: Partial<TradingViewAlert>): Trading
   return {
     id: data.id || `alert-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     symbol: data.symbol || 'UNKNOWN',
-    message: data.message || 'TradingView Alert',
+    message: data.message || 'Levi Bot Alert',
     type: data.type || 'info',
     timeframe: data.timeframe || '1d',
     price: data.price || 0,

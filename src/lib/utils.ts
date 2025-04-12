@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(amount: number, currency: string = 'USD', maximumFractionDigits: number = 2): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('he-IL', {
     style: 'currency',
     currency,
     maximumFractionDigits
@@ -15,7 +15,7 @@ export function formatCurrency(amount: number, currency: string = 'USD', maximum
 }
 
 export function formatPercentage(value: number, maximumFractionDigits: number = 2): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('he-IL', {
     style: 'percent',
     minimumFractionDigits: 2,
     maximumFractionDigits
@@ -23,7 +23,7 @@ export function formatPercentage(value: number, maximumFractionDigits: number = 
 }
 
 export function formatNumber(value: number, maximumFractionDigits: number = 2): string {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('he-IL', {
     maximumFractionDigits
   }).format(value);
 }

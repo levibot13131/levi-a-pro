@@ -1,110 +1,77 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { PricePoint } from '@/types/asset';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-interface PriceChartProps {
-  data: PricePoint[];
-  isLoading?: boolean;
-  title?: string;
+export interface PriceChartProps {
+  data: any[];
   height?: number;
-  showCardWrapper?: boolean;
-  color?: string;
 }
 
-const PriceChart: React.FC<PriceChartProps> = ({
-  data,
-  isLoading = false,
-  title = 'מחיר',
-  height = 300,
-  showCardWrapper = true,
-  color = '#22c55e'
-}) => {
-  // Format data for the chart
-  const chartData = data.map((point) => ({
-    time: new Date(point.timestamp).toLocaleDateString('he-IL'),
-    price: point.price,
-    volume: point.volume || 0
-  }));
-
-  const formatPrice = (price: number) => {
-    return price >= 1 
-      ? price.toLocaleString(undefined, { maximumFractionDigits: 2 })
-      : price.toLocaleString(undefined, { maximumFractionDigits: 8 });
-  };
-
-  const renderChart = () => (
-    <div style={{ width: '100%', height }}>
-      {isLoading ? (
-        <div className="flex flex-col space-y-3 w-full h-full">
-          <Skeleton className="h-[70%] w-full" />
-          <Skeleton className="h-[20%] w-full" />
-        </div>
-      ) : data.length > 0 ? (
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart
-            data={chartData}
-            margin={{ top: 10, right: 10, left: 10, bottom: 10 }}
-          >
-            <defs>
-              <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={color} stopOpacity={0.8} />
-                <stop offset="95%" stopColor={color} stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-            <XAxis 
-              dataKey="time" 
-              axisLine={false}
-              tickLine={false}
-              tickMargin={10}
-              tick={{ fontSize: 12, fill: '#888888' }}
-            />
-            <YAxis 
-              type="number" 
-              domain={['auto', 'auto']} 
-              axisLine={false}
-              tickLine={false}
-              tickMargin={10}
-              tickFormatter={formatPrice}
-              orientation="right"
-              tick={{ fontSize: 12, fill: '#888888' }}
-            />
-            <Tooltip 
-              formatter={(value: number) => [`$${formatPrice(value)}`, 'מחיר']}
-              labelFormatter={(label) => `תאריך: ${label}`}
-            />
-            <Area 
-              type="monotone" 
-              dataKey="price" 
-              stroke={color}
-              fillOpacity={1}
-              fill="url(#colorPrice)"
-              strokeWidth={2}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      ) : (
-        <div className="flex items-center justify-center h-full text-muted-foreground">
-          אין נתונים להצגה
-        </div>
-      )}
-    </div>
-  );
-
-  if (!showCardWrapper) {
-    return renderChart();
+const PriceChart: React.FC<PriceChartProps> = ({ data, height = 400 }) => {
+  if (!data || data.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>מחיר היסטורי</CardTitle>
+        </CardHeader>
+        <CardContent className="h-80 flex items-center justify-center">
+          <p className="text-muted-foreground">אין נתונים זמינים</p>
+        </CardContent>
+      </Card>
+    );
   }
+
+  // Format date for tooltip
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString('he-IL', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
 
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-right">{title}</CardTitle>
+      <CardHeader>
+        <CardTitle>מחיר היסטורי</CardTitle>
       </CardHeader>
       <CardContent>
-        {renderChart()}
+        <div style={{ width: '100%', height }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart
+              data={data}
+              margin={{
+                top: 10,
+                right: 30,
+                left: 0,
+                bottom: 0,
+              }}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+              <XAxis 
+                dataKey="timestamp" 
+                tickFormatter={formatDate}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis 
+                tick={{ fontSize: 12 }}
+                domain={['auto', 'auto']}
+              />
+              <Tooltip
+                formatter={(value: number) => [`$${value.toLocaleString()}`, 'מחיר']}
+                labelFormatter={(label) => formatDate(label)}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="price" 
+                stroke="#3B82F6" 
+                fill="#3B82F6" 
+                fillOpacity={0.2} 
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
       </CardContent>
     </Card>
   );

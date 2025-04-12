@@ -8,16 +8,40 @@ import { initializeUsers } from './services/auth/userService';
 import { Toaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// Initialize users data when the app starts
+// יצירת ריאקט קווארי קליינט
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 5, // 5 דקות
+    },
+  },
+});
+
+// אתחול משתמשים
 initializeUsers();
 
-// Import startup service to ensure initialization
+// ייבוא שירות האתחול להבטחת אתחול
 import './services/tradingView/startup';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <QueryClientProvider client={queryClient}>
+        <App />
+        <Toaster 
+          position="top-center" 
+          richColors 
+          closeButton 
+          dir="rtl"
+          toastOptions={{
+            classNames: {
+              title: "font-bold text-right",
+              description: "text-right"
+            }
+          }}
+        />
+      </QueryClientProvider>
     </BrowserRouter>
   </React.StrictMode>,
 );

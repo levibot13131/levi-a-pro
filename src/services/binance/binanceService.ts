@@ -1,118 +1,150 @@
 
 import { toast } from 'sonner';
 
+// מפתח לשמירת פרטי התחברות בלוקל סטורג'
+const BINANCE_AUTH_KEY = 'levi_bot_binance_credentials';
+
+// פרטי התחברות Binance
 export interface BinanceCredentials {
   apiKey: string;
   apiSecret: string;
-  lastConnected?: number;
   isConnected?: boolean;
+  lastConnected?: number;
 }
 
-// Local storage key for Binance credentials
-const BINANCE_CREDENTIALS_KEY = 'binance_credentials';
-
-// Save Binance credentials to local storage
-export const saveBinanceCredentials = (credentials: BinanceCredentials): void => {
-  const data = {
-    ...credentials,
-    lastConnected: Date.now()
-  };
-  localStorage.setItem(BINANCE_CREDENTIALS_KEY, JSON.stringify(data));
+/**
+ * אימות פרטי התחברות Binance
+ */
+export const validateBinanceCredentials = async (credentials: BinanceCredentials): Promise<boolean> => {
+  try {
+    // סימולציה של בדיקת API
+    return new Promise(resolve => {
+      setTimeout(() => {
+        // בדיקה אם קיימים פרטי חיבור תקינים
+        const valid = credentials.apiKey?.trim().length > 10 && 
+                     credentials.apiSecret?.trim().length > 10;
+          
+        if (valid) {
+          saveBinanceCredentials({
+            ...credentials,
+            isConnected: true,
+            lastConnected: Date.now()
+          });
+        }
+        
+        resolve(valid);
+      }, 1500); // סימולציה של זמן תגובה מהשרת
+    });
+  } catch (error) {
+    console.error('Error validating Binance credentials:', error);
+    return false;
+  }
 };
 
-// Get Binance credentials from local storage
+/**
+ * שמירת פרטי התחברות Binance
+ */
+export const saveBinanceCredentials = (credentials: BinanceCredentials): void => {
+  localStorage.setItem(BINANCE_AUTH_KEY, JSON.stringify(credentials));
+};
+
+/**
+ * קבלת פרטי התחברות Binance
+ */
 export const getBinanceCredentials = (): BinanceCredentials | null => {
-  const data = localStorage.getItem(BINANCE_CREDENTIALS_KEY);
-  if (!data) return null;
+  const credentials = localStorage.getItem(BINANCE_AUTH_KEY);
+  
+  if (!credentials) return null;
   
   try {
-    return JSON.parse(data) as BinanceCredentials;
-  } catch (e) {
-    console.error('Error parsing Binance credentials:', e);
+    return JSON.parse(credentials) as BinanceCredentials;
+  } catch (error) {
+    console.error('Error parsing Binance credentials:', error);
     return null;
   }
 };
 
-// Check if Binance is connected
-export const isBinanceConnected = (): boolean => {
-  const credentials = getBinanceCredentials();
-  return !!credentials && !!credentials.apiKey && !!credentials.apiSecret;
-};
-
-// Disconnect from Binance
-export const disconnectBinance = (): void => {
-  localStorage.removeItem(BINANCE_CREDENTIALS_KEY);
-};
-
-// Test Binance connection
+/**
+ * בדיקת חיבור לבינאנס
+ */
 export const testBinanceConnection = async (): Promise<boolean> => {
-  // In a real application, we would make an API call to test the connection
   const credentials = getBinanceCredentials();
-  if (!credentials) return false;
   
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // For demo purposes, always return success if we have credentials
-  return true;
-};
-
-// Start real-time market data updates
-export const startRealTimeMarketData = async (): Promise<boolean> => {
-  if (!isBinanceConnected()) {
-    console.error('Cannot start real-time market data: Not connected to Binance');
+  if (!credentials) {
+    toast.error('אין פרטי התחברות לבינאנס');
     return false;
   }
   
-  // In a real application, we would establish a WebSocket connection to Binance
-  console.log('Starting real-time market data updates from Binance');
-  
-  return true;
+  try {
+    // סימולציה של בדיקת קישוריות
+    return new Promise(resolve => {
+      setTimeout(() => {
+        const success = true; // סימולציה של הצלחה
+        
+        if (success) {
+          toast.success('החיבור לבינאנס פעיל');
+        } else {
+          toast.error('החיבור לבינאנס נכשל');
+        }
+        
+        resolve(success);
+      }, 1000);
+    });
+  } catch (error) {
+    console.error('Error testing Binance connection:', error);
+    toast.error('שגיאה בבדיקת החיבור לבינאנס');
+    return false;
+  }
 };
 
-// Get fundamental data for an asset
-export const getFundamentalData = async (assetId: string): Promise<any> => {
-  if (!isBinanceConnected()) {
-    console.error('Cannot get fundamental data: Not connected to Binance');
-    return null;
-  }
+/**
+ * התחלת נתוני שוק בזמן אמת
+ */
+export const startRealTimeMarketData = (symbols: string[]) => {
+  console.log('Starting real-time market data for symbols:', symbols);
   
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 800));
+  // סימולציה של התחלת עדכונים בזמן אמת
+  const interval = setInterval(() => {
+    // לוגיקה של עדכון נתונים בזמן אמת
+    console.log('Updating market data for symbols:', symbols);
+  }, 15000);
   
-  // Return mock data
+  // החזרת פונקציה לעצירת העדכונים
   return {
-    marketCap: 950000000000,
-    volume24h: 45000000000,
-    circulatingSupply: 19000000,
-    maxSupply: 21000000,
-    allTimeHigh: 69000,
-    allTimeHighDate: '2021-11-10'
+    stop: () => {
+      clearInterval(interval);
+      console.log('Stopped real-time market data updates');
+    }
   };
 };
 
-// Get real-time price data
-export const getRealTimePriceData = async (symbols: string[]): Promise<Record<string, any>> => {
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  // Return mock data
-  const result: Record<string, any> = {};
-  
-  symbols.forEach(symbol => {
-    const basePrice = symbol.toLowerCase().includes('btc') ? 50000 : 
-                      symbol.toLowerCase().includes('eth') ? 3000 : 
-                      symbol.toLowerCase().includes('bnb') ? 450 : 100;
-    
-    const randomChange = (Math.random() * 6) - 3; // Random change between -3% and +3%
-    
-    result[symbol] = {
-      symbol,
-      price: basePrice + (basePrice * randomChange / 100),
-      change24h: randomChange,
-      volume: basePrice * 10000 * (0.8 + Math.random() * 0.4)
-    };
-  });
-  
-  return result;
+/**
+ * קבלת נתונים בסיסיים
+ */
+export const getFundamentalData = (symbol: string) => {
+  return {
+    symbol,
+    name: symbol.replace('USDT', ''),
+    marketCap: Math.random() * 1000000000,
+    volume24h: Math.random() * 100000000,
+    circulatingSupply: Math.random() * 100000000,
+    allTimeHigh: Math.random() * 100000,
+    launchDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000)
+  };
+};
+
+/**
+ * ניתוק חיבור לבינאנס
+ */
+export const disconnectBinance = () => {
+  localStorage.removeItem(BINANCE_AUTH_KEY);
+  toast.info('החיבור לבינאנס נותק');
+};
+
+/**
+ * בדיקה האם המשתמש מחובר לבינאנס
+ */
+export const isBinanceConnected = (): boolean => {
+  const credentials = getBinanceCredentials();
+  return credentials?.isConnected === true;
 };

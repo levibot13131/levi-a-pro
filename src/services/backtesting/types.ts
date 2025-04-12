@@ -14,6 +14,13 @@ export interface BacktestSettings {
   leverage: number;
   compounding: boolean;
   fees: number;
+  assetIds?: string[];
+  entryType?: string;
+  stopLossType?: string;
+  takeProfitType?: string;
+  riskRewardRatio?: number;
+  trailingStop?: boolean;
+  maxOpenTrades?: number;
 }
 
 export interface BacktestResult {
@@ -64,3 +71,8 @@ export interface EquityPoint {
   date: number;
   equity: number;
 }
+
+export type Trade = BacktestTrade;
+
+// נשנה את השם לפי דרישת המשתמש
+export type BacktestResults = BacktestResult;

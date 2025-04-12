@@ -1,125 +1,104 @@
 
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { startRealTimeMarketData, getFundamentalData } from '@/services/binance/binanceService';
-import { useBinanceConnection } from './use-binance-connection';
-import { toast } from 'sonner';
 
-export interface MarketData {
+interface MarketData {
   symbol: string;
   price: number;
-  volume: number;
-  timestamp: number;
   change24h: number;
-}
-
-export interface FundamentalData {
-  symbol: string;
-  marketCap: number;
-  volume24h: number;
-  circulatingSupply: number;
-  maxSupply: number;
-  fundamentalScore: number;
-  sentiment: string;
-  newsCount24h: number;
-  socialMentions24h: number;
-  timestamp: number;
+  volume: number;
+  lastUpdate: number;
 }
 
 export function useBinanceData(symbols: string[] = []) {
-  const { isConnected } = useBinanceConnection();
   const [marketData, setMarketData] = useState<Record<string, MarketData>>({});
-  const [fundamentalData, setFundamentalData] = useState<Record<string, FundamentalData>>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [isStreamActive, setIsStreamActive] = useState(false);
-  
-  // Start real-time data stream when component mounts
+  const [realTimeActive, setRealTimeActive] = useState(false);
+
+  // נתונים בסיסיים עבור כל סימול
+  const { data: fundamentalData } = useQuery({
+    queryKey: ['binance', 'fundamental', symbols],
+    queryFn: () => {
+      // נביא נתונים בסיסיים רק אם יש סימבולים
+      if (symbols.length === 0) return {};
+      
+      // נשתמש במאפ ליצירת אובייקט עם נתונים בסיסיים לכל סימבול
+      const result: Record<string, any> = {};
+      symbols.forEach(symbol => {
+        result[symbol] = getFundamentalData(symbol);
+      });
+      
+      return result;
+    },
+    enabled: symbols.length > 0,
+    staleTime: 1000 * 60 * 60, // פעם בשעה
+  });
+
+  // התחברות לנתונים בזמן אמת
   useEffect(() => {
-    if (!isConnected || symbols.length === 0) {
-      setIsLoading(false);
-      return;
-    }
+    if (symbols.length === 0) return;
     
-    setIsLoading(true);
-    let stopFunction: (() => void) | null = null;
+    // אתחול נתוני מחיר ראשוניים
+    const initialData: Record<string, MarketData> = {};
+    symbols.forEach(symbol => {
+      initialData[symbol] = {
+        symbol,
+        price: Math.random() * 1000 + 100, // מחיר התחלתי אקראי
+        change24h: (Math.random() * 10) - 5, // שינוי יומי אקראי
+        volume: Math.random() * 1000000,
+        lastUpdate: Date.now()
+      };
+    });
+    setMarketData(initialData);
     
-    // Fetch initial fundamental data for each symbol
-    const fetchFundamental = async () => {
-      const fundamentalResults: Record<string, FundamentalData> = {};
-      
-      for (const symbol of symbols) {
-        try {
-          const data = await getFundamentalData(symbol);
-          fundamentalResults[symbol] = data;
-        } catch (error) {
-          console.error(`Error fetching fundamental data for ${symbol}:`, error);
-        }
-      }
-      
-      setFundamentalData(fundamentalResults);
-    };
+    // התחלת עדכוני מחיר בזמן אמת
+    const realTimeService = startRealTimeMarketData(symbols);
+    setRealTimeActive(true);
     
-    fetchFundamental();
-    
-    // Start real-time market data stream
-    const startStream = async () => {
-      try {
-        const result = await startRealTimeMarketData(symbols, (data) => {
-          setMarketData(prev => ({
-            ...prev,
-            [data.symbol]: data
-          }));
-          
-          if (isLoading) {
-            setIsLoading(false);
+    // אינטרבל לסימולציה של נתונים בזמן אמת
+    const interval = setInterval(() => {
+      setMarketData(prev => {
+        const updated = { ...prev };
+        symbols.forEach(symbol => {
+          if (updated[symbol]) {
+            // עדכון מחיר בצורה אקראית (לדמות תנודות מחיר)
+            const priceChange = updated[symbol].price * (Math.random() * 0.02 - 0.01);
+            updated[symbol] = {
+              ...updated[symbol],
+              price: updated[symbol].price + priceChange,
+              change24h: updated[symbol].change24h + (Math.random() * 0.5 - 0.25),
+              lastUpdate: Date.now()
+            };
           }
         });
-        
-        stopFunction = result.stop;
-        setIsStreamActive(true);
-      } catch (error) {
-        console.error("Error starting real-time market data:", error);
-        setIsLoading(false);
-      }
-    };
+        return updated;
+      });
+    }, 5000); // עדכון כל 5 שניות
     
-    startStream();
-    
-    // Clean up on unmount
     return () => {
-      if (stopFunction) {
-        stopFunction();
+      clearInterval(interval);
+      if (realTimeService) {
+        realTimeService.stop();
       }
-      setIsStreamActive(false);
+      setRealTimeActive(false);
     };
-  }, [isConnected, symbols.join(',')]);
-  
-  // Periodically update fundamental data (every 5 minutes)
-  useEffect(() => {
-    if (!isConnected || symbols.length === 0) return;
-    
-    const updateInterval = setInterval(async () => {
-      const fundamentalResults: Record<string, FundamentalData> = { ...fundamentalData };
-      
-      for (const symbol of symbols) {
-        try {
-          const data = await getFundamentalData(symbol);
-          fundamentalResults[symbol] = data;
-        } catch (error) {
-          console.error(`Error updating fundamental data for ${symbol}:`, error);
-        }
-      }
-      
-      setFundamentalData(fundamentalResults);
-    }, 5 * 60 * 1000); // 5 minutes
-    
-    return () => clearInterval(updateInterval);
-  }, [isConnected, symbols.join(','), fundamentalData]);
-  
+  }, [symbols.join(',')]);
+
+  // עצירת עדכוני מחיר בזמן אמת
+  const stopRealTimeUpdates = () => {
+    setRealTimeActive(false);
+  };
+
+  // התחלת עדכוני מחיר בזמן אמת
+  const startRealTimeUpdates = () => {
+    setRealTimeActive(true);
+  };
+
   return {
     marketData,
     fundamentalData,
-    isLoading,
-    isStreamActive,
-    isConnected
+    isRealTimeActive: realTimeActive,
+    stopRealTimeUpdates,
+    startRealTimeUpdates
   };
 }

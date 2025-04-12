@@ -26,11 +26,11 @@ const RiskManagementTabs = ({ performanceStats, trendStats }: RiskManagementTabs
         </TabsTrigger>
         <TabsTrigger value="calculator" className="flex items-center gap-1">
           <Calculator className="h-4 w-4 ml-1" />
-          מחשבון סיכונים
+          מחשבון סיכונים Levi
         </TabsTrigger>
         <TabsTrigger value="rules" className="flex items-center gap-1">
           <ShieldCheck className="h-4 w-4 ml-1" />
-          כללי מסחר
+          כללי מסחר Levi
         </TabsTrigger>
         <TabsTrigger value="journal" className="flex items-center gap-1">
           <BookOpen className="h-4 w-4 ml-1" />
@@ -53,11 +53,11 @@ const RiskManagementTabs = ({ performanceStats, trendStats }: RiskManagementTabs
           <div className="md:col-span-5">
             <Card>
               <CardHeader>
-                <CardTitle className="text-right">הסבר מחשבון הסיכונים</CardTitle>
+                <CardTitle className="text-right">הסבר מחשבון הסיכונים של Levi Bot</CardTitle>
               </CardHeader>
               <CardContent className="text-right">
                 <p className="mb-4">
-                  מחשבון זה מבוסס על נוסחת החישוב של אסטרטגיית המסחר שלך:
+                  מחשבון זה מבוסס על נוסחת החישוב של אסטרטגיית המסחר של Levi Bot:
                 </p>
                 
                 <div className="space-y-3 mb-4 font-mono text-sm border-y py-3">
@@ -98,7 +98,7 @@ const RiskManagementTabs = ({ performanceStats, trendStats }: RiskManagementTabs
                   </p>
                   <p>
                     <strong>חשוב:</strong> הקפד תמיד על סיכון מקסימלי של 1% מהתיק לעסקה בודדת,
-                    בהתאם לאסטרטגיית הסיכונים שלך.
+                    בהתאם לאסטרטגיית הסיכונים של Levi Bot.
                   </p>
                 </div>
               </CardContent>

@@ -9,13 +9,13 @@ import BacktestingForm from './BacktestingForm';
 import BacktestResults from './BacktestResults';
 import RealTimeAlerts from './RealTimeAlerts';
 import ComprehensiveAnalysis from './ComprehensiveAnalysis';
-import { BacktestSettings, BacktestResults as BacktestResultsType } from '@/services/backtesting/types';
+import { BacktestSettings, BacktestResult } from '@/services/backtesting/types';
 import { runBacktest } from '@/services/backtesting';
 import WhatsappIntegrationPanel from '../whatsapp/WhatsappIntegrationPanel';
 
 const BacktestingSystem: React.FC = () => {
   const [activeTab, setActiveTab] = useState('backtest');
-  const [results, setResults] = useState<BacktestResultsType | null>(null);
+  const [results, setResults] = useState<BacktestResult | null>(null);
   const [settings, setSettings] = useState<BacktestSettings | null>(null);
   const [selectedAsset, setSelectedAsset] = useState<string>('bitcoin');
   const [isRunning, setIsRunning] = useState(false);
@@ -23,16 +23,16 @@ const BacktestingSystem: React.FC = () => {
   const handleRunBacktest = async (settings: BacktestSettings) => {
     setIsRunning(true);
     setSettings(settings);
-    setSelectedAsset(settings.assetIds[0] || 'bitcoin');
+    setSelectedAsset(settings.assetIds?.[0] || 'bitcoin');
     
     try {
       const results = await runBacktest(settings);
       setResults(results);
-      toast.success('הבדיקה הסתיימה בהצלחה');
-      // Switch to results tab
+      toast.success('בדיקת Levi Bot הסתיימה בהצלחה');
+      // מעבר ללשונית תוצאות
       setActiveTab('results');
     } catch (error) {
-      toast.error('שגיאה בהרצת הבדיקה', {
+      toast.error('שגיאה בהרצת בדיקת Levi Bot', {
         description: 'אירעה שגיאה בעת הרצת בדיקת העבר. נא לנסות שוב.'
       });
     } finally {
@@ -43,7 +43,7 @@ const BacktestingSystem: React.FC = () => {
   return (
     <Container className="py-8">
       <h1 className="text-3xl font-bold mb-8 text-right">
-        מערכת בדיקות עבר וניתוח בזמן אמת
+        Levi Bot - מערכת בדיקות עבר וניתוח בזמן אמת
       </h1>
       
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -73,7 +73,7 @@ const BacktestingSystem: React.FC = () => {
         <TabsContent value="backtest">
           <Card>
             <CardHeader>
-              <CardTitle className="text-right">הגדרת בדיקת העבר</CardTitle>
+              <CardTitle className="text-right">הגדרת בדיקת עבר - Levi Bot</CardTitle>
             </CardHeader>
             <CardContent>
               <BacktestingForm 
@@ -96,7 +96,21 @@ const BacktestingSystem: React.FC = () => {
           <div className="grid grid-cols-1 gap-6">
             <RealTimeAlerts
               assetIds={settings?.assetIds || [selectedAsset]}
-              settings={settings || { strategy: 'A.A', riskPerTrade: 1, initialCapital: 10000, assetIds: [], timeframe: '1d', startDate: '', endDate: '', entryType: 'market', stopLossType: 'fixed', takeProfitType: 'fixed', riskRewardRatio: 2, trailingStop: false, maxOpenTrades: 1 }}
+              settings={settings || { 
+                strategy: 'Levi Bot', 
+                riskPerTrade: 1, 
+                initialCapital: 10000, 
+                assetIds: [], 
+                timeframe: '1d', 
+                startDate: new Date(), 
+                endDate: new Date(), 
+                entryType: 'market', 
+                stopLossType: 'fixed', 
+                takeProfitType: 'fixed', 
+                riskRewardRatio: 2, 
+                trailingStop: false, 
+                maxOpenTrades: 1 
+              }}
             />
           </div>
         </TabsContent>

@@ -16,7 +16,7 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Get the return URL from location state or default to home
+  // הפניה לדף אליו המשתמש ניסה להגיע לפני הכניסה
   const from = (location.state as any)?.from?.pathname || '/';
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -33,7 +33,7 @@ const Login = () => {
       const success = await login(email, password);
       
       if (success) {
-        toast.success('התחברת בהצלחה');
+        toast.success('ברוך הבא ל-Levi Bot');
         navigate(from, { replace: true });
       } else {
         toast.error('התחברות נכשלה', {
@@ -50,10 +50,19 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-[80vh]">
-      <Card className="w-full max-w-md">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="mb-8 text-center">
+        <h1 className="text-4xl font-bold tracking-tight text-primary">
+          Levi Bot
+        </h1>
+        <p className="text-muted-foreground">
+          מערכת מסחר אלגוריתמית מבוססת בינה מלאכותית
+        </p>
+      </div>
+      
+      <Card className="w-full max-w-md shadow-lg">
         <CardHeader>
-          <CardTitle className="text-right">התחברות למערכת</CardTitle>
+          <CardTitle className="text-right">כניסה למערכת</CardTitle>
           <CardDescription className="text-right">
             הזן את פרטי ההתחברות שלך להמשך
           </CardDescription>
@@ -82,18 +91,23 @@ const Login = () => {
               />
             </div>
             <div className="text-sm text-muted-foreground text-right">
-              * עבור גרסת הדגמה:<br />
-              משתמש רגיל: user@example.com / user123<br />
-              מנהל מערכת: admin@example.com / admin123
+              <p className="font-semibold">Levi Bot - גישה מוגבלת בלבד</p>
+              <p>* עבור גרסת הדגמה:</p>
+              <p>משתמש רגיל: user@example.com / user123</p>
+              <p>מנהל מערכת: admin@example.com / admin123</p>
             </div>
           </CardContent>
           <CardFooter>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'מתחבר...' : 'התחבר'}
+              {isLoading ? 'מתחבר...' : 'התחבר ל-Levi Bot'}
             </Button>
           </CardFooter>
         </form>
       </Card>
+      
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Levi Bot - פלטפורמת מסחר אלגוריתמית בגרסה 1.0.0
+      </p>
     </div>
   );
 };
