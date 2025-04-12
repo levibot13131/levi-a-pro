@@ -1,100 +1,111 @@
 
+import { v4 as uuidv4 } from 'uuid';
 import { PricePoint, TradeSignal } from '@/types/asset';
 
-/**
- * Generate trading signals based on momentum indicators
- */
-export function generateMomentumSignals(
+// Function to generate momentum-based signals
+export const generateMomentumSignals = (
   priceData: PricePoint[],
-  assetId: string
-): TradeSignal[] {
-  if (!priceData || priceData.length < 14) {
-    return [];
-  }
-  
+  assetId: string,
+  timeframe: string
+): TradeSignal[] => {
   const signals: TradeSignal[] = [];
   
-  // Calculate a simple RSI
-  const rsiValues = calculateRSI(priceData, 14);
+  // Need at least 20 data points to generate signals
+  if (priceData.length < 20) {
+    return signals;
+  }
   
-  // Generate signals based on RSI
-  for (let i = 14; i < priceData.length - 1; i++) {
-    // Oversold (RSI < 30): Potential buy signal
-    if (rsiValues[i] < 30 && rsiValues[i - 1] >= 30) {
+  // Simple momentum detection (price crossing average)
+  const shortTermAvg = calculateMovingAverage(priceData, 5);
+  const longTermAvg = calculateMovingAverage(priceData, 20);
+  
+  for (let i = 1; i < priceData.length; i++) {
+    // Buy signal: short-term MA crosses above long-term MA
+    if (
+      shortTermAvg[i - 1] <= longTermAvg[i - 1] &&
+      shortTermAvg[i] > longTermAvg[i]
+    ) {
       signals.push({
-        id: `momentum-buy-${i}`,
+        id: uuidv4(),
         assetId,
         type: 'buy',
-        price: priceData[i].price,
-        timestamp: priceData[i].timestamp,
-        strength: 'strong',
-        strategy: 'RSI Oversold',
-        timeframe: '1d',
-        targetPrice: priceData[i].price * 1.05,
-        stopLoss: priceData[i].price * 0.98,
-        riskRewardRatio: 2.5,
-        notes: 'RSI entered oversold zone',
-        source: 'system',
-        createdAt: Date.now()
+        price: priceData[i].value,
+        timestamp: new Date(priceData[i].time).getTime(),
+        strength: getSignalStrength(priceData, i, 'buy'),
+        strategy: 'Momentum Crossover',
+        timeframe,
+        targetPrice: priceData[i].value * 1.05, // 5% target
+        stopLoss: priceData[i].value * 0.97, // 3% stop loss
+        riskRewardRatio: 5/3, // Risk reward ratio
+        createdAt: Date.now(),
+        notes: 'Short-term moving average crossed above long-term moving average',
+        indicator: 'MA Crossover',
+        // Remove the source property since it doesn't exist in TradeSignal type
       });
     }
     
-    // Overbought (RSI > 70): Potential sell signal
-    if (rsiValues[i] > 70 && rsiValues[i - 1] <= 70) {
+    // Sell signal: short-term MA crosses below long-term MA
+    if (
+      shortTermAvg[i - 1] >= longTermAvg[i - 1] &&
+      shortTermAvg[i] < longTermAvg[i]
+    ) {
       signals.push({
-        id: `momentum-sell-${i}`,
+        id: uuidv4(),
         assetId,
         type: 'sell',
-        price: priceData[i].price,
-        timestamp: priceData[i].timestamp,
-        strength: 'strong',
-        strategy: 'RSI Overbought',
-        timeframe: '1d',
-        targetPrice: priceData[i].price * 0.95,
-        stopLoss: priceData[i].price * 1.02,
-        riskRewardRatio: 2.5,
-        notes: 'RSI entered overbought zone',
-        source: 'system',
-        createdAt: Date.now()
+        price: priceData[i].value,
+        timestamp: new Date(priceData[i].time).getTime(),
+        strength: getSignalStrength(priceData, i, 'sell'),
+        strategy: 'Momentum Crossover',
+        timeframe,
+        targetPrice: priceData[i].value * 0.95, // 5% target
+        stopLoss: priceData[i].value * 1.03, // 3% stop loss
+        riskRewardRatio: 5/3, // Risk reward ratio
+        createdAt: Date.now(),
+        notes: 'Short-term moving average crossed below long-term moving average',
+        indicator: 'MA Crossover',
+        // Remove the source property since it doesn't exist in TradeSignal type
       });
     }
   }
   
   return signals;
-}
+};
 
-/**
- * Calculate Relative Strength Index (RSI)
- */
-function calculateRSI(priceData: PricePoint[], period: number): number[] {
-  const rsi: number[] = [];
-  
-  // Fill with nulls for the first few periods
-  for (let i = 0; i < period; i++) {
-    rsi.push(50); // Default to neutral
-  }
-  
-  // Calculate price changes
-  const changes: number[] = [];
-  for (let i = 1; i < priceData.length; i++) {
-    changes.push(priceData[i].price - priceData[i - 1].price);
-  }
-  
-  // Calculate RSI
-  for (let i = period; i < priceData.length; i++) {
-    const gains = changes.slice(i - period, i).filter(change => change > 0);
-    const losses = changes.slice(i - period, i).filter(change => change < 0);
-    
-    const avgGain = gains.length > 0 ? gains.reduce((sum, val) => sum + val, 0) / period : 0;
-    const avgLoss = losses.length > 0 ? Math.abs(losses.reduce((sum, val) => sum + val, 0)) / period : 0;
-    
-    if (avgLoss === 0) {
-      rsi.push(100);
-    } else {
-      const rs = avgGain / avgLoss;
-      rsi.push(100 - (100 / (1 + rs)));
+// Helper function to calculate moving average
+const calculateMovingAverage = (data: PricePoint[], period: number): number[] => {
+  const result: number[] = [];
+  for (let i = 0; i < data.length; i++) {
+    if (i < period - 1) {
+      result.push(0);
+      continue;
     }
+    
+    let sum = 0;
+    for (let j = 0; j < period; j++) {
+      sum += data[i - j].value;
+    }
+    result.push(sum / period);
   }
+  return result;
+};
+
+// Helper function to determine signal strength
+const getSignalStrength = (
+  data: PricePoint[], 
+  index: number, 
+  type: 'buy' | 'sell'
+): 'weak' | 'medium' | 'strong' => {
+  // This is a simplified example
+  // In a real app, you'd have more sophisticated logic
   
-  return rsi;
-}
+  if (index < 5) return 'medium'; // Not enough historical data
+  
+  const currentPrice = data[index].value;
+  const previousPrice = data[index - 5].value;
+  const priceChange = Math.abs((currentPrice - previousPrice) / previousPrice * 100);
+  
+  if (priceChange > 5) return 'strong';
+  if (priceChange > 2) return 'medium';
+  return 'weak';
+};

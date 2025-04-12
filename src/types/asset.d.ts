@@ -3,31 +3,40 @@ export interface Asset {
   id: string;
   name: string;
   symbol: string;
-  imageUrl: string;
+  imageUrl?: string;
   price: number;
-  marketCap: number;
-  fullyDilutedValuation: number;
-  volume24h: number;
-  volumeChange24h: number;
-  circulatingSupply: number;
-  totalSupply: number;
-  maxSupply: number;
-  ath: number;
-  athChangePercentage: number;
-  athDate: string;
-  atl: number;
-  atlChangePercentage: number;
-  atlDate: string;
-  roi: null | {
+  marketCap?: number;
+  fullyDilutedValuation?: number;
+  volume24h?: number;
+  volumeChange24h?: number;
+  circulatingSupply?: number;
+  totalSupply?: number;
+  maxSupply?: number;
+  ath?: number;
+  athChangePercentage?: number;
+  athDate?: string;
+  atl?: number;
+  atlChangePercentage?: number;
+  atlDate?: string;
+  roi?: null | {
       times: number;
       currency: string;
       percentage: number;
   };
-  lastUpdated: string;
-  sparklineIn7d: {
+  lastUpdated?: string;
+  sparklineIn7d?: {
       price: number[];
   };
-  priceChangePercentage24h: number;
+  priceChangePercentage24h?: number;
+  change24h?: number;
+  type?: 'crypto' | 'stocks' | 'forex' | 'commodities';
+  rank?: number;
+  status?: string;
+  priceAtAdd?: number;
+  addedAt?: number;
+  tags?: string[];
+  strategy?: string;
+  relatedAssets?: string[];
 }
 
 export interface AssetHistoricalData {
@@ -40,7 +49,7 @@ export type TimeframeType =
   | '1m' | '3m' | '5m' | '15m' | '30m' 
   | '1h' | '2h' | '4h' | '6h' | '8h' | '12h' 
   | '1d' | '3d' | '1w' | '1M'
-  | string; // מאפשר גם סטרינגים אחרים כדי לפתור את השגיאות
+  | string; // allows other string values to resolve errors
 
 export interface MarketData {
   [timestamp: number]: {
@@ -59,11 +68,20 @@ export interface SocialPost {
   assetId: string;
   source: string;
   author: string;
-  text: string;
+  text?: string;
+  content?: string;
   likes: number;
-  retweets: number;
-  date: string;
-  url: string;
+  retweets?: number;
+  comments?: number;
+  shares?: number;
+  date?: string;
+  publishedAt: string;
+  url?: string;
+  postUrl?: string;
+  platform?: string;
+  authorImageUrl?: string;
+  authorUsername?: string;
+  sentiment?: 'positive' | 'neutral' | 'negative';
 }
 
 export interface NewsItem {
@@ -71,10 +89,14 @@ export interface NewsItem {
   assetId: string;
   source: string;
   title: string;
-  content: string;
-  date: string;
-  url: string;
-  imageUrl: string;
+  content?: string;
+  summary?: string;
+  date?: string;
+  publishedAt: string;
+  url?: string;
+  imageUrl?: string;
+  sentiment?: 'positive' | 'neutral' | 'negative';
+  relatedAssets?: string[];
 }
 
 export interface TradeSignal {
@@ -83,40 +105,48 @@ export interface TradeSignal {
   type: 'buy' | 'sell';
   price: number;
   timestamp: number;
-  strength: 'strong' | 'medium' | 'weak';
+  strength: 'weak' | 'medium' | 'strong';
   strategy: string;
   timeframe: string;
   targetPrice?: number;
   stopLoss?: number;
   riskRewardRatio?: number;
+  createdAt: number;
   notes?: string;
-  source?: string;
-  createdAt?: number;
   symbolName?: string;
   confidence?: number;
   indicator?: string;
   description?: string;
+  source?: string;
 }
 
 export interface MarketAnalysis {
+  id: string;
   assetId: string;
-  date: string;
-  sentiment: 'positive' | 'negative' | 'neutral';
+  type: 'technical' | 'fundamental' | 'sentiment';
+  sentiment: 'bullish' | 'bearish' | 'neutral';
   summary: string;
-  analyst: string;
-  rating: 'buy' | 'sell' | 'hold';
-  targetPrice: number;
+  title: string;
+  conclusion: string;
+  keyPoints: string[];
+  author: string;
+  date: string;
+  publishedAt: number;
+  marketSector?: string;
+  rating?: 'buy' | 'sell' | 'hold';
+  targetPrice?: number;
+  analyst?: string;
 }
 
 export interface TradeJournalEntry {
   id: string;
-  date: string; // Required in both types
+  date: string;
   assetId: string;
   assetName: string;
   type?: 'buy' | 'sell';
   quantity?: number;
   direction: 'long' | 'short';
-  entryDate?: string; // Changed to string to match with journal.ts
+  entryDate?: string;
   entryPrice: number;
   exitDate?: string;
   exitPrice?: number;
