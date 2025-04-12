@@ -2,18 +2,63 @@
 import { Asset } from '@/types/asset';
 import { TrackedAsset, TRACKED_ASSETS_KEY } from './types';
 import { getTrackedAssets as getTrackedAssetsFromStorage, saveTrackedAssets } from './storage';
-
-export { 
+import { 
+  getAssetById,
   toggleAssetPin, 
   toggleAssetAlerts, 
   setAssetPriority 
 } from './assetManagement';
+
+export { 
+  toggleAssetPin, 
+  toggleAssetAlerts, 
+  setAssetPriority,
+  getAssetById
+};
 
 // Export the main getTrackedAssets function
 export const getTrackedAssets = async () => {
   return getTrackedAssetsFromStorage();
 };
 
+// Functions for initializing and filtering tracked assets
+export const initializeTrackedAssets = async (): Promise<void> => {
+  // Simple initialization function that can be expanded later
+  const existingAssets = await getTrackedAssetsFromStorage();
+  if (existingAssets.length === 0) {
+    console.log('No tracked assets found, initializing with default assets');
+    // This could initialize with default assets if needed
+  }
+};
+
+export const getFilteredTrackedAssets = async (
+  market?: string,
+  priority?: string,
+  signal?: string
+): Promise<TrackedAsset[]> => {
+  const assets = await getTrackedAssetsFromStorage();
+  
+  return assets.filter(asset => {
+    // Filter by market type
+    if (market && market !== 'all' && asset.type !== market) {
+      return false;
+    }
+    
+    // Filter by priority
+    if (priority && priority !== 'all' && asset.priority !== priority) {
+      return false;
+    }
+    
+    // Filter by signal type (if implemented)
+    if (signal && signal !== 'all' && asset.technicalSignal !== signal) {
+      return false;
+    }
+    
+    return true;
+  });
+};
+
+// The rest of the existing code
 export const addTrackedAsset = async (asset: Asset | string): Promise<boolean> => {
   try {
     const existingAssets = await getTrackedAssetsFromStorage();
