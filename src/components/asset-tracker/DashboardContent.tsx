@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Globe, Activity, ExternalLink } from 'lucide-react';
 import { useTradingViewConnection } from '@/hooks/use-tradingview-connection';
 import { startAssetTracking, stopAssetTracking, isTrackingActive } from '@/services/assetTracking/realTimeSync';
+import { Asset } from '@/types/asset';
 
 const DashboardContent = () => {
   const { data: assets = [], isLoading, refetch } = useQuery({
@@ -19,7 +20,7 @@ const DashboardContent = () => {
     queryFn: getTrackedAssets,
   });
 
-  const [selectedAsset, setSelectedAsset] = useState(null);
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const { isConnected } = useTradingViewConnection();
   
   React.useEffect(() => {
@@ -49,7 +50,7 @@ const DashboardContent = () => {
 
   const handleSelectAsset = (assetId: string) => {
     const asset = assets.find(a => a.id === assetId);
-    setSelectedAsset(asset);
+    setSelectedAsset(asset || null);
   };
 
   if (isLoading) {
@@ -90,7 +91,7 @@ const DashboardContent = () => {
               <MarketInformation selectedAsset={selectedAsset} />
             </TabsContent>
             <TabsContent value="externalSources">
-              <ExternalSources selectedAsset={selectedAsset} />
+              <ExternalSources onUpdate={refetch} selectedAsset={selectedAsset} />
             </TabsContent>
             <TabsContent value="social">
               <SocialMonitoring selectedAsset={selectedAsset} />

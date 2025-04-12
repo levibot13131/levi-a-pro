@@ -1,7 +1,7 @@
 
 // Types for TradingView alerts
 export interface TradingViewAlert {
-  id: string;
+  id?: string;
   symbol: string;
   message: string;
   type: 'buy' | 'sell' | 'info';
@@ -11,21 +11,39 @@ export interface TradingViewAlert {
   indicators: string[];
   source: 'tradingview' | 'custom' | 'webhook';
   priority: 'high' | 'medium' | 'low';
-  status: 'new' | 'delivered' | 'failed';
+  status?: 'new' | 'processed' | 'error';
+  strategy?: string;
+  details?: string;
+  chartUrl?: string;
+  action?: 'buy' | 'sell' | 'info';
 }
 
-export const createTradingViewAlert = (partial: Partial<TradingViewAlert>): TradingViewAlert => {
+export interface AlertDestination {
+  id: string;
+  name: string;
+  type: AlertDestinationType;
+  active: boolean;
+  config: Record<string, any>;
+}
+
+export type AlertDestinationType = 'email' | 'telegram' | 'webhook' | 'notification' | 'sms' | 'whatsapp';
+
+export function createTradingViewAlert(data: Partial<TradingViewAlert>): TradingViewAlert {
   return {
-    id: partial.id || `alert-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    symbol: partial.symbol || 'UNKNOWN',
-    message: partial.message || 'No message provided',
-    type: partial.type || 'info',
-    timeframe: partial.timeframe || '1d',
-    price: partial.price || 0,
-    timestamp: partial.timestamp || Date.now(),
-    indicators: partial.indicators || [],
-    source: partial.source || 'custom',
-    priority: partial.priority || 'medium',
-    status: partial.status || 'new'
+    id: data.id || `alert-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    symbol: data.symbol || 'UNKNOWN',
+    message: data.message || 'TradingView Alert',
+    type: data.type || 'info',
+    timeframe: data.timeframe || '1d',
+    price: data.price || 0,
+    timestamp: data.timestamp || Date.now(),
+    indicators: data.indicators || [],
+    source: data.source || 'custom',
+    priority: data.priority || 'medium',
+    status: data.status || 'new',
+    strategy: data.strategy,
+    details: data.details,
+    chartUrl: data.chartUrl,
+    action: data.action
   };
-};
+}

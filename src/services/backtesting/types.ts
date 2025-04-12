@@ -1,114 +1,66 @@
-import { PositionSizingCalculation } from "@/services/customTradingStrategyService";
+
+import { TimeframeType } from '@/types/asset';
 
 export interface BacktestSettings {
+  startDate: Date;
+  endDate: Date;
+  strategy: string;
+  timeframe: TimeframeType;
   initialCapital: number;
+  takeProfit: number;
+  stopLoss: number;
   riskPerTrade: number;
-  strategy: 'A.A' | 'SMC' | 'Wyckoff' | 'Custom';
-  entryType: 'market' | 'limit';
-  stopLossType: 'fixed' | 'atr' | 'support';
-  takeProfitType: 'fixed' | 'resistance' | 'riskReward';
-  riskRewardRatio: number;
-  timeframe: string;
-  startDate: string;
-  endDate: string;
-  trailingStop: boolean;
-  maxOpenTrades: number;
-  assetIds: string[];
+  tradeSize: 'fixed' | 'percentage';
+  leverage: number;
+  compounding: boolean;
+  fees: number;
 }
 
-export interface Trade {
+export interface BacktestResult {
   id: string;
   assetId: string;
-  assetName: string;
-  direction: 'long' | 'short';
-  entryDate: string;
+  settings: BacktestSettings;
+  totalTrades: number;
+  winningTrades: number;
+  losingTrades: number;
+  winRate: number;
+  profitLoss: number;
+  profitLossPercentage: number;
+  maxDrawdown: number;
+  maxDrawdownPercentage: number;
+  sharpeRatio: number;
+  volatility: number;
+  finalCapital: number;
+  trades: BacktestTrade[];
+  signals: BacktestSignal[];
+  equity: EquityPoint[];
+  createdAt: number;
+}
+
+export interface BacktestTrade {
+  id: string;
+  type: 'buy' | 'sell';
   entryPrice: number;
-  stopLoss: number;
-  takeProfit: number;
-  positionSize: number;
-  exitDate?: string;
-  exitPrice?: number;
-  profit?: number;
-  profitPercentage?: number;
-  status: 'open' | 'closed' | 'stopped' | 'target';
-  duration?: number; // in days
-  maxDrawdown?: number;
-  strategyUsed: string;
-  signalId?: string;
-  marketCondition?: string; // e.g. 'bull', 'bear', 'sideways'
-  entryReason?: string;
-  exitReason?: string;
-  tradingSession?: 'asian' | 'european' | 'american'; // Trading session
+  entryDate: number;
+  exitPrice: number;
+  exitDate: number;
+  quantity: number;
+  profit: number;
+  profitPercentage: number;
+  signal?: string;
 }
 
-export interface EnhancedAnalysis {
-  patterns: {
-    name: string;
-    type: 'bullish' | 'bearish' | 'neutral';
-    startDate: string;
-    endDate: string;
-    significance: number;
-    description: string;
-  }[];
-  trends: {
-    period: string;
-    direction: string;
-    strength: number;
-  }[];
-  overallTrend: string;
-  tradeClusters: {
-    clusters: { 
-      period: string; 
-      count: number; 
-      performance: number; 
-      strategy: string 
-    }[];
-    bestTimesToTrade: string[];
-    worstTimesToTrade: string[];
-  };
-  marketRegimes: {
-    bullMarketPerformance: number;
-    bearMarketPerformance: number;
-    rangeBoundPerformance: number;
-    volatilePerformance: number;
-    bestRegime: string;
-  };
+export interface BacktestSignal {
+  id: string;
+  type: 'buy' | 'sell';
+  price: number;
+  date: number;
+  strategy: string;
+  strength: 'strong' | 'medium' | 'weak';
+  executed: boolean;
 }
 
-export interface BacktestResults {
-  trades: Trade[];
-  performance: {
-    totalReturn: number;
-    totalReturnPercentage: number;
-    winRate: number;
-    averageWin: number;
-    averageLoss: number;
-    largestWin: number;
-    largestLoss: number;
-    profitFactor: number;
-    maxDrawdown: number;
-    sharpeRatio: number;
-    totalTrades: number;
-    winningTrades: number;
-    losingTrades: number;
-    averageTradeDuration: number;
-  };
-  equity: {
-    date: string;
-    value: number;
-    drawdown: number;
-  }[];
-  monthly: {
-    period: string;
-    return: number;
-    trades: number;
-  }[];
-  assetPerformance: {
-    assetId: string;
-    assetName: string;
-    return: number;
-    trades: number;
-    winRate: number;
-  }[];
-  enhancedAnalysis?: EnhancedAnalysis;
+export interface EquityPoint {
+  date: number;
+  equity: number;
 }

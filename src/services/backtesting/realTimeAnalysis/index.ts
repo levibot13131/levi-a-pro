@@ -1,10 +1,11 @@
 
-import { PricePoint } from '@/types/asset';
+import { PricePoint, TradeSignal } from '@/types/asset';
 import { generateSignalsFromHistory } from '@/services/backtesting/signals';
 import { sendAlert } from '@/services/tradingView/tradingViewAlertService';
 import { getAlertDestinations } from '@/services/tradingView/tradingViewAlertService';
 import { toast } from 'sonner';
 import { BacktestSettings } from '../types';
+import { TradingViewAlert, createTradingViewAlert } from '@/services/tradingView/alerts/types';
 
 // מאגר האיתותים
 let storedSignals: any[] = [];
@@ -106,16 +107,19 @@ export const startRealTimeAnalysis = (
             // שליחת התראות על איתותים חזקים בלבד
             for (const signal of latestSignals) {
               if (signal.strength === 'strong') {
-                await sendAlert({
+                const alert = createTradingViewAlert({
                   symbol: signal.assetId,
                   message: signal.notes || 'איתות חדש זוהה',
                   indicators: [signal.strategy],
                   timeframe: signal.timeframe,
                   timestamp: signal.timestamp,
                   price: signal.price,
-                  action: signal.type === 'buy' ? 'buy' : 'sell',
-                  strength: signal.type === 'buy' ? 8 : 7
+                  type: signal.type === 'buy' ? 'buy' : 'sell',
+                  source: 'custom',
+                  priority: 'high'
                 });
+                
+                await sendAlert(alert);
               }
             }
             

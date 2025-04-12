@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getUpcomingMarketEvents } from '@/services/marketInformation/eventsService';
@@ -10,13 +11,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { MarketEvent } from '@/types/marketInformation';
+import { Asset } from '@/types/asset';
 
-const MarketInformation: React.FC = () => {
+interface MarketInformationProps {
+  selectedAsset?: Asset | null;
+}
+
+const MarketInformation: React.FC<MarketInformationProps> = ({ selectedAsset }) => {
   const [selectedTimeRange, setSelectedTimeRange] = useState<string>('30');
 
   // Fetch upcoming market events
   const { data: events, isLoading: eventsLoading } = useQuery({
-    queryKey: ['marketEvents', selectedTimeRange],
+    queryKey: ['marketEvents', selectedTimeRange, selectedAsset?.id],
     queryFn: async () => {
       const result = await getUpcomingMarketEvents(parseInt(selectedTimeRange));
       return result as MarketEvent[];

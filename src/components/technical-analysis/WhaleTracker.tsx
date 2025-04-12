@@ -4,7 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getWhaleMovements, getWhaleBehaviorPatterns, WhaleMovement } from "@/services/whaleTrackerService";
+import { getWhaleMovements, getWhaleBehaviorPatterns } from "@/services/whaleTrackerService";
+import { type WhaleMovement, type WhaleBehaviorPattern } from "@/services/whaleTrackerService";
 import { BarChart, Eye, TrendingUp } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 
@@ -122,8 +123,8 @@ const WhaleTracker = ({ assetId, formatPrice }: WhaleTrackerProps) => {
                         </Badge>
                         <div>
                           <h4 className="font-semibold">
-                            {movement.transactionType === 'buy' ? 'קנייה' : 
-                             movement.transactionType === 'sell' ? 'מכירה' : 'העברה'}
+                            {movement.transactionType === 'exchange_deposit' ? 'הפקדה לבורסה' : 
+                             movement.transactionType === 'exchange_withdrawal' ? 'משיכה מבורסה' : 'העברה בין ארנקים'}
                           </h4>
                           <p className="text-sm text-gray-500">{formatTimestamp(movement.timestamp)}</p>
                         </div>
@@ -135,10 +136,10 @@ const WhaleTracker = ({ assetId, formatPrice }: WhaleTrackerProps) => {
                            `ארנק: ${movement.walletAddress.substring(0, 6)}...${movement.walletAddress.substring(movement.walletAddress.length - 4)}`}
                         </p>
                         <p className="text-sm">
-                          {movement.transactionType === 'transfer' ? 
-                            `מ${movement.source} אל ${movement.destination}` : 
-                            movement.transactionType === 'buy' ? 
-                              `מ${movement.source}` : `אל ${movement.destination}`}
+                          {movement.transactionType === 'wallet_transfer' ? 
+                            `מ${movement.source || 'ארנק לא ידוע'} אל ${movement.destination || 'ארנק לא ידוע'}` : 
+                            movement.transactionType === 'exchange_deposit' ? 
+                              `מ${movement.source || 'ארנק לא ידוע'}` : `אל ${movement.destination || 'ארנק לא ידוע'}`}
                         </p>
                       </div>
                       <div className="mt-2 text-sm">

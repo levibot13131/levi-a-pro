@@ -1,119 +1,118 @@
 
 import { toast } from 'sonner';
 
-// Types
 export interface BinanceCredentials {
   apiKey: string;
   apiSecret: string;
-  label?: string;
-  permissions?: ('read' | 'trade' | 'withdraw')[];
-  createdAt: number;
+  lastConnected?: number;
+  isConnected?: boolean;
 }
 
-// Storage key
-const STORAGE_KEY = 'binance_credentials';
+// Local storage key for Binance credentials
+const BINANCE_CREDENTIALS_KEY = 'binance_credentials';
 
-// Get credentials from storage
+// Save Binance credentials to local storage
+export const saveBinanceCredentials = (credentials: BinanceCredentials): void => {
+  const data = {
+    ...credentials,
+    lastConnected: Date.now()
+  };
+  localStorage.setItem(BINANCE_CREDENTIALS_KEY, JSON.stringify(data));
+};
+
+// Get Binance credentials from local storage
 export const getBinanceCredentials = (): BinanceCredentials | null => {
+  const data = localStorage.getItem(BINANCE_CREDENTIALS_KEY);
+  if (!data) return null;
+  
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return null;
-    
-    return JSON.parse(stored);
+    return JSON.parse(data) as BinanceCredentials;
   } catch (e) {
-    console.error('Failed to retrieve Binance credentials:', e);
+    console.error('Error parsing Binance credentials:', e);
     return null;
   }
 };
 
-// Save credentials to storage
-export const saveBinanceCredentials = (credentials: BinanceCredentials): boolean => {
-  try {
-    const { apiKey, apiSecret } = credentials;
-    
-    // Basic validation
-    if (!apiKey || !apiSecret) {
-      return false;
-    }
-    
-    // Add timestamp if not present
-    if (!credentials.createdAt) {
-      credentials.createdAt = Date.now();
-    }
-    
-    // Save to localStorage
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(credentials));
-    return true;
-  } catch (e) {
-    console.error('Failed to save Binance credentials:', e);
-    return false;
-  }
-};
-
-// Check if connected to Binance
+// Check if Binance is connected
 export const isBinanceConnected = (): boolean => {
   const credentials = getBinanceCredentials();
-  return !!credentials;
+  return !!credentials && !!credentials.apiKey && !!credentials.apiSecret;
 };
 
 // Disconnect from Binance
 export const disconnectBinance = (): void => {
-  localStorage.removeItem(STORAGE_KEY);
-  toast.info('התנתקת מחשבון Binance', {
-    description: 'כל הנתונים המקומיים נמחקו מהמכשיר'
-  });
+  localStorage.removeItem(BINANCE_CREDENTIALS_KEY);
 };
 
-// Validate Binance credentials
-export const validateBinanceCredentials = async (apiKey: string, apiSecret: string): Promise<boolean> => {
-  try {
-    if (!apiKey || !apiSecret) return false;
-    
-    // Simulate API validation delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // In a real implementation, we would make an API call to Binance to validate the credentials
-    // For demo purposes, we'll accept any credentials that are not empty
-    
-    // Store credentials locally
-    const credentials: BinanceCredentials = {
-      apiKey,
-      apiSecret,
-      permissions: ['read'],
-      createdAt: Date.now()
-    };
-    
-    return saveBinanceCredentials(credentials);
-  } catch (error) {
-    console.error('Error validating Binance credentials:', error);
+// Test Binance connection
+export const testBinanceConnection = async (): Promise<boolean> => {
+  // In a real application, we would make an API call to test the connection
+  const credentials = getBinanceCredentials();
+  if (!credentials) return false;
+  
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // For demo purposes, always return success if we have credentials
+  return true;
+};
+
+// Start real-time market data updates
+export const startRealTimeMarketData = async (): Promise<boolean> => {
+  if (!isBinanceConnected()) {
+    console.error('Cannot start real-time market data: Not connected to Binance');
     return false;
   }
+  
+  // In a real application, we would establish a WebSocket connection to Binance
+  console.log('Starting real-time market data updates from Binance');
+  
+  return true;
 };
 
-// Get Binance account info
-export const getBinanceAccountInfo = async (): Promise<any> => {
-  try {
-    const credentials = getBinanceCredentials();
-    if (!credentials) throw new Error('Not connected to Binance');
-    
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Mock data - in a real app we would call the Binance API
-    return {
-      balances: [
-        { asset: 'BTC', free: 0.02, locked: 0 },
-        { asset: 'ETH', free: 0.5, locked: 0 },
-        { asset: 'USDT', free: 1000, locked: 0 }
-      ],
-      accountType: 'SPOT',
-      canTrade: true,
-      canDeposit: true,
-      canWithdraw: true,
-      lastUpdated: Date.now()
-    };
-  } catch (error) {
-    console.error('Error getting Binance account info:', error);
-    throw error;
+// Get fundamental data for an asset
+export const getFundamentalData = async (assetId: string): Promise<any> => {
+  if (!isBinanceConnected()) {
+    console.error('Cannot get fundamental data: Not connected to Binance');
+    return null;
   }
+  
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  // Return mock data
+  return {
+    marketCap: 950000000000,
+    volume24h: 45000000000,
+    circulatingSupply: 19000000,
+    maxSupply: 21000000,
+    allTimeHigh: 69000,
+    allTimeHighDate: '2021-11-10'
+  };
+};
+
+// Get real-time price data
+export const getRealTimePriceData = async (symbols: string[]): Promise<Record<string, any>> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  // Return mock data
+  const result: Record<string, any> = {};
+  
+  symbols.forEach(symbol => {
+    const basePrice = symbol.toLowerCase().includes('btc') ? 50000 : 
+                      symbol.toLowerCase().includes('eth') ? 3000 : 
+                      symbol.toLowerCase().includes('bnb') ? 450 : 100;
+    
+    const randomChange = (Math.random() * 6) - 3; // Random change between -3% and +3%
+    
+    result[symbol] = {
+      symbol,
+      price: basePrice + (basePrice * randomChange / 100),
+      change24h: randomChange,
+      volume: basePrice * 10000 * (0.8 + Math.random() * 0.4)
+    };
+  });
+  
+  return result;
 };

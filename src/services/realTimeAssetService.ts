@@ -1,163 +1,204 @@
-import { Asset, AssetHistoricalData, PricePoint, TimeframeType } from '@/types/asset';
+
+import { Asset, AssetType, TimeframeType } from '@/types/asset';
 import { toast } from 'sonner';
-import { isTradingViewConnected } from './tradingView/tradingViewAuthService';
-import { isBinanceConnected } from './binance/binanceService';
 
-// מאגר מקומי של נכסים
-let cachedAssets: Asset[] = [];
-let lastUpdateTime = 0;
+let assets: Asset[] = [];
+let trendingAssets: Asset[] = [];
+let isInitialized = false;
 
-// אתחול המערכת
-// נטען את הנכסים מדמו/אמיתי בהתאם למצב החיבור
-const initializeRealTimeAssets = async () => {
-  if (!cachedAssets.length) {
-    try {
-      // בהתחלה נטען מנתוני דמו
-      await updateAssetsFromMock();
-      console.log('Initialized assets from mock data');
-      
-      // אם יש חיבור לשירותים חיצוניים, ננסה להתעדכן מהם
-      checkExternalConnections();
-    } catch (error) {
-      console.error('Failed to initialize assets', error);
-    }
-  }
-};
-
-// בדיקת חיבורים חיצוניים וניסיון להתעדכן
-const checkExternalConnections = async () => {
-  const tradingViewConnected = isTradingViewConnected();
-  const binanceConnected = isBinanceConnected();
+/**
+ * Initialize asset data
+ */
+export const initializeAssets = async () => {
+  if (isInitialized) return;
   
-  if (tradingViewConnected || binanceConnected) {
-    console.log('External connections found, updating assets from live data');
-    try {
-      const assetIds = cachedAssets.map(asset => asset.id);
-      const updatedCount = await updateAssetsFromLiveData(assetIds);
-      
-      if (updatedCount > 0) {
-        toast.success(`עודכנו ${updatedCount} נכסים בזמן אמת`, {
-          description: 'הנתונים יתעדכנו אוטומatically כל 30 שניות'
-        });
-      }
-    } catch (error) {
-      console.error('Failed to update from live data', error);
-    }
-  }
-};
-
-// עדכון מנתוני דמו
-const updateAssetsFromMock = async () => {
-  // import the mock service dynamically to avoid circular dependencies
-  const { getAssets } = await import('./mockDataService');
-  cachedAssets = await getAssets();
-  lastUpdateTime = Date.now();
-  return cachedAssets.length;
-};
-
-// עדכון מנתונים בזמן אמת
-const updateAssetsFromLiveData = async (assetIds: string[]) => {
-  let updatedCount = 0;
-  
-  // אם יש חיבור ל-TradingView או Binance, ננסה לעדכן מהם
-  if (isTradingViewConnected()) {
-    try {
-      // מדמה עדכון מ-TradingView
-      for (const asset of cachedAssets) {
-        // עדכון רנדומלי עם סטייה קטנה מהמחיר הקודם
-        const priceChange = (Math.random() - 0.5) * 0.02; // סטייה של עד 1%
-        asset.price = asset.price * (1 + priceChange);
-        asset.change24h = asset.change24h + (Math.random() - 0.5) * 0.5; // עדכון קטן ל-24h
-        updatedCount++;
-      }
-      console.log('Updated assets from TradingView');
-    } catch (error) {
-      console.error('Failed to update from TradingView', error);
-    }
-  }
-  
-  if (isBinanceConnected()) {
-    try {
-      // מדמה עדכון מ-Binance
-      for (const asset of cachedAssets) {
-        if (['bitcoin', 'ethereum', 'solana'].includes(asset.id)) {
-          // עדכון רנדומלי עם סטייה קטנה מהמחיר הקודם
-          const priceChange = (Math.random() - 0.5) * 0.015; // סטייה של עד 0.75%
-          asset.price = asset.price * (1 + priceChange);
-          asset.volume24h = asset.volume24h * (1 + (Math.random() - 0.5) * 0.1); // עדכון קטן לנפח
-          updatedCount++;
-        }
-      }
-      console.log('Updated assets from Binance');
-    } catch (error) {
-      console.error('Failed to update from Binance', error);
-    }
-  }
-  
-  if (updatedCount > 0) {
-    lastUpdateTime = Date.now();
-  }
-  
-  return updatedCount;
-};
-
-// קבלת כל הנכסים
-export const getAllAssets = (): Asset[] => {
-  // א�� אין נכסים או עבר זמן רב מהעדכון האחרון, נאתחל שוב
-  if (cachedAssets.length === 0 || Date.now() - lastUpdateTime > 5 * 60 * 1000) {
-    initializeRealTimeAssets();
-  }
-  return cachedAssets;
-};
-
-// קבלת נכס לפי מזהה
-export const getAssetById = (id: string): Asset | undefined => {
-  if (cachedAssets.length === 0) {
-    initializeRealTimeAssets();
-  }
-  return cachedAssets.find(asset => asset.id === id);
-};
-
-// קבלת נכסים לפי סוג
-export const getAssetsByType = (type: string): Asset[] => {
-  return getAllAssets().filter(asset => asset.type === type);
-};
-
-// חיפוש נכסים
-export const searchAssets = (query: string): Asset[] => {
-  if (!query) return [];
-  
-  const searchTerm = query.toLowerCase();
-  return getAllAssets().filter(
-    asset => 
-      asset.name.toLowerCase().includes(searchTerm) || 
-      asset.symbol.toLowerCase().includes(searchTerm)
-  );
-};
-
-// קבלת היסטוריית נכס
-export const getAssetHistory = async (
-  assetId: string,
-  timeframe: TimeframeType = '1d',
-  days: number = 30
-): Promise<AssetHistoricalData | null> => {
   try {
-    // import the mock service dynamically to avoid circular dependencies
-    const { getAssetHistory: getMockAssetHistory } = await import('./mockDataService');
-    return await getMockAssetHistory(assetId, timeframe, days);
+    // In a real app, we would fetch this from an API
+    // For demo purposes, we'll use mock data
+    assets = await fetchMockAssets();
+    trendingAssets = generateTrendingAssets();
+    isInitialized = true;
   } catch (error) {
-    console.error('Failed to get asset history', error);
-    return null;
+    console.error('Failed to initialize asset data:', error);
+    toast.error('שגיאה בטעינת נתוני נכסים', {
+      description: 'לא ניתן לטעון את נתוני הנכסים'
+    });
   }
 };
 
-// התחלת הנכסים בטעינת המודול
-initializeRealTimeAssets();
-
-// הגדרת אינטרוול לעדכון אוטומטי
-setInterval(async () => {
-  if (isTradingViewConnected() || isBinanceConnected()) {
-    const assetIds = cachedAssets.map(asset => asset.id);
-    await updateAssetsFromLiveData(assetIds);
+/**
+ * Get all assets
+ */
+export const getMarketAssets = async (type?: AssetType): Promise<Asset[]> => {
+  if (!isInitialized) {
+    await initializeAssets();
   }
-}, 30000); // עדכון כל 30 שניות
+  
+  if (type) {
+    return assets.filter(asset => asset.type === type);
+  }
+  
+  return assets;
+};
+
+/**
+ * Get trending assets
+ */
+export const getTrendingAssets = async (): Promise<Asset[]> => {
+  if (!isInitialized) {
+    await initializeAssets();
+  }
+  
+  return trendingAssets;
+};
+
+/**
+ * Get asset by id
+ */
+export const getAssetById = async (id: string): Promise<Asset | null> => {
+  if (!isInitialized) {
+    await initializeAssets();
+  }
+  
+  const asset = assets.find(asset => asset.id === id);
+  return asset || null;
+};
+
+/**
+ * Get historical price data for an asset
+ */
+export const getHistoricalPriceData = async (
+  assetId: string, 
+  timeframe: TimeframeType = '1d',
+  limit: number = 100
+): Promise<{ timestamp: number; price: number; volume?: number }[]> => {
+  // In a real app, we would fetch this from an API
+  // For demo purposes, we'll generate mock data
+  
+  const asset = await getAssetById(assetId);
+  if (!asset) return [];
+  
+  const now = Date.now();
+  const data: { timestamp: number; price: number; volume?: number }[] = [];
+  
+  let timeInterval = 24 * 60 * 60 * 1000; // 1 day in milliseconds
+  switch(timeframe) {
+    case '1h': timeInterval = 60 * 60 * 1000; break;
+    case '4h': timeInterval = 4 * 60 * 60 * 1000; break;
+    case '1w': timeInterval = 7 * 24 * 60 * 60 * 1000; break;
+    case '1m': timeInterval = 30 * 24 * 60 * 60 * 1000; break;
+  }
+  
+  let currentPrice = asset.price;
+  let volatility = 0.02; // 2% daily volatility
+  
+  // Generate mock data points
+  for (let i = limit - 1; i >= 0; i--) {
+    const timestamp = now - (i * timeInterval);
+    const randomChange = (Math.random() - 0.5) * 2 * volatility;
+    currentPrice = currentPrice * (1 + randomChange);
+    
+    // Generate mock volume
+    const volume = currentPrice * (100000 + Math.random() * 900000);
+    
+    data.push({
+      timestamp,
+      price: currentPrice,
+      volume
+    });
+  }
+  
+  return data;
+};
+
+/**
+ * Fetch mock assets
+ */
+const fetchMockAssets = async (): Promise<Asset[]> => {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  return [
+    {
+      id: 'bitcoin',
+      symbol: 'BTC',
+      name: 'Bitcoin',
+      type: 'crypto',
+      price: 50000 + (Math.random() * 3000),
+      change24h: (Math.random() * 10) - 5,
+      marketCap: 950000000000,
+      volume24h: 45000000000,
+      rank: 1,
+      icon: '/icons/btc.svg',
+      imageUrl: 'https://assets.coingecko.com/coins/images/1/large/bitcoin.png',
+      description: 'Bitcoin is a decentralized digital currency that can be transferred on the peer-to-peer bitcoin network.'
+    },
+    {
+      id: 'ethereum',
+      symbol: 'ETH',
+      name: 'Ethereum',
+      type: 'crypto',
+      price: 3000 + (Math.random() * 200),
+      change24h: (Math.random() * 10) - 5,
+      marketCap: 350000000000,
+      volume24h: 20000000000,
+      rank: 2,
+      icon: '/icons/eth.svg',
+      imageUrl: 'https://assets.coingecko.com/coins/images/279/large/ethereum.png',
+      description: 'Ethereum is a decentralized, open-source blockchain with smart contract functionality.'
+    },
+    {
+      id: 'ripple',
+      symbol: 'XRP',
+      name: 'Ripple',
+      type: 'crypto',
+      price: 0.5 + (Math.random() * 0.1),
+      change24h: (Math.random() * 10) - 5,
+      marketCap: 25000000000,
+      volume24h: 2000000000,
+      rank: 5,
+      icon: '/icons/xrp.svg',
+      imageUrl: 'https://assets.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png',
+      description: 'Ripple is a real-time gross settlement system, currency exchange and remittance network.'
+    },
+    {
+      id: 'apple',
+      symbol: 'AAPL',
+      name: 'Apple Inc.',
+      type: 'stocks',
+      price: 180 + (Math.random() * 10),
+      change24h: (Math.random() * 4) - 2,
+      marketCap: 3000000000000,
+      volume24h: 15000000000,
+      rank: 1,
+      icon: '/icons/aapl.svg',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg',
+      description: 'Apple Inc. is an American multinational technology company that designs, develops, and sells consumer electronics, computer software, and online services.'
+    },
+    {
+      id: 'tesla',
+      symbol: 'TSLA',
+      name: 'Tesla, Inc.',
+      type: 'stocks',
+      price: 220 + (Math.random() * 15),
+      change24h: (Math.random() * 6) - 3,
+      marketCap: 700000000000,
+      volume24h: 25000000000,
+      rank: 6,
+      icon: '/icons/tsla.svg',
+      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/e/e8/Tesla_logo.png',
+      description: 'Tesla, Inc. is an American electric vehicle and clean energy company.'
+    }
+  ];
+};
+
+/**
+ * Generate trending assets
+ */
+const generateTrendingAssets = (): Asset[] => {
+  // In a real app, this would be based on some metrics
+  // For demo purposes, we'll just take a few random assets
+  return assets
+    .sort(() => Math.random() - 0.5)
+    .slice(0, Math.min(assets.length, 3));
+};

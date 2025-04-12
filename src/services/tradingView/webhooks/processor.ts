@@ -1,8 +1,9 @@
 
 import { toast } from 'sonner';
-import { createSampleAlert, sendAlert } from '../tradingViewAlertService';
+import { createTradingViewAlert, sendAlert } from '../tradingViewAlertService';
 import { isTradingViewConnected } from '../tradingViewAuthService';
 import { WebhookSignal } from '@/types/webhookSignal';
+import { TradingViewAlert } from '../alerts/types';
 
 // סוגי האיתותים שאנחנו מקבלים מ-TradingView
 export type WebhookSignalType = 'buy' | 'sell' | 'info';
@@ -27,8 +28,24 @@ export const handleTradingViewWebhook = async (data: any): Promise<boolean> => {
       return false;
     }
     
+    // Convert WebhookSignal to TradingViewAlert
+    const alert: TradingViewAlert = {
+      symbol: processedSignal.symbol,
+      message: processedSignal.message,
+      indicators: processedSignal.indicators,
+      timeframe: processedSignal.timeframe,
+      timestamp: processedSignal.timestamp,
+      price: processedSignal.price,
+      type: processedSignal.action as 'buy' | 'sell' | 'info',
+      source: 'webhook',
+      priority: processedSignal.strength >= 8 ? 'high' : processedSignal.strength >= 5 ? 'medium' : 'low',
+      status: 'new',
+      action: processedSignal.action,
+      details: processedSignal.details
+    };
+    
     // שליחת ההתראה דרך השירות
-    await sendAlert(processedSignal);
+    await sendAlert(alert);
     
     return true;
   } catch (error) {
@@ -138,8 +155,20 @@ export const simulateWebhook = async (type: WebhookSignalType = 'info'): Promise
   }
   
   try {
-    // יצירת התראה לדוגמה
-    const sampleAlert = createSampleAlert(type);
+    // Create a sample alert with correct types
+    const sampleAlert = createTradingViewAlert({
+      symbol: 'BTC/USD',
+      message: `Sample ${type.toUpperCase()} Alert`,
+      type: type as 'buy' | 'sell' | 'info',
+      timeframe: '1d',
+      price: 51244.50 + (Math.random() * 500),
+      timestamp: Date.now(),
+      indicators: ['RSI', 'MACD'],
+      source: 'custom',
+      priority: 'medium',
+      action: type as 'buy' | 'sell' | 'info',
+      details: `זוהי הודעת בדיקה מהמערכת. סוג: ${type}, זמן: ${new Date().toLocaleString('he-IL')}`
+    });
     
     // שליחת ההתראה
     await sendAlert(sampleAlert);

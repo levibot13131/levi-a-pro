@@ -15,6 +15,7 @@ import {
   updateAssetsFromConnectedSources
 } from '@/services/marketInformation/externalSourcesService';
 import TradingViewIntegration from './TradingViewIntegration';
+import { Asset } from '@/types/asset';
 
 interface ExternalSource {
   id: string;
@@ -23,7 +24,12 @@ interface ExternalSource {
   connected: boolean;
 }
 
-const ExternalSources: React.FC<{ onUpdate?: () => void }> = ({ onUpdate }) => {
+interface ExternalSourcesProps {
+  onUpdate?: () => void;
+  selectedAsset?: Asset | null;
+}
+
+const ExternalSources: React.FC<ExternalSourcesProps> = ({ onUpdate, selectedAsset }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [activeTab, setActiveTab] = useState('sources');
 
