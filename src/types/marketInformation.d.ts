@@ -48,13 +48,13 @@ export interface MarketEvent {
   source: string;
   time: string;
   link: string;
-  hasReminder: boolean;
+  reminder: boolean;
   importance: string;
   // These are from the older type but might be needed
-  reminder?: boolean;
   type?: string;
   relatedAssets?: string[];
   expectedImpact?: string;
+  hasReminder?: boolean;
 }
 
 export type MarketSource = FinancialDataSource;

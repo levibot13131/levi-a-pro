@@ -3,7 +3,7 @@
 
 import { getSources, getSourceById, getSourcesByType } from './sourcesService';
 import { getInfluencers, getInfluencersByPlatform, toggleInfluencerFollow } from './influencersService';
-import { getUpcomingMarketEvents, getUpcomingEvents, setEventReminder } from './eventsService';
+import { getUpcomingMarketEvents, setEventReminder } from './eventsService';
 import { 
   getExternalSources, 
   connectToExternalSource, 
@@ -29,7 +29,6 @@ export {
   
   // Events
   getUpcomingMarketEvents,
-  getUpcomingEvents,
   setEventReminder,
   
   // External sources

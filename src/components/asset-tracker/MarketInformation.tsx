@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getUpcomingEvents, setEventReminder } from '@/services/marketInformation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Newspaper, Users, Calendar, RefreshCw } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { toast } from 'sonner';
-import { MarketEvent } from '@/types/marketInformation';
+import { Newspaper, Users, Calendar } from 'lucide-react';
 import { Asset } from '@/types/asset';
+import { useMarketEvents } from './market-information/useMarketEvents';
+import MarketInformationHeader from './market-information/MarketInformationHeader';
+import EventsTab from './market-information/EventsTab';
+import PlaceholderTab from './market-information/PlaceholderTab';
 
 interface MarketInformationProps {
   selectedAsset?: Asset | null;
@@ -18,106 +16,24 @@ interface MarketInformationProps {
 const MarketInformation: React.FC<MarketInformationProps> = ({ selectedAsset }) => {
   const [selectedTimeRange, setSelectedTimeRange] = useState<string>('30');
   const [autoRefresh, setAutoRefresh] = useState<boolean>(true);
-
-  const { data: events, isLoading: eventsLoading, refetch } = useQuery({
-    queryKey: ['marketEvents', selectedTimeRange, selectedAsset?.id],
-    queryFn: async () => {
-      const result = await getUpcomingEvents(selectedTimeRange);
-      return result as MarketEvent[];
-    },
-    refetchInterval: autoRefresh ? 60000 : false, // Auto refresh every minute if enabled
-  });
-
-  useEffect(() => {
-    if (!autoRefresh) return;
-    
-    const refreshInterval = setInterval(() => {
-      refetch();
-    }, 60000); // Refresh every minute
-    
-    return () => clearInterval(refreshInterval);
-  }, [autoRefresh, refetch]);
-
-  const handleSetReminder = (eventId: string, reminder: boolean) => {
-    setEventReminder(eventId, reminder);
-    toast.success(`${reminder ? 'הגדרת' : 'ביטלת'} תזכורת לאירוע`);
-    
-    if (events) {
-      const updatedEvents = events.map(event => 
-        event.id === eventId ? { ...event, hasReminder: reminder } : event
-      );
-    }
-  };
-
-  const renderEventImportance = (importance: string) => {
-    switch(importance) {
-      case 'critical':
-      case 'high':
-        return <Badge className="bg-red-500">חשיבות גבוהה</Badge>;
-      case 'medium':
-        return <Badge className="bg-orange-500">חשיבות בינונית</Badge>;
-      default:
-        return <Badge variant="outline">חשיבות נמוכה</Badge>;
-    }
-  };
-
-  const formatEventDate = (dateString: string) => {
-    const eventDate = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(eventDate.getTime() - now.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) {
-      return 'היום';
-    } else if (diffDays === 1) {
-      return 'מחר';
-    } else {
-      return `בעוד ${diffDays} ימים`;
-    }
-  };
-
-  const handleRefresh = () => {
-    refetch();
-    toast.success('נתונים התעדכנו בהצלחה');
-  };
+  
+  const {
+    events,
+    eventsLoading,
+    handleSetReminder,
+    handleRefresh
+  } = useMarketEvents(selectedTimeRange, autoRefresh);
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-right flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={handleRefresh}
-              className="h-8 w-8"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-            <select 
-              className="bg-transparent text-sm font-normal border border-gray-300 rounded px-2 py-1 ml-2"
-              value={selectedTimeRange}
-              onChange={(e) => setSelectedTimeRange(e.target.value)}
-            >
-              <option value="7">7 ימים</option>
-              <option value="30">30 ימים</option>
-              <option value="90">90 ימים</option>
-            </select>
-            <div className="flex items-center">
-              <label htmlFor="auto-refresh" className="mr-2 text-sm">
-                עדכון אוטומטי
-              </label>
-              <input
-                type="checkbox"
-                id="auto-refresh"
-                checked={autoRefresh}
-                onChange={(e) => setAutoRefresh(e.target.checked)}
-                className="rounded"
-              />
-            </div>
-          </div>
-          <div>מידע פונדמנטלי</div>
-        </CardTitle>
+        <MarketInformationHeader 
+          selectedTimeRange={selectedTimeRange}
+          setSelectedTimeRange={setSelectedTimeRange}
+          autoRefresh={autoRefresh}
+          setAutoRefresh={setAutoRefresh}
+          handleRefresh={handleRefresh}
+        />
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="events">
@@ -137,67 +53,28 @@ const MarketInformation: React.FC<MarketInformationProps> = ({ selectedAsset }) 
           </TabsList>
           
           <TabsContent value="events" className="text-right">
-            {eventsLoading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-                <Skeleton className="h-20 w-full" />
-              </div>
-            ) : events && events.length > 0 ? (
-              <div className="space-y-3 max-h-[300px] overflow-y-auto">
-                {events.map((event: MarketEvent) => (
-                  <div key={event.id} className="border rounded-md p-3">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>{renderEventImportance(event.importance)}</div>
-                      <h3 className="font-medium">{event.title}</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">{event.description}</p>
-                    <div className="flex justify-between items-center text-sm">
-                      <Button 
-                        variant={event.hasReminder ? "outline" : "default"} 
-                        size="sm"
-                        onClick={() => handleSetReminder(event.id, !event.hasReminder)}
-                      >
-                        {event.hasReminder ? 'בטל תזכורת' : 'הגדר תזכורת'}
-                      </Button>
-                      <div className="flex items-center">
-                        <Calendar className="h-3 w-3 ml-1" />
-                        {formatEventDate(event.date)}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <Calendar className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                <p>אין אירועים צפויים בטווח הזמן שנבחר</p>
-                <Button onClick={handleRefresh} variant="outline" className="mt-4">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  רענן נתונים
-                </Button>
-              </div>
-            )}
+            <EventsTab 
+              events={events}
+              eventsLoading={eventsLoading}
+              handleSetReminder={handleSetReminder}
+              handleRefresh={handleRefresh}
+            />
           </TabsContent>
           
           <TabsContent value="influencers">
-            <div className="text-center py-6">
-              <Users className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p>עקוב אחרי משפיענים מובילים בשוק</p>
-              <Button className="mt-2" variant="outline">
-                הצג משפיענים
-              </Button>
-            </div>
+            <PlaceholderTab 
+              icon={Users}
+              text="עקוב אחרי משפיענים מובילים בשוק"
+              buttonText="הצג משפיענים"
+            />
           </TabsContent>
           
           <TabsContent value="news">
-            <div className="text-center py-6">
-              <Newspaper className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-              <p>עקוב אחרי חדשות שוק בזמן אמת</p>
-              <Button className="mt-2" variant="outline">
-                הצג חדשות
-              </Button>
-            </div>
+            <PlaceholderTab 
+              icon={Newspaper}
+              text="עקוב אחרי חדשות שוק בזמן אמת"
+              buttonText="הצג חדשות"
+            />
           </TabsContent>
         </Tabs>
       </CardContent>

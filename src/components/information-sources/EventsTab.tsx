@@ -79,11 +79,11 @@ const EventsTab: React.FC<EventsTabProps> = ({
               
               <div className="flex gap-2">
                 <Button
-                  variant={event.hasReminder ? "destructive" : "outline"}
+                  variant={event.reminder ? "destructive" : "outline"}
                   size="sm"
                   onClick={() => onFocus(event.id)}
                 >
-                  {event.hasReminder ? (
+                  {event.reminder ? (
                     <>
                       <BellOff className="h-4 w-4 ml-2" />
                       בטל תזכורת

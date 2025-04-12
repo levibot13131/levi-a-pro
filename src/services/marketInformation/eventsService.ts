@@ -12,7 +12,7 @@ const marketEvents: MarketEvent[] = [
     category: 'כלכלי',
     impact: 'high',
     source: 'FederalReserve',
-    hasReminder: false,
+    reminder: false,
     link: 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm',
     importance: 'high'
   },
@@ -25,7 +25,7 @@ const marketEvents: MarketEvent[] = [
     category: 'כלכלי',
     impact: 'medium',
     source: 'ECB',
-    hasReminder: false,
+    reminder: false,
     link: 'https://www.ecb.europa.eu/pub/projections/html/index.en.html',
     importance: 'medium'
   },
@@ -38,7 +38,7 @@ const marketEvents: MarketEvent[] = [
     category: 'קריפטו',
     impact: 'high',
     source: 'Bitcoin',
-    hasReminder: true,
+    reminder: true,
     link: 'https://www.bitcoinblockhalf.com/',
     importance: 'high'
   },
@@ -51,7 +51,7 @@ const marketEvents: MarketEvent[] = [
     category: 'מניות',
     impact: 'medium',
     source: 'Apple',
-    hasReminder: false,
+    reminder: false,
     link: 'https://investor.apple.com/investor-relations/default.aspx',
     importance: 'medium'
   },
@@ -64,7 +64,7 @@ const marketEvents: MarketEvent[] = [
     category: 'כלכלי',
     impact: 'medium',
     source: 'BLS',
-    hasReminder: false,
+    reminder: false,
     link: 'https://www.bls.gov/news.release/empsit.toc.htm',
     importance: 'medium'
   }
@@ -75,26 +75,11 @@ export const getUpcomingMarketEvents = (): MarketEvent[] => {
   return [...marketEvents];
 };
 
-// קבלת אירועים לפי קטגוריה
-export const getUpcomingEvents = (timeRange?: string): MarketEvent[] => {
-  if (!timeRange) return [...marketEvents];
-  
-  // Filter based on time range if needed
-  const today = new Date();
-  const endDate = new Date();
-  endDate.setDate(today.getDate() + parseInt(timeRange));
-  
-  return marketEvents.filter(event => {
-    const eventDate = new Date(event.date);
-    return eventDate >= today && eventDate <= endDate;
-  });
-};
-
 // הגדרת תזכורת לאירוע
-export const setEventReminder = (id: string, hasReminder: boolean): boolean => {
+export const setEventReminder = (id: string, reminder: boolean): boolean => {
   const eventIndex = marketEvents.findIndex(event => event.id === id);
   if (eventIndex === -1) return false;
   
-  marketEvents[eventIndex].hasReminder = hasReminder;
+  marketEvents[eventIndex].reminder = reminder;
   return true;
 };
