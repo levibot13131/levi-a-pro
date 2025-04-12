@@ -2,9 +2,9 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { MarketEvent } from '@/types/marketInformation';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, ExternalLink, Bell, BellOff } from 'lucide-react';
-import { setEventReminder } from '@/services/marketInformation/eventsService';
+import { CalendarIcon, Bell, BellOff, ExternalLink } from 'lucide-react';
 
 interface EventsTabProps {
   events: MarketEvent[];
@@ -17,93 +17,96 @@ const EventsTab: React.FC<EventsTabProps> = ({
   focusedEventIds,
   onFocus
 }) => {
-  const sortedEvents = [...events].sort((a, b) => {
-    const dateA = new Date(`${a.date} ${a.time}`);
-    const dateB = new Date(`${b.date} ${b.time}`);
-    return dateA.getTime() - dateB.getTime();
-  });
+  const formatDate = (dateStr: string, timeStr: string) => {
+    const date = new Date(dateStr);
+    const formattedDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+    return `${formattedDate} ${timeStr}`;
+  };
   
-  const formatImpact = (impact: 'high' | 'medium' | 'low') => {
+  const getImpactBadge = (impact: 'high' | 'medium' | 'low') => {
     switch (impact) {
       case 'high':
-        return 'השפעה גבוהה';
+        return <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">השפעה גבוהה</Badge>;
       case 'medium':
-        return 'השפעה בינונית';
+        return <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">השפעה בינונית</Badge>;
       case 'low':
-        return 'השפעה נמוכה';
+        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">השפעה נמוכה</Badge>;
       default:
-        return '';
+        return <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300">השפעה לא ידועה</Badge>;
     }
   };
   
-  const getImpactColor = (impact: 'high' | 'medium' | 'low') => {
-    switch (impact) {
-      case 'high':
-        return 'bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-500';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-500';
-      case 'low':
-        return 'bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-500';
+  const getCategoryBadge = (category: string) => {
+    switch (category) {
+      case 'כלכלי':
+        return <Badge variant="outline" className="border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-300">כלכלי</Badge>;
+      case 'קריפטו':
+        return <Badge variant="outline" className="border-purple-500 text-purple-600 dark:border-purple-400 dark:text-purple-300">קריפטו</Badge>;
+      case 'מניות':
+        return <Badge variant="outline" className="border-green-500 text-green-600 dark:border-green-400 dark:text-green-300">מניות</Badge>;
       default:
-        return '';
+        return <Badge variant="outline">{category}</Badge>;
     }
-  };
-  
-  const handleToggleReminder = (id: string, hasReminder: boolean) => {
-    setEventReminder(id, !hasReminder);
-    onFocus(id);
   };
   
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {sortedEvents.map(event => (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {events.map(event => (
         <Card key={event.id}>
           <CardContent className="pt-6">
-            <h3 className="font-bold text-lg mb-2">{event.title}</h3>
-            
-            <div className="flex flex-wrap gap-2 mb-4">
-              <span className={`text-xs px-2 py-0.5 rounded ${getImpactColor(event.impact)}`}>
-                {formatImpact(event.impact)}
-              </span>
-              <span className="text-xs bg-muted px-2 py-0.5 rounded">
-                {event.category}
-              </span>
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                {getImpactBadge(event.impact)}
+              </div>
+              <div className="text-right">
+                <h3 className="font-bold text-lg">{event.title}</h3>
+                <div className="flex items-center justify-end gap-2 mt-1">
+                  {getCategoryBadge(event.category)}
+                  <span className="text-xs text-muted-foreground">
+                    {event.source}
+                  </span>
+                </div>
+              </div>
             </div>
             
-            <p className="text-sm text-muted-foreground mb-4">{event.description}</p>
+            <p className="text-sm text-muted-foreground mb-4 text-right">{event.description}</p>
             
-            <div className="flex items-center gap-2 mb-4 text-sm">
-              <Calendar className="h-4 w-4 text-primary" />
-              <span>{event.date}</span>
-              <Clock className="h-4 w-4 text-primary ml-2" />
-              <span>{event.time}</span>
-            </div>
-            
-            <div className="flex justify-between gap-2">
-              <Button
-                variant={focusedEventIds.has(event.id) ? "default" : "outline"}
-                size="sm"
-                className="flex-1"
-                onClick={() => handleToggleReminder(event.id, event.hasReminder)}
-              >
-                {event.hasReminder ? (
-                  <><BellOff className="h-4 w-4 mr-2" />הסר תזכורת</>
-                ) : (
-                  <><Bell className="h-4 w-4 mr-2" />הגדר תזכורת</>
-                )}
-              </Button>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center text-sm">
+                <CalendarIcon className="h-4 w-4 ml-2" />
+                <span>{formatDate(event.date, event.time)}</span>
+              </div>
               
-              {event.link && (
+              <div className="flex gap-2">
                 <Button
-                  variant="outline"
+                  variant={event.hasReminder ? "destructive" : "outline"}
                   size="sm"
-                  className="flex-1"
-                  onClick={() => window.open(event.link, '_blank')}
+                  onClick={() => onFocus(event.id)}
                 >
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  פרטים נוספים
+                  {event.hasReminder ? (
+                    <>
+                      <BellOff className="h-4 w-4 ml-2" />
+                      בטל תזכורת
+                    </>
+                  ) : (
+                    <>
+                      <Bell className="h-4 w-4 ml-2" />
+                      הוסף תזכורת
+                    </>
+                  )}
                 </Button>
-              )}
+                
+                {event.link && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => window.open(event.link, '_blank')}
+                  >
+                    <ExternalLink className="h-4 w-4 ml-2" />
+                    פרטים
+                  </Button>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
