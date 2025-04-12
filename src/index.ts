@@ -7,9 +7,14 @@ import { showProductionWarningIfNeeded } from './services/environment/production
 // Initialize production notifications
 showProductionWarningIfNeeded();
 
-const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+const rootElement = document.getElementById('root');
+if (rootElement) {
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+} else {
+  console.error('Root element not found');
+}
