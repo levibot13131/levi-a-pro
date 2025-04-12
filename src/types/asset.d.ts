@@ -1,3 +1,4 @@
+
 export interface TradeJournalEntry {
   id: string;
   assetId: string;
@@ -10,7 +11,7 @@ export interface TradeJournalEntry {
   positionSize: number;
   risk: number;
   notes?: string;
-  strategy: string; // Now required
+  strategy: string; // Required field
   tags?: string[];
   outcome: 'open' | 'win' | 'loss' | 'breakeven';
 }

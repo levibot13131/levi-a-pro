@@ -1,3 +1,4 @@
+
 import { TradeSignal } from '@/types/asset';
 import { toast } from 'sonner';
 import { useQuery } from '@tanstack/react-query';
@@ -71,12 +72,11 @@ export const clearStoredSignals = () => {
 /**
  * Hook to access stored signals
  */
-export const useStoredSignals = (assetId?: string) => {
+export const useStoredSignals = () => {
   return useQuery({
-    queryKey: ['storedSignals', assetId],
+    queryKey: ['storedSignals'],
     queryFn: () => {
-      const signals = getStoredSignals();
-      return assetId ? signals.filter(s => s.assetId === assetId) : signals;
+      return getStoredSignals();
     },
     refetchInterval: 5000, // Refresh every 5 seconds
   });
