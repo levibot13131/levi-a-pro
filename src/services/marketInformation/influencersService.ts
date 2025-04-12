@@ -13,7 +13,13 @@ const influencers: MarketInfluencer[] = [
     isFollowed: false,
     influence: 85,
     avatarUrl: 'https://example.com/avatars/seth.jpg',
-    username: 'sethmarcus'
+    username: 'sethmarcus',
+    reliability: 90,
+    expertise: ['קריפטו', 'השקעות'],
+    bio: 'יזם ומשקיע בתחום הקריפטו',
+    profileUrl: 'https://twitter.com/sethmarcus',
+    isVerified: true,
+    assetsDiscussed: ['Bitcoin', 'Ethereum']
   },
   {
     id: '2',
@@ -25,7 +31,13 @@ const influencers: MarketInfluencer[] = [
     isFollowed: true,
     influence: 75,
     avatarUrl: 'https://example.com/avatars/sarah.jpg',
-    username: 'sarahtrade'
+    username: 'sarahtrade',
+    reliability: 85,
+    expertise: ['אנליזה טכנית', 'מט״ח'],
+    bio: 'מנתחת טכנית וותיקה',
+    profileUrl: 'https://youtube.com/sarahtrade',
+    isVerified: true,
+    assetsDiscussed: ['EURUSD', 'USDJPY']
   },
   {
     id: '3',
@@ -37,7 +49,13 @@ const influencers: MarketInfluencer[] = [
     isFollowed: false,
     influence: 65,
     avatarUrl: 'https://example.com/avatars/daniel.jpg',
-    username: 'danielalpha'
+    username: 'danielalpha',
+    reliability: 80,
+    expertise: ['השקעות', 'ניתוח פונדמנטלי'],
+    bio: 'כותב ניוזלטר פופולרי',
+    profileUrl: 'https://substack.com/danielalpha',
+    isVerified: false,
+    assetsDiscussed: ['SPY', 'QQQ']
   },
   {
     id: '4',
@@ -49,7 +67,13 @@ const influencers: MarketInfluencer[] = [
     isFollowed: false,
     influence: 70,
     avatarUrl: 'https://example.com/avatars/tal.jpg',
-    username: 'talcohen'
+    username: 'talcohen',
+    reliability: 75,
+    expertise: ['מט״ח', 'ניהול סיכונים'],
+    bio: 'סוחר מט״ח מקצועי',
+    profileUrl: 'https://twitter.com/talcohen',
+    isVerified: true,
+    assetsDiscussed: ['GBPUSD', 'USDCAD']
   },
   {
     id: '5',
@@ -61,7 +85,13 @@ const influencers: MarketInfluencer[] = [
     isFollowed: true,
     influence: 80,
     avatarUrl: 'https://example.com/avatars/maya.jpg',
-    username: 'mayascale'
+    username: 'mayascale',
+    reliability: 88,
+    expertise: ['חינוך פיננסי', 'השקעות פסיביות'],
+    bio: 'יוצרת תוכן פיננסי',
+    profileUrl: 'https://instagram.com/mayascale',
+    isVerified: true,
+    assetsDiscussed: ['VOO', 'VTI']
   }
 ];
 

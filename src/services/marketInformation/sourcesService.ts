@@ -16,7 +16,8 @@ let sources: FinancialDataSource[] = [
     categories: ['crypto', 'blockchain', 'news'],
     isFeatured: true,
     rating: 4.2,
-    platform: 'web'
+    platform: 'web',
+    category: 'crypto'
   },
   {
     id: '2',
@@ -32,7 +33,8 @@ let sources: FinancialDataSource[] = [
     categories: ['analysis', 'charts', 'trading'],
     isFeatured: true,
     rating: 4.8,
-    platform: 'web'
+    platform: 'web',
+    category: 'charts'
   },
   {
     id: '3',
@@ -48,7 +50,8 @@ let sources: FinancialDataSource[] = [
     categories: ['macro', 'stocks', 'news'],
     isFeatured: false,
     rating: 4.5,
-    platform: 'web'
+    platform: 'web',
+    category: 'finance'
   }
 ];
 

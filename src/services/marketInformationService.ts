@@ -6,7 +6,8 @@ export * from './marketInformation/index';
 export type { 
   FinancialDataSource,
   MarketInfluencer,
-  MarketEvent 
+  MarketEvent,
+  MarketSource
 } from '@/types/marketInformation';
 
 // Old types are kept for backward compatibility but not re-exported to avoid conflicts

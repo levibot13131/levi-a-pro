@@ -76,9 +76,18 @@ export const getUpcomingMarketEvents = (): MarketEvent[] => {
 };
 
 // קבלת אירועים לפי קטגוריה
-export const getUpcomingEvents = (category?: string): MarketEvent[] => {
-  if (!category) return [...marketEvents];
-  return marketEvents.filter(event => event.category === category);
+export const getUpcomingEvents = (timeRange?: string): MarketEvent[] => {
+  if (!timeRange) return [...marketEvents];
+  
+  // Filter based on time range if needed
+  const today = new Date();
+  const endDate = new Date();
+  endDate.setDate(today.getDate() + parseInt(timeRange));
+  
+  return marketEvents.filter(event => {
+    const eventDate = new Date(event.date);
+    return eventDate >= today && eventDate <= endDate;
+  });
 };
 
 // הגדרת תזכורת לאירוע

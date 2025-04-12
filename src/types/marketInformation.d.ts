@@ -9,8 +9,8 @@ export interface MarketInfluencer {
   isFollowed: boolean;
   influence: number;
   avatarUrl: string;
+  username: string;
   // These are from the older type but might be needed
-  username?: string;
   reliability?: number;
   expertise?: string[];
   bio?: string;
@@ -49,9 +49,9 @@ export interface MarketEvent {
   time: string;
   link: string;
   hasReminder: boolean;
+  importance: string;
   // These are from the older type but might be needed
   reminder?: boolean;
-  importance?: string;
   type?: string;
   relatedAssets?: string[];
   expectedImpact?: string;
