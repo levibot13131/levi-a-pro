@@ -1,71 +1,65 @@
-
-import { useEffect } from 'react';
-import { Route, Routes } from 'react-router-dom';
-import { ThemeProvider } from '@/components/theme-provider';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Toaster } from '@/components/ui/toaster';
+import { Toaster as SonnerToaster } from 'sonner';
+import { ThemeProvider } from "@/components/ui/theme-provider";
 import MainLayout from '@/components/layouts/main-layout';
-import Dashboard from '@/pages/Dashboard';
-import Assets from '@/pages/Assets';
-import AssetDetails from '@/pages/AssetDetails';
-import MarketNews from '@/pages/MarketNews';
-import TechnicalAnalysis from '@/pages/TechnicalAnalysis';
-import Portfolio from '@/pages/Portfolio';
-import Backtesting from '@/pages/Backtesting';
-import Settings from '@/pages/Settings';
-import NotFound from '@/pages/NotFound';
-import { AuthProvider } from '@/contexts/AuthContext';
-import Login from '@/pages/Login';
-import TradingViewIntegration from '@/pages/TradingViewIntegration';
-import BinanceIntegration from '@/pages/BinanceIntegration';
-import { initializeAllServices } from '@/services/initializationService';
-import RequireAuth from '@/components/auth/RequireAuth';
-import UserManagement from '@/pages/UserManagement';
-import RiskManagement from '@/pages/RiskManagement'; // Make sure this is imported
+import { EnvironmentBanner } from '@/components/ui/environment-banner';
+import './App.css';
+import AssetTracker from './pages/AssetTracker';
+import Backtesting from './pages/Backtesting';
+import TradingSignals from './pages/TradingSignals';
+import TechnicalAnalysis from './pages/TechnicalAnalysis';
+import TradingViewIntegration from './pages/TradingViewIntegration';
+import BinanceIntegration from './pages/BinanceIntegration';
+import Profile from './pages/Profile';
+import Settings from './pages/Settings';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import InformationSources from './pages/InformationSources';
+import Journal from './pages/Journal';
+import AdminPanel from './pages/AdminPanel';
+import RequireAuth from './components/auth/RequireAuth';
+import Unauthorized from './pages/Unauthorized';
+import Missing from './pages/Missing';
+import LinkPage from './pages/LinkPage';
 
 function App() {
-  // אתחול כל שירותי המערכת בטעינת האפליקציה
-  useEffect(() => {
-    // שינוי כותרת האפליקציה ל-Levi Bot
-    document.title = 'Levi Bot - מערכת מסחר אוטומטית';
-    
-    // אתחול שירותים
-    initializeAllServices();
-    
-    // הגדרות לוקאליות ספציפיות לפלטפורמה
-    localStorage.setItem('LEVI_BOT_VERSION', '1.0.0');
-    localStorage.setItem('LEVI_BOT_INITIALIZED', 'true');
-    localStorage.setItem('LEVI_BOT_OWNER', 'levi');
-  }, []);
-
   return (
-    <ThemeProvider defaultTheme="light" storageKey="ui-theme">
-      <AuthProvider>
+    <ThemeProvider defaultTheme="dark" storageKey="ui-theme">
+      <Router>
+        <EnvironmentBanner />
         <Routes>
-          <Route path="/" element={<MainLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="/assets" element={<Assets />} />
-            <Route path="/assets/:assetId" element={<AssetDetails />} />
-            <Route path="/market-news" element={<MarketNews />} />
-            <Route path="/technical-analysis" element={<TechnicalAnalysis />} />
-            <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/" element={<MainLayout />} />
+          <Route path="/linkpage" element={<LinkPage />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+
+          <Route element={<RequireAuth />}>
+            <Route path="/asset-tracker" element={<AssetTracker />} />
             <Route path="/backtesting" element={<Backtesting />} />
-            <Route path="/risk-management" element={<RiskManagement />} />
-            <Route path="/settings" element={
-              <RequireAuth>
-                <Settings />
-              </RequireAuth>
-            } />
-            <Route path="/user-management" element={
-              <RequireAuth requireAdmin={true}>
-                <UserManagement />
-              </RequireAuth>
-            } />
+            <Route path="/trading-signals" element={<TradingSignals />} />
+            <Route path="/technical-analysis" element={<TechnicalAnalysis />} />
             <Route path="/tradingview-integration" element={<TradingViewIntegration />} />
             <Route path="/binance-integration" element={<BinanceIntegration />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/information-sources" element={<InformationSources />} />
+            <Route path="/journal" element={<Journal />} />
+            <Route path="/admin" element={<AdminPanel />} />
           </Route>
-          <Route path="/login" element={<Login />} />
+
+          <Route path="*" element={<Missing />} />
         </Routes>
-      </AuthProvider>
+        <Toaster />
+        <SonnerToaster position="top-right" richColors />
+      </Router>
     </ThemeProvider>
   );
 }

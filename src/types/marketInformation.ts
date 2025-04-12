@@ -24,6 +24,10 @@ export interface MarketInfluencer {
   description: string;
   lastPrediction?: string;
   isPremium?: boolean;
+  username?: string;
+  profileUrl?: string;
+  avatarUrl?: string;
+  bio?: string;
 }
 
 export interface FinancialDataSource {
@@ -36,4 +40,7 @@ export interface FinancialDataSource {
   description: string;
   isPaid: boolean;
   frequencyUpdate: string;
+  categories?: string[];
+  rating?: number;
+  platform?: string;
 }

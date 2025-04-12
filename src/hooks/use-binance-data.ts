@@ -37,10 +37,11 @@ export function useBinanceData(symbols: string[] = []) {
   useEffect(() => {
     // Check if we are in production environment (Lovable preview/production)
     const isProduction = window.location.hostname.includes('lovable.app');
+    let cleanup = () => {};
     
     if (symbols.length === 0) {
       setIsLoading(false);
-      return;
+      return cleanup;
     }
 
     if (isProduction) {
@@ -83,17 +84,17 @@ export function useBinanceData(symbols: string[] = []) {
         });
       }, 5000);
       
-      return () => clearInterval(interval);
+      cleanup = () => clearInterval(interval);
     } else {
       // In development, try to connect to the real Binance API
-      const cleanup = startRealTimeMarketData(symbols, (data) => {
+      cleanup = startRealTimeMarketData(symbols, (data) => {
         setMarketData(prev => ({ ...prev, ...data }));
         setRealTimeActive(true);
         setIsLoading(false);
       });
-      
-      return cleanup;
     }
+    
+    return cleanup;
   }, [symbols.join(',')]);
 
   return {

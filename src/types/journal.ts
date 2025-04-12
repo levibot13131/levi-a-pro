@@ -16,7 +16,9 @@ export interface TradeJournalEntry {
   outcome?: 'open' | 'win' | 'loss' | 'breakeven';
   notes?: string;
   tags?: string[];
-  strategy?: string; // Make strategy optional in TradeJournalEntry
+  strategy?: string;
+  date?: string;
+  symbol?: string;
 }
 
 export interface TradingJournalEntry {
@@ -36,5 +38,7 @@ export interface TradingJournalEntry {
   outcome: 'open' | 'win' | 'loss' | 'breakeven';
   notes?: string;
   tags?: string[];
-  strategy: string; // Strategy is required in TradingJournalEntry
+  strategy: string;
+  date?: string;
+  symbol?: string;
 }

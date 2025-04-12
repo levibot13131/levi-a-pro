@@ -14,8 +14,16 @@ import {
 import { LogOut, User, Settings } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 
+// Extended User interface to include additional properties
+interface ExtendedUser {
+  email?: string | null;
+  displayName?: string | null;
+  photoURL?: string | null;
+}
+
 const AuthNavbar = () => {
-  const { user, isAdmin, logout } = useAuth();
+  const { user: authUser, isAdmin, logout } = useAuth();
+  const user = authUser as ExtendedUser;
   
   return (
     <div className="border-b">
