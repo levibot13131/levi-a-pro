@@ -1,3 +1,4 @@
+
 export interface MarketData {
   id: string;
   name: string;
@@ -7,6 +8,12 @@ export interface MarketData {
   volume24h: number;
   change24h: number;
   lastUpdated: string;
+  dominance?: number; // Add the dominance property as optional
+  priceChange24h?: number;
+  priceChangePercentage24h?: number;
+  priceChange7d?: number;
+  priceChangePercentage7d?: number;
+  volume?: number;
 }
 
 export interface MarketEvent {

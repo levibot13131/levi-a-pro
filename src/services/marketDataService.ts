@@ -47,13 +47,22 @@ export const fetchMarketData = async (coinIds: string[]): Promise<Record<string,
   const result: Record<string, MarketData> = {};
   
   coinIds.forEach(id => {
+    // Using type assertion to add the dominance property
     result[id] = {
+      id: id,
+      name: id === 'bitcoin' ? 'Bitcoin' : id === 'ethereum' ? 'Ethereum' : 'Binance Coin',
+      symbol: id === 'bitcoin' ? 'BTC' : id === 'ethereum' ? 'ETH' : 'BNB',
+      price: id === 'bitcoin' ? 65000 : id === 'ethereum' ? 3400 : 580,
+      marketCap: id === 'bitcoin' ? 1250000000000 : id === 'ethereum' ? 420000000000 : 89000000000,
+      volume24h: id === 'bitcoin' ? 30000000000 : id === 'ethereum' ? 18000000000 : 2000000000,
       dominance: id === 'bitcoin' ? 45.2 : id === 'ethereum' ? 18.5 : 4.2,
       volume: id === 'bitcoin' ? 30000000000 : id === 'ethereum' ? 18000000000 : 2000000000,
       priceChange24h: id === 'bitcoin' ? 1500 : id === 'ethereum' ? 60 : 2.8,
       priceChangePercentage24h: id === 'bitcoin' ? 2.5 : id === 'ethereum' ? 1.8 : 0.5,
       priceChange7d: id === 'bitcoin' ? 3000 : id === 'ethereum' ? 120 : 5,
       priceChangePercentage7d: id === 'bitcoin' ? 4.8 : id === 'ethereum' ? 3.6 : 0.8,
+      change24h: id === 'bitcoin' ? 2.5 : id === 'ethereum' ? 1.8 : 0.5,
+      lastUpdated: new Date().toISOString()
     };
   });
   

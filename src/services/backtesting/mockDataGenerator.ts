@@ -1,3 +1,4 @@
+
 import { AssetHistoricalData } from '@/types/asset';
 
 // When creating the mockAssetHistory, ensure it has all required properties:
@@ -33,4 +34,10 @@ export const generateMockAssetHistory = (assetId: string, timeframe: string = '1
     firstDate: dataPoints[0].timestamp,
     lastDate: dataPoints[dataPoints.length - 1].timestamp
   };
+};
+
+// Add the missing function to generate historical data
+export const generateHistoricalData = async (assetId: string, timeframe: string = '1d'): Promise<AssetHistoricalData> => {
+  // For simplicity, we're reusing the generateMockAssetHistory function
+  return generateMockAssetHistory(assetId, timeframe);
 };

@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ResultsPerformanceTab from './results/ResultsPerformanceTab';
@@ -7,6 +8,7 @@ import ResultsStatisticsTab from './results/ResultsStatisticsTab';
 import ResultsChartTab from './results/ResultsChartTab';
 import { BacktestingResult, Trade } from '@/services/backtestingService';
 import { Asset } from '@/types/asset';
+import { format } from 'date-fns';
 
 interface BacktestResultsProps {
   results: BacktestingResult;
