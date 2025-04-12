@@ -1,15 +1,12 @@
-
-// Import from the backtesting directory
 import { BacktestResult } from './backtesting/types';
 import { calculatePositionSize, PositionSizingInput } from './backtesting/positionSizer';
 import { DetectedPattern, TrendInfo, ClusterInfo, RegimeAnalysisResult } from './backtesting/patterns/types';
 
-// Re-export with a different name to avoid conflict
-export { BacktestResult as BacktestingResult };
+// Use export type for type re-exports
+export type { BacktestResult as BacktestingResult };
 export { calculatePositionSize };
 export type { PositionSizingInput };
 
-// Implement the missing analysis functions
 export const detectTrends = (trades: any[]): TrendInfo[] => {
   // Analysis implementation
   return trades.map((_, index) => ({
