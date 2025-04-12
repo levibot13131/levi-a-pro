@@ -1,135 +1,50 @@
 
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Toaster } from 'sonner';
-import { ThemeProvider } from './components/ui/theme-provider';
-import MainLayout from './components/layouts/main-layout';
+import { Route, Routes } from 'react-router-dom';
+import { ThemeProvider } from '@/components/theme-provider';
+import MainLayout from '@/components/layouts/main-layout';
 import Dashboard from '@/pages/Dashboard';
-import Login from '@/pages/Login';
-import Assets from './pages/Assets';
-import AssetDetails from './pages/AssetDetails';
+import Assets from '@/pages/Assets';
+import AssetDetails from '@/pages/AssetDetails';
 import MarketNews from '@/pages/MarketNews';
-import TradingSignals from '@/pages/TradingSignals';
+import TechnicalAnalysis from '@/pages/TechnicalAnalysis';
+import Portfolio from '@/pages/Portfolio';
 import Backtesting from '@/pages/Backtesting';
+import Settings from '@/pages/Settings';
+import NotFound from '@/pages/NotFound';
+import { AuthProvider } from '@/contexts/AuthContext';
+import Login from '@/pages/Login';
 import TradingViewIntegration from '@/pages/TradingViewIntegration';
 import BinanceIntegration from '@/pages/BinanceIntegration';
-import { AuthProvider } from '@/contexts/AuthContext';
-import RequireAuth from '@/components/auth/RequireAuth';
-import Settings from './pages/Settings';
-import { initializeTradingViewServices } from '@/services/tradingView/startup';
-import GuideModal from '@/components/GuideModal';
-
-// קבוע לבדיקה אם זו הטעינה הראשונה של האפליקציה
-const FIRST_VISIT_KEY = 'app-first-visit';
+import { initializeAllServices } from '@/services/initializationService';
 
 function App() {
-  const [showGuide, setShowGuide] = useState(false);
-  
+  // אתחול כל שירותי המערכת בטעינת האפליקציה
   useEffect(() => {
-    // Initialize TradingView services
-    initializeTradingViewServices();
-    
-    // בדיקה אם זו הטעינה הראשונה של האפליקציה
-    const isFirstVisit = !localStorage.getItem(FIRST_VISIT_KEY);
-    if (isFirstVisit) {
-      // הצגת המדריך בטעינה הראשונה
-      setShowGuide(true);
-      // שמירת סימון לביקור ראשון
-      localStorage.setItem(FIRST_VISIT_KEY, 'visited');
-    }
+    initializeAllServices();
   }, []);
 
   return (
-    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="light" storageKey="ui-theme">
       <AuthProvider>
-        <Router>
-          <Toaster 
-            position="top-left"
-            toastOptions={{
-              style: { direction: 'rtl' }
-            }}  
-          />
-          <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/login" element={<Login />} />
-            <Route element={<MainLayout />}>
-              <Route 
-                path="/dashboard" 
-                element={
-                  <RequireAuth>
-                    <Dashboard />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/assets" 
-                element={
-                  <RequireAuth>
-                    <Assets />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/assets/:id" 
-                element={
-                  <RequireAuth>
-                    <AssetDetails />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/market-news" 
-                element={
-                  <RequireAuth>
-                    <MarketNews />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/trading-signals" 
-                element={
-                  <RequireAuth>
-                    <TradingSignals />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/backtesting" 
-                element={
-                  <RequireAuth>
-                    <Backtesting />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/trading-view" 
-                element={
-                  <RequireAuth>
-                    <TradingViewIntegration />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/binance-integration" 
-                element={
-                  <RequireAuth>
-                    <BinanceIntegration />
-                  </RequireAuth>
-                } 
-              />
-              <Route 
-                path="/settings" 
-                element={
-                  <RequireAuth>
-                    <Settings />
-                  </RequireAuth>
-                } 
-              />
-            </Route>
-          </Routes>
-          
-          <GuideModal open={showGuide} onOpenChange={setShowGuide} />
-        </Router>
+        <Toaster richColors position="top-center" dir="rtl" closeButton={true} />
+        <Routes>
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="/assets" element={<Assets />} />
+            <Route path="/assets/:assetId" element={<AssetDetails />} />
+            <Route path="/news" element={<MarketNews />} />
+            <Route path="/technical-analysis" element={<TechnicalAnalysis />} />
+            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/backtesting" element={<Backtesting />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/tradingview-integration" element={<TradingViewIntegration />} />
+            <Route path="/binance-integration" element={<BinanceIntegration />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+          <Route path="/login" element={<Login />} />
+        </Routes>
       </AuthProvider>
     </ThemeProvider>
   );

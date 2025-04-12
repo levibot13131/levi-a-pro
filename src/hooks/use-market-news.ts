@@ -1,239 +1,263 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { formatDistanceToNow } from 'date-fns';
-import { he } from 'date-fns/locale';
-import { Badge } from '@/components/ui/badge';
+import { useState, useEffect } from 'react';
+import { getNewsByAssetId } from '@/services/mockNewsService';
+import { toast } from 'sonner';
 
-// Type definitions
 export interface NewsItem {
   id: string;
   title: string;
   summary: string;
-  content?: string;
   publishedAt: string;
   source: string;
-  url: string;
+  url?: string;
   imageUrl?: string;
   sentiment?: 'positive' | 'negative' | 'neutral';
   relatedAssets?: string[];
 }
 
-export interface MarketUpdate {
+// סוגי פילטרים
+export type NewsFilter = 'all' | 'positive' | 'negative' | 'neutral' | 'crypto' | 'stocks';
+
+// פרמטרים עבור שאילתת חדשות
+export interface NewsQueryParams {
+  limit?: number;
+  offset?: number;
+  filter?: NewsFilter;
+  assetId?: string;
+  search?: string;
+}
+
+// נתונים על תנועות לווייתנים
+export interface WhaleMovement {
   id: string;
-  title: string;
-  summary: string;
+  assetId: string;
+  amount: number;
+  fromAddress: string;
+  toAddress: string;
   timestamp: string;
+  transactionType: 'exchange_deposit' | 'exchange_withdrawal' | 'wallet_transfer';
+  exchangeName?: string;
 }
 
-export interface TrendingTopic {
-  name: string;
-  count: number;
-  sentiment?: 'positive' | 'negative' | 'neutral';
-}
-
-// Mock data for development
-const mockNews: NewsItem[] = [
-  {
-    id: '1',
-    title: 'ביטקוין חצה את רף ה-$50,000',
-    summary: 'לאחר עליות משמעותיות, ביטקוין חצה את רף ה-$50,000 לראשונה מאז ינואר.',
-    publishedAt: new Date(Date.now() - 3600000).toISOString(),
-    source: 'Crypto News',
-    url: '#',
-    imageUrl: 'https://picsum.photos/seed/crypto1/800/600',
-    sentiment: 'positive',
-    relatedAssets: ['bitcoin']
-  },
-  {
-    id: '2',
-    title: 'אתריום מתקרב לשיא חדש',
-    summary: 'אתריום ממשיך במגמה חיובית ומתקרב לשיא היסטורי חדש, בעקבות התקדמות בעדכון הרשת.',
-    publishedAt: new Date(Date.now() - 7200000).toISOString(),
-    source: 'DeFi Times',
-    url: '#',
-    imageUrl: 'https://picsum.photos/seed/crypto2/800/600',
-    sentiment: 'positive',
-    relatedAssets: ['ethereum']
-  },
-  {
-    id: '3',
-    title: 'רגולטורים מחמירים את הפיקוח על בורסות קריפטו',
-    summary: 'רשויות רגולטוריות בארה"ב ובאירופה מודיעות על הידוק הפיקוח על בורסות קריפטו.',
-    publishedAt: new Date(Date.now() - 10800000).toISOString(),
-    source: 'Regulation Today',
-    url: '#',
-    sentiment: 'negative'
-  },
-  {
-    id: '4',
-    title: 'CBDC של ישראל: בנק ישראל בוחן אפשרות להנפיק שקל דיגיטלי',
-    summary: 'בנק ישראל פרסם נייר עמדה על האפשרות להנפיק מטבע דיגיטלי של הבנק המרכזי (CBDC).',
-    publishedAt: new Date(Date.now() - 14400000).toISOString(),
-    source: 'Banking News IL',
-    url: '#',
-    imageUrl: 'https://picsum.photos/seed/crypto4/800/600',
-    sentiment: 'neutral'
-  },
-  {
-    id: '5',
-    title: 'חברת סולנה משיקה קרן לפיתוח אפליקציות DeFi',
-    summary: 'חברת סולנה הכריזה על הקמת קרן של 100 מיליון דולר לתמיכה בפיתוח אפליקציות DeFi על הפלטפורמה.',
-    publishedAt: new Date(Date.now() - 18000000).toISOString(),
-    source: 'DeFi Daily',
-    url: '#',
-    imageUrl: 'https://picsum.photos/seed/crypto5/800/600',
-    sentiment: 'positive',
-    relatedAssets: ['solana']
-  },
-  {
-    id: '6',
-    title: 'קרדנו משחררת עדכון משמעותי לרשת',
-    summary: 'קרדנו השיקה עדכון חדש לרשת שלה, שמטרתו לשפר את הביצועים והתמיכה בחוזים חכמים.',
-    publishedAt: new Date(Date.now() - 21600000).toISOString(),
-    source: 'ADA News',
-    url: '#',
-    sentiment: 'positive',
-    relatedAssets: ['cardano']
-  },
-];
-
-const mockMarketUpdates: MarketUpdate[] = [
-  {
-    id: '1',
-    title: 'נפח מסחר גלובלי',
-    summary: 'נפח המסחר היומי עלה ב-15% ל-$120 מיליארד',
-    timestamp: new Date().toISOString()
-  },
-  {
-    id: '2',
-    title: 'דומיננטיות ביטקוין',
-    summary: 'דומיננטיות ביטקוין ירדה ל-47.5%, הרמה הנמוכה ביותר ב-3 חודשים',
-    timestamp: new Date().toISOString()
-  },
-  {
-    id: '3',
-    title: 'כלל שווי שוק',
-    summary: 'שווי שוק כולל של הקריפטו עלה ב-5.3% ל-$1.8 טריליון',
-    timestamp: new Date().toISOString()
-  }
-];
-
-const mockTrendingTopics: TrendingTopic[] = [
-  { name: 'ביטקוין', count: 5, sentiment: 'positive' },
-  { name: 'רגולציה', count: 3, sentiment: 'negative' },
-  { name: 'דיפיי', count: 2, sentiment: 'positive' },
-  { name: 'NFT', count: 2, sentiment: 'neutral' },
-  { name: 'אתריום', count: 4, sentiment: 'positive' },
-  { name: 'Web3', count: 1, sentiment: 'positive' },
-  { name: 'CBDC', count: 2, sentiment: 'neutral' }
-];
-
-// Format time ago in Hebrew
-export function formatTimeAgo(date: string | Date): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return formatDistanceToNow(dateObj, { addSuffix: true, locale: he });
-}
-
-// The hook
-interface UseMarketNewsOptions {
-  externalFetch?: () => Promise<NewsItem[]>;
-}
-
-export default function useMarketNews(options?: UseMarketNewsOptions) {
-  const [latestNews, setLatestNews] = useState<NewsItem[]>(mockNews);
-  const [marketUpdates, setMarketUpdates] = useState<MarketUpdate[]>(mockMarketUpdates);
-  const [trendingTopics, setTrendingTopics] = useState<TrendingTopic[]>(mockTrendingTopics);
-  const [isLoading, setIsLoading] = useState(false);
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(new Date());
+// הוק לקבלת חדשות שוק
+export function useMarketNews(params: NewsQueryParams = {}) {
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
+  const [page, setPage] = useState(1);
   
-  // פונקציה לפילטור נתונים לפי נכס
-  const filterItems = <T extends { relatedAssets?: string[] }>(
-    items: T[] | undefined, 
-    selectedFilter: string
-  ): T[] => {
-    if (!items) return [];
-    if (selectedFilter === 'all') return items;
-    return items.filter(item => 
-      item.relatedAssets?.includes(selectedFilter)
-    );
-  };
+  const limit = params.limit || 10;
+  const filter = params.filter || 'all';
+  const assetId = params.assetId;
+  const search = params.search || '';
   
-  // עיצוב תגית לפי סנטימנט
-  const getSentimentBadge = (sentiment?: 'positive' | 'neutral' | 'negative') => {
-    switch (sentiment) {
-      case 'positive':
-        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">חיובי</Badge>;
-      case 'negative':
-        return <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">שלילי</Badge>;
-      case 'neutral':
-        return <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">ניטרלי</Badge>;
-      default:
-        return null;
-    }
-  };
-  
-  // פורמט למספר גדול
-  const formatNumber = (num: number): string => {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + 'M';
-    } else if (num >= 1000) {
-      return (num / 1000).toFixed(1) + 'K';
-    } else {
-      return num.toString();
-    }
-  };
-  
-  // פורמט לתאריך
-  const formatDate = (dateStr: string): string => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('he-IL', { 
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-  
-  const fetchNews = useCallback(async () => {
+  // פונקציה לשליפת חדשות
+  const fetchNews = async () => {
     setIsLoading(true);
+    setError(null);
+    
     try {
-      // If external fetch function is provided, use it
-      if (options?.externalFetch) {
-        const data = await options.externalFetch();
-        if (data) {
-          setLatestNews(data);
+      const offset = (page - 1) * limit;
+      let newsItems: NewsItem[] = [];
+      
+      // שליפת נתונים מהשירות
+      const fetchedNews = await getNewsByAssetId(assetId || '');
+      
+      // סינון לפי הפילטר הנבחר
+      newsItems = fetchedNews.filter(item => {
+        if (filter === 'all') {
+          return true;
+        } else if (filter === 'positive' || filter === 'negative' || filter === 'neutral') {
+          return item.sentiment === filter;
+        } else if (filter === 'crypto') {
+          // סינון לנכסי קריפטו (לפי המזהה או אחר)
+          return item.relatedAssets?.some(asset => 
+            ['bitcoin', 'ethereum', 'solana', 'cardano', 'polkadot'].includes(asset)
+          );
+        } else if (filter === 'stocks') {
+          // סינון למניות
+          return item.relatedAssets?.some(asset => 
+            ['aapl', 'amzn', 'googl', 'msft', 'tsla'].includes(asset)
+          );
         }
-      } else {
-        // Otherwise use mock data with a small delay to simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setLatestNews(mockNews);
-        setMarketUpdates(mockMarketUpdates);
-        setTrendingTopics(mockTrendingTopics);
+        return true;
+      });
+      
+      // סינון לפי חיפוש אם יש
+      if (search) {
+        const searchLower = search.toLowerCase();
+        newsItems = newsItems.filter(item => 
+          item.title.toLowerCase().includes(searchLower) || 
+          item.summary.toLowerCase().includes(searchLower) ||
+          item.source.toLowerCase().includes(searchLower)
+        );
       }
-      setLastUpdate(new Date());
-    } catch (error) {
-      console.error('Error fetching news:', error);
+      
+      // חיתוך לפי מגבלת העמוד
+      const paginatedItems = newsItems.slice(offset, offset + limit);
+      
+      setNews(paginatedItems);
+      setTotalCount(newsItems.length);
+    } catch (err) {
+      console.error('Error fetching market news:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch news'));
+      toast.error('שגיאה בטעינת חדשות', {
+        description: 'לא ניתן לטעון את החדשות האחרונות, אנא נסה שוב מאוחר יותר'
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [options?.externalFetch]);
+  };
   
-  // Initial fetch
+  // טעינה מחדש של החדשות
+  const refetch = () => {
+    fetchNews();
+  };
+  
+  // שינוי עמוד
+  const changePage = (newPage: number) => {
+    setPage(newPage);
+  };
+  
+  // אפקט לטעינת חדשות בטעינה ראשונית או שינוי פרמטרים
   useEffect(() => {
     fetchNews();
-  }, [fetchNews]);
+  }, [assetId, filter, search, page, limit]);
   
   return {
-    latestNews,
-    marketUpdates,
-    trendingTopics,
+    news,
     isLoading,
-    refetch: fetchNews,
-    lastUpdate,
-    filterItems,
-    getSentimentBadge,
-    formatNumber,
-    formatDate
+    error,
+    totalCount,
+    page,
+    limit,
+    changePage,
+    refetch
   };
 }
+
+// פונקציה להשגת תנועות לווייתנים
+export const getWhaleMovements = async (assetId: string, limit: number = 5): Promise<WhaleMovement[]> => {
+  // מדמה API call לקבלת תנועות לווייתנים
+  await new Promise(resolve => setTimeout(resolve, 800));
+  
+  // מתאים את התנועות לפי סוג הנכס
+  let mockMovements: WhaleMovement[] = [];
+  
+  if (assetId === 'bitcoin') {
+    mockMovements = [
+      {
+        id: '1',
+        assetId: 'bitcoin',
+        amount: 435.78,
+        fromAddress: '0x3a1b4C...e5f7',
+        toAddress: 'binance_wallet',
+        timestamp: new Date(Date.now() - 3600000).toISOString(),
+        transactionType: 'exchange_deposit',
+        exchangeName: 'Binance'
+      },
+      {
+        id: '2',
+        assetId: 'bitcoin',
+        amount: 210.45,
+        fromAddress: 'coinbase_wallet',
+        toAddress: '0x7c2d3F...a1b2',
+        timestamp: new Date(Date.now() - 7200000).toISOString(),
+        transactionType: 'exchange_withdrawal',
+        exchangeName: 'Coinbase'
+      }
+    ];
+  } else if (assetId === 'ethereum') {
+    mockMovements = [
+      {
+        id: '3',
+        assetId: 'ethereum',
+        amount: 1205.67,
+        fromAddress: '0x1f4a3D...c9e2',
+        toAddress: 'kraken_wallet',
+        timestamp: new Date(Date.now() - 5400000).toISOString(),
+        transactionType: 'exchange_deposit',
+        exchangeName: 'Kraken'
+      }
+    ];
+  } else if (assetId === 'solana') {
+    mockMovements = [
+      {
+        id: '4',
+        assetId: 'solana',
+        amount: 8750.21,
+        fromAddress: 'ftx_wallet',
+        toAddress: '0x9e4b2D...f1e3',
+        timestamp: new Date(Date.now() - 10800000).toISOString(),
+        transactionType: 'exchange_withdrawal',
+        exchangeName: 'FTX'
+      }
+    ];
+  } else {
+    // לנכסים אחרים, נייצר תנועות אקראיות
+    const exchanges = ['Binance', 'Coinbase', 'Kraken', 'FTX', 'Huobi'];
+    for (let i = 0; i < Math.floor(Math.random() * 3) + 1; i++) {
+      const isDeposit = Math.random() > 0.5;
+      const exchangeName = exchanges[Math.floor(Math.random() * exchanges.length)];
+      mockMovements.push({
+        id: `generic-${assetId}-${i}`,
+        assetId,
+        amount: Math.floor(Math.random() * 1000) + 100,
+        fromAddress: isDeposit ? `0x${Math.random().toString(16).substring(2, 10)}...` : `${exchangeName.toLowerCase()}_wallet`,
+        toAddress: isDeposit ? `${exchangeName.toLowerCase()}_wallet` : `0x${Math.random().toString(16).substring(2, 10)}...`,
+        timestamp: new Date(Date.now() - (Math.random() * 86400000)).toISOString(),
+        transactionType: isDeposit ? 'exchange_deposit' : 'exchange_withdrawal',
+        exchangeName
+      });
+    }
+  }
+  
+  return mockMovements.slice(0, limit);
+};
+
+// פונקציה להשגת נתוני נוזלות שוק
+export const getLiquidityFlows = async (timeframe: string = '24h'): Promise<{ inflows: number[], outflows: number[], timeLabels: string[] }> => {
+  // מדמה API call לקבלת נתוני נוזלות
+  await new Promise(resolve => setTimeout(resolve, 600));
+  
+  const now = new Date();
+  const timeLabels: string[] = [];
+  const inflows: number[] = [];
+  const outflows: number[] = [];
+  
+  // יצירת נתונים מדומים לפי מסגרת הזמן
+  let points = 0;
+  let interval = 0;
+  
+  if (timeframe === '24h') {
+    points = 24;
+    interval = 60 * 60 * 1000; // שעה
+    for (let i = 0; i < points; i++) {
+      const time = new Date(now.getTime() - (points - i) * interval);
+      timeLabels.push(time.getHours().toString().padStart(2, '0') + ':00');
+      inflows.push(Math.floor(Math.random() * 500) + 100);
+      outflows.push(Math.floor(Math.random() * 400) + 50);
+    }
+  } else if (timeframe === '7d') {
+    points = 7;
+    interval = 24 * 60 * 60 * 1000; // יום
+    for (let i = 0; i < points; i++) {
+      const time = new Date(now.getTime() - (points - i) * interval);
+      timeLabels.push(time.toLocaleDateString('he-IL', { weekday: 'short' }));
+      inflows.push(Math.floor(Math.random() * 2000) + 500);
+      outflows.push(Math.floor(Math.random() * 1800) + 300);
+    }
+  } else if (timeframe === '30d') {
+    points = 30;
+    interval = 24 * 60 * 60 * 1000; // יום
+    for (let i = 0; i < points; i++) {
+      const time = new Date(now.getTime() - (points - i) * interval);
+      timeLabels.push(time.getDate().toString());
+      inflows.push(Math.floor(Math.random() * 5000) + 1000);
+      outflows.push(Math.floor(Math.random() * 4500) + 800);
+    }
+  }
+  
+  return { inflows, outflows, timeLabels };
+};

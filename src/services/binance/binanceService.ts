@@ -53,156 +53,131 @@ export const getBinanceCredentials = (): BinanceCredentials | null => {
 };
 
 // Save Binance credentials
-export const saveBinanceCredentials = (
-  apiKey: string, 
-  apiSecret: string
-): BinanceCredentials => {
-  const credentials: BinanceCredentials = {
-    apiKey,
-    apiSecret,
+export const saveBinanceCredentials = (credentials: BinanceCredentials): void => {
+  localStorage.setItem(BINANCE_CREDENTIALS_KEY, JSON.stringify({
+    ...credentials,
     isConnected: true,
     lastConnected: Date.now()
-  };
-  
-  localStorage.setItem(BINANCE_CREDENTIALS_KEY, JSON.stringify(credentials));
-  return credentials;
+  }));
 };
 
 // Disconnect from Binance
 export const disconnectBinance = (): void => {
   localStorage.removeItem(BINANCE_CREDENTIALS_KEY);
-  toast.info('נותקת מחשבון Binance');
+  toast.info('נותק מחשבון Binance');
 };
 
-// Connect to Binance
-export const connectToBinance = async (
-  apiKey: string,
-  apiSecret: string
-): Promise<BinanceCredentials> => {
-  // In a real implementation, this would validate the credentials with Binance API
-  // For demo, just simulate a network request
-  await new Promise(resolve => setTimeout(resolve, 1500));
+// Test Binance connection
+export const testBinanceConnection = async (): Promise<boolean> => {
+  const credentials = getBinanceCredentials();
   
-  // Check if API key has valid format (mock validation)
-  if (!apiKey.match(/^[A-Za-z0-9]{15,64}$/)) {
-    throw new Error('מפתח API לא תקין');
+  if (!credentials) {
+    return false;
   }
   
-  // Check if API secret has valid format (mock validation)
-  if (!apiSecret.match(/^[A-Za-z0-9]{30,64}$/)) {
-    throw new Error('סוד API לא תקין');
+  try {
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // For demo purposes, we'll just check if API key looks valid
+    return credentials.apiKey.length > 10 && credentials.apiSecret.length > 10;
+  } catch (error) {
+    console.error('Error testing Binance connection:', error);
+    return false;
   }
-  
-  // Save credentials
-  const credentials = saveBinanceCredentials(apiKey, apiSecret);
-  
-  toast.success('חיבור ל-Binance בוצע בהצלחה', {
-    description: 'כעת תוכל לקבל נתוני מסחר בזמן אמת ולבצע פעולות מסחר'
-  });
-  
-  return credentials;
 };
 
-// Start real-time market data stream
+// Mock method for starting real-time market data
 export const startRealTimeMarketData = async (
   symbols: string[],
-  onData: (data: MarketDataResponse) => void
+  onUpdate: (data: MarketDataResponse) => void
 ): Promise<{ stop: () => void }> => {
-  if (!isBinanceConnected()) {
-    throw new Error('לא מחובר ל-Binance');
-  }
-  
-  // Initialize symbols prices for consistency
-  const initialPrices: Record<string, number> = {};
-  symbols.forEach(symbol => {
-    if (symbol === 'bitcoin') initialPrices[symbol] = 68000 + (Math.random() * 1000);
-    else if (symbol === 'ethereum') initialPrices[symbol] = 3300 + (Math.random() * 100);
-    else if (symbol === 'solana') initialPrices[symbol] = 143 + (Math.random() * 10);
-    else initialPrices[symbol] = 100 + (Math.random() * 50);
-  });
-  
-  // Simulate websocket connection
+  // In a real implementation, this would connect to Binance WebSocket API
   console.log('Starting real-time market data for:', symbols);
   
-  // Interval for simulating data
-  const interval = setInterval(() => {
+  // For demo, we'll update at an interval
+  const intervalId = setInterval(() => {
     symbols.forEach(symbol => {
-      // Simulate real-time price changes (small variations)
-      const currentPrice = initialPrices[symbol];
-      const priceChange = currentPrice * (Math.random() * 0.006 - 0.003); // ±0.3%
-      const newPrice = currentPrice + priceChange;
-      initialPrices[symbol] = newPrice;
+      const basePrice = getBasePrice(symbol);
       
-      // Random volume
-      const volume = currentPrice * 1000 * (0.8 + Math.random() * 0.4);
-      
-      // Random 24h change
-      const change24h = (Math.random() * 6) - 3; // -3% to +3%
-      
-      // Send mock data to callback
-      onData({
+      // Send random price updates
+      onUpdate({
         symbol,
-        price: newPrice,
-        volume,
+        price: basePrice * (1 + (Math.random() - 0.5) * 0.01),
+        volume: Math.random() * 100000000,
         timestamp: Date.now(),
-        change24h
+        change24h: (Math.random() - 0.5) * 5
       });
     });
-  }, 2000); // Update every 2 seconds
+  }, 3000);
   
-  // Return function to stop the stream
   return {
-    stop: () => {
-      clearInterval(interval);
-      console.log('Stopped real-time market data');
-    }
+    stop: () => clearInterval(intervalId)
   };
 };
 
-// Get fundamental data for an asset
+// Get fundamental data for a symbol
 export const getFundamentalData = async (symbol: string): Promise<FundamentalDataResponse> => {
-  // In a real implementation, this would fetch data from Binance API
-  // For demo, return mock data
+  // Simulate API call delay
   await new Promise(resolve => setTimeout(resolve, 800));
   
-  let marketCap = 0;
-  let volume24h = 0;
-  let circulatingSupply = 0;
-  let maxSupply = 0;
-  
-  // Set realistic values based on symbol
-  if (symbol === 'bitcoin') {
-    marketCap = 1300000000000 + (Math.random() * 50000000000);
-    volume24h = 35000000000 + (Math.random() * 10000000000);
-    circulatingSupply = 19500000 + (Math.random() * 100000);
-    maxSupply = 21000000;
-  } else if (symbol === 'ethereum') {
-    marketCap = 400000000000 + (Math.random() * 20000000000);
-    volume24h = 15000000000 + (Math.random() * 5000000000);
-    circulatingSupply = 120000000 + (Math.random() * 500000);
-    maxSupply = 0; // No fixed max supply
-  } else if (symbol === 'solana') {
-    marketCap = 60000000000 + (Math.random() * 5000000000);
-    volume24h = 2000000000 + (Math.random() * 1000000000);
-    circulatingSupply = 420000000 + (Math.random() * 1000000);
-    maxSupply = 500000000;
-  } else {
-    marketCap = 1000000000 + (Math.random() * 1000000000);
-    volume24h = 500000000 + (Math.random() * 200000000);
-    circulatingSupply = 100000000 + (Math.random() * 10000000);
-    maxSupply = 250000000;
-  }
+  const basePrice = getBasePrice(symbol);
   
   return {
     symbol,
-    marketCap,
-    volume24h,
-    circulatingSupply,
-    maxSupply,
-    fundamentalScore: Math.round(60 + Math.random() * 30), // 60-90
-    sentiment: ['positive', 'neutral', 'positive'][Math.floor(Math.random() * 3)], // More positive bias
-    newsCount24h: Math.floor(5 + Math.random() * 15),
-    socialMentions24h: Math.floor(1000 + Math.random() * 9000),
+    marketCap: basePrice * getCirculatingSupply(symbol),
+    volume24h: basePrice * getCirculatingSupply(symbol) * (Math.random() * 0.1),
+    circulatingSupply: getCirculatingSupply(symbol),
+    maxSupply: getMaxSupply(symbol),
+    fundamentalScore: Math.floor(Math.random() * 10) + 1,
+    sentiment: ['positive', 'neutral', 'negative'][Math.floor(Math.random() * 3)],
+    newsCount24h: Math.floor(Math.random() * 50) + 1,
+    socialMentions24h: Math.floor(Math.random() * 1000) + 100,
     timestamp: Date.now()
   };
+};
+
+// Helper function to get base price for a symbol
+const getBasePrice = (symbol: string): number => {
+  const priceMap: Record<string, number> = {
+    'BTCUSDT': 68000,
+    'ETHUSDT': 3300,
+    'SOLUSDT': 143,
+    'ADAUSDT': 0.45,
+    'DOGEUSDT': 0.12,
+    'XRPUSDT': 0.55,
+    'BNBUSDT': 580,
+  };
+  
+  return priceMap[symbol] || 100; // Default to 100 if not found
+};
+
+// Helper function to get circulating supply
+const getCirculatingSupply = (symbol: string): number => {
+  const supplyMap: Record<string, number> = {
+    'BTCUSDT': 19460000,
+    'ETHUSDT': 120000000,
+    'SOLUSDT': 425000000,
+    'ADAUSDT': 35000000000,
+    'DOGEUSDT': 140000000000,
+    'XRPUSDT': 45000000000,
+    'BNBUSDT': 155000000,
+  };
+  
+  return supplyMap[symbol] || 1000000000;
+};
+
+// Helper function to get max supply
+const getMaxSupply = (symbol: string): number => {
+  const maxSupplyMap: Record<string, number> = {
+    'BTCUSDT': 21000000,
+    'ETHUSDT': 0, // No max supply
+    'SOLUSDT': 0, // No max supply
+    'ADAUSDT': 45000000000,
+    'DOGEUSDT': 0, // No max supply
+    'XRPUSDT': 100000000000,
+    'BNBUSDT': 200000000,
+  };
+  
+  return maxSupplyMap[symbol] || 0;
 };

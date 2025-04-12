@@ -1,244 +1,158 @@
 
-import { WebhookData } from './types';
-import { parseWebhookData, validateWebhookData } from './parser';
-import { sendAlert } from '../alerts/sender';
 import { toast } from 'sonner';
-import { TradingViewAlert } from '../alerts/types';
-import { generateSampleWebhookData, simulateWebhookRequest } from './sampleGenerator';
+import { createSampleAlert, sendAlert } from '../tradingViewAlertService';
+import { isTradingViewConnected } from '../tradingViewAuthService';
+import { WebhookSignal } from '@/types/webhookSignal';
+
+// סוגי האיתותים שאנחנו מקבלים מ-TradingView
+export type WebhookSignalType = 'buy' | 'sell' | 'info';
 
 /**
- * Process incoming webhook data from TradingView
+ * מטפל בבקשת webhook שהתקבלה מ-TradingView
  */
-export const processWebhookData = async (data: WebhookData): Promise<boolean> => {
-  console.log('📥 Processing webhook data:', JSON.stringify(data, null, 2));
+export const handleTradingViewWebhook = async (data: any): Promise<boolean> => {
+  if (!isTradingViewConnected()) {
+    console.error('Cannot process webhook: TradingView not connected');
+    return false;
+  }
   
   try {
-    // Validate the webhook data
-    if (!validateWebhookData(data)) {
-      console.error('❌ Webhook validation failed', {
-        symbol: data.symbol,
-        hasAction: !!data.action,
-        hasSignal: !!data.signal,
-        hasPrice: !!data.price || !!data.close
-      });
-      
-      // אם יש סימבול, ננסה להשלים את השדות החסרים
-      if (data.symbol) {
-        console.log('Attempting to fix incomplete webhook data');
-        
-        // השלמת שדות חסרים עם ערכי ברירת מחדל
-        if (!data.action && !data.signal) {
-          data.action = 'info';
-          console.log('Added default action: info');
-        }
-        
-        if (!data.price && !data.close) {
-          data.price = 0;
-          console.log('Added default price: 0');
-        }
-        
-        if (!data.message && data.signal) {
-          data.message = data.signal;
-          console.log('Using signal as message');
-        }
-        
-        // בדיקה חוזרת אחרי התיקונים
-        if (!validateWebhookData(data)) {
-          toast.error('הווהבוק לא תקין גם אחרי תיקונים', {
-            description: 'חסרים שדות חובה או נתונים לא תקינים'
-          });
-          return false;
-        }
-      } else {
-        toast.error('הווהבוק לא תקין', {
-          description: 'חסרים שדות חובה או נתונים לא תקינים'
-        });
-        return false;
-      }
-    }
+    console.log('Received webhook data:', data);
     
-    console.log('✅ Webhook data validated successfully');
+    // עיבוד הנתונים שהתקבלו
+    const processedSignal = processWebhookData(data);
     
-    // Parse the webhook data into an alert
-    const alert = parseWebhookData(data);
-    
-    if (!alert) {
-      console.error('❌ Failed to parse webhook data into alert');
-      toast.error('שגיאה בפרסור נתוני הווהבוק', {
-        description: 'לא ניתן ליצור התראה מהנתונים שהתקבלו'
-      });
+    if (!processedSignal) {
+      console.error('Invalid webhook data format');
       return false;
     }
     
-    console.log('🔍 Successfully parsed webhook into alert:', JSON.stringify(alert, null, 2));
+    // שליחת ההתראה דרך השירות
+    await sendAlert(processedSignal);
     
-    // בדיקה אם ההתראה נשלחת דרך הרשימה האוטומטית
-    const isAutomaticAlert = data.automatic === true || data.source === 'automatic_watchlist';
-    
-    // Get alert type in Hebrew
-    const alertTypeHebrew = alert.action === 'buy' ? 'קנייה' : 
-                          alert.action === 'sell' ? 'מכירה' : 'מידע';
-    
-    // Send notification about received webhook before attempting to send
-    toast.info(`התקבלה התראת ${alertTypeHebrew}`, {
-      description: `עבור ${alert.symbol} - שולח ליעדים מוגדרים...`
-    });
-    
-    // Send the alert
-    const success = await sendAlert(alert);
-    
-    if (success) {
-      console.log('✅ Successfully processed webhook data and sent alert');
-      toast.success('התראה נשלחה בהצלחה', {
-        description: `התראת ${alertTypeHebrew} נשלחה ליעדים המוגדרים`
-      });
-      
-      // אם זו התראה אוטומטית, ננהל אותה במערכת ההתראות האוטומטיות
-      if (isAutomaticAlert) {
-        console.log('Handling automatic alert in the system');
-        // כאן אפשר להוסיף לוגיקה נוספת לניהול התראות אוטומטיות
-      }
-    } else {
-      console.error('❌ Failed to send alert');
-      toast.error('שליחת ההתראה נכשלה', {
-        description: 'ייתכן שלא הוגדר יעד להתראות או שאירעה שגיאה'
-      });
-    }
-    
-    return success;
+    return true;
   } catch (error) {
-    console.error('❌ Error processing webhook data:', error);
-    toast.error('שגיאה בעיבוד נתוני Webhook', {
-      description: 'אירעה שגיאה בעיבוד נתונים מ-TradingView'
-    });
+    console.error('Error processing TradingView webhook:', error);
     return false;
   }
 };
 
 /**
- * Handle webhook request from TradingView
+ * עיבוד נתוני ה-webhook לפורמט הפנימי שלנו
  */
-export const handleTradingViewWebhook = async (req: any): Promise<boolean> => {
-  console.log('📥 Received webhook request from TradingView', {
-    headers: req.headers,
-    hasBody: !!req.body,
-    bodyType: typeof req.body
-  });
-  
-  try {
-    let data = req.body;
-    
-    // If the request body is a string, try to parse it as JSON
-    if (typeof data === 'string') {
-      try {
-        console.log('Parsing string webhook data as JSON');
-        data = JSON.parse(data);
-      } catch (e) {
-        console.error('❌ Failed to parse webhook data as JSON:', e);
-        
-        // אם לא ניתן לפרסר כ-JSON, אולי זה איתות פשוט
-        console.log('Trying to handle as simple alert text');
-        data = {
-          symbol: 'Unknown',
-          message: data,
-          action: 'info',
-          price: 0,
-          timestamp: Date.now()
-        };
-        
-        toast.info('התקבל איתות בפורמט טקסט פשוט');
-      }
-    }
-    
-    // אם התקבל אובייקט ריק, נחזיר שגיאה
-    if (!data || Object.keys(data).length === 0) {
-      console.error('❌ Empty webhook payload');
-      toast.error('תוכן הווהבוק ריק', {
-        description: 'לא התקבלו נתונים בקריאת הווהבוק'
-      });
-      return false;
-    }
-    
-    console.log('📊 Received webhook payload:', JSON.stringify(data, null, 2));
-    
-    // Process the webhook data
-    return await processWebhookData(data);
-  } catch (error) {
-    console.error('❌ Error handling TradingView webhook:', error);
-    toast.error('שגיאה בטיפול בווהבוק', {
-      description: 'אירעה שגיאה בלתי צפויה בעת טיפול בווהבוק'
-    });
-    return false;
+const processWebhookData = (data: any): WebhookSignal | null => {
+  // וידוא שהנתונים תקינים
+  if (!data || typeof data !== 'object') {
+    return null;
   }
+  
+  // חילוץ הנתונים מה-payload
+  const {
+    symbol = 'UNKNOWN',
+    strategy = 'Unknown',
+    timeframe = '1d',
+    price,
+    message,
+    action = 'info'
+  } = data;
+  
+  // המרת הפעולה לסוג האיתות המוכר שלנו
+  let signalType: WebhookSignalType = 'info';
+  
+  if (typeof action === 'string') {
+    const actionLower = action.toLowerCase();
+    if (actionLower.includes('buy') || actionLower.includes('long')) {
+      signalType = 'buy';
+    } else if (actionLower.includes('sell') || actionLower.includes('short')) {
+      signalType = 'sell';
+    }
+  }
+  
+  // יצירת האיתות
+  return {
+    symbol,
+    message: message || `${signalType.toUpperCase()} Alert for ${symbol}`,
+    indicators: strategy ? [strategy] : [],
+    timeframe,
+    timestamp: Date.now(),
+    price: parseFloat(price) || 0,
+    action: signalType,
+    strength: signalType === 'info' ? 5 : 8
+  };
 };
 
 /**
- * Test the webhook flow with sample data
+ * בודק את תהליך ה-webhook מקצה לקצה
  */
-export const testWebhookFlow = async (type: 'buy' | 'sell' | 'info' = 'info'): Promise<boolean> => {
-  console.log(`🧪 Testing webhook flow with ${type} signal...`);
-  
-  try {
-    // Generate sample webhook data
-    const sampleData = generateSampleWebhookData(type);
-    console.log('📤 Generated sample webhook data:', JSON.stringify(sampleData, null, 2));
-    
-    // Process the sample data
-    const success = await processWebhookData(sampleData);
-    
-    if (success) {
-      console.log('✅ Webhook test successful - alert was processed and sent');
-      toast.success(`בדיקת Webhook הצליחה`, {
-        description: `הודעת ${type === 'buy' ? 'קנייה' : type === 'sell' ? 'מכירה' : 'מידע'} נשלחה בהצלחה`,
-      });
-    } else {
-      console.error('❌ Webhook test failed - could not process or send alert');
-      toast.error(`בדיקת Webhook נכשלה`, {
-        description: 'לא הצלחנו לשלוח את ההודעה, בדוק את הלוגים לפרטים נוספים'
-      });
-    }
-    
-    return success;
-  } catch (error) {
-    console.error('❌ Error testing webhook flow:', error);
+export const testWebhookFlow = async (type: WebhookSignalType = 'info'): Promise<boolean> => {
+  if (!isTradingViewConnected()) {
     toast.error('שגיאה בבדיקת Webhook', {
-      description: 'אירעה שגיאה בעת ניסיון לבדוק את מנגנון ה-Webhook'
+      description: 'אינך מחובר ל-TradingView'
+    });
+    return false;
+  }
+  
+  try {
+    // יצירת מידע לבדיקה
+    const testData = {
+      symbol: 'BTC/USD',
+      strategy: 'Test Strategy',
+      timeframe: '1h',
+      price: '50000',
+      message: `TEST ${type.toUpperCase()} SIGNAL`,
+      action: type
+    };
+    
+    // עיבוד הנתונים ושליחת ההתראה
+    const success = await handleTradingViewWebhook(testData);
+    
+    if (success) {
+      toast.success('בדיקת Webhook הצליחה', {
+        description: `האיתות נשלח בהצלחה לכל היעדים המוגדרים`
+      });
+    } else {
+      toast.error('בדיקת Webhook נכשלה', {
+        description: 'אירעה שגיאה בעיבוד האיתות'
+      });
+    }
+    
+    return success;
+  } catch (error) {
+    console.error('Error testing webhook flow:', error);
+    toast.error('שגיאה בבדיקת Webhook', {
+      description: 'אירעה שגיאה בלתי צפויה'
     });
     return false;
   }
 };
 
 /**
- * Simulate a webhook request from TradingView
+ * מדמה קבלת איתות webhook מ-TradingView
  */
-export const simulateWebhook = async (type: 'buy' | 'sell' | 'info' = 'info'): Promise<boolean> => {
-  console.log(`🔄 Simulating ${type} webhook request from TradingView...`);
+export const simulateWebhook = async (type: WebhookSignalType = 'info'): Promise<boolean> => {
+  if (!isTradingViewConnected()) {
+    toast.error('שגיאה בסימולציית Webhook', {
+      description: 'אינך מחובר ל-TradingView'
+    });
+    return false;
+  }
   
   try {
-    // Simulate a webhook request
-    const req = simulateWebhookRequest(type);
-    console.log('📤 Simulated webhook request:', JSON.stringify(req, null, 2));
+    // יצירת התראה לדוגמה
+    const sampleAlert = createSampleAlert(type);
     
-    // Handle the simulated request
-    const success = await handleTradingViewWebhook(req);
+    // שליחת ההתראה
+    await sendAlert(sampleAlert);
     
-    if (success) {
-      console.log('✅ Webhook simulation successful');
-      toast.success(`סימולציית Webhook הצליחה`, {
-        description: `הודעת ${type === 'buy' ? 'קנייה' : type === 'sell' ? 'מכירה' : 'מידע'} נשלחה בהצלחה`,
-      });
-    } else {
-      console.error('❌ Webhook simulation failed');
-      toast.error(`סימולציית Webhook נכשלה`, {
-        description: 'לא הצלחנו לשלוח את ההודעה, בדוק את הלוגים לפרטים נוספים'
-      });
-    }
+    toast.success('סימולציית Webhook הצליחה', {
+      description: `האיתות מסוג ${type.toUpperCase()} נשלח בהצלחה לכל היעדים`
+    });
     
-    return success;
+    return true;
   } catch (error) {
-    console.error('❌ Error simulating webhook:', error);
+    console.error('Error simulating webhook:', error);
     toast.error('שגיאה בסימולציית Webhook', {
-      description: 'אירעה שגיאה בעת ניסיון לסמלץ webhook מ-TradingView'
+      description: 'אירעה שגיאה בלתי צפויה'
     });
     return false;
   }

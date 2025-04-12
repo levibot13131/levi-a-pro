@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useBinanceConnection } from '@/hooks/use-binance-connection';
 import BinanceConnectButton from '@/components/binance/BinanceConnectButton';
 import BinanceConnectionStatus from '@/components/binance/BinanceConnectionStatus';
+import BinanceRealTimeStatus from '@/components/binance/BinanceRealTimeStatus';
 import { useAuth } from '@/contexts/AuthContext';
 import RequireAuth from '@/components/auth/RequireAuth';
 import { LineChart, Wallet, ArrowUpDown, Clock, Settings } from 'lucide-react';
@@ -104,23 +105,24 @@ const BinanceIntegration = () => {
             <TabsContent value="overview">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <BinanceConnectionStatus />
-                
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-right">סיכום חשבון</CardTitle>
-                    <CardDescription className="text-right">
-                      נתוני החשבון שלך בבינאנס
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-muted p-4 rounded-md">
-                      <p className="text-center text-sm">
-                        הנתונים יטענו כאשר החיבור לבינאנס יאומת
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <BinanceRealTimeStatus />
               </div>
+              
+              <Card className="mt-6">
+                <CardHeader>
+                  <CardTitle className="text-right">סיכום חשבון</CardTitle>
+                  <CardDescription className="text-right">
+                    נתוני החשבון שלך בבינאנס
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-muted p-4 rounded-md">
+                    <p className="text-center text-sm">
+                      נתונים יטענו כאשר החיבור לבינאנס יאומת
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="assets">

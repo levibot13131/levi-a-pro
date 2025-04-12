@@ -1,85 +1,169 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Link2, UserCheck2, LogOut } from 'lucide-react';
-import BinanceConnectForm from './BinanceConnectForm';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Lock, Key, LogIn, LogOut } from 'lucide-react';
 import { useBinanceConnection } from '@/hooks/use-binance-connection';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { saveBinanceCredentials, disconnectBinance, testBinanceConnection } from '@/services/binance/binanceService';
+import { toast } from 'sonner';
 
 interface BinanceConnectButtonProps {
-  onConnectChange?: (isConnected: boolean) => void;
+  onConnectSuccess?: () => void;
 }
 
-const BinanceConnectButton: React.FC<BinanceConnectButtonProps> = ({ 
-  onConnectChange 
-}) => {
-  const { isConnected, credentials, disconnect, refreshConnection } = useBinanceConnection();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
-
-  // Notify parent of connection changes
-  useEffect(() => {
-    if (onConnectChange) {
-      onConnectChange(isConnected);
+const BinanceConnectButton: React.FC<BinanceConnectButtonProps> = ({ onConnectSuccess }) => {
+  const { isConnected, refreshConnection } = useBinanceConnection();
+  const [showDialog, setShowDialog] = useState(false);
+  const [apiKey, setApiKey] = useState('');
+  const [apiSecret, setApiSecret] = useState('');
+  const [isTesting, setIsTesting] = useState(false);
+  
+  const handleConnect = async () => {
+    if (!apiKey || !apiSecret) {
+      toast.error('שגיאה בהתחברות', {
+        description: 'יש להזין מפתח API וסיסמה'
+      });
+      return;
     }
-  }, [isConnected, onConnectChange]);
-
-  const handleConnectSuccess = () => {
-    refreshConnection();
+    
+    setIsTesting(true);
+    
+    try {
+      // שמירת הפרטים
+      saveBinanceCredentials({
+        apiKey,
+        apiSecret,
+        isConnected: true
+      });
+      
+      // בדיקת חיבור
+      const testResult = await testBinanceConnection();
+      
+      if (testResult) {
+        toast.success('התחברות לבינאנס בוצעה בהצלחה');
+        refreshConnection();
+        setShowDialog(false);
+        
+        if (onConnectSuccess) {
+          onConnectSuccess();
+        }
+      } else {
+        toast.error('בדיקת חיבור נכשלה', {
+          description: 'המפתחות שהוזנו אינם תקפים או שיש בעיה בחיבור'
+        });
+        disconnectBinance();
+      }
+    } catch (error) {
+      console.error('Connection error:', error);
+      toast.error('שגיאה בהתחברות', {
+        description: 'אירעה שגיאה בעת ההתחברות לבינאנס'
+      });
+    } finally {
+      setIsTesting(false);
+    }
   };
-
+  
   const handleDisconnect = () => {
-    disconnect();
-    setIsConfirmDialogOpen(false);
+    disconnectBinance();
+    refreshConnection();
+    toast.success('נותק מבינאנס בהצלחה');
   };
-
+  
+  // מילוי אוטומטי לסביבת פיתוח
+  const fillTestCredentials = () => {
+    setApiKey('demo_api_key_12345678901234567890');
+    setApiSecret('demo_api_secret_12345678901234567890abcdefghijklmnopqrstuvwxyz');
+    toast.info('מפתחות דמו הוזנו', {
+      description: 'ניתן להשתמש במפתחות אלו לבדיקת המערכת'
+    });
+  };
+  
   return (
     <>
       {isConnected ? (
-        <Button
+        <Button 
           variant="outline"
-          className="gap-2"
-          onClick={() => setIsConfirmDialogOpen(true)}
+          onClick={handleDisconnect}
+          className="gap-1"
         >
-          <UserCheck2 className="h-4 w-4" />
-          מחובר ל-Binance
+          <LogOut className="h-4 w-4 ml-1" />
+          התנתק מבינאנס
         </Button>
       ) : (
         <Button 
-          className="gap-2"
-          onClick={() => setIsDialogOpen(true)}
+          onClick={() => setShowDialog(true)}
+          className="gap-1"
         >
-          <Link2 className="h-4 w-4" />
-          התחבר ל-Binance
+          <LogIn className="h-4 w-4 ml-1" />
+          התחבר לבינאנס
         </Button>
       )}
-
-      <BinanceConnectForm 
-        isOpen={isDialogOpen} 
-        onOpenChange={setIsDialogOpen} 
-        onConnectSuccess={handleConnectSuccess}
-      />
-
-      <AlertDialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-right">ניתוק מ-Binance</AlertDialogTitle>
-            <AlertDialogDescription className="text-right">
-              האם אתה בטוח שברצונך להתנתק מחשבון ה-Binance שלך?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="flex-row-reverse justify-start gap-2">
-            <AlertDialogCancel>ביטול</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDisconnect}
-              className="bg-destructive hover:bg-destructive/90 flex gap-2"
+      
+      <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        <DialogContent className="sm:max-w-[425px] text-right">
+          <DialogHeader>
+            <DialogTitle>התחברות לחשבון Binance</DialogTitle>
+            <DialogDescription>
+              הזן את מפתחות ה-API של חשבון ה-Binance שלך כדי להתחבר.
+              <div className="mt-2 text-xs text-muted-foreground">
+                <span className="font-medium">הערה:</span> המפתחות נשמרים ברמה המקומית במכשיר שלך בלבד ולא נשלחים לשרת.
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="apiKey" className="text-right">מפתח API</Label>
+              <div className="relative">
+                <Input 
+                  id="apiKey" 
+                  value={apiKey} 
+                  onChange={(e) => setApiKey(e.target.value)} 
+                  className="pl-10 text-left"
+                  dir="ltr"
+                />
+                <Key className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              </div>
+            </div>
+            
+            <div className="grid gap-2">
+              <Label htmlFor="apiSecret" className="text-right">סיסמת API (Secret)</Label>
+              <div className="relative">
+                <Input 
+                  id="apiSecret" 
+                  value={apiSecret} 
+                  onChange={(e) => setApiSecret(e.target.value)} 
+                  className="pl-10 text-left"
+                  dir="ltr"
+                  type="password"
+                />
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              </div>
+            </div>
+            
+            <Button 
+              type="button"
+              onClick={fillTestCredentials}
+              variant="ghost"
+              size="sm"
+              className="justify-start mt-1"
             >
-              <LogOut className="h-4 w-4" />
-              ניתוק
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+              השתמש במפתחות דמו
+            </Button>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              onClick={handleConnect} 
+              disabled={!apiKey || !apiSecret || isTesting}
+            >
+              {isTesting ? 'בודק חיבור...' : 'התחבר'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
