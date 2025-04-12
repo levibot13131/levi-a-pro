@@ -46,24 +46,25 @@ export const fetchMarketData = async (coinIds: string[]): Promise<Record<string,
   // Mock implementation - would be replaced with actual API call
   const result: Record<string, MarketData> = {};
   
-  coinIds.forEach(id => {
-    result[id] = {
-      id: id,
-      name: id === 'bitcoin' ? 'Bitcoin' : id === 'ethereum' ? 'Ethereum' : 'Binance Coin',
-      symbol: id === 'bitcoin' ? 'BTC' : id === 'ethereum' ? 'ETH' : 'BNB',
-      price: id === 'bitcoin' ? 65000 : id === 'ethereum' ? 3400 : 580,
-      marketCap: id === 'bitcoin' ? 1250000000000 : id === 'ethereum' ? 420000000000 : 89000000000,
-      volume24h: id === 'bitcoin' ? 30000000000 : id === 'ethereum' ? 18000000000 : 2000000000,
-      dominance: id === 'bitcoin' ? 45.2 : id === 'ethereum' ? 18.5 : 4.2,
-      volume: id === 'bitcoin' ? 30000000000 : id === 'ethereum' ? 18000000000 : 2000000000,
-      priceChange24h: id === 'bitcoin' ? 1500 : id === 'ethereum' ? 60 : 2.8,
-      priceChangePercentage24h: id === 'bitcoin' ? 2.5 : id === 'ethereum' ? 1.8 : 0.5,
-      priceChange7d: id === 'bitcoin' ? 3000 : id === 'ethereum' ? 120 : 5,
-      priceChangePercentage7d: id === 'bitcoin' ? 4.8 : id === 'ethereum' ? 3.6 : 0.8,
-      change24h: id === 'bitcoin' ? 2.5 : id === 'ethereum' ? 1.8 : 0.5,
-      lastUpdated: new Date().toISOString()
+  coinIds.forEach(coinId => {
+    result[coinId] = {
+      id: coinId,  // Explicitly set the id
+      name: coinId === 'bitcoin' ? 'Bitcoin' : coinId === 'ethereum' ? 'Ethereum' : 'Binance Coin',
+      symbol: coinId === 'bitcoin' ? 'BTC' : coinId === 'ethereum' ? 'ETH' : 'BNB',
+      price: coinId === 'bitcoin' ? 65000 : coinId === 'ethereum' ? 3400 : 580,
+      marketCap: coinId === 'bitcoin' ? 1250000000000 : coinId === 'ethereum' ? 420000000000 : 89000000000,
+      volume24h: coinId === 'bitcoin' ? 30000000000 : coinId === 'ethereum' ? 18000000000 : 2000000000,
+      change24h: coinId === 'bitcoin' ? 2.5 : coinId === 'ethereum' ? 1.8 : 0.5,
+      lastUpdated: new Date().toISOString(),
+      dominance: coinId === 'bitcoin' ? 45.2 : coinId === 'ethereum' ? 18.5 : 4.2,
+      volume: coinId === 'bitcoin' ? 30000000000 : coinId === 'ethereum' ? 18000000000 : 2000000000,
+      priceChange24h: coinId === 'bitcoin' ? 1500 : coinId === 'ethereum' ? 60 : 2.8,
+      priceChangePercentage24h: coinId === 'bitcoin' ? 2.5 : coinId === 'ethereum' ? 1.8 : 0.5,
+      priceChange7d: coinId === 'bitcoin' ? 3000 : coinId === 'ethereum' ? 120 : 5,
+      priceChangePercentage7d: coinId === 'bitcoin' ? 4.8 : coinId === 'ethereum' ? 3.6 : 0.8
     };
   });
   
   return result;
 };
+
