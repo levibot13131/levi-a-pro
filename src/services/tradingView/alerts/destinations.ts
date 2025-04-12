@@ -1,5 +1,5 @@
 
-import { AlertDestination } from './types';
+import { AlertDestination, AlertDestinationType } from './types';
 import { toast } from 'sonner';
 
 // קבוע לשמירת המזהה ב-localStorage
@@ -11,8 +11,8 @@ let alertDestinations: AlertDestination[] = [
   {
     id: 'default-destination',
     name: 'Webhook ברירת מחדל',
-    type: 'webhook',
-    active: false,
+    type: 'webhook' as AlertDestinationType,
+    active: true, // שינינו ל-true כדי שיהיה פעיל כברירת מחדל
     endpoint: 'https://eobyanldxae2fi5.m.pipedream.net',
     headers: {
       'Content-Type': 'application/json'

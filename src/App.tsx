@@ -1,61 +1,137 @@
 
-import { Routes, Route } from 'react-router-dom';
-import MainNavigation from './components/MainNavigation';
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from '@/components/theme-provider';
+import MainLayout from '@/components/layouts/main-layout';
+import Dashboard from '@/pages/Dashboard';
+import Login from '@/pages/Login';
+import Assets from '@/pages/Assets';
+import AssetDetails from '@/pages/AssetDetails';
+import MarketNews from '@/pages/MarketNews';
+import TradingSignals from '@/pages/TradingSignals';
+import Backtesting from '@/pages/Backtesting';
+import TradingViewIntegration from '@/pages/TradingViewIntegration';
+import BinanceIntegration from '@/pages/BinanceIntegration';
 import { AuthProvider } from '@/contexts/AuthContext';
+import RequireAuth from '@/components/auth/RequireAuth';
+import Settings from '@/pages/Settings';
+import { initializeTradingViewServices } from '@/services/tradingView/startup';
+import GuideModal from '@/components/GuideModal';
 
-// Pages
-import Home from './pages/Home';
-import MarketData from './pages/MarketData';
-import AssetTracker from './pages/AssetTracker';
-import MarketNews from './pages/MarketNews';
-import TradingSignals from './pages/TradingSignals';
-import RiskManagement from './pages/RiskManagement';
-import Backtesting from './pages/Backtesting';
-import UserManagement from './pages/UserManagement';
-import Login from './pages/Login';
-import InformationSources from './pages/InformationSources';
-import ComprehensiveAnalysis from './pages/ComprehensiveAnalysis';
-import BinanceIntegration from './pages/BinanceIntegration';
-import TrendingCoins from './pages/TrendingCoins';
-import CryptoSentiment from './pages/CryptoSentiment';
-import TradingViewIntegration from './pages/TradingViewIntegration';
-
-// Create a client
-const queryClient = new QueryClient();
+// קבוע לבדיקה אם זו הטעינה הראשונה של האפליקציה
+const FIRST_VISIT_KEY = 'app-first-visit';
 
 function App() {
+  const [showGuide, setShowGuide] = useState(false);
+  
+  useEffect(() => {
+    // Initialize TradingView services
+    initializeTradingViewServices();
+    
+    // בדיקה אם זו הטעינה הראשונה של האפליקציה
+    const isFirstVisit = !localStorage.getItem(FIRST_VISIT_KEY);
+    if (isFirstVisit) {
+      // הצגת המדריך בטעינה הראשונה
+      setShowGuide(true);
+      // שמירת סימון לביקור ראשון
+      localStorage.setItem(FIRST_VISIT_KEY, 'visited');
+    }
+  }, []);
+
   return (
-    <QueryClientProvider client={queryClient}>
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <AuthProvider>
-        <div className="min-h-screen flex">
-          <div className="flex-none">
-            <MainNavigation />
-          </div>
-          <div className="flex-1 overflow-auto">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/market-data" element={<MarketData />} />
-              <Route path="/asset-tracker" element={<AssetTracker />} />
-              <Route path="/market-news" element={<MarketNews />} />
-              <Route path="/trading-signals" element={<TradingSignals />} />
-              <Route path="/risk-management" element={<RiskManagement />} />
-              <Route path="/backtesting" element={<Backtesting />} />
-              <Route path="/user-management" element={<UserManagement />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/information-sources" element={<InformationSources />} />
-              <Route path="/comprehensive-analysis" element={<ComprehensiveAnalysis />} />
-              <Route path="/binance-integration" element={<BinanceIntegration />} />
-              <Route path="/trending-coins" element={<TrendingCoins />} />
-              <Route path="/crypto-sentiment" element={<CryptoSentiment />} />
-              <Route path="/tradingview-integration" element={<TradingViewIntegration />} />
-            </Routes>
-          </div>
-        </div>
-        <Toaster dir="rtl" position="top-center" />
+        <Router>
+          <Toaster 
+            position="top-left"
+            toastOptions={{
+              style: { direction: 'rtl' }
+            }}  
+          />
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/login" element={<Login />} />
+            <Route element={<MainLayout />}>
+              <Route 
+                path="/dashboard" 
+                element={
+                  <RequireAuth>
+                    <Dashboard />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/assets" 
+                element={
+                  <RequireAuth>
+                    <Assets />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/assets/:id" 
+                element={
+                  <RequireAuth>
+                    <AssetDetails />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/market-news" 
+                element={
+                  <RequireAuth>
+                    <MarketNews />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/trading-signals" 
+                element={
+                  <RequireAuth>
+                    <TradingSignals />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/backtesting" 
+                element={
+                  <RequireAuth>
+                    <Backtesting />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/trading-view" 
+                element={
+                  <RequireAuth>
+                    <TradingViewIntegration />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/binance-integration" 
+                element={
+                  <RequireAuth>
+                    <BinanceIntegration />
+                  </RequireAuth>
+                } 
+              />
+              <Route 
+                path="/settings" 
+                element={
+                  <RequireAuth>
+                    <Settings />
+                  </RequireAuth>
+                } 
+              />
+            </Route>
+          </Routes>
+          
+          <GuideModal open={showGuide} onOpenChange={setShowGuide} />
+        </Router>
       </AuthProvider>
-    </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 
