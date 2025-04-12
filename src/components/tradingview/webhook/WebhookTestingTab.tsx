@@ -1,60 +1,67 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ArrowUp, ArrowDown, Info } from 'lucide-react';
 
 interface WebhookTestingTabProps {
-  handleTestWebhookFlow: (type: 'buy' | 'sell' | 'info') => Promise<void>;
+  handleTestWebhookFlow: (type: 'buy' | 'sell' | 'info') => Promise<boolean>;
   isTesting: boolean;
 }
 
-const WebhookTestingTab: React.FC<WebhookTestingTabProps> = ({ 
-  handleTestWebhookFlow, 
-  isTesting 
+const WebhookTestingTab: React.FC<WebhookTestingTabProps> = ({
+  handleTestWebhookFlow,
+  isTesting
 }) => {
   return (
-    <>
-      <Alert className="mb-4">
-        <AlertTitle>בדיקת זרימת Webhook מלאה</AlertTitle>
-        <AlertDescription>
-          בדוק את הזרימה המלאה של Webhook, כולל פירוק הנתונים, עיבוד ושליחה לכל יעדי ההתראות המוגדרים.
-          התראות יישלחו בפועל לטלגרם ולוואטסאפ אם הם מוגדרים.
-        </AlertDescription>
-      </Alert>
+    <div className="space-y-4">
+      <div className="text-right mb-4">
+        <p className="text-sm text-muted-foreground">
+          בדיקת Webhook בודקת את תהליך עיבוד האיתות מבלי לסמלץ קריאת Webhook אמיתית.
+          השתמש באפשרות זו לבדיקת עיבוד האיתות והשליחה ליעדים.
+        </p>
+      </div>
       
-      <div className="grid grid-cols-3 gap-2">
-        <Button 
-          variant="default" 
-          className="w-full bg-green-600 hover:bg-green-700"
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <Button
+          variant="outline"
+          className="flex items-center justify-center gap-2 h-16"
           onClick={() => handleTestWebhookFlow('buy')}
           disabled={isTesting}
         >
-          <ArrowUp className="h-4 w-4 mr-2" />
-          בדוק איתות קנייה
+          <ArrowUp className="h-5 w-5 text-green-500" />
+          <div className="text-right">
+            <div className="font-medium">בדוק איתות קנייה</div>
+            <div className="text-xs text-muted-foreground">BTC/USD</div>
+          </div>
         </Button>
         
-        <Button 
-          variant="default"
-          className="w-full bg-red-600 hover:bg-red-700"
+        <Button
+          variant="outline"
+          className="flex items-center justify-center gap-2 h-16"
           onClick={() => handleTestWebhookFlow('sell')}
           disabled={isTesting}
         >
-          <ArrowDown className="h-4 w-4 mr-2" />
-          בדוק איתות מכירה
+          <ArrowDown className="h-5 w-5 text-red-500" />
+          <div className="text-right">
+            <div className="font-medium">בדוק איתות מכירה</div>
+            <div className="text-xs text-muted-foreground">ETH/USD</div>
+          </div>
         </Button>
         
-        <Button 
-          variant="default"
-          className="w-full bg-blue-600 hover:bg-blue-700"
+        <Button
+          variant="outline"
+          className="flex items-center justify-center gap-2 h-16"
           onClick={() => handleTestWebhookFlow('info')}
           disabled={isTesting}
         >
-          <Info className="h-4 w-4 mr-2" />
-          בדוק איתות מידע
+          <Info className="h-5 w-5 text-blue-500" />
+          <div className="text-right">
+            <div className="font-medium">בדוק התראת מידע</div>
+            <div className="text-xs text-muted-foreground">שוק כללי</div>
+          </div>
         </Button>
       </div>
-    </>
+    </div>
   );
 };
 

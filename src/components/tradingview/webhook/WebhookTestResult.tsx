@@ -1,38 +1,47 @@
 
 import React from 'react';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle2, AlertTriangle } from 'lucide-react';
-
-interface TestResult {
-  success: boolean;
-  type: string;
-  time: Date;
-}
+import { CheckCircle, XCircle } from 'lucide-react';
+import { Badge } from "@/components/ui/badge";
 
 interface WebhookTestResultProps {
-  lastTestResult: TestResult | null;
+  lastTestResult: { success: boolean; type: string; time: Date } | null;
 }
 
 const WebhookTestResult: React.FC<WebhookTestResultProps> = ({ lastTestResult }) => {
   if (!lastTestResult) return null;
   
+  const getTypeHebrew = (type: string) => {
+    switch (type) {
+      case 'buy': return 'קנייה';
+      case 'sell': return 'מכירה';
+      case 'info': return 'מידע';
+      default: return type;
+    }
+  };
+  
   return (
-    <Alert className={lastTestResult.success ? 
-      "mt-2 bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-900/50" : 
-      "mt-2 bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-900/50"
-    }>
-      <AlertTitle className="flex items-center gap-2">
-        {lastTestResult.success ? 
-          <CheckCircle2 className="h-4 w-4 text-green-500" /> : 
-          <AlertTriangle className="h-4 w-4 text-red-500" />
-        }
-        {lastTestResult.success ? 'הבדיקה הצליחה' : 'הבדיקה נכשלה'}
-      </AlertTitle>
-      <AlertDescription>
-        איתות {lastTestResult.type === 'buy' ? 'קנייה' : 
-             lastTestResult.type === 'sell' ? 'מכירה' : 'מידע'} נבדק ב-{lastTestResult.time.toLocaleTimeString()}
-      </AlertDescription>
-    </Alert>
+    <div className="flex justify-center mt-2">
+      <Badge 
+        variant={lastTestResult.success ? "outline" : "outline"}
+        className={`gap-1 ${
+          lastTestResult.success 
+            ? "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400"
+            : "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400"
+        }`}
+      >
+        {lastTestResult.success ? (
+          <CheckCircle className="h-3 w-3" />
+        ) : (
+          <XCircle className="h-3 w-3" />
+        )}
+        בדיקת התראת {getTypeHebrew(lastTestResult.type)} 
+        {lastTestResult.success ? " הצליחה" : " נכשלה"}
+        <span className="mx-1">•</span>
+        <span className="text-xs opacity-80">
+          {lastTestResult.time.toLocaleTimeString('he-IL')}
+        </span>
+      </Badge>
+    </div>
   );
 };
 

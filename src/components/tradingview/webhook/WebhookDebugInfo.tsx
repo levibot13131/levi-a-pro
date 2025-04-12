@@ -1,49 +1,70 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Terminal } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Badge } from "@/components/ui/badge";
 
 interface WebhookDebugInfoProps {
   showDebugInfo: boolean;
-  setShowDebugInfo: (show: boolean) => void;
+  setShowDebugInfo: React.Dispatch<React.SetStateAction<boolean>>;
   destinations: any[];
 }
 
-const WebhookDebugInfo: React.FC<WebhookDebugInfoProps> = ({ 
-  showDebugInfo, 
-  setShowDebugInfo, 
-  destinations 
+const WebhookDebugInfo: React.FC<WebhookDebugInfoProps> = ({
+  showDebugInfo,
+  setShowDebugInfo,
+  destinations
 }) => {
-  const hasTelegram = destinations.some(d => d.type === 'telegram' && d.active);
-  const hasWhatsApp = destinations.some(d => d.type === 'whatsapp' && d.active);
-  
   return (
-    <>
-      <div className="mt-4 flex justify-end">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => setShowDebugInfo(!showDebugInfo)}
-          className="gap-1"
-        >
-          <Terminal className="h-3 w-3" />
-          {showDebugInfo ? 'הסתר מידע טכני' : 'הצג מידע טכני'}
-        </Button>
-      </div>
-      
-      {showDebugInfo && (
-        <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-900 rounded-md border text-xs font-mono">
-          <h4 className="font-medium mb-1">מידע טכני:</h4>
-          <div>
-            <p>יעדים פעילים: {destinations.filter(d => d.active).length}</p>
-            <p>טלגרם: {hasTelegram ? 'מוגדר ✓' : 'לא מוגדר ✗'}</p>
-            <p>וואטסאפ: {hasWhatsApp ? 'מוגדר ✓' : 'לא מוגדר ✗'}</p>
-            <p>סך יעדים: {destinations.length}</p>
-            <p>פתח את קונסול הדפדפן (F12) לצפייה בלוגים מפורטים</p>
+    <div className="mt-4 pt-4 border-t">
+      <Collapsible open={showDebugInfo} onOpenChange={setShowDebugInfo}>
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" className="flex items-center text-xs w-full justify-between p-2 h-auto">
+            <span>מידע דיאגנוסטי</span>
+            {showDebugInfo ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="text-xs p-3 bg-muted/40 rounded-md mt-2">
+          <div className="space-y-2 text-right">
+            <div>
+              <strong>יעדי התראות:</strong>{" "}
+              {destinations.length === 0 ? (
+                <span className="text-red-500">לא מוגדרים</span>
+              ) : (
+                destinations.map((dest, i) => (
+                  <Badge 
+                    key={i} 
+                    variant={dest.active ? "default" : "outline"}
+                    className="ml-1 text-xs"
+                  >
+                    {dest.type} {dest.active ? "(פעיל)" : "(לא פעיל)"}
+                  </Badge>
+                ))
+              )}
+            </div>
+            <div>
+              <strong>כתובת Webhook:</strong>{" "}
+              <code dir="ltr" className="text-xs font-mono break-all">
+                {window.location.origin}/api/tradingview/webhook
+              </code>
+            </div>
+            <div>
+              <strong>פורמט מומלץ:</strong>{" "}
+              <code dir="ltr" className="text-xs font-mono">
+                {'{"symbol":"BTCUSD", "action":"buy", "price":50000, "message":"Buy signal"}'}
+              </code>
+            </div>
+            <div>
+              <strong>פורמט חלופי:</strong>{" "}
+              <code dir="ltr" className="text-xs font-mono">
+                BTCUSD, buy, 50000, Buy signal
+              </code>
+            </div>
           </div>
-        </div>
-      )}
-    </>
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
   );
 };
 

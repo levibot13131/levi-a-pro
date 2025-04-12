@@ -1,17 +1,19 @@
 
 import React from 'react';
-import { AlertTriangle } from 'lucide-react';
+import { Bell, BarChart } from 'lucide-react';
 
 const EmptySignalsState: React.FC = () => {
   return (
-    <div className="p-8 text-center">
-      <div className="mx-auto h-12 w-12 rounded-full bg-muted/30 flex items-center justify-center mb-4">
-        <AlertTriangle className="h-6 w-6 text-muted-foreground" />
-      </div>
-      <h3 className="mb-2 text-lg font-medium">אין איתותים</h3>
-      <p className="text-sm text-muted-foreground">
-        אין איתותים זמינים כרגע. הפעל את ניתוח הנתונים בזמן אמת כדי לקבל התראות.
+    <div className="flex flex-col items-center justify-center py-10 px-4 text-center text-muted-foreground">
+      <Bell className="h-12 w-12 mb-3 text-muted-foreground/50" />
+      <h3 className="text-lg font-medium mb-1">אין התראות</h3>
+      <p className="text-sm max-w-xs">
+        הפעל את ניטור בזמן אמת כדי לקבל התראות על שינויים משמעותיים בנכסים שלך
       </p>
+      <div className="flex items-center mt-4 text-xs">
+        <BarChart className="h-3 w-3 mr-1" />
+        <span>התראות יופיעו כאן כשיזוהו איתותים</span>
+      </div>
     </div>
   );
 };

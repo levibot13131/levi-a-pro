@@ -1,117 +1,98 @@
 
-import { WebhookData } from "./types";
+import { WebhookData } from './types';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Generate sample webhook data for testing
  */
 export const generateSampleWebhookData = (type: 'buy' | 'sell' | 'info' = 'info'): WebhookData => {
-  const now = new Date();
-  const timeStr = now.toISOString();
-  console.log(`Generating ${type} sample webhook data at ${timeStr}`);
+  const timestamp = Date.now();
   
-  // Select symbol based on type
-  const symbol = type === 'buy' ? 'BTC/USD' : type === 'sell' ? 'ETH/USD' : 'XRP/USD';
+  // Base webhook data
+  const baseData: WebhookData = {
+    symbol: 'BTCUSD',
+    time: timestamp,
+    timeframe: '1D',
+    price: 0,
+    action: type,
+  };
   
-  // Generate price based on symbol
-  let price = 0;
-  switch (symbol) {
-    case 'BTC/USD':
-      price = 47250 + (Math.random() * 1000);
-      break;
-    case 'ETH/USD':
-      price = 2450 + (Math.random() * 100);
-      break;
-    case 'XRP/USD':
-      price = 0.50 + (Math.random() * 0.1);
-      break;
+  // Customize data based on type
+  switch (type) {
+    case 'buy':
+      return {
+        ...baseData,
+        symbol: 'BTCUSD',
+        price: 51244.50 + (Math.random() * 500),
+        message: 'זוהה איתות קנייה חזק על Bitcoin',
+        indicators: 'RSI,MACD,Golden Cross',
+        strategy_name: 'Magic Triangle Strategy',
+        details: 'מומנטום חיובי חזק, RSI עולה מעל 50, חציית MACD',
+        automatic: Math.random() > 0.5 // 50% chance for automatic flag
+      };
+    case 'sell':
+      return {
+        ...baseData,
+        symbol: 'ETHUSD',
+        price: 3022.75 - (Math.random() * 100),
+        message: 'התקבל איתות מכירה על Ethereum',
+        indicators: 'RSI,Bearish Divergence',
+        strategy_name: 'Wyckoff Distribution',
+        details: 'דחייה ברמת התנגדות חזקה, RSI מראה דיברגנס שלילי',
+        source: Math.random() > 0.5 ? 'automatic_watchlist' : 'manual'
+      };
+    case 'info':
+      return {
+        ...baseData,
+        symbol: 'XRPUSD',
+        price: 0.5023 + (Math.random() * 0.05),
+        message: 'עדכון שוק: תנודתיות גבוהה צפויה',
+        indicators: 'Market Volume,Volatility Index',
+        strategy_name: 'Market Analysis',
+        details: 'זוהתה עליה בתנודתיות השוק, מומלץ לנהוג במשנה זהירות'
+      };
     default:
-      price = 100 + (Math.random() * 10);
+      return baseData;
   }
-  
-  // Format price
-  const formattedPrice = price.toFixed(2);
-  console.log(`Generated price for ${symbol}: ${formattedPrice}`);
-  
-  // Generate strategy based on type
-  let strategy = '';
-  let message = '';
-  let details = '';
-  
-  if (type === 'buy') {
-    strategy = 'magic_triangle';
-    message = 'זוהה פריצת משולש הקסם כלפי מעלה';
-    details = 'RSI מעל 60, חציית ממוצעים נעים';
-  } else if (type === 'sell') {
-    strategy = 'Wyckoff';
-    message = 'נמצא דפוס חלוקה של וייקוף במחיר';
-    details = 'נפח יורד, PSY חלש, שבירת תמיכה';
-  } else {
-    strategy = 'quarters';
-    message = 'עדכון מחיר: בדיקת רמת תמיכה';
-    details = 'הגיע לרמת רבע שני במסגרת זמן 4 שעות';
-  }
-  
-  // Create sample webhook data
-  const data: WebhookData = {
-    symbol: symbol,
-    action: type,
-    signal: message,
-    message: message,
-    price: formattedPrice,
-    close: formattedPrice,
-    indicators: ['RSI', 'MA Cross', strategy],
-    timeframe: '1d',
-    time: timeStr,
-    details: details,
-    strategy_name: strategy,
-    strategy: strategy,
-    bar_close: formattedPrice,
-    chartUrl: `https://www.tradingview.com/chart/?symbol=${symbol.replace('/', '')}`
-  };
-  
-  console.log('Generated sample webhook data:', JSON.stringify(data, null, 2));
-  return data;
-};
-
-/**
- * Create a sample alert for testing
- */
-export const createSampleAlert = (type: 'buy' | 'sell' | 'info' = 'info') => {
-  // Generate sample webhook data
-  const data = generateSampleWebhookData(type);
-  console.log(`Creating sample ${type} alert from webhook data`);
-  
-  // Create an alert based on the sample data (will be processed by the webhook parser)
-  return {
-    symbol: data.symbol,
-    message: data.message || '',
-    action: type,
-    indicators: Array.isArray(data.indicators) 
-      ? data.indicators 
-      : (data.indicators ? [String(data.indicators)] : []),
-    timeframe: data.timeframe || '1d',
-    timestamp: Date.now(),
-    price: parseFloat(data.price?.toString() || '0'),
-    details: data.details || '',
-    strategy: data.strategy || '',
-    chartUrl: data.chartUrl || ''
-  };
 };
 
 /**
  * Simulate a webhook request from TradingView
  */
-export const simulateWebhookRequest = (type: 'buy' | 'sell' | 'info' = 'info'): any => {
-  // Generate sample webhook data
-  const data = generateSampleWebhookData(type);
-  console.log(`Simulating ${type} webhook request with generated data`);
+export const simulateWebhookRequest = (type: 'buy' | 'sell' | 'info' = 'info') => {
+  const webhookData = generateSampleWebhookData(type);
   
-  // Create a simulated request object
   return {
-    body: data,
     headers: {
       'content-type': 'application/json',
       'user-agent': 'TradingView'
-    }
+    },
+    body: webhookData
   };
+};
+
+/**
+ * Create a webhook payload in a different format to test compatibility
+ */
+export const createAlternativeFormatWebhook = (type: 'buy' | 'sell' | 'info' = 'info'): string => {
+  const symbols = {
+    buy: 'BTCUSD',
+    sell: 'ETHUSD',
+    info: 'XRPUSD'
+  };
+  
+  const messages = {
+    buy: 'BUY: Bitcoin crossed above 50-day MA',
+    sell: 'SELL: Ethereum rejected at resistance',
+    info: 'INFO: Market volatility increasing'
+  };
+  
+  const prices = {
+    buy: '51244.50',
+    sell: '3022.75',
+    info: '0.5023'
+  };
+  
+  // Create simple string format that our parser should still handle
+  return `${symbols[type]}, ${type}, ${prices[type]}, ${messages[type]}`;
 };

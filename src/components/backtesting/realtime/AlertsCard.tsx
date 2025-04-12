@@ -56,6 +56,8 @@ const AlertsCard: React.FC<AlertsCardProps> = ({
             signalsCount={signals.length}
             toggleRealTimeAlerts={toggleRealTimeAlerts}
             handleClearSignals={handleClearSignals}
+            enableAutomaticAlerts={enableAutomaticAlerts}
+            areAutoAlertsEnabled={areAutoAlertsEnabled}
           />
 
           <Separator />
