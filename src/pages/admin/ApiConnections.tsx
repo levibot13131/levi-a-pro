@@ -222,35 +222,29 @@ const ApiConnections = () => {
   const [binanceConnected, setBinanceConnected] = useState(false);
   const [twitterConnected, setTwitterConnected] = useState(false);
   const [coinMarketCapConnected, setCoinMarketCapConnected] = useState(false);
-  const [coinGeckoConnected, setCoinGeckoConnected] = useState(true); // CoinGecko doesn't require API key
-  
+  const [coinGeckoConnected, setCoinGeckoConnected] = useState(true);
+
   const [binanceCredentials, setBinanceCredentials] = useState<any>(null);
   const [twitterCredentials, setTwitterCredentials] = useState<any>(null);
   const [coinMarketCapApiKey, setCoinMarketCapApiKey] = useState<string | null>(null);
-  
-  // Load connection statuses
+
   useEffect(() => {
-    // Get Binance credentials
     const binanceCreds = getBinanceCredentials();
     setBinanceConnected(!!binanceCreds?.isConnected);
     setBinanceCredentials(binanceCreds);
     
-    // Get Twitter connection status
     setTwitterConnected(isTwitterConnected());
     setTwitterCredentials(getTwitterCredentials());
     
-    // Get CoinMarketCap connection status
     setCoinMarketCapConnected(isCoinMarketCapConnected());
     setCoinMarketCapApiKey(getCoinMarketCapApiKey());
     
-    // Test CoinGecko connection
     testCoinGeckoConnection();
   }, []);
-  
-  // Test CoinGecko connection
-  const testCoinGeckoConnection = async () => {
+
+  const testCoinGecko = async () => {
     try {
-      const isConnected = await testConnection();
+      const isConnected = await testCoinGeckoConnection();
       setCoinGeckoConnected(isConnected);
       return isConnected;
     } catch (error) {
@@ -259,8 +253,7 @@ const ApiConnections = () => {
       return false;
     }
   };
-  
-  // Binance handlers
+
   const handleConnectBinance = async (apiKey: string, apiSecret?: string) => {
     if (!apiSecret) return;
     
@@ -286,14 +279,13 @@ const ApiConnections = () => {
       toast.error('שגיאה בהתחברות לבינאנס');
     }
   };
-  
+
   const handleDisconnectBinance = () => {
     disconnectBinance();
     setBinanceConnected(false);
     setBinanceCredentials(null);
   };
-  
-  // Twitter handlers
+
   const handleConnectTwitter = async (apiKey: string, apiSecret?: string) => {
     if (!apiSecret) return;
     
@@ -316,14 +308,13 @@ const ApiConnections = () => {
       toast.error('שגיאה בהתחברות לטוויטר');
     }
   };
-  
+
   const handleDisconnectTwitter = () => {
     disconnectTwitter();
     setTwitterConnected(false);
     setTwitterCredentials(null);
   };
-  
-  // CoinMarketCap handlers
+
   const handleConnectCoinMarketCap = (apiKey: string) => {
     try {
       const success = initializeCoinMarketCap(apiKey);
@@ -339,7 +330,7 @@ const ApiConnections = () => {
       toast.error('שגיאה בהתחברות ל-CoinMarketCap');
     }
   };
-  
+
   const handleDisconnectCoinMarketCap = () => {
     localStorage.removeItem('coinmarketcap_api_key');
     setCoinMarketCapConnected(false);
@@ -473,7 +464,7 @@ const ApiConnections = () => {
                 <li>צור חשבון ב-CoinMarketCap</li>
                 <li>הירשם לתוכנית Basic (חינמית) או מתקדמת יותר</li>
                 <li>צור מפתח API חדש</li>
-                <li>העתק את מפתח ה-API והזן אותו בטופס הנ"ל</li>
+                <li>העתק את מ��תח ה-API והזן אותו בטופס הנ"ל</li>
               </ol>
             }
           />
@@ -494,7 +485,7 @@ const ApiConnections = () => {
             </CardHeader>
             <CardContent>
               <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded text-right mb-4">
-                <p>CoinGecko מספק גישה ישירה למידע ללא צורך ברישום או קבלת מפתח API במגבלות מסוימות:</p>
+                <p>CoinGecko מספק גישה ישירה למידע ללא צורך ברישום או קבלת מפתח API במגבלות מ��וימות:</p>
                 <ul className="list-disc list-inside mt-2 space-y-1">
                   <li>עד 10-30 בקשות בדקה בגרסה החינמית</li>
                   <li>גישה לנתוני מחירים, היסטוריה ומטבעות</li>
@@ -507,7 +498,7 @@ const ApiConnections = () => {
                 <Button
                   variant="outline"
                   onClick={async () => {
-                    const isConnected = await testCoinGeckoConnection();
+                    const isConnected = await testCoinGecko();
                     setCoinGeckoConnected(isConnected);
                     if (isConnected) {
                       toast.success('החיבור ל-CoinGecko פעיל');

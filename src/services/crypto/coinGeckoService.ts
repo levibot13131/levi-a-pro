@@ -9,6 +9,39 @@ const COINGECKO_API_BASE_URL = 'https://api.coingecko.com/api/v3';
 const apiCache = new Map<string, { data: any, timestamp: number }>();
 const CACHE_DURATION = 60 * 1000; // 1 minute
 
+// Define types
+export interface CoinPriceData {
+  id: string;
+  symbol: string;
+  name: string;
+  image: string;
+  current_price: number;
+  market_cap: number;
+  market_cap_rank: number;
+  fully_diluted_valuation: number | null;
+  total_volume: number;
+  high_24h: number;
+  low_24h: number;
+  price_change_24h: number;
+  price_change_percentage_24h: number;
+  market_cap_change_24h: number;
+  market_cap_change_percentage_24h: number;
+  circulating_supply: number;
+  total_supply: number | null;
+  max_supply: number | null;
+  ath: number;
+  ath_change_percentage: number;
+  ath_date: string;
+  atl: number;
+  atl_change_percentage: number;
+  atl_date: string;
+  last_updated: string;
+  price_change_percentage_1h_in_currency?: number;
+  price_change_percentage_24h_in_currency?: number;
+  price_change_percentage_7d_in_currency?: number;
+  sparkline_in_7d?: { price: number[] };
+}
+
 /**
  * Test connection to CoinGecko API
  */
@@ -55,6 +88,86 @@ export const getPrices = async (coinIds: string[], currency = 'usd'): Promise<Re
     return prices;
   } catch (error) {
     console.error('Error fetching CoinGecko prices:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get simple prices for multiple coins in multiple currencies
+ */
+export const getSimplePrices = async (
+  coinIds: string[] = ['bitcoin', 'ethereum', 'solana', 'cardano', 'binancecoin'],
+  currencies: string[] = ['usd']
+): Promise<Record<string, any>> => {
+  const cacheKey = `simple_prices_${coinIds.join('_')}_${currencies.join('_')}`;
+  
+  // Check cache first
+  const cachedData = apiCache.get(cacheKey);
+  if (cachedData && (Date.now() - cachedData.timestamp < CACHE_DURATION)) {
+    console.log('Using cached CoinGecko simple price data');
+    return cachedData.data;
+  }
+  
+  try {
+    const response = await axios.get(`${COINGECKO_API_BASE_URL}/simple/price`, {
+      params: {
+        ids: coinIds.join(','),
+        vs_currencies: currencies.join(','),
+        include_market_cap: true,
+        include_24hr_vol: true,
+        include_24hr_change: true
+      }
+    });
+    
+    // Update cache
+    apiCache.set(cacheKey, { data: response.data, timestamp: Date.now() });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching CoinGecko simple prices:', error);
+    toast.error('שגיאה בטעינת מחירים מ-CoinGecko');
+    throw error;
+  }
+};
+
+/**
+ * Get coins markets data
+ */
+export const getCoinsMarkets = async (
+  currency = 'usd',
+  perPage = 20,
+  page = 1,
+  sparkline = true,
+  priceChangePercentage = '1h,24h,7d'
+): Promise<CoinPriceData[]> => {
+  const cacheKey = `markets_${currency}_${perPage}_${page}_${sparkline}_${priceChangePercentage}`;
+  
+  // Check cache first
+  const cachedData = apiCache.get(cacheKey);
+  if (cachedData && (Date.now() - cachedData.timestamp < CACHE_DURATION)) {
+    console.log('Using cached CoinGecko markets data');
+    return cachedData.data;
+  }
+  
+  try {
+    const response = await axios.get(`${COINGECKO_API_BASE_URL}/coins/markets`, {
+      params: {
+        vs_currency: currency,
+        per_page: perPage,
+        page: page,
+        sparkline: sparkline,
+        price_change_percentage: priceChangePercentage,
+        order: 'market_cap_desc'
+      }
+    });
+    
+    // Update cache
+    apiCache.set(cacheKey, { data: response.data, timestamp: Date.now() });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching CoinGecko markets data:', error);
+    toast.error('שגיאה בטעינת נתוני שוק מ-CoinGecko');
     throw error;
   }
 };
@@ -115,6 +228,33 @@ export const getMarketData = async (
   } catch (error) {
     console.error('Error fetching CoinGecko market data:', error);
     toast.error('שגיאה בטעינת נתוני שוק');
+    throw error;
+  }
+};
+
+/**
+ * Get global market data
+ */
+export const getGlobalData = async (): Promise<any> => {
+  const cacheKey = `global_data`;
+  
+  // Check cache first
+  const cachedData = apiCache.get(cacheKey);
+  if (cachedData && (Date.now() - cachedData.timestamp < CACHE_DURATION)) {
+    console.log('Using cached CoinGecko global data');
+    return cachedData.data;
+  }
+  
+  try {
+    const response = await axios.get(`${COINGECKO_API_BASE_URL}/global`);
+    
+    // Update cache
+    apiCache.set(cacheKey, { data: response.data, timestamp: Date.now() });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching CoinGecko global data:', error);
+    toast.error('שגיאה בטעינת נתוני שוק גלובליים');
     throw error;
   }
 };
