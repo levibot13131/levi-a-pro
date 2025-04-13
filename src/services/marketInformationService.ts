@@ -18,3 +18,23 @@ export {
   getUpcomingMarketEvents, 
   setEventReminder 
 } from './marketInformation/eventsService';
+
+export {
+  getExternalSources,
+  connectToExternalSource,
+  disconnectExternalSource,
+  updateAssetsFromConnectedSources
+} from './marketInformation/externalSourcesService';
+
+export {
+  getSources,
+  getSourceById,
+  getSourcesByType,
+  toggleSourceFavorite
+} from './marketInformation/sourcesService';
+
+export {
+  getInfluencers,
+  getInfluencersByPlatform,
+  toggleInfluencerFollow
+} from './marketInformation/influencersService';

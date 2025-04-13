@@ -1,18 +1,16 @@
 
-// Legacy type definitions for compatibility
-export interface LegacyFinancialDataSource {
+export interface LegacyMarketEvent {
   id: string;
-  name: string;
-  url: string;
+  title: string;
+  date: string;
   category: string;
-  dataPoints: string[];
+  impact: string;
   description: string;
-  reliabilityRating: number;
-  reliability?: number;
-  accessType?: 'free' | 'paid' | 'api' | 'freemium';
-  languages?: string[];
-  updateFrequency?: string;
-  focused?: boolean;
+  expectedVolatility: string;
+  assetImpact: Record<string, string>;
+  importance: string;
+  source: string;
+  reminder: boolean;
 }
 
 export interface LegacyMarketInfluencer {
@@ -22,30 +20,21 @@ export interface LegacyMarketInfluencer {
   company: string;
   influence: number;
   recentStatements: string[];
-  sentiment: 'bullish' | 'bearish' | 'neutral';
-  description?: string;
-  platforms?: {
-    type: 'twitter' | 'linkedin' | 'youtube' | 'blog' | 'other';
-    url: string;
-    followers: number;
-  }[];
-  specialty?: string[];
-  reliability?: number;
-  followStatus?: 'following' | 'not-following';
+  sentiment: string;
+  specialty: string[];
+  reliability: number;
+  followStatus: string;
 }
 
-export interface LegacyMarketEvent {
+export interface LegacyFinancialDataSource {
   id: string;
-  title: string;
-  date: string;
+  name: string;
+  url: string;
   category: string;
-  impact: string;
+  dataPoints: string[];
   description: string;
-  expectedVolatility?: string;
-  assetImpact?: {
-    [key: string]: string;
-  };
-  importance?: 'low' | 'medium' | 'high' | 'critical';
-  source?: string;
-  reminder?: boolean;
+  reliabilityRating: number;
+  accessType: string;
+  languages: string[];
+  updateFrequency: string;
 }

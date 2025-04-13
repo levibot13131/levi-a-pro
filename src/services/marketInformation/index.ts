@@ -32,7 +32,7 @@ export {
   getInfluencersByPlatform,
   toggleInfluencerFollow,
   
-  // Events - explicitly export these
+  // Events
   getUpcomingMarketEvents,
   setEventReminder,
   

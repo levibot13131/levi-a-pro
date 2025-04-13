@@ -49,7 +49,7 @@ const EventsList: React.FC<EventsListProps> = ({
   return (
     <div className="space-y-4">
       {events.map((event) => (
-        <Card key={event.id} className="overflow-hidden border-l-4 hover:bg-accent/10 transition-colors">
+        <Card key={event.id} className="overflow-hidden border-r-4 border-r-primary hover:bg-accent/10 transition-colors">
           <CardContent className="p-4">
             <div className="flex justify-between items-start mb-2">
               <div className="flex items-center">
@@ -61,14 +61,16 @@ const EventsList: React.FC<EventsListProps> = ({
                 >
                   {event.reminder ? <Bell className="h-4 w-4 text-primary" /> : <BellOff className="h-4 w-4" />}
                 </Button>
-                <Button 
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => window.open(event.link, '_blank')}
-                  title="פתח קישור חיצוני"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </Button>
+                {event.link && (
+                  <Button 
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => window.open(event.link, '_blank')}
+                    title="פתח קישור חיצוני"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <Badge className="bg-blue-500">{event.category}</Badge>

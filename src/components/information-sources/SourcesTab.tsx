@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FinancialDataSource } from '@/types/marketInformation';  // שינוי הייבוא למיקום הנכון
+import { FinancialDataSource } from '@/types/marketInformation'; 
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BookmarkIcon, ExternalLink, Globe, Info, Newspaper } from 'lucide-react';
@@ -19,7 +19,7 @@ const SourcesTab: React.FC<SourcesTabProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {sources.map(source => (
-        <Card key={source.id}>
+        <Card key={source.id} className="hover:shadow-md transition-shadow">
           <CardContent className="pt-6">
             <div className="flex items-start justify-between mb-4">
               <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
@@ -33,7 +33,7 @@ const SourcesTab: React.FC<SourcesTabProps> = ({
               </div>
               <div className="text-right">
                 <h3 className="font-bold text-lg">{source.name}</h3>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-1 justify-end">
                   <span className="text-xs bg-muted px-2 py-0.5 rounded">
                     {source.type === 'news' 
                       ? 'חדשות' 
@@ -54,9 +54,9 @@ const SourcesTab: React.FC<SourcesTabProps> = ({
               </div>
             </div>
             
-            <p className="text-sm text-muted-foreground mb-4">{source.description}</p>
+            <p className="text-sm text-muted-foreground mb-4 text-right">{source.description}</p>
             
-            <div className="flex flex-wrap gap-1 mb-4">
+            <div className="flex flex-wrap gap-1 mb-4 justify-end">
               {source.categories.map(category => (
                 <span 
                   key={category} 
