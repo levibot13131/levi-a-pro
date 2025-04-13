@@ -2,152 +2,217 @@
 import axios from 'axios';
 import { toast } from 'sonner';
 
-// Define the base URL
-const COINGECKO_API_BASE = 'https://api.coingecko.com/api/v3';
+// Base URL for CoinGecko API
+const COINGECKO_API_BASE_URL = 'https://api.coingecko.com/api/v3';
 
-// Cache for API responses to prevent rate limiting
-const apiCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_DURATION = 30 * 1000; // 30 seconds cache
-
-// Interface for coin price data
-export interface CoinPriceData {
-  id: string;
-  symbol: string;
-  name: string;
-  image: string;
-  current_price: number;
-  market_cap: number;
-  market_cap_rank: number;
-  fully_diluted_valuation: number | null;
-  total_volume: number;
-  high_24h: number;
-  low_24h: number;
-  price_change_24h: number;
-  price_change_percentage_24h: number;
-  market_cap_change_24h: number;
-  market_cap_change_percentage_24h: number;
-  circulating_supply: number;
-  total_supply: number | null;
-  max_supply: number | null;
-  ath: number;
-  ath_change_percentage: number;
-  ath_date: string;
-  atl: number;
-  atl_change_percentage: number;
-  atl_date: string;
-  last_updated: string;
-}
+// Cache for API responses to avoid rate limits
+const apiCache = new Map<string, { data: any, timestamp: number }>();
+const CACHE_DURATION = 60 * 1000; // 1 minute
 
 /**
- * Helper function to use cached data or fetch fresh data
- */
-const fetchWithCache = async (url: string): Promise<any> => {
-  // Check if we have cached data
-  const cacheKey = url;
-  const cachedResponse = apiCache.get(cacheKey);
-  const now = Date.now();
-  
-  if (cachedResponse && now - cachedResponse.timestamp < CACHE_DURATION) {
-    console.log('Using cached data for:', url);
-    return cachedResponse.data;
-  }
-  
-  try {
-    console.log('Fetching fresh data from CoinGecko:', url);
-    const response = await axios.get(url);
-    
-    // Cache the response
-    apiCache.set(cacheKey, {
-      data: response.data,
-      timestamp: now
-    });
-    
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching data from CoinGecko:', error);
-    toast.error('שגיאה בטעינת נתונים מ-CoinGecko');
-    return null;
-  }
-};
-
-/**
- * Get simple price data for specific coins
- */
-export const getSimplePrices = async (coinIds: string[] = ['bitcoin', 'ethereum'], currencies: string[] = ['usd', 'ils']): Promise<any> => {
-  const url = `${COINGECKO_API_BASE}/simple/price?ids=${coinIds.join(',')}&vs_currencies=${currencies.join(',')}&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true`;
-  return fetchWithCache(url);
-};
-
-/**
- * Get detailed market data for coins (supports pagination)
- */
-export const getCoinsMarkets = async (
-  currency: string = 'usd',
-  perPage: number = 20,
-  page: number = 1,
-  sparkline: boolean = false
-): Promise<CoinPriceData[]> => {
-  const url = `${COINGECKO_API_BASE}/coins/markets?vs_currency=${currency}&order=market_cap_desc&per_page=${perPage}&page=${page}&sparkline=${sparkline}&locale=en`;
-  return fetchWithCache(url);
-};
-
-/**
- * Get trending coins in the last 24 hours
- */
-export const getTrendingCoins = async (): Promise<any> => {
-  const url = `${COINGECKO_API_BASE}/search/trending`;
-  return fetchWithCache(url);
-};
-
-/**
- * Get detailed data for a specific coin
- */
-export const getCoinData = async (coinId: string): Promise<any> => {
-  const url = `${COINGECKO_API_BASE}/coins/${coinId}?localization=false&tickers=true&market_data=true&community_data=true&developer_data=false&sparkline=false`;
-  return fetchWithCache(url);
-};
-
-/**
- * Get historical market data for a specific coin
- */
-export const getCoinHistory = async (coinId: string, days: number | 'max' = 7): Promise<any> => {
-  const url = `${COINGECKO_API_BASE}/coins/${coinId}/market_chart?vs_currency=usd&days=${days}`;
-  return fetchWithCache(url);
-};
-
-/**
- * Search for coins, categories and markets
- */
-export const searchCoins = async (query: string): Promise<any> => {
-  const url = `${COINGECKO_API_BASE}/search?query=${encodeURIComponent(query)}`;
-  return fetchWithCache(url);
-};
-
-/**
- * Get global crypto market data
- */
-export const getGlobalData = async (): Promise<any> => {
-  const url = `${COINGECKO_API_BASE}/global`;
-  return fetchWithCache(url);
-};
-
-/**
- * Clear the cache to force fresh data fetching
- */
-export const clearCache = (): void => {
-  apiCache.clear();
-  toast.success('מטמון CoinGecko נוקה בהצלחה');
-};
-
-/**
- * Check if CoinGecko API is responding
+ * Test connection to CoinGecko API
  */
 export const testConnection = async (): Promise<boolean> => {
   try {
-    const response = await axios.get(`${COINGECKO_API_BASE}/ping`);
+    const response = await axios.get(`${COINGECKO_API_BASE_URL}/ping`);
     return response.status === 200;
   } catch (error) {
-    console.error('CoinGecko connection test failed:', error);
+    console.error('Error testing CoinGecko connection:', error);
     return false;
+  }
+};
+
+/**
+ * Get current prices for multiple coins
+ */
+export const getPrices = async (coinIds: string[], currency = 'usd'): Promise<Record<string, number>> => {
+  const cacheKey = `prices_${coinIds.join('_')}_${currency}`;
+  
+  // Check cache first
+  const cachedData = apiCache.get(cacheKey);
+  if (cachedData && (Date.now() - cachedData.timestamp < CACHE_DURATION)) {
+    console.log('Using cached CoinGecko price data');
+    return cachedData.data;
+  }
+  
+  try {
+    const response = await axios.get(`${COINGECKO_API_BASE_URL}/simple/price`, {
+      params: {
+        ids: coinIds.join(','),
+        vs_currencies: currency
+      }
+    });
+    
+    // Format the response
+    const prices: Record<string, number> = {};
+    for (const coinId in response.data) {
+      prices[coinId] = response.data[coinId][currency];
+    }
+    
+    // Update cache
+    apiCache.set(cacheKey, { data: prices, timestamp: Date.now() });
+    
+    return prices;
+  } catch (error) {
+    console.error('Error fetching CoinGecko prices:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get market data for coins
+ */
+export const getMarketData = async (
+  coinIds: string[],
+  currency = 'usd',
+  days = 1,
+  interval = 'hourly'
+): Promise<any> => {
+  const cacheKey = `market_${coinIds.join('_')}_${currency}_${days}_${interval}`;
+  
+  // Check cache first
+  const cachedData = apiCache.get(cacheKey);
+  if (cachedData && (Date.now() - cachedData.timestamp < CACHE_DURATION)) {
+    console.log('Using cached CoinGecko market data');
+    return cachedData.data;
+  }
+  
+  try {
+    const results = {};
+    
+    // CoinGecko limits the number of IDs per request, so we process them in batches
+    const batchSize = 10;
+    
+    for (let i = 0; i < coinIds.length; i += batchSize) {
+      const batchIds = coinIds.slice(i, i + batchSize);
+      
+      const response = await axios.get(`${COINGECKO_API_BASE_URL}/coins/markets`, {
+        params: {
+          vs_currency: currency,
+          ids: batchIds.join(','),
+          order: 'market_cap_desc',
+          per_page: batchSize,
+          page: 1,
+          sparkline: true,
+          price_change_percentage: '24h,7d,30d'
+        }
+      });
+      
+      response.data.forEach((coin: any) => {
+        results[coin.id] = coin;
+      });
+      
+      // Respect API rate limits
+      if (i + batchSize < coinIds.length) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+    
+    // Update cache
+    apiCache.set(cacheKey, { data: results, timestamp: Date.now() });
+    
+    return results;
+  } catch (error) {
+    console.error('Error fetching CoinGecko market data:', error);
+    toast.error('שגיאה בטעינת נתוני שוק');
+    throw error;
+  }
+};
+
+/**
+ * Get historical price data for a coin
+ */
+export const getHistoricalData = async (
+  coinId: string,
+  currency = 'usd',
+  days = 30
+): Promise<any> => {
+  const cacheKey = `historical_${coinId}_${currency}_${days}`;
+  
+  // Check cache first
+  const cachedData = apiCache.get(cacheKey);
+  if (cachedData && (Date.now() - cachedData.timestamp < CACHE_DURATION)) {
+    console.log('Using cached CoinGecko historical data');
+    return cachedData.data;
+  }
+  
+  try {
+    const response = await axios.get(
+      `${COINGECKO_API_BASE_URL}/coins/${coinId}/market_chart`,
+      {
+        params: {
+          vs_currency: currency,
+          days: days,
+          interval: days > 90 ? 'daily' : undefined
+        }
+      }
+    );
+    
+    // Update cache
+    apiCache.set(cacheKey, { data: response.data, timestamp: Date.now() });
+    
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching historical data for ${coinId}:`, error);
+    toast.error(`שגיאה בטעינת נתונים היסטוריים עבור ${coinId}`);
+    throw error;
+  }
+};
+
+/**
+ * Get trending coins from CoinGecko
+ */
+export const getTrendingCoins = async (): Promise<any[]> => {
+  const cacheKey = 'trending_coins';
+  
+  // Check cache first
+  const cachedData = apiCache.get(cacheKey);
+  if (cachedData && (Date.now() - cachedData.timestamp < CACHE_DURATION)) {
+    console.log('Using cached CoinGecko trending coins');
+    return cachedData.data;
+  }
+  
+  try {
+    const response = await axios.get(`${COINGECKO_API_BASE_URL}/search/trending`);
+    
+    // Update cache
+    apiCache.set(cacheKey, { data: response.data.coins, timestamp: Date.now() });
+    
+    return response.data.coins;
+  } catch (error) {
+    console.error('Error fetching trending coins:', error);
+    toast.error('שגיאה בטעינת מטבעות מובילים');
+    throw error;
+  }
+};
+
+/**
+ * Clear the CoinGecko API cache
+ */
+export const clearCache = (): void => {
+  apiCache.clear();
+  console.log('CoinGecko API cache cleared');
+};
+
+/**
+ * Get the API request limit status
+ */
+export const getApiStatus = async (): Promise<any> => {
+  try {
+    // CoinGecko doesn't have a specific endpoint for API status in the free tier
+    // We'll just use the ping endpoint to check if the API is working
+    const response = await axios.get(`${COINGECKO_API_BASE_URL}/ping`);
+    return {
+      status: response.status === 200 ? 'operational' : 'issues',
+      limitRemaining: 'unknown', // Not available in free tier
+      limitResetAt: 'unknown'    // Not available in free tier
+    };
+  } catch (error) {
+    console.error('Error checking CoinGecko API status:', error);
+    return {
+      status: 'issues',
+      limitRemaining: 'unknown',
+      limitResetAt: 'unknown'
+    };
   }
 };

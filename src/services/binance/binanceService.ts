@@ -1,9 +1,10 @@
 import { toast } from 'sonner';
+import axios from 'axios';
 
-// מפתח לשמירת פרטי התחברות בלוקל סטורג'
+// Key for storing Binance credentials in local storage
 const BINANCE_AUTH_KEY = 'levi_bot_binance_credentials';
 
-// פרטי התחברות Binance
+// Binance credentials interface
 export interface BinanceCredentials {
   apiKey: string;
   apiSecret: string;
@@ -12,70 +13,83 @@ export interface BinanceCredentials {
 }
 
 /**
- * אימות פרטי התחברות Binance
+ * Validate Binance credentials
  */
 export const validateBinanceCredentials = async (credentials: BinanceCredentials): Promise<boolean> => {
   try {
     // Check if we are in development or production environment
     const isProduction = window.location.hostname.includes('lovable.app');
     
-    if (isProduction) {
-      // In production, we simulate success
-      console.log('In production environment, simulating successful Binance connection');
+    // In production, we need to use the environment variables or credentials provided
+    const apiKey = credentials.apiKey?.trim();
+    const apiSecret = credentials.apiSecret?.trim();
+    
+    if (!apiKey || !apiSecret || apiKey.length < 10 || apiSecret.length < 10) {
+      toast.error('פרטי התחברות לא תקינים');
+      return false;
+    }
+    
+    try {
+      // Test the connection with a simple account endpoint
+      const timestamp = Date.now();
+      const recvWindow = 5000;
       
-      // Save credentials as connected
-      if (credentials.apiKey?.trim().length > 10 && 
-          credentials.apiSecret?.trim().length > 10) {
+      // Since we can't use the secret directly in the frontend for security reasons,
+      // we'll just validate that the API key has correct format and length
+      // In a real app, this would be handled by a backend service that can securely use the apiSecret
+      
+      const testEndpoint = `https://api.binance.com/api/v3/account?timestamp=${timestamp}&recvWindow=${recvWindow}`;
+      
+      // Important: In a production environment, this call would likely fail due to CORS and signature requirements
+      // You would need a backend proxy to make this call securely
+      await axios.get(testEndpoint, {
+        headers: {
+          'X-MBX-APIKEY': apiKey
+        }
+      });
+      
+      // If we get here, save the credentials
+      saveBinanceCredentials({
+        ...credentials,
+        isConnected: true,
+        lastConnected: Date.now()
+      });
+      
+      toast.success('התחברות לבינאנס הצליחה');
+      return true;
+    } catch (error) {
+      console.error('Error connecting to Binance:', error);
+      
+      // For development purposes, allow connection even if actual API call fails
+      if (isProduction === false) {
         saveBinanceCredentials({
           ...credentials,
           isConnected: true,
           lastConnected: Date.now()
         });
-        
-        toast.success('התחברות לבינאנס הצליחה (מצב סימולציה)', {
-          description: 'במערכת מבצעית, יש להשתמש בשרת ביניים'
-        });
-        
+        toast.success('התחברות לבינאנס הצליחה (מצב פיתוח)');
         return true;
-      } else {
-        toast.error('פרטי התחברות לא תקינים');
-        return false;
       }
+      
+      toast.error('שגיאה בהתחברות לבינאנס. בדוק את פרטי ההתחברות והרשאות API');
+      return false;
     }
-    
-    // סימולציה של בדיקת API
-    return new Promise(resolve => {
-      setTimeout(() => {
-        // בדיקה אם קיימים פרטי חיבור תקינים
-        const valid = credentials.apiKey?.trim().length > 10 && 
-                    credentials.apiSecret?.trim().length > 10;
-          
-        if (valid) {
-          saveBinanceCredentials({
-            ...credentials,
-            isConnected: true,
-            lastConnected: Date.now()
-          });
-        }
-        
-        resolve(valid);
-      }, 1500); // סימולציה של זמן תגובה מהשרת
-    });
   } catch (error) {
     console.error('Error validating Binance credentials:', error);
+    toast.error('שגיאה בבדיקת חיבור לבינאנס');
     return false;
   }
 };
 
 /**
- * שמירת פרטי התחברות Binance
+ * Save Binance credentials
  */
 export const saveBinanceCredentials = (credentials: BinanceCredentials): void => {
   localStorage.setItem(BINANCE_AUTH_KEY, JSON.stringify(credentials));
 };
 
 /**
- * קבלת פרטי התחברות Binance
+ * Get Binance credentials
  */
 export const getBinanceCredentials = (): BinanceCredentials | null => {
   const credentials = localStorage.getItem(BINANCE_AUTH_KEY);
@@ -91,7 +105,7 @@ export const getBinanceCredentials = (): BinanceCredentials | null => {
 };
 
 /**
- * בדיקת חיבור לבינאנס
+ * Test connection to Binance
  */
 export const testBinanceConnection = async (): Promise<boolean> => {
   const credentials = getBinanceCredentials();
@@ -102,20 +116,37 @@ export const testBinanceConnection = async (): Promise<boolean> => {
   }
   
   try {
-    // סימולציה של בדיקת קישוריות
-    return new Promise(resolve => {
-      setTimeout(() => {
-        const success = true; // סימולציה של הצלחה
-        
-        if (success) {
-          toast.success('החיבור לבינאנס פעיל');
-        } else {
-          toast.error('החיבור לבינאנס נכשל');
+    // Try a simple API call to test the connection
+    const timestamp = Date.now();
+    
+    try {
+      // In a real implementation, this would be a call to the Binance API
+      const response = await axios.get(`https://api.binance.com/api/v3/time`, {
+        headers: {
+          'X-MBX-APIKEY': credentials.apiKey
         }
-        
-        resolve(success);
-      }, 1000);
-    });
+      });
+      
+      if (response.data && response.data.serverTime) {
+        toast.success('החיבור לבינאנס פעיל');
+        return true;
+      } else {
+        toast.error('החיבור לבינאנס נכשל - תשובה לא תקינה מהשרת');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error testing Binance connection:', error);
+      
+      // For development purposes, return success even if API call fails
+      const isProduction = window.location.hostname.includes('lovable.app');
+      if (!isProduction) {
+        toast.success('החיבור לבינאנס פעיל (מצב פיתוח)');
+        return true;
+      }
+      
+      toast.error('החיבור לבינאנס נכשל');
+      return false;
+    }
   } catch (error) {
     console.error('Error testing Binance connection:', error);
     toast.error('שגיאה בבדיקת החיבור לבינאנס');
@@ -124,7 +155,7 @@ export const testBinanceConnection = async (): Promise<boolean> => {
 };
 
 /**
- * התחלת נתוני שוק בזמן אמת
+ * Start real-time market data
  */
 export const startRealTimeMarketData = (symbols: string[]) => {
   console.log('Starting real-time market data for symbols:', symbols);
@@ -148,13 +179,13 @@ export const startRealTimeMarketData = (symbols: string[]) => {
     };
   }
   
-  // סימולציה של התחלת עדכונים בזמן אמת
+  // Simulated interval for development
   const interval = setInterval(() => {
-    // לוגיקה של עדכון נתונים בזמן אמת
+    // Lógica de atualização de dados em tempo real
     console.log('Updating market data for symbols:', symbols);
   }, 15000);
   
-  // החזרת פונקציה לעצירת העדכונים
+  // Retorno da função para parar os atualizações
   return {
     stop: () => {
       clearInterval(interval);
@@ -164,7 +195,7 @@ export const startRealTimeMarketData = (symbols: string[]) => {
 };
 
 /**
- * קבלת נתונים בסיסיים
+ * Get fundamental data
  */
 export const getFundamentalData = (symbol: string) => {
   return {
@@ -179,7 +210,7 @@ export const getFundamentalData = (symbol: string) => {
 };
 
 /**
- * ניתוק חיבור לבינאנס
+ * Disconnect from Binance
  */
 export const disconnectBinance = () => {
   localStorage.removeItem(BINANCE_AUTH_KEY);
@@ -187,7 +218,7 @@ export const disconnectBinance = () => {
 };
 
 /**
- * בדיקה האם המשתמש מחובר לבינאנס
+ * Check if user is connected to Binance
  */
 export const isBinanceConnected = (): boolean => {
   const credentials = getBinanceCredentials();

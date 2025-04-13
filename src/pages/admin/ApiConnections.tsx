@@ -102,7 +102,7 @@ const ApiConnection: React.FC<ApiConnectionProps> = ({
             {showApiDetails && (
               <div className="space-y-3">
                 <div className="text-right">
-                  <Label className="block">מפתח API</Label>
+                  <Label className="block">מפת�� API</Label>
                   <div className="bg-gray-100 dark:bg-gray-800 p-2 rounded text-sm font-mono truncate">
                     {apiKey ? apiKey.substring(0, 4) + '...' + apiKey.substring(apiKey.length - 4) : 'לא זמין'}
                   </div>
@@ -222,7 +222,7 @@ const ApiConnections = () => {
   const [binanceConnected, setBinanceConnected] = useState(false);
   const [twitterConnected, setTwitterConnected] = useState(false);
   const [coinMarketCapConnected, setCoinMarketCapConnected] = useState(false);
-  const [coinGeckoConnected, setCoinGeckoConnected] = useState(true); // Always connected since no API key required
+  const [coinGeckoConnected, setCoinGeckoConnected] = useState(true); // CoinGecko doesn't require API key
   
   const [binanceCredentials, setBinanceCredentials] = useState<any>(null);
   const [twitterCredentials, setTwitterCredentials] = useState<any>(null);
@@ -244,10 +244,21 @@ const ApiConnections = () => {
     setCoinMarketCapApiKey(getCoinMarketCapApiKey());
     
     // Test CoinGecko connection
-    testCoinGeckoConnection().then(isConnected => {
-      setCoinGeckoConnected(isConnected);
-    });
+    testCoinGeckoConnection();
   }, []);
+  
+  // Test CoinGecko connection
+  const testCoinGeckoConnection = async () => {
+    try {
+      const isConnected = await testConnection();
+      setCoinGeckoConnected(isConnected);
+      return isConnected;
+    } catch (error) {
+      console.error('Error testing CoinGecko connection:', error);
+      setCoinGeckoConnected(false);
+      return false;
+    }
+  };
   
   // Binance handlers
   const handleConnectBinance = async (apiKey: string, apiSecret?: string) => {
