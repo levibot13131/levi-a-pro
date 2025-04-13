@@ -8,12 +8,12 @@ const marketEvents: MarketEvent[] = [
     title: 'פגישת הפד',
     description: 'ישיבת הפד לקביעת ריבית בארה"ב',
     date: '2023-11-15',
-    time: '19:00',
     category: 'כלכלי',
     impact: 'high',
     source: 'FederalReserve',
-    reminder: false,
+    time: '19:00',
     link: 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm',
+    reminder: false,
     importance: 'high'
   },
   {
@@ -21,12 +21,12 @@ const marketEvents: MarketEvent[] = [
     title: 'התחזית הכלכלית האירופאית',
     description: 'פרסום תחזית כלכלית רבעונית של האיחוד האירופי',
     date: '2023-11-20',
-    time: '11:00',
     category: 'כלכלי',
     impact: 'medium',
     source: 'ECB',
-    reminder: false,
+    time: '11:00',
     link: 'https://www.ecb.europa.eu/pub/projections/html/index.en.html',
+    reminder: false,
     importance: 'medium'
   },
   {
@@ -34,12 +34,12 @@ const marketEvents: MarketEvent[] = [
     title: 'חצייה של ביטקוין',
     description: 'אירוע חציית התגמול הבא של ביטקוין',
     date: '2024-04-10',
-    time: '12:00',
     category: 'קריפטו',
     impact: 'high',
     source: 'Bitcoin',
-    reminder: true,
+    time: '12:00',
     link: 'https://www.bitcoinblockhalf.com/',
+    reminder: true,
     importance: 'high'
   },
   {
@@ -47,12 +47,12 @@ const marketEvents: MarketEvent[] = [
     title: 'שחרור דוחות רבעון אפל',
     description: 'פרסום דוחות כספיים של אפל לרבעון האחרון',
     date: '2023-12-01',
-    time: '22:30',
     category: 'מניות',
     impact: 'medium',
     source: 'Apple',
-    reminder: false,
+    time: '22:30',
     link: 'https://investor.apple.com/investor-relations/default.aspx',
+    reminder: false,
     importance: 'medium'
   },
   {
@@ -60,12 +60,12 @@ const marketEvents: MarketEvent[] = [
     title: 'פרסום נתוני אבטלה',
     description: 'נתוני שוק העבודה החודשיים',
     date: '2023-11-10',
-    time: '15:30',
     category: 'כלכלי',
     impact: 'medium',
     source: 'BLS',
-    reminder: false,
+    time: '15:30',
     link: 'https://www.bls.gov/news.release/empsit.toc.htm',
+    reminder: false,
     importance: 'medium'
   }
 ];
