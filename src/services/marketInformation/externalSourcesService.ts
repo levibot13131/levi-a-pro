@@ -49,24 +49,6 @@ export const disconnectExternalSource = async (sourceId: string): Promise<boolea
   return true;
 };
 
-// Sync tracked assets with external source
-export const syncAssetsWithExternalSource = async (sourceId: string): Promise<boolean> => {
-  const source = EXTERNAL_SOURCES.find(s => s.id === sourceId);
-  if (!source || !source.connected) {
-    toast.error(`אנא התחבר תחילה ל-${source?.name || 'מקור'}`);
-    return false;
-  }
-  
-  // Simulate syncing assets
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  // In a real implementation, this would fetch data from the external source
-  // and update the tracked assets accordingly
-  
-  toast.success(`הנכסים עודכנו בהצלחה מ-${source.name}`);
-  return true;
-};
-
 // Update asset data from all connected sources
 export const updateAssetsFromConnectedSources = async (): Promise<number> => {
   const connectedSources = EXTERNAL_SOURCES.filter(s => s.connected);
