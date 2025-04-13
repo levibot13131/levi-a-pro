@@ -17,7 +17,7 @@ import {
   getMarketEvents,
   connectToExternalDataSource,
   refreshMarketData
-} from './legacyService';
+} from './legacy';
 
 // Export all services
 export {

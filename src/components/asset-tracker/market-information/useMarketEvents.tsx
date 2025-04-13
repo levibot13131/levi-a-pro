@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { MarketEvent } from '@/types/marketInformation';
-import { getUpcomingMarketEvents, setEventReminder } from '@/services/marketInformationService';
+import { getUpcomingMarketEvents, setEventReminder } from '@/services/marketInformation';
 
 export const useMarketEvents = (selectedTimeRange: string, autoRefresh: boolean) => {
   const { data: events, isLoading: eventsLoading, refetch } = useQuery({

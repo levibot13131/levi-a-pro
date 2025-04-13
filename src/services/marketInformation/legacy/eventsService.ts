@@ -1,76 +1,45 @@
 
 import { LegacyMarketEvent } from './types';
 
-// Market Events
+// Mock data for market events
+const events: LegacyMarketEvent[] = [
+  {
+    id: "1",
+    title: "Fed Interest Rate Decision",
+    date: "2023-12-15",
+    category: "economic",
+    impact: "high",
+    description: "Federal Reserve decision on interest rates",
+    expectedVolatility: "high",
+    assetImpact: {
+      "USD": "strong",
+      "Treasuries": "strong",
+      "Equities": "medium"
+    },
+    importance: "high",
+    source: "Federal Reserve",
+    reminder: true
+  },
+  {
+    id: "2",
+    title: "Apple Earnings",
+    date: "2023-11-02",
+    category: "earnings",
+    impact: "medium",
+    description: "Apple Q4 earnings report",
+    expectedVolatility: "medium",
+    assetImpact: {
+      "AAPL": "strong",
+      "NASDAQ": "medium",
+      "Tech Sector": "medium"
+    },
+    importance: "medium",
+    source: "Apple Inc",
+    reminder: false
+  }
+];
+
+// Get all market events
 export const getMarketEvents = (): LegacyMarketEvent[] => {
-  return [
-    {
-      id: 'event1',
-      title: 'ישיבת הפד',
-      date: '2024-05-01',
-      category: 'מאקרו',
-      impact: 'high',
-      description: 'החלטת ריבית של הבנק המרכזי האמריקאי (פד)',
-      expectedVolatility: 'high',
-      assetImpact: {
-        stocks: 'high',
-        crypto: 'medium',
-        bonds: 'high'
-      },
-      importance: 'high',
-      source: 'FederalReserve',
-      reminder: false
-    },
-    {
-      id: 'event2',
-      title: 'הנפקת ETF ביטקוין',
-      date: '2024-04-15',
-      category: 'קריפטו',
-      impact: 'high',
-      description: 'אישור והנפקת קרנות סל (ETF) לביטקוין',
-      expectedVolatility: 'high',
-      assetImpact: {
-        stocks: 'low',
-        crypto: 'very high',
-        bonds: 'low'
-      },
-      importance: 'high',
-      source: 'SEC',
-      reminder: false
-    },
-    {
-      id: 'event3',
-      title: 'פרסום נתוני אינפלציה',
-      date: '2024-04-10',
-      category: 'מאקרו',
-      impact: 'medium',
-      description: 'פרסום מדד המחירים לצרכן בארה״ב',
-      expectedVolatility: 'medium',
-      assetImpact: {
-        stocks: 'medium',
-        crypto: 'medium',
-        bonds: 'high'
-      },
-      importance: 'medium',
-      source: 'BLS',
-      reminder: false
-    },
-    {
-      id: 'event4',
-      title: 'עדכון רשת אתריום',
-      date: '2024-06-01',
-      category: 'קריפטו',
-      impact: 'medium',
-      description: 'שדרוג משמעותי לרשת האתריום',
-      expectedVolatility: 'medium',
-      assetImpact: {
-        stocks: 'low',
-        crypto: 'high',
-        bonds: 'low'
-      },
-      importance: 'medium',
-      source: 'Ethereum Foundation',
-      reminder: false
-    }
-  ];
+  return [...events];
 };
