@@ -13,7 +13,10 @@ export const MARKET_EVENTS: MarketEvent[] = [
     expectedImpact: "bullish",
     source: "official",
     reminder: false,
-    type: "technical"
+    type: "technical",
+    impact: "high",
+    time: "12:00",
+    link: "https://www.bitcoinblockhalf.com/"
   },
   {
     id: "event2",
@@ -26,7 +29,10 @@ export const MARKET_EVENTS: MarketEvent[] = [
     expectedImpact: "bearish",
     source: "official",
     reminder: false,
-    type: "economic"
+    type: "economic",
+    impact: "high",
+    time: "14:00",
+    link: "https://www.federalreserve.gov/"
   }
 ];
 
@@ -44,7 +50,10 @@ export const MARKET_INFLUENCERS: MarketInfluencer[] = [
     expertise: ["Bitcoin", "Ethereum", "DeFi"],
     profileUrl: "https://twitter.com/crypto_expert",
     isVerified: true,
-    imageUrl: "https://example.com/expert1.jpg"
+    avatarUrl: "https://example.com/expert1.jpg",
+    topics: ["Bitcoin", "Ethereum", "DeFi"],
+    isFollowed: false,
+    influence: 85
   },
   {
     id: "inf2",
@@ -59,7 +68,10 @@ export const MARKET_INFLUENCERS: MarketInfluencer[] = [
     expertise: ["Technical Analysis", "Trend Analysis"],
     profileUrl: "https://youtube.com/market_guru",
     isVerified: true,
-    imageUrl: "https://example.com/expert2.jpg"
+    avatarUrl: "https://example.com/expert2.jpg",
+    topics: ["Technical Analysis", "Trend Analysis"],
+    isFollowed: true,
+    influence: 90
   }
 ];
 
@@ -78,7 +90,8 @@ export const FINANCIAL_DATA_SOURCES: FinancialDataSource[] = [
     languages: ["en"],
     isFeatured: true,
     rating: 4.5,
-    platform: "Web"
+    platform: "Web",
+    imageUrl: "https://example.com/cryptocompare.jpg"
   },
   {
     id: "src2",
@@ -94,6 +107,7 @@ export const FINANCIAL_DATA_SOURCES: FinancialDataSource[] = [
     languages: ["en", "es", "ru"],
     isFeatured: true,
     rating: 4.8,
-    platform: "Web"
+    platform: "Web",
+    imageUrl: "https://example.com/tradingview.jpg"
   }
 ];

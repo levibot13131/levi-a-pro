@@ -14,7 +14,10 @@ const marketEvents: MarketEvent[] = [
     time: '19:00',
     link: 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm',
     reminder: false,
-    importance: 'high'
+    importance: 'high',
+    type: 'economic',
+    relatedAssets: ['usd', 'treasury'],
+    expectedImpact: 'significant'
   },
   {
     id: '2',
@@ -27,7 +30,10 @@ const marketEvents: MarketEvent[] = [
     time: '11:00',
     link: 'https://www.ecb.europa.eu/pub/projections/html/index.en.html',
     reminder: false,
-    importance: 'medium'
+    importance: 'medium',
+    type: 'economic',
+    relatedAssets: ['euro', 'eu-market'],
+    expectedImpact: 'moderate'
   },
   {
     id: '3',
@@ -40,7 +46,10 @@ const marketEvents: MarketEvent[] = [
     time: '12:00',
     link: 'https://www.bitcoinblockhalf.com/',
     reminder: true,
-    importance: 'high'
+    importance: 'high',
+    type: 'crypto',
+    relatedAssets: ['bitcoin', 'crypto-market'],
+    expectedImpact: 'substantial'
   },
   {
     id: '4',
@@ -53,7 +62,10 @@ const marketEvents: MarketEvent[] = [
     time: '22:30',
     link: 'https://investor.apple.com/investor-relations/default.aspx',
     reminder: false,
-    importance: 'medium'
+    importance: 'medium',
+    type: 'earnings',
+    relatedAssets: ['aapl', 'tech-sector'],
+    expectedImpact: 'moderate'
   },
   {
     id: '5',
@@ -66,7 +78,10 @@ const marketEvents: MarketEvent[] = [
     time: '15:30',
     link: 'https://www.bls.gov/news.release/empsit.toc.htm',
     reminder: false,
-    importance: 'medium'
+    importance: 'medium',
+    type: 'economic',
+    relatedAssets: ['usd', 'us-stocks'],
+    expectedImpact: 'variable'
   }
 ];
 
