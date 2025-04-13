@@ -8,10 +8,10 @@ import {
   MarketInfluencer,
   MarketEvent,
   FinancialDataSource
-} from '@/services/marketInformation/index';
-import { toggleSourceFavorite } from '@/services/marketInformation/sourcesService';
-import { toggleInfluencerFollow } from '@/services/marketInformation/influencersService';
-import { setEventReminder } from '@/services/marketInformation/eventsService';
+} from '@/services/marketInformationService';
+import { toggleSourceFavorite } from '@/services/marketInformationService';
+import { toggleInfluencerFollow } from '@/services/marketInformationService';
+import { setEventReminder } from '@/services/marketInformationService';
 import InfluencersTab from '@/components/information-sources/InfluencersTab';
 import SourcesTab from '@/components/information-sources/SourcesTab';
 import EventsTab from '@/components/information-sources/EventsTab';

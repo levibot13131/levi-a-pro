@@ -106,4 +106,3 @@ export const updateAssetsFromConnectedSources = async (): Promise<number> => {
     return 0;
   }
 };
-

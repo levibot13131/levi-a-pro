@@ -13,7 +13,7 @@ import {
   connectToExternalSource,
   disconnectExternalSource,
   updateAssetsFromConnectedSources
-} from '@/services/marketInformation/externalSourcesService';
+} from '@/services/marketInformationService';
 import TradingViewIntegration from './TradingViewIntegration';
 import { Asset } from '@/types/asset';
 
