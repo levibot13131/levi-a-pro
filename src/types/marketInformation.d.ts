@@ -54,3 +54,23 @@ export interface FinancialDataSource {
 }
 
 export type MarketSource = FinancialDataSource;
+
+export interface EventReminder {
+  eventId: string;
+  userId: string;
+  notificationTime: number;
+  enabled: boolean;
+}
+
+export interface CustomEventData {
+  title: string;
+  date: string;
+  importance: string;
+  description: string;
+  type: string;
+  relatedAssets: string[];
+  expectedImpact: string;
+  source: string;
+}
+
+export type AddCustomEventFn = (assetId: string, eventData: CustomEventData) => Promise<MarketEvent>;

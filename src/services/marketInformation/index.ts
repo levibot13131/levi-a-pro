@@ -39,5 +39,8 @@ export type {
   MarketEvent, 
   MarketInfluencer, 
   FinancialDataSource, 
-  MarketSource 
+  MarketSource,
+  EventReminder,
+  CustomEventData,
+  AddCustomEventFn
 } from '@/types/marketInformation';

@@ -2,12 +2,13 @@
 // Re-export everything from the marketInformation directory
 export * from './marketInformation/index';
 
-// Re-export specific types to fix import errors
+// Explicitly re-export the types to avoid any import issues
 export type { 
   FinancialDataSource,
   MarketInfluencer,
   MarketEvent,
-  MarketSource
+  MarketSource,
+  EventReminder,
+  CustomEventData,
+  AddCustomEventFn
 } from '@/types/marketInformation';
-
-// Old types are kept for backward compatibility but not re-exported to avoid conflicts
