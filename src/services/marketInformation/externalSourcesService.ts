@@ -1,10 +1,10 @@
 
-import { toast } from 'sonner';
 import { 
-  connectToExternalSource, 
-  disconnectFromExternalSource, 
+  connectToExternalSource as legacyConnectToExternalSource, 
+  disconnectFromExternalSource as legacyDisconnectFromExternalSource, 
   fetchDataFromExternalSource 
 } from './legacy/externalsService';
+import { toast } from 'sonner';
 
 interface ExternalSource {
   id: string;
@@ -43,7 +43,7 @@ export const getExternalSources = async (): Promise<ExternalSource[]> => {
 // Connect to an external source
 export const connectToExternalSource = async (sourceId: string): Promise<boolean> => {
   try {
-    const result = await connectToExternalSource(sourceId);
+    const result = await legacyConnectToExternalSource(sourceId);
     if (result) {
       const index = externalSources.findIndex(source => source.id === sourceId);
       if (index !== -1) {
@@ -63,7 +63,7 @@ export const connectToExternalSource = async (sourceId: string): Promise<boolean
 // Disconnect from an external source
 export const disconnectExternalSource = async (sourceId: string): Promise<boolean> => {
   try {
-    const result = await disconnectFromExternalSource(sourceId);
+    const result = await legacyDisconnectFromExternalSource(sourceId);
     if (result) {
       const index = externalSources.findIndex(source => source.id === sourceId);
       if (index !== -1) {
@@ -106,3 +106,4 @@ export const updateAssetsFromConnectedSources = async (): Promise<number> => {
     return 0;
   }
 };
+
