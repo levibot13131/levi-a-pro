@@ -12,7 +12,10 @@ export interface MarketInfluencer {
   bio: string;
   profileUrl: string;
   isVerified: boolean;
-  imageUrl?: string; // Added property
+  avatarUrl: string;
+  topics: string[];
+  isFollowed: boolean;
+  influence: number;
 }
 
 export interface FinancialDataSource {
@@ -22,7 +25,7 @@ export interface FinancialDataSource {
   description: string;
   url: string;
   reliability: number;
-  category: string | string[]; // Changed to accept both string and string[]
+  category: string | string[];
   rating: number;
   platform: string;
   isPaid: boolean;
@@ -30,6 +33,7 @@ export interface FinancialDataSource {
   languages: string[];
   isFeatured: boolean;
   categories: string[];
+  imageUrl: string;
 }
 
 export interface MarketEvent {
@@ -42,8 +46,11 @@ export interface MarketEvent {
   relatedAssets: string[];
   expectedImpact: string;
   source: string;
-  reminder: boolean; // Added property
-  category?: string; // Added property
+  reminder: boolean;
+  category: string;
+  impact: 'low' | 'medium' | 'high';
+  time: string;
+  link: string;
 }
 
 export interface EventReminder {
@@ -66,3 +73,5 @@ export interface CustomEventData {
 }
 
 export type AddCustomEventFn = (assetId: string, eventData: CustomEventData) => Promise<MarketEvent>;
+
+export type MarketSource = FinancialDataSource;
