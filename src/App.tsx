@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
@@ -30,6 +31,7 @@ import NotFound from './pages/NotFound';
 import RiskManagement from './pages/RiskManagement';
 import ProxyGuide from './pages/ProxyGuide';
 import IntegrationStatus from './pages/IntegrationStatus';
+import ApiConnections from './pages/admin/ApiConnections';
 
 function App() {
   return (
@@ -59,6 +61,7 @@ function App() {
             <Route path="/information-sources" element={<InformationSources />} />
             <Route path="/journal" element={<Journal />} />
             <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/admin/api-connections" element={<ApiConnections />} />
             <Route path="/market-data" element={<MarketData />} />
             <Route path="/risk-management" element={<RiskManagement />} />
           </Route>
