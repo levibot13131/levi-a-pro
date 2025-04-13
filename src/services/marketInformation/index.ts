@@ -10,6 +10,15 @@ import {
   updateAssetsFromConnectedSources 
 } from './externalSourcesService';
 
+// Legacy service functions - re-exported from legacy service
+import {
+  getFinancialDataSources,
+  getMarketInfluencers,
+  getMarketEvents,
+  connectToExternalDataSource,
+  refreshMarketData
+} from './legacyService';
+
 // Export all services
 export {
   // Sources
@@ -31,7 +40,14 @@ export {
   getExternalSources,
   connectToExternalSource,
   disconnectExternalSource,
-  updateAssetsFromConnectedSources
+  updateAssetsFromConnectedSources,
+  
+  // Legacy services
+  getFinancialDataSources,
+  getMarketInfluencers,
+  getMarketEvents,
+  connectToExternalDataSource,
+  refreshMarketData
 };
 
 // Export types
