@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
@@ -30,6 +29,7 @@ import MarketData from './pages/MarketData';
 import NotFound from './pages/NotFound';
 import RiskManagement from './pages/RiskManagement';
 import ProxyGuide from './pages/ProxyGuide';
+import IntegrationStatus from './pages/IntegrationStatus';
 
 function App() {
   return (

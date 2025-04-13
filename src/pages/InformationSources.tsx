@@ -5,13 +5,15 @@ import {
   getSources, 
   getInfluencers, 
   getUpcomingMarketEvents,
+  toggleSourceFavorite,
+  toggleInfluencerFollow,
+  setEventReminder
+} from '@/services/marketInformationService';
+import { 
   MarketInfluencer,
   MarketEvent,
   FinancialDataSource
-} from '@/services/marketInformationService';
-import { toggleSourceFavorite } from '@/services/marketInformationService';
-import { toggleInfluencerFollow } from '@/services/marketInformationService';
-import { setEventReminder } from '@/services/marketInformationService';
+} from '@/types/marketInformation';
 import InfluencersTab from '@/components/information-sources/InfluencersTab';
 import SourcesTab from '@/components/information-sources/SourcesTab';
 import EventsTab from '@/components/information-sources/EventsTab';
