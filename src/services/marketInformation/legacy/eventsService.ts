@@ -16,7 +16,10 @@ export const getMarketEvents = (): LegacyMarketEvent[] => {
         stocks: 'high',
         crypto: 'medium',
         bonds: 'high'
-      }
+      },
+      importance: 'high',
+      source: 'FederalReserve',
+      reminder: false
     },
     {
       id: 'event2',
@@ -30,7 +33,10 @@ export const getMarketEvents = (): LegacyMarketEvent[] => {
         stocks: 'low',
         crypto: 'very high',
         bonds: 'low'
-      }
+      },
+      importance: 'high',
+      source: 'SEC',
+      reminder: false
     },
     {
       id: 'event3',
@@ -44,7 +50,10 @@ export const getMarketEvents = (): LegacyMarketEvent[] => {
         stocks: 'medium',
         crypto: 'medium',
         bonds: 'high'
-      }
+      },
+      importance: 'medium',
+      source: 'BLS',
+      reminder: false
     },
     {
       id: 'event4',
@@ -58,7 +67,10 @@ export const getMarketEvents = (): LegacyMarketEvent[] => {
         stocks: 'low',
         crypto: 'high',
         bonds: 'low'
-      }
+      },
+      importance: 'medium',
+      source: 'Ethereum Foundation',
+      reminder: false
     }
   ];
 };
