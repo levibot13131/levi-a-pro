@@ -116,6 +116,30 @@ const InformationSources = () => {
             <TabsTrigger value="sources" className="flex-1">מקורות</TabsTrigger>
             <TabsTrigger value="events" className="flex-1">אירועים</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="influencers">
+            <InfluencersTab
+              influencers={filteredInfluencers}
+              focusedInfluencerIds={focusedInfluencerIds}
+              onFocus={handleFollowInfluencer}
+            />
+          </TabsContent>
+          
+          <TabsContent value="sources">
+            <SourcesTab
+              sources={filteredSources}
+              focusedSourceIds={focusedSourceIds}
+              onFocus={handleSourceFocus}
+            />
+          </TabsContent>
+          
+          <TabsContent value="events">
+            <EventsTab
+              events={filteredEvents}
+              focusedEventIds={focusedEventIds}
+              onFocus={handleEventReminder}
+            />
+          </TabsContent>
         </Tabs>
         
         <div className="w-full md:w-64">
@@ -129,30 +153,6 @@ const InformationSources = () => {
           />
         </div>
       </div>
-      
-      <TabsContent value="influencers" className={activeTab === 'influencers' ? 'block' : 'hidden'}>
-        <InfluencersTab
-          influencers={filteredInfluencers}
-          focusedInfluencerIds={focusedInfluencerIds}
-          onFocus={handleFollowInfluencer}
-        />
-      </TabsContent>
-      
-      <TabsContent value="sources" className={activeTab === 'sources' ? 'block' : 'hidden'}>
-        <SourcesTab
-          sources={filteredSources}
-          focusedSourceIds={focusedSourceIds}
-          onFocus={handleSourceFocus}
-        />
-      </TabsContent>
-      
-      <TabsContent value="events" className={activeTab === 'events' ? 'block' : 'hidden'}>
-        <EventsTab
-          events={filteredEvents}
-          focusedEventIds={focusedEventIds}
-          onFocus={handleEventReminder}
-        />
-      </TabsContent>
     </div>
   );
 };
