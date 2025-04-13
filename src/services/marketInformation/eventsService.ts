@@ -1,7 +1,5 @@
-
 import { MarketEvent } from '@/types/marketInformation';
 
-// מערך של אירועי שוק לדוגמה
 const marketEvents: MarketEvent[] = [
   {
     id: '1',

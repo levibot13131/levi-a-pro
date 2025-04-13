@@ -10,7 +10,7 @@ import {
   updateAssetsFromConnectedSources 
 } from './externalSourcesService';
 
-// Legacy service functions - re-exported from legacy service
+// Legacy service functions
 import {
   getFinancialDataSources,
   getMarketInfluencers,
@@ -32,7 +32,7 @@ export {
   getInfluencersByPlatform,
   toggleInfluencerFollow,
   
-  // Events
+  // Events - explicitly export these
   getUpcomingMarketEvents,
   setEventReminder,
   

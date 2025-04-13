@@ -12,3 +12,9 @@ export type {
   CustomEventData,
   AddCustomEventFn
 } from '@/types/marketInformation';
+
+// Explicitly export the functions
+export { 
+  getUpcomingMarketEvents, 
+  setEventReminder 
+} from './marketInformation/eventsService';
