@@ -1,22 +1,23 @@
 
 import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import Layout from '@/components/Layout';
+import Layout from '@/components/layout/Layout';
 import Home from '@/pages/Home';
 import Dashboard from '@/pages/Dashboard';
-import MarketOverview from '@/pages/MarketOverview';
+import MarketOverview from '@/pages/market/MarketOverview'; 
 import TechnicalAnalysis from '@/pages/TechnicalAnalysis';
 import ComprehensiveAnalysis from '@/pages/ComprehensiveAnalysis';
 import Backtesting from '@/pages/Backtesting';
 import TradingSignals from '@/pages/TradingSignals';
-import WatchList from '@/pages/WatchList';
-import ScreenerPage from '@/pages/ScreenerPage';
+import WatchList from '@/pages/market/WatchList';
+import ScreenerPage from '@/pages/market/ScreenerPage';
 import Portfolio from '@/pages/Portfolio';
 import Settings from '@/pages/Settings';
 import ApiConnections from '@/pages/admin/ApiConnections';
 import AdvancedSettings from '@/pages/admin/AdvancedSettings';
 import BinanceIntegration from '@/pages/BinanceIntegration';
 import NotFound from '@/pages/NotFound';
+import MarketNews from '@/pages/MarketNews';
 import { AuthProvider } from '@/contexts/AuthContext';
 
 const RoutesComponent = () => {
@@ -39,6 +40,7 @@ const RoutesComponent = () => {
             <Route path="api-connections" element={<ApiConnections />} />
             <Route path="advanced-settings" element={<AdvancedSettings />} />
             <Route path="binance-integration" element={<BinanceIntegration />} />
+            <Route path="market-news" element={<MarketNews />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
