@@ -1,9 +1,12 @@
-
 import axios from 'axios';
 import { toast } from 'sonner';
 
 // Base URL for CoinGecko API
 const COINGECKO_API_BASE_URL = 'https://api.coingecko.com/api/v3';
+const COINGECKO_PRO_API_BASE_URL = 'https://pro-api.coingecko.com/api/v3';
+
+// Local storage key for API key
+const COINGECKO_API_KEY_STORAGE = 'coingecko_api_key';
 
 // Cache for API responses to avoid rate limits
 const apiCache = new Map<string, { data: any, timestamp: number }>();
@@ -43,11 +46,67 @@ export interface CoinPriceData {
 }
 
 /**
+ * Get the CoinGecko API key from local storage
+ */
+export const getCoinGeckoApiKey = (): string | null => {
+  return localStorage.getItem(COINGECKO_API_KEY_STORAGE);
+};
+
+/**
+ * Set the CoinGecko API key in local storage
+ */
+export const setCoinGeckoApiKey = (apiKey: string): void => {
+  localStorage.setItem(COINGECKO_API_KEY_STORAGE, apiKey);
+  toast.success('מפתח ה-API של CoinGecko נשמר בהצלחה');
+};
+
+/**
+ * Remove the CoinGecko API key from local storage
+ */
+export const removeCoinGeckoApiKey = (): void => {
+  localStorage.removeItem(COINGECKO_API_KEY_STORAGE);
+  toast.info('מפתח ה-API של CoinGecko הוסר');
+};
+
+/**
+ * Check if CoinGecko Pro API key is set
+ */
+export const isCoinGeckoProConnected = (): boolean => {
+  const apiKey = getCoinGeckoApiKey();
+  return !!apiKey && apiKey.length > 10;
+};
+
+/**
+ * Get the appropriate API base URL based on whether a Pro API key is available
+ */
+const getApiBaseUrl = (): string => {
+  const apiKey = getCoinGeckoApiKey();
+  return apiKey ? COINGECKO_PRO_API_BASE_URL : COINGECKO_API_BASE_URL;
+};
+
+/**
+ * Build headers for API requests, including API key if available
+ */
+const buildHeaders = (): Record<string, string> => {
+  const headers: Record<string, string> = {};
+  const apiKey = getCoinGeckoApiKey();
+  
+  if (apiKey) {
+    headers['x-cg-pro-api-key'] = apiKey;
+  }
+  
+  return headers;
+};
+
+/**
  * Test connection to CoinGecko API
  */
 export const testConnection = async (): Promise<boolean> => {
   try {
-    const response = await axios.get(`${COINGECKO_API_BASE_URL}/ping`);
+    const headers = buildHeaders();
+    const baseUrl = getApiBaseUrl();
+    
+    const response = await axios.get(`${baseUrl}/ping`, { headers });
     return response.status === 200;
   } catch (error) {
     console.error('Error testing CoinGecko connection:', error);
@@ -69,11 +128,15 @@ export const getPrices = async (coinIds: string[], currency = 'usd'): Promise<Re
   }
   
   try {
-    const response = await axios.get(`${COINGECKO_API_BASE_URL}/simple/price`, {
+    const headers = buildHeaders();
+    const baseUrl = getApiBaseUrl();
+    
+    const response = await axios.get(`${baseUrl}/simple/price`, {
       params: {
         ids: coinIds.join(','),
         vs_currencies: currency
-      }
+      },
+      headers
     });
     
     // Format the response
@@ -109,14 +172,18 @@ export const getSimplePrices = async (
   }
   
   try {
-    const response = await axios.get(`${COINGECKO_API_BASE_URL}/simple/price`, {
+    const headers = buildHeaders();
+    const baseUrl = getApiBaseUrl();
+    
+    const response = await axios.get(`${baseUrl}/simple/price`, {
       params: {
         ids: coinIds.join(','),
         vs_currencies: currencies.join(','),
         include_market_cap: true,
         include_24hr_vol: true,
         include_24hr_change: true
-      }
+      },
+      headers
     });
     
     // Update cache
@@ -355,4 +422,74 @@ export const getApiStatus = async (): Promise<any> => {
       limitResetAt: 'unknown'
     };
   }
+};
+
+/**
+ * Get rate limit status for CoinGecko API
+ * Note: Only works with Pro API, free tier doesn't provide this info
+ */
+export const getRateLimitStatus = async (): Promise<any> => {
+  const apiKey = getCoinGeckoApiKey();
+  
+  if (!apiKey) {
+    return {
+      status: 'unknown',
+      minuteLimit: 'unknown',
+      minuteRemaining: 'unknown',
+      minuteReset: 'unknown'
+    };
+  }
+  
+  try {
+    const response = await axios.get(`${COINGECKO_PRO_API_BASE_URL}/ping`, {
+      headers: {
+        'x-cg-pro-api-key': apiKey
+      }
+    });
+    
+    // Extract rate limit headers if available
+    return {
+      status: 'operational',
+      minuteLimit: response.headers['x-ratelimit-limit'] || 'unknown',
+      minuteRemaining: response.headers['x-ratelimit-remaining'] || 'unknown',
+      minuteReset: response.headers['x-ratelimit-reset'] || 'unknown'
+    };
+  } catch (error) {
+    console.error('Error checking CoinGecko rate limit status:', error);
+    return {
+      status: 'issues',
+      minuteLimit: 'unknown',
+      minuteRemaining: 'unknown',
+      minuteReset: 'unknown'
+    };
+  }
+};
+
+/**
+ * Validate CoinGecko Pro API key
+ */
+export const validateCoinGeckoApiKey = async (apiKey: string): Promise<boolean> => {
+  try {
+    if (!apiKey || apiKey.length < 10) {
+      return false;
+    }
+    
+    const response = await axios.get(`${COINGECKO_PRO_API_BASE_URL}/ping`, {
+      headers: {
+        'x-cg-pro-api-key': apiKey
+      }
+    });
+    
+    return response.status === 200;
+  } catch (error) {
+    console.error('Error validating CoinGecko API key:', error);
+    return false;
+  }
+};
+
+/**
+ * Determine if rate limiting is occurring
+ */
+export const isRateLimited = (error: any): boolean => {
+  return error?.response?.status === 429;
 };

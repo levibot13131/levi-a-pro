@@ -16,6 +16,8 @@ import { isTwitterConnected, validateTwitterCredentials, disconnectTwitter, getT
 import { isCoinMarketCapConnected, initializeCoinMarketCap, getCoinMarketCapApiKey } from '@/services/coinMarketCap/coinMarketCapService';
 import { getExternalSources } from '@/services/marketInformation/externalSourcesService';
 import { testConnection as testCoinGeckoConnection } from '@/services/crypto/coinGeckoService';
+import { validateCoinGeckoApiKey } from '@/services/crypto/coinGeckoService';
+import { removeCoinGeckoApiKey } from '@/services/crypto/coinGeckoService';
 
 interface ApiConnectionProps {
   title: string;
@@ -223,6 +225,8 @@ const ApiConnections = () => {
   const [twitterConnected, setTwitterConnected] = useState(false);
   const [coinMarketCapConnected, setCoinMarketCapConnected] = useState(false);
   const [coinGeckoConnected, setCoinGeckoConnected] = useState(true);
+  const [coinGeckoProConnected, setCoinGeckoProConnected] = useState(false);
+  const [coinGeckoApiKey, setCoinGeckoApiKey] = useState<string>('');
 
   const [binanceCredentials, setBinanceCredentials] = useState<any>(null);
   const [twitterCredentials, setTwitterCredentials] = useState<any>(null);
@@ -240,6 +244,10 @@ const ApiConnections = () => {
     setCoinMarketCapApiKey(getCoinMarketCapApiKey());
     
     testCoinGeckoConnection();
+    
+    const coinGeckoKey = getCoinGeckoApiKey();
+    setCoinGeckoProConnected(!!coinGeckoKey);
+    setCoinGeckoApiKey(coinGeckoKey || '');
   }, []);
 
   const testCoinGecko = async () => {
@@ -336,6 +344,30 @@ const ApiConnections = () => {
     setCoinMarketCapConnected(false);
     setCoinMarketCapApiKey(null);
     toast.info('החיבור ל-CoinMarketCap נותק');
+  };
+
+  const handleConnectCoinGeckoPro = async (apiKey: string) => {
+    try {
+      const isValid = await validateCoinGeckoApiKey(apiKey);
+      
+      if (isValid) {
+        setCoinGeckoApiKey(apiKey);
+        setCoinGeckoProConnected(true);
+        setCoinGeckoApiKey(apiKey);
+        toast.success('התחברות ל-CoinGecko Pro הצליחה');
+      } else {
+        toast.error('מפתח API לא תקין או שגיאה בהתחברות');
+      }
+    } catch (error) {
+      toast.error('שגיאה בהתחברות ל-CoinGecko Pro');
+    }
+  };
+
+  const handleDisconnectCoinGeckoPro = () => {
+    removeCoinGeckoApiKey();
+    setCoinGeckoProConnected(false);
+    setCoinGeckoApiKey('');
+    toast.info('החיבור ל-CoinGecko Pro נותק');
   };
 
   return (
@@ -471,58 +503,79 @@ const ApiConnections = () => {
         </TabsContent>
         
         <TabsContent value="coingecko">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <Badge variant={coinGeckoConnected ? "success" : "secondary"} className="ml-2">
-                  {coinGeckoConnected ? "מחובר" : "לא מחובר"}
-                </Badge>
-                <CardTitle className="text-right">CoinGecko</CardTitle>
-              </div>
-              <CardDescription className="text-right">
-                חיבור לנתוני מטבעות קריפטו בזמן אמת ללא צורך במפתח API
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded text-right mb-4">
-                <p>CoinGecko מספק גישה ישירה למידע ללא צורך ברישום או קבלת מפתח API במגבלות מ��וימות:</p>
-                <ul className="list-disc list-inside mt-2 space-y-1">
-                  <li>עד 10-30 בקשות בדקה בגרסה החינמית</li>
-                  <li>גישה לנתוני מחירים, היסטוריה ומטבעות</li>
-                  <li>האתר מתעדכן באופן אוטומטי מדי 30 שניות</li>
-                </ul>
-                <p className="mt-2">לקבלת גבולות גבוהים יותר, ניתן לבדוק את <a href="https://www.coingecko.com/en/api/pricing" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">תוכניות ה-API המקצועיות</a>.</p>
-              </div>
-              
-              <div className="flex justify-between mt-4">
-                <Button
-                  variant="outline"
-                  onClick={async () => {
-                    const isConnected = await testCoinGecko();
-                    setCoinGeckoConnected(isConnected);
-                    if (isConnected) {
-                      toast.success('החיבור ל-CoinGecko פעיל');
-                    } else {
-                      toast.error('החיבור ל-CoinGecko אינו פעיל');
-                    }
-                  }}
-                >
-                  <RefreshCw className="h-4 w-4 ml-2" />
-                  בדוק חיבור
-                </Button>
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <Badge variant={coinGeckoConnected ? "success" : "secondary"} className="ml-2">
+                    {coinGeckoConnected ? "מחובר" : "לא מחובר"}
+                  </Badge>
+                  <CardTitle className="text-right">CoinGecko (גרסה חינמית)</CardTitle>
+                </div>
+                <CardDescription className="text-right">
+                  חיבור לנתוני מטבעות קריפטו בזמן אמת ללא צורך במפתח API
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-gray-100 dark:bg-gray-800 p-4 rounded text-right mb-4">
+                  <p>CoinGecko מספק גישה ישירה למידע ללא צורך ברישום או קבלת מפתח API במגבלות מסוימות:</p>
+                  <ul className="list-disc list-inside mt-2 space-y-1">
+                    <li>עד 10-30 בקשות בדקה בגרסה החינמית</li>
+                    <li>גישה לנתוני מחירים, היסטוריה ומטבעות</li>
+                    <li>האתר מתעדכן באופן אוטומטי מדי 30 שניות</li>
+                  </ul>
+                  <p className="mt-2">לקבלת גבולות גבוהים יותר, ניתן לבדוק את <a href="https://www.coingecko.com/en/api/pricing" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">תוכניות ה-API המקצועיות</a>.</p>
+                </div>
                 
-                <a
-                  href="https://www.coingecko.com/en/api/documentation"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200"
-                >
-                  <ExternalLink className="h-4 w-4 ml-2" />
-                  תיעוד ה-API
-                </a>
-              </div>
-            </CardContent>
-          </Card>
+                <div className="flex justify-between mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={async () => {
+                      const isConnected = await testCoinGecko();
+                      setCoinGeckoConnected(isConnected);
+                      if (isConnected) {
+                        toast.success('החיבור ל-CoinGecko פעיל');
+                      } else {
+                        toast.error('החיבור ל-CoinGecko אינו פעיל');
+                      }
+                    }}
+                  >
+                    <RefreshCw className="h-4 w-4 ml-2" />
+                    בדוק חיבור
+                  </Button>
+                  
+                  <a
+                    href="https://www.coingecko.com/en/api/documentation"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200"
+                  >
+                    <ExternalLink className="h-4 w-4 ml-2" />
+                    תיעוד ה-API
+                  </a>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <ApiConnection
+              title="CoinGecko Pro"
+              description="חיבור מתקדם לנתוני קריפטו עם מגבלות גבוהות יותר באמצעות מפתח API"
+              isConnected={coinGeckoProConnected}
+              apiKey={coinGeckoApiKey}
+              onConnect={handleConnectCoinGeckoPro}
+              onDisconnect={handleDisconnectCoinGeckoPro}
+              needsSecret={false}
+              setupUrl="https://www.coingecko.com/en/api/pricing"
+              setupInstructions={
+                <ol className="list-decimal list-inside space-y-2">
+                  <li>הירשם לאחת מתוכניות ה-API המקצועיות של CoinGecko</li>
+                  <li>קבל את מפתח ה-API שלך מהפורטל של CoinGecko</li>
+                  <li>הזן את מפתח ה-API בטופס זה</li>
+                  <li>הגבלות הבקשות יעלו משמעותית לעומת הגרסה החינמית</li>
+                </ol>
+              }
+            />
+          </div>
         </TabsContent>
       </Tabs>
     </Container>
