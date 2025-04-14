@@ -224,3 +224,11 @@ export const isBinanceConnected = (): boolean => {
   const credentials = getBinanceCredentials();
   return credentials?.isConnected === true;
 };
+
+/**
+ * Clear Binance credentials from localStorage
+ */
+export const clearBinanceCredentials = (): void => {
+  localStorage.removeItem(BINANCE_AUTH_KEY);
+  toast.info('חיבור Binance נוקה');
+};
