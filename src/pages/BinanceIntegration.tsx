@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Container } from '@/components/ui/container';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,9 +9,10 @@ import BinanceConnectionStatus from '@/components/binance/BinanceConnectionStatu
 import BinanceRealTimeStatus from '@/components/binance/BinanceRealTimeStatus';
 import { useAuth } from '@/contexts/AuthContext';
 import RequireAuth from '@/components/auth/RequireAuth';
-import { LineChart, Wallet, ArrowUpDown, Clock, Settings } from 'lucide-react';
+import { LineChart, Wallet, ArrowUpDown, Clock, Settings, Book } from 'lucide-react';
 import { useBinanceData } from '@/hooks/use-binance-data';
 import { toast } from 'sonner';
+import RealModeGuide from '@/components/guides/RealModeGuide';
 
 const BinanceIntegration = () => {
   const { isConnected, refreshConnection } = useBinanceConnection();
@@ -113,7 +115,7 @@ const BinanceIntegration = () => {
           </Card>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="overview" className="flex items-center gap-1">
                 <LineChart className="h-4 w-4" />
                 סקירה
@@ -129,6 +131,10 @@ const BinanceIntegration = () => {
               <TabsTrigger value="history" className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
                 היסטוריה
+              </TabsTrigger>
+              <TabsTrigger value="guide" className="flex items-center gap-1">
+                <Book className="h-4 w-4" />
+                מדריך
               </TabsTrigger>
               {isAdmin && (
                 <TabsTrigger value="settings" className="flex items-center gap-1">
@@ -206,6 +212,10 @@ const BinanceIntegration = () => {
                   </div>
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="guide">
+              <RealModeGuide />
             </TabsContent>
 
             {isAdmin && (

@@ -3,17 +3,25 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Activity, AlertTriangle, CheckCircle2, Zap, Settings, RefreshCw } from 'lucide-react';
+import { 
+  Activity, AlertTriangle, CheckCircle2, Zap, Settings, 
+  RefreshCw, ToggleLeft, ToggleRight 
+} from 'lucide-react';
 import { useSystemStatus } from '@/hooks/use-system-status';
 import { toast } from 'sonner';
 import { getProxyConfig, isProxyConfigured } from '@/services/proxy/proxyConfig';
 import { Link } from 'react-router-dom';
 import { useBinanceConnection } from '@/hooks/use-binance-connection';
+import { 
+  isRealTimeMode as checkIsRealTimeMode, 
+  setRealTimeMode 
+} from '@/services/binance/marketData';
 
 const BinanceRealTimeStatus: React.FC = () => {
   const { isRealTime, connectionStatus, dataSources, enableRealTimeMode } = useSystemStatus();
   const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
   const { isConnected: isBinanceConnected } = useBinanceConnection();
+  const [isForceRealTime, setIsForceRealTime] = useState<boolean>(checkIsRealTimeMode());
   
   const binanceSource = dataSources.find(source => source.type === 'binance');
   const isBinanceActive = binanceSource?.status === 'active' || isBinanceConnected;
@@ -59,6 +67,25 @@ const BinanceRealTimeStatus: React.FC = () => {
       description: 'נתוני בינאנס עודכנו ידנית'
     });
   };
+
+  // טוגל למצב נתונים אמיתיים
+  const handleToggleRealData = () => {
+    const newValue = !isForceRealTime;
+    setIsForceRealTime(newValue);
+    
+    // עדכון הגדרת מצב אמיתי בשירות
+    setRealTimeMode(newValue);
+    
+    if (newValue) {
+      toast.success('מצב נתונים אמיתיים מופעל', {
+        description: 'המערכת תציג נתונים אמיתיים במקום נתוני דמו'
+      });
+    } else {
+      toast.info('מצב נתונים אמיתיים מושבת', {
+        description: 'המערכת תציג נתוני דמו'
+      });
+    }
+  };
   
   const proxyConfig = getProxyConfig();
   const showProxyWarning = isBinanceActive && !proxyConfig.isEnabled;
@@ -83,15 +110,36 @@ const BinanceRealTimeStatus: React.FC = () => {
           {isBinanceActive ? (
             <div className="rounded-md p-3 bg-green-50 dark:bg-green-950/20 flex items-start justify-between">
               <div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="gap-1"
-                  onClick={handleManualRefresh}
-                >
-                  <RefreshCw className="h-4 w-4" />
-                  רענן נתונים
-                </Button>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1"
+                    onClick={handleManualRefresh}
+                  >
+                    <RefreshCw className="h-4 w-4" />
+                    רענן נתונים
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1 justify-start"
+                    onClick={handleToggleRealData}
+                  >
+                    {isForceRealTime ? (
+                      <>
+                        <ToggleRight className="h-4 w-4 text-green-600" />
+                        מצב נתונים אמיתיים
+                      </>
+                    ) : (
+                      <>
+                        <ToggleLeft className="h-4 w-4" />
+                        מצב נתוני דמו
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
               <div className="text-right">
                 <div className="flex items-center gap-2 mb-1">
@@ -100,6 +148,13 @@ const BinanceRealTimeStatus: React.FC = () => {
                 </div>
                 <p className="text-sm text-muted-foreground">
                   מערכת זמן אמת פעילה. נתונים מתעדכנים אוטומטית כל {isDevelopment ? "5" : "30"} שניות.
+                </p>
+                <p className="text-sm font-medium mt-1">
+                  מצב נתונים: {isForceRealTime ? (
+                    <span className="text-green-600">אמיתי</span>
+                  ) : (
+                    <span className="text-orange-500">דמו</span>
+                  )}
                 </p>
               </div>
             </div>

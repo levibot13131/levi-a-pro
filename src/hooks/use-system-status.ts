@@ -1,150 +1,183 @@
 
 import { useState, useEffect } from 'react';
-import { useTradingViewConnection } from './use-tradingview-connection';
-import { useBinanceConnection } from './use-binance-connection';
+import { isRealTimeMode, setRealTimeMode } from '@/services/binance/marketData';
 import { toast } from 'sonner';
-import { listenToProxyChanges, getProxyConfig } from '@/services/proxy/proxyConfig';
 
-export type ConnectionStatus = 'connected' | 'partial' | 'disconnected';
-export type DataSourceType = 'tradingview' | 'binance' | 'webhook' | 'internal';
-
-export interface DataSource {
-  type: DataSourceType;
-  name: string;
-  status: 'active' | 'inactive';
+interface DataSource {
+  type: 'binance' | 'tradingview' | 'proxy';
+  status: 'active' | 'inactive' | 'error';
   lastUpdated?: Date;
 }
 
-export interface SystemStatusData {
-  connectionStatus: ConnectionStatus;
-  dataSources: DataSource[];
+interface SystemStatus {
   isRealTime: boolean;
-  lastUpdated: Date | null;
-  activeFeatures: string[];
+  connectionStatus: 'connected' | 'partial' | 'disconnected';
+  hasProxyConfig: boolean;
+  dataSources: DataSource[];
+  enableRealTimeMode: () => boolean;
+  disableRealTimeMode: () => boolean;
+  toggleRealTimeMode: () => boolean;
 }
 
-export function useSystemStatus() {
-  const { isConnected: isTradingViewConnected } = useTradingViewConnection();
-  const { isConnected: isBinanceConnected } = useBinanceConnection();
-  const [status, setStatus] = useState<SystemStatusData>({
-    connectionStatus: 'disconnected',
-    dataSources: [],
-    isRealTime: false,
-    lastUpdated: null,
-    activeFeatures: []
-  });
-  const [proxyEnabled, setProxyEnabled] = useState(() => getProxyConfig().isEnabled);
-  
-  // בדיקת המערכת והגדרת הסטטוס
+export const useSystemStatus = (): SystemStatus => {
+  const [isRealTime, setIsRealTime] = useState<boolean>(localStorage.getItem('system_real_time_mode') === 'true');
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'partial' | 'disconnected'>('disconnected');
+  const [hasProxyConfig, setHasProxyConfig] = useState<boolean>(false);
+  const [dataSources, setDataSources] = useState<DataSource[]>([
+    { type: 'binance', status: 'inactive' },
+    { type: 'tradingview', status: 'inactive' },
+    { type: 'proxy', status: 'inactive' }
+  ]);
+
+  // אתחול המצב בטעינה ראשונית
   useEffect(() => {
-    const checkSystemStatus = () => {
-      // בנייה של מקורות המידע
-      const dataSources: DataSource[] = [
-        {
-          type: 'tradingview',
-          name: 'TradingView',
-          status: isTradingViewConnected ? 'active' : 'inactive',
-          lastUpdated: isTradingViewConnected ? new Date() : undefined
-        },
-        {
-          type: 'binance',
-          name: 'Binance',
-          status: isBinanceConnected ? 'active' : 'inactive',
-          lastUpdated: isBinanceConnected ? new Date() : undefined
-        },
-        {
-          type: 'webhook',
-          name: 'Webhook Alerts',
-          status: (isTradingViewConnected && proxyEnabled) ? 'active' : 'inactive'
-        },
-        {
-          type: 'internal',
-          name: 'Internal Data',
-          status: 'active', // תמיד פעיל
-          lastUpdated: new Date()
-        }
-      ];
-      
-      // קביעת סטטוס חיבור כללי
-      let connectionStatus: ConnectionStatus = 'disconnected';
-      if (isTradingViewConnected && isBinanceConnected) {
-        connectionStatus = 'connected';
-      } else if (isTradingViewConnected || isBinanceConnected) {
-        connectionStatus = 'partial';
+    // בדיקה האם יש פרוקסי מוגדר
+    const proxyConfigured = localStorage.getItem('levi_bot_proxy_url') !== null;
+    setHasProxyConfig(proxyConfigured);
+    
+    // בדיקה אם יש התחברות לבינאנס
+    const binanceConnected = localStorage.getItem('levi_bot_binance_credentials') !== null;
+    
+    // בדיקה אם יש התחברות ל-TradingView
+    const tradingViewConnected = localStorage.getItem('tradingview_auth_credentials') !== null;
+    
+    // עדכון מצב החיבור הכללי
+    if (binanceConnected && tradingViewConnected) {
+      setConnectionStatus('connected');
+    } else if (binanceConnected || tradingViewConnected) {
+      setConnectionStatus('partial');
+    } else {
+      setConnectionStatus('disconnected');
+    }
+    
+    // עדכון מקורות הנתונים
+    setDataSources([
+      { 
+        type: 'binance', 
+        status: binanceConnected ? 'active' : 'inactive',
+        lastUpdated: binanceConnected ? new Date() : undefined
+      },
+      { 
+        type: 'tradingview', 
+        status: tradingViewConnected ? 'active' : 'inactive',
+        lastUpdated: tradingViewConnected ? new Date() : undefined
+      },
+      { 
+        type: 'proxy', 
+        status: proxyConfigured ? 'active' : 'inactive' 
       }
-      
-      // קביעת האם המערכת בזמן אמת
-      const isRealTime = isTradingViewConnected || isBinanceConnected;
-      
-      // קביעת פיצ'רים פעילים
-      const activeFeatures: string[] = ['מעקב נכסים', 'חדשות שוק'];
-      
-      if (isTradingViewConnected) {
-        activeFeatures.push('איתותים טכניים', 'גרפים מתקדמים', 'התראות');
+    ]);
+    
+    // טעינת מצב זמן אמת מהזיכרון
+    const savedRealTimeMode = localStorage.getItem('system_real_time_mode') === 'true';
+    setIsRealTime(savedRealTimeMode);
+    
+    // טעינת הגדרת מצב זמן אמת מצב Binance
+    if (isRealTimeMode() !== savedRealTimeMode) {
+      // עדכון ההגדרה בשירות Binance
+      setRealTimeMode(savedRealTimeMode);
+    }
+  }, []);
+  
+  // האזנה לשינויים במצב החיבור
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'levi_bot_proxy_url') {
+        setHasProxyConfig(e.newValue !== null);
+        setDataSources(prev => prev.map(source => 
+          source.type === 'proxy' ? 
+            { ...source, status: e.newValue !== null ? 'active' : 'inactive' } : 
+            source
+        ));
+      } else if (e.key === 'levi_bot_binance_credentials') {
+        const binanceConnected = e.newValue !== null;
+        setDataSources(prev => prev.map(source => 
+          source.type === 'binance' ? 
+            { ...source, status: binanceConnected ? 'active' : 'inactive', lastUpdated: binanceConnected ? new Date() : undefined } : 
+            source
+        ));
+        
+        updateConnectionStatus();
+      } else if (e.key === 'tradingview_auth_credentials') {
+        const tradingViewConnected = e.newValue !== null;
+        setDataSources(prev => prev.map(source => 
+          source.type === 'tradingview' ? 
+            { ...source, status: tradingViewConnected ? 'active' : 'inactive', lastUpdated: tradingViewConnected ? new Date() : undefined } : 
+            source
+        ));
+        
+        updateConnectionStatus();
+      } else if (e.key === 'system_real_time_mode') {
+        setIsRealTime(e.newValue === 'true');
+        
+        // עדכון הגדרת מצב זמן אמת בשירות Binance
+        setRealTimeMode(e.newValue === 'true');
       }
-      
-      if (isBinanceConnected) {
-        activeFeatures.push('מסחר אוטומטי', 'ספר הזמנות', 'ניתוח נוזלות');
-      }
-      
-      if (proxyEnabled) {
-        activeFeatures.push('ווב הוק', 'חיבור API');
-      }
-      
-      setStatus({
-        connectionStatus,
-        dataSources,
-        isRealTime,
-        lastUpdated: new Date(),
-        activeFeatures
-      });
     };
     
-    // בדיקה ראשונית
-    checkSystemStatus();
+    const updateConnectionStatus = () => {
+      const binanceConnected = localStorage.getItem('levi_bot_binance_credentials') !== null;
+      const tradingViewConnected = localStorage.getItem('tradingview_auth_credentials') !== null;
+      
+      if (binanceConnected && tradingViewConnected) {
+        setConnectionStatus('connected');
+      } else if (binanceConnected || tradingViewConnected) {
+        setConnectionStatus('partial');
+      } else {
+        setConnectionStatus('disconnected');
+      }
+    };
     
-    // בדיקה תקופתית
-    const interval = setInterval(checkSystemStatus, 30000); // בדיקה כל 30 שניות
-    
-    // האזנה לשינויים בהגדרות פרוקסי
-    const unsubscribe = listenToProxyChanges((config) => {
-      console.log('Proxy config changed:', config);
-      setProxyEnabled(config.isEnabled);
-      checkSystemStatus();
-    });
+    window.addEventListener('storage', handleStorageChange);
     
     return () => {
-      clearInterval(interval);
-      unsubscribe();
+      window.removeEventListener('storage', handleStorageChange);
     };
-  }, [isTradingViewConnected, isBinanceConnected, proxyEnabled]);
+  }, []);
   
-  // הפעלה של המערכת בזמן אמת
-  const enableRealTimeMode = () => {
-    if (!isTradingViewConnected && !isBinanceConnected) {
-      toast.warning('לא ניתן להפעיל מצב זמן אמת', {
-        description: 'יש להתחבר תחילה ל-TradingView או Binance'
-      });
+  const enableRealTimeMode = (): boolean => {
+    try {
+      localStorage.setItem('system_real_time_mode', 'true');
+      setIsRealTime(true);
+      
+      // עדכון הגדרת מצב זמן אמת בשירות Binance
+      setRealTimeMode(true);
+      
+      return true;
+    } catch (error) {
+      console.error('Error enabling real-time mode:', error);
+      toast.error('שגיאה בהפעלת מצב זמן אמת');
       return false;
     }
-    
-    // בדיקה אם הפרוקסי מוגדר ופעיל
-    const proxyConfig = getProxyConfig();
-    if (!proxyConfig.isEnabled || !proxyConfig.baseUrl) {
-      toast.warning('מומלץ להגדיר פרוקסי לפני הפעלת מצב זמן אמת', {
-        description: 'המערכת תעבוד, אך ללא תמיכה בווב הוק ובהתראות מתקדמות'
-      });
+  };
+  
+  const disableRealTimeMode = (): boolean => {
+    try {
+      localStorage.setItem('system_real_time_mode', 'false');
+      setIsRealTime(false);
+      
+      // עדכון הגדרת מצב זמן אמת בשירות Binance
+      setRealTimeMode(false);
+      
+      return true;
+    } catch (error) {
+      console.error('Error disabling real-time mode:', error);
+      toast.error('שגיאה בכיבוי מצב זמן אמת');
+      return false;
     }
-    
-    toast.success('מצב זמן אמת הופעל', {
-      description: 'המערכת תעדכן נתונים בזמן אמת'
-    });
-    return true;
+  };
+  
+  const toggleRealTimeMode = (): boolean => {
+    return isRealTime ? disableRealTimeMode() : enableRealTimeMode();
   };
   
   return {
-    ...status,
+    isRealTime,
+    connectionStatus,
+    hasProxyConfig,
+    dataSources,
     enableRealTimeMode,
-    isProxyEnabled: proxyEnabled
+    disableRealTimeMode,
+    toggleRealTimeMode
   };
-}
+};

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { useChartData } from '../../hooks/use-chart-data';
-import ChartToolbar from './chart/ChartToolbar';
+import CollapsibleToolbar from '../technical-analysis/charts/CollapsibleToolbar'; // שינוי כאן
 import ChartLoading from './chart/ChartLoading';
 import ChartError from './chart/ChartError';
 import ChartNoData from './chart/ChartNoData';
@@ -22,6 +22,8 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
   const [chartType, setChartType] = useState<'candle' | 'line' | 'bar'>('line');
   const [showVolume, setShowVolume] = useState<boolean>(false);
   const [showIndicators, setShowIndicators] = useState<boolean>(true);
+  const [showPatterns, setShowPatterns] = useState<boolean>(true); // הוספה חדשה
+  const [showSignals, setShowSignals] = useState<boolean>(true);   // הוספה חדשה
   
   const {
     chartData,
@@ -63,18 +65,16 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
         </div>
       </CardHeader>
       <CardContent>
-        <ChartToolbar 
-          onRefresh={handleRefresh}
-          onTimeframeChange={handleTimeframeChange}
-          onChartTypeChange={handleChartTypeChange}
-          isRefreshing={isLoading}
-          selectedTimeframe={selectedTimeframe}
-          chartType={chartType}
-          showVolume={showVolume}
-          setShowVolume={setShowVolume}
-          showIndicators={showIndicators}
-          setShowIndicators={setShowIndicators}
-        />
+        <div className="mb-4">
+          <CollapsibleToolbar 
+            showVolume={showVolume}
+            setShowVolume={setShowVolume}
+            showPatterns={showPatterns}
+            setShowPatterns={setShowPatterns}
+            showSignals={showSignals}
+            setShowSignals={setShowSignals}
+          />
+        </div>
         
         {isLoading ? (
           <ChartLoading />
@@ -86,6 +86,8 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
             chartType={chartType}
             showVolume={showVolume}
             isPositiveChange={isPositiveChange}
+            showPatterns={showPatterns}  // העברת הפרמטרים החדשים
+            showSignals={showSignals}    // העברת הפרמטרים החדשים
           />
         ) : (
           <ChartNoData />
