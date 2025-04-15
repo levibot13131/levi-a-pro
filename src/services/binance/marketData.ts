@@ -1,226 +1,126 @@
 
+import { getProxyConfig } from '@/services/proxy/proxyConfig';
 import { toast } from 'sonner';
-import { useAppSettings } from '@/hooks/use-app-settings';
 
-// Current mode tracking
+export interface CurrencyData {
+  symbol: string;
+  price: number;
+  change24h: number;
+  high24h: number;
+  low24h: number;
+  volume24h: number;
+  marketCap: number;
+  lastUpdated: number;
+}
+
 let realTimeMode = false;
 
-// Function to check if real-time mode is enabled
-export const isRealTimeMode = () => realTimeMode;
-
-// Function to set real-time mode
-export const setRealTimeMode = (enabled: boolean) => {
-  realTimeMode = enabled;
-  // Dispatch event to notify other components
-  const event = new CustomEvent('real-time-mode-change', {
-    detail: { enabled }
-  });
-  window.dispatchEvent(event);
-  
-  // Log the change
-  console.log(`Real-time mode: ${enabled ? 'ENABLED' : 'DISABLED'}`);
+export const isRealTimeMode = (): boolean => {
   return realTimeMode;
 };
 
-// Start real-time market data updates
-export const startRealTimeMarketData = (symbol: string = 'BTCUSDT') => {
-  console.log(`Starting real-time market data for ${symbol}`);
+export const setRealTimeMode = (enabled: boolean): boolean => {
+  // שמירת המצב הקודם
+  const previousMode = realTimeMode;
   
+  // עדכון המצב החדש
+  realTimeMode = enabled;
+  
+  // בדיקה שהמצב השתנה
+  if (previousMode !== realTimeMode) {
+    // שליחת אירוע שינוי מצב זמן אמת
+    window.dispatchEvent(new CustomEvent('realtime-mode-changed', {
+      detail: { enabled: realTimeMode }
+    }));
+    
+    console.log(`Real-time mode ${realTimeMode ? 'enabled' : 'disabled'}`);
+  }
+  
+  return realTimeMode;
+};
+
+/**
+ * התחלת עדכוני נתוני שוק בזמן אמת
+ */
+export const startRealTimeMarketData = (symbol: string): boolean => {
   try {
-    // In production, this would connect to the Binance WebSocket API
-    // For now we simulate the connection
-    const isConnected = true;
+    // בדיקה האם יש פרוקסי מוגדר וזמין
+    const proxyConfig = getProxyConfig();
     
-    if (isConnected && realTimeMode) {
-      console.log(`Real-time data stream established for ${symbol}`);
-      // Start simulating real-time updates for development
-      simulateRealTimeUpdates(symbol);
-    }
+    // סימולציה של התחלת מעקב זמן אמת
+    console.log(`Starting real-time market data for ${symbol}`);
     
-    return isConnected;
+    // בהצלחה, יש להחזיר true
+    return true;
   } catch (error) {
-    console.error(`Failed to start real-time data for ${symbol}:`, error);
+    console.error('Error starting real-time market data:', error);
+    
+    // נכשל, יש להחזיר false
     return false;
   }
 };
 
-// Simulate real-time updates for development
-const simulateRealTimeUpdates = (symbol: string) => {
+/**
+ * האזנה לעדכוני בינאנס
+ */
+export const listenToBinanceUpdates = (callback: (data: any) => void): () => void => {
+  // יצירת אובייקט WebSocket או סימולציה של עדכונים תקופתיים
   const interval = setInterval(() => {
-    if (!realTimeMode) {
-      clearInterval(interval);
-      return;
+    if (realTimeMode) {
+      // סימולציה של עדכון נתונים
+      const mockData = {
+        symbol: 'BTCUSDT',
+        price: 42000 + (Math.random() * 2000),
+        change: (Math.random() * 10) - 5 // -5% to +5%
+      };
+      
+      callback(mockData);
     }
-    
-    const mockUpdate = {
-      symbol,
-      price: Math.random() * 50000,
-      timestamp: Date.now(),
-      volume: Math.random() * 100000
-    };
-    
-    // Dispatch custom event with the mock data
-    const event = new CustomEvent('binance-data-update', {
-      detail: mockUpdate
-    });
-    
-    window.dispatchEvent(event);
-  }, 5000); // Update every 5 seconds
+  }, 5000);
   
-  return () => clearInterval(interval);
-};
-
-// Setup event listener for Binance updates
-export const listenToBinanceUpdates = (callback: (data: any) => void) => {
-  const eventName = 'binance-data-update';
-  
-  // Add event listener
-  window.addEventListener(eventName, ((event: CustomEvent) => {
-    callback(event.detail);
-  }) as EventListener);
-  
-  // Return cleanup function
+  // החזרת פונקציית ניקוי
   return () => {
-    window.removeEventListener(eventName, ((event: CustomEvent) => {
-      callback(event.detail);
-    }) as EventListener);
+    clearInterval(interval);
   };
 };
 
-// Get currency fundamental data
+/**
+ * קבלת נתונים בסיסיים על מטבע
+ */
 export const getFundamentalData = async (symbol: string): Promise<CurrencyData> => {
-  if (realTimeMode) {
-    try {
-      // In production, this would fetch from an actual API
-      console.log(`Fetching actual market data for ${symbol}`);
-      
-      // For now, return mock data with slightly more realistic values
-      return generateRealisticMockData(symbol);
-    } catch (error) {
-      console.error(`Error fetching data for ${symbol}:`, error);
-      // Fall back to mock data
-      return generateRealisticMockData(symbol);
-    }
-  } else {
-    // Return standard mock data
+  try {
+    // בדיקה האם יש פרוקסי מוגדר
+    const proxyConfig = getProxyConfig();
+    
+    // סימולציה של קבלת נתונים
+    const mockData: CurrencyData = {
+      symbol,
+      price: symbol.includes('BTC') ? 42000 + (Math.random() * 2000) : 
+             symbol.includes('ETH') ? 2000 + (Math.random() * 500) :
+             500 + (Math.random() * 100),
+      change24h: (Math.random() * 10) - 5, // -5% to +5%
+      high24h: 45000,
+      low24h: 41000,
+      volume24h: 15000000000,
+      marketCap: 800000000000,
+      lastUpdated: Date.now()
+    };
+    
+    return mockData;
+  } catch (error) {
+    console.error('Error fetching fundamental data:', error);
+    toast.error('שגיאה בטעינת נתוני מטבע');
+    
+    // במקרה של שגיאה, החזר נתונים ריקים
     return {
       symbol,
-      name: symbol.replace('USDT', ''),
-      price: Math.random() * 50000,
-      change24h: (Math.random() * 10) - 5,
-      volume24h: Math.random() * 1000000000,
-      marketCap: Math.random() * 1000000000000,
-      circulatingSupply: Math.random() * 21000000,
-      totalSupply: Math.random() * 21000000,
-      maxSupply: symbol === 'BTCUSDT' ? 21000000 : Math.random() * 100000000,
-      launchDate: '2009-01-03',
-      allTimeHigh: {
-        price: 69000,
-        date: '2021-11-10'
-      }
+      price: 0,
+      change24h: 0,
+      high24h: 0,
+      low24h: 0,
+      volume24h: 0,
+      marketCap: 0,
+      lastUpdated: Date.now()
     };
-  }
-};
-
-// Generate more realistic mock data
-const generateRealisticMockData = (symbol: string): CurrencyData => {
-  const baseSymbol = symbol.replace('USDT', '');
-  
-  const data: Record<string, any> = {
-    BTC: {
-      price: 40000 + (Math.random() * 10000),
-      marketCap: 750000000000 + (Math.random() * 100000000000),
-      volume24h: 20000000000 + (Math.random() * 10000000000),
-      circulating: 19000000,
-      total: 21000000,
-      max: 21000000,
-      launch: '2009-01-03',
-      ath: 69000
-    },
-    ETH: {
-      price: 2000 + (Math.random() * 500),
-      marketCap: 250000000000 + (Math.random() * 50000000000),
-      volume24h: 12000000000 + (Math.random() * 5000000000),
-      circulating: 120000000,
-      total: 120000000,
-      max: null,
-      launch: '2015-07-30',
-      ath: 4800
-    },
-    SOL: {
-      price: 50 + (Math.random() * 20),
-      marketCap: 20000000000 + (Math.random() * 5000000000),
-      volume24h: 2000000000 + (Math.random() * 1000000000),
-      circulating: 350000000,
-      total: 500000000,
-      max: null,
-      launch: '2020-03-16',
-      ath: 260
-    }
-  };
-  
-  const coinData = data[baseSymbol] || {
-    price: 10 + (Math.random() * 100),
-    marketCap: 1000000000 + (Math.random() * 10000000000),
-    volume24h: 500000000 + (Math.random() * 1000000000),
-    circulating: 100000000 + (Math.random() * 900000000),
-    total: 1000000000,
-    max: null,
-    launch: '2020-01-01',
-    ath: 100
-  };
-  
-  return {
-    symbol,
-    name: baseSymbol,
-    price: coinData.price,
-    change24h: (Math.random() * 10) - 5,
-    volume24h: coinData.volume24h,
-    marketCap: coinData.marketCap,
-    circulatingSupply: coinData.circulating,
-    totalSupply: coinData.total,
-    maxSupply: coinData.max,
-    launchDate: coinData.launch,
-    allTimeHigh: {
-      price: coinData.ath,
-      date: '2021-11-10'
-    }
-  };
-};
-
-// Interface for currency data
-export interface CurrencyData {
-  symbol: string;
-  name: string;
-  price: number;
-  change24h: number;
-  volume24h: number;
-  marketCap: number;
-  circulatingSupply: number;
-  totalSupply: number;
-  maxSupply: number | null;
-  launchDate: string;
-  allTimeHigh: {
-    price: number;
-    date: string;
-  };
-}
-
-// Start and stop polling for data (if not using WebSockets)
-let pollingInterval: number | null = null;
-
-export const startPolling = (callback: () => void, interval: number = 5000) => {
-  if (pollingInterval) clearInterval(pollingInterval);
-  pollingInterval = window.setInterval(callback, interval);
-  return () => {
-    if (pollingInterval) clearInterval(pollingInterval);
-    pollingInterval = null;
-  };
-};
-
-export const stopPolling = () => {
-  if (pollingInterval) {
-    clearInterval(pollingInterval);
-    pollingInterval = null;
   }
 };

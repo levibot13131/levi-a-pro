@@ -1,52 +1,64 @@
 
-import { useState } from 'react';
-import { TradeSignal } from '@/types/asset';
 import { useQuery } from '@tanstack/react-query';
 
-// Storage key for signals
-const SIGNAL_STORAGE_KEY = 'realtime_signals';
+export interface TradeSignal {
+  id: string;
+  asset: string;
+  type: 'buy' | 'sell' | 'alert';
+  message: string;
+  timestamp: number;
+  price?: number;
+  source?: string;
+}
 
-// Get signals from storage
-export const getStoredSignals = (): TradeSignal[] => {
-  try {
-    const signals = localStorage.getItem(SIGNAL_STORAGE_KEY);
-    return signals ? JSON.parse(signals) : [];
-  } catch (error) {
-    console.error('Error getting stored signals:', error);
-    return [];
-  }
+const STORAGE_KEY = 'levi_bot_trade_signals';
+
+// שמירת אות מסחר
+export const saveSignal = (signal: Omit<TradeSignal, 'id'>): TradeSignal => {
+  const existingSignals = getSignals();
+  
+  // יצירת מזהה ייחודי
+  const newSignal: TradeSignal = {
+    ...signal,
+    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  };
+  
+  // הוספת האות לתחילת המערך
+  existingSignals.unshift(newSignal);
+  
+  // הגבלת מספר האותות שנשמרים
+  const limitedSignals = existingSignals.slice(0, 100);
+  
+  // שמירה באחסון מקומי
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(limitedSignals));
+  
+  return newSignal;
 };
 
-// Add signal to storage
-export const addSignal = (signal: TradeSignal): boolean => {
+// קבלת כל האותות השמורים
+export const getSignals = (): TradeSignal[] => {
   try {
-    const signals = getStoredSignals();
-    signals.unshift(signal); // Add to beginning of array
-    localStorage.setItem(SIGNAL_STORAGE_KEY, JSON.stringify(signals));
-    return true;
+    const storedSignals = localStorage.getItem(STORAGE_KEY);
+    if (storedSignals) {
+      return JSON.parse(storedSignals);
+    }
   } catch (error) {
-    console.error('Error storing signal:', error);
-    return false;
+    console.error('Error parsing trade signals:', error);
   }
+  
+  return [];
 };
 
-// Clear all stored signals
-export const clearStoredSignals = (): boolean => {
-  try {
-    localStorage.removeItem(SIGNAL_STORAGE_KEY);
-    return true;
-  } catch (error) {
-    console.error('Error clearing signals:', error);
-    return false;
-  }
+// ניקוי כל האותות
+export const clearSignals = (): void => {
+  localStorage.removeItem(STORAGE_KEY);
 };
 
-// Hook to use signals with React Query
+// הוק לשליפת אותות שמורים (עם React Query)
 export const useStoredSignals = () => {
   return useQuery({
-    queryKey: ['realTimeSignals'],
-    queryFn: getStoredSignals,
-    refetchOnWindowFocus: true,
-    staleTime: 5000, // 5 seconds
+    queryKey: ['tradeSignals'],
+    queryFn: getSignals,
+    refetchInterval: 30000, // רענון כל 30 שניות
   });
 };

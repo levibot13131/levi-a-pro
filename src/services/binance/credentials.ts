@@ -1,60 +1,49 @@
 
-import { toast } from 'sonner';
-
-// Key for storing Binance credentials in local storage
-const BINANCE_AUTH_KEY = 'levi_bot_binance_credentials';
-
-// Binance credentials interface
+// קובץ לניהול פרטי התחברות של Binance
 export interface BinanceCredentials {
   apiKey: string;
   apiSecret: string;
-  isConnected?: boolean;
+  isConnected: boolean;
   lastConnected?: number;
 }
 
-/**
- * Save Binance credentials
- */
-export const saveBinanceCredentials = (credentials: BinanceCredentials): void => {
-  localStorage.setItem(BINANCE_AUTH_KEY, JSON.stringify(credentials));
-};
+const BINANCE_CREDS_KEY = 'levi_bot_binance_credentials';
 
-/**
- * Get Binance credentials
- */
+// קבלת פרטי התחברות לבינאנס
 export const getBinanceCredentials = (): BinanceCredentials | null => {
-  const credentials = localStorage.getItem(BINANCE_AUTH_KEY);
-  
-  if (!credentials) return null;
-  
   try {
-    return JSON.parse(credentials) as BinanceCredentials;
+    const savedCreds = localStorage.getItem(BINANCE_CREDS_KEY);
+    if (savedCreds) {
+      return JSON.parse(savedCreds);
+    }
   } catch (error) {
     console.error('Error parsing Binance credentials:', error);
-    return null;
+  }
+  return null;
+};
+
+// שמירת פרטי התחברות לבינאנס
+export const saveBinanceCredentials = (credentials: BinanceCredentials): void => {
+  try {
+    localStorage.setItem(BINANCE_CREDS_KEY, JSON.stringify(credentials));
+    console.log('Binance credentials saved');
+  } catch (error) {
+    console.error('Error saving Binance credentials:', error);
   }
 };
 
-/**
- * Clear Binance credentials from localStorage
- */
-export const clearBinanceCredentials = (): void => {
-  localStorage.removeItem(BINANCE_AUTH_KEY);
-  toast.info('חיבור Binance נוקה');
-};
-
-/**
- * Disconnect from Binance
- */
-export const disconnectBinance = () => {
-  localStorage.removeItem(BINANCE_AUTH_KEY);
-  toast.info('החיבור לבינאנס נותק');
-};
-
-/**
- * Check if user is connected to Binance
- */
+// בדיקה האם מחובר לבינאנס
 export const isBinanceConnected = (): boolean => {
-  const credentials = getBinanceCredentials();
-  return credentials?.isConnected === true;
+  const creds = getBinanceCredentials();
+  return !!creds?.isConnected;
+};
+
+// ניתוק מבינאנס
+export const disconnectBinance = (): void => {
+  try {
+    localStorage.removeItem(BINANCE_CREDS_KEY);
+    console.log('Disconnected from Binance');
+  } catch (error) {
+    console.error('Error disconnecting from Binance:', error);
+  }
 };

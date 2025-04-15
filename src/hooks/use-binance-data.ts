@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { useAppSettings } from './use-app-settings';
 import { startRealTimeMarketData, listenToBinanceUpdates, getFundamentalData, CurrencyData } from '../services/binance/marketData';
 
-export type PriceData = {
+export interface PriceData {
   symbol: string;
   price: number;
   change: number;
@@ -12,7 +12,7 @@ export type PriceData = {
   low24h: number;
   volume: number;
   lastUpdate: number;
-};
+}
 
 interface MarketDataEntry {
   symbol: string;
@@ -31,7 +31,9 @@ export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
   const [fundamentalData, setFundamentalData] = useState<CurrencyData | null>(null);
   const [marketData, setMarketData] = useState<Record<string, MarketDataEntry>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const { demoMode } = useAppSettings();
+  const { demoMode } = useAppSettings((state: any) => ({
+    demoMode: state.demoMode
+  }));
 
   // Normalize symbols to always be an array for internal use
   const symbolsArray = Array.isArray(symbols) ? symbols : [symbols];

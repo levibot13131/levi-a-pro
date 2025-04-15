@@ -3,9 +3,12 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Check, RefreshCw, Power, Trash2, Zap, WifiOff } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { TradeSignal } from '@/types/asset';
+import { Bell, BellOff, AlertTriangle, Activity, Settings } from 'lucide-react';
+
+interface ProxyStatus {
+  isEnabled: boolean;
+  hasUrl: boolean;
+}
 
 interface AlertsCardProps {
   signals: any[];
@@ -16,7 +19,7 @@ interface AlertsCardProps {
   areAutoAlertsEnabled: boolean;
   isBinanceConnected: boolean;
   binanceMarketData: any;
-  proxyStatus: { isEnabled: boolean; hasUrl: boolean };
+  proxyStatus: ProxyStatus;
 }
 
 const AlertsCard: React.FC<AlertsCardProps> = ({
@@ -31,127 +34,109 @@ const AlertsCard: React.FC<AlertsCardProps> = ({
   proxyStatus
 }) => {
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-2">
+    <Card>
+      <CardHeader>
         <div className="flex justify-between items-center">
-          <Badge variant={isActive ? "default" : "outline"} className={isActive ? "bg-green-500" : ""}>
-            {isActive ? 'פעיל' : 'לא פעיל'}
+          <Badge variant={isActive ? "default" : "outline"}>
+            {isActive ? "פעיל" : "לא פעיל"}
           </Badge>
-          <CardTitle className="text-right text-xl">התראות בזמן אמת</CardTitle>
+          <CardTitle className="text-right">התראות בזמן אמת</CardTitle>
         </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex space-x-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleClearSignals}
-                disabled={signals.length === 0}
-              >
-                <Trash2 className="h-4 w-4 ml-1" />
-                נקה התראות
-              </Button>
-            </div>
-            
-            <div>
+          <div className="flex flex-col space-y-2">
+            <div className="flex justify-between items-center">
               <Button 
                 variant={isActive ? "destructive" : "default"}
                 size="sm"
                 onClick={toggleRealTimeAlerts}
+                disabled={!isBinanceConnected && !proxyStatus.isEnabled}
               >
                 {isActive ? (
                   <>
-                    <Power className="h-4 w-4 ml-1" />
-                    הפסק ניתוח
+                    <BellOff className="ml-2 h-4 w-4" />
+                    הפסק התראות
                   </>
                 ) : (
                   <>
-                    <Zap className="h-4 w-4 ml-1" />
-                    הפעל ניתוח בזמן אמת
+                    <Bell className="ml-2 h-4 w-4" />
+                    הפעל התראות
                   </>
                 )}
               </Button>
+              
+              <div className="flex items-center text-right">
+                <span className="text-sm font-medium">סטטוס התראות:</span>
+                <Badge variant={isActive ? "success" : "secondary"} className="mr-2">
+                  {isActive ? "פעיל" : "לא פעיל"}
+                </Badge>
+              </div>
             </div>
+            
+            {!isBinanceConnected && (
+              <div className="bg-orange-50 dark:bg-orange-950/20 p-2 rounded-md flex items-center">
+                <AlertTriangle className="h-4 w-4 text-orange-500 ml-2" />
+                <span className="text-xs">נדרש חיבור לבינאנס עבור התראות בזמן אמת</span>
+              </div>
+            )}
+            
+            {!proxyStatus.isEnabled && (
+              <div className="bg-yellow-50 dark:bg-yellow-950/20 p-2 rounded-md flex items-center">
+                <Settings className="h-4 w-4 text-yellow-500 ml-2" />
+                <span className="text-xs">מומלץ להפעיל פרוקסי לקבלת התראות מדויקות</span>
+              </div>
+            )}
           </div>
           
-          {!isActive && !areAutoAlertsEnabled && (
+          <div className="flex justify-between">
             <Button 
               variant="outline" 
-              size="sm" 
-              className="w-full" 
-              onClick={enableAutomaticAlerts}
+              size="sm"
+              onClick={handleClearSignals}
+              disabled={signals.length === 0}
             >
-              <RefreshCw className="h-4 w-4 ml-1" />
-              הפעל מעקב אוטומטי אחר נכסים מסומנים
+              נקה התראות
             </Button>
-          )}
+            
+            <Button
+              variant={areAutoAlertsEnabled ? "secondary" : "outline"}
+              size="sm"
+              onClick={enableAutomaticAlerts}
+              disabled={!isActive}
+            >
+              <Activity className="ml-2 h-4 w-4" />
+              התראות אוטומטיות
+            </Button>
+          </div>
           
-          {!proxyStatus.isEnabled && (
-            <div className="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-md text-amber-800 dark:text-amber-300 text-sm flex items-start">
-              <AlertCircle className="h-4 w-4 mt-0.5 ml-2 flex-shrink-0" />
-              <p className="text-right">
-                הגדרת פרוקסי מומלצת עבור נתונים בזמן אמת. 
-                <a href="/proxy-settings" className="underline ml-1">הגדר פרוקסי</a>
+          <div className="border rounded-md p-2">
+            <h4 className="text-sm font-medium mb-2 text-right">התראות אחרונות</h4>
+            
+            {signals.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center">
+                אין התראות חדשות
               </p>
-            </div>
-          )}
-          
-          {!isBinanceConnected && (
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-blue-800 dark:text-blue-300 text-sm flex items-start">
-              <WifiOff className="h-4 w-4 mt-0.5 ml-2 flex-shrink-0" />
-              <p className="text-right">
-                חיבור לבינאנס יאפשר נתוני מחיר מדויקים יותר. 
-                <a href="/binance-integration" className="underline ml-1">התחבר לבינאנס</a>
-              </p>
-            </div>
-          )}
-          
-          <div className="border rounded-md">
-            <ScrollArea className="h-[300px] p-4">
-              {signals.length > 0 ? (
-                <div className="space-y-3">
-                  {signals.map((signal, index) => (
-                    <div 
-                      key={index} 
-                      className={`p-3 rounded-md ${
-                        signal.type === 'buy' 
-                          ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-900' 
-                          : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <Badge variant="outline" className={
-                          signal.type === 'buy' 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' 
-                            : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-                        }>
-                          {signal.type === 'buy' ? 'קנייה' : 'מכירה'}
-                        </Badge>
-                        <div className="font-medium">{signal.symbolName || signal.assetId}</div>
-                      </div>
-                      <p className="text-sm text-right">{signal.description}</p>
-                      <div className="mt-2 text-xs flex justify-between">
-                        <span>
-                          מחיר: {typeof signal.price === 'number' 
-                            ? signal.price.toLocaleString(undefined, {maximumFractionDigits: 2}) 
-                            : signal.price}
-                        </span>
-                        <span>
-                          {new Date(signal.timestamp).toLocaleTimeString()}
-                        </span>
-                      </div>
+            ) : (
+              <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                {signals.map((signal, index) => (
+                  <div 
+                    key={index} 
+                    className="text-xs p-2 border-l-2 border-primary bg-muted rounded-sm text-right"
+                  >
+                    <div className="font-medium">
+                      {signal.type}: {signal.asset}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-muted-foreground py-10">
-                  <p>אין התראות עדיין</p>
-                  <p className="text-sm">התראות יופיעו כאן ברגע שיתקבלו</p>
-                </div>
-              )}
-            </ScrollArea>
+                    <div className="text-muted-foreground">
+                      {signal.message}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {new Date(signal.timestamp).toLocaleString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </CardContent>

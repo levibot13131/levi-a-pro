@@ -1,81 +1,59 @@
 
-import { TradeSignal } from '@/types/asset';
-import { addSignal } from './signalStorage';
-import { generateSignal } from './signalGenerator';
-import { toast } from 'sonner';
-import { isTelegramConfigured, sendSignalToTelegram } from '@/services/messaging/telegramService';
+import { saveSignal, TradeSignal } from './signalStorage';
 
-interface AnalysisOptions {
-  strategy: string;
-  interval?: number;
-  maxSignals?: number;
-  sendToTelegram?: boolean;
+interface AlertInstance {
+  stop: () => void;
 }
 
-// Default options
-const defaultOptions: AnalysisOptions = {
-  strategy: 'auto',
-  interval: 60000, // 1 minute
-  maxSignals: 5,
-  sendToTelegram: true
-};
-
+/**
+ * התחלת ניתוח בזמן אמת ושליחת התראות
+ */
 export const startRealTimeAnalysis = (
-  assetIds: string[],
-  options: Partial<AnalysisOptions> = {}
-) => {
-  const mergedOptions = { ...defaultOptions, ...options };
-  let isRunning = true;
-  let signalCount = 0;
-  let intervalId: number | null = null;
+  assets: string[],
+  settings: any = {}
+): AlertInstance => {
+  console.log('Starting real-time analysis for assets:', assets);
   
-  const runAnalysis = async () => {
-    if (!isRunning || (mergedOptions.maxSignals && signalCount >= mergedOptions.maxSignals)) {
-      if (intervalId) {
-        clearInterval(intervalId);
+  // מנגנון לסימולציה של התראות
+  const intervalId = setInterval(() => {
+    if (Math.random() > 0.7) { // 30% סיכוי להתראה
+      const randomAsset = assets[Math.floor(Math.random() * assets.length)];
+      const alertTypes = ['buy', 'sell', 'alert'] as const;
+      const randomType = alertTypes[Math.floor(Math.random() * alertTypes.length)];
+      
+      let message = '';
+      switch (randomType) {
+        case 'buy':
+          message = `נוצר איתות קנייה עבור ${randomAsset} - המחיר עבר ממוצע נע 50`;
+          break;
+        case 'sell':
+          message = `נוצר איתות מכירה עבור ${randomAsset} - המחיר שובר את רמת התמיכה`;
+          break;
+        case 'alert':
+          message = `תנועה חדה במחיר של ${randomAsset} - שינוי של 3.2% ב-15 דקות האחרונות`;
+          break;
       }
-      return;
+      
+      const signal: Omit<TradeSignal, 'id'> = {
+        asset: randomAsset,
+        type: randomType,
+        message,
+        timestamp: Date.now(),
+        price: Math.floor(Math.random() * 20000) + 30000,
+        source: 'real-time-analysis'
+      };
+      
+      // שמירת האיתות
+      saveSignal(signal);
+      
+      console.log('New signal generated:', signal);
     }
-    
-    // Generate a signal for a random asset
-    if (assetIds.length > 0) {
-      const randomIndex = Math.floor(Math.random() * assetIds.length);
-      const assetId = assetIds[randomIndex];
-      
-      const signal = generateSignal(assetId, mergedOptions.strategy);
-      addSignal(signal);
-      signalCount++;
-      
-      // Notify user of new signal
-      toast.info(`איתות חדש: ${signal.type === 'buy' ? 'קנייה' : 'מכירה'} ${signal.symbolName || signal.assetId}`, {
-        description: signal.description || `מחיר: ${signal.price}, אסטרטגיה: ${signal.strategy}`
-      });
-      
-      // Send to Telegram if enabled and configured
-      if (mergedOptions.sendToTelegram && isTelegramConfigured()) {
-        const sent = await sendSignalToTelegram(signal);
-        if (sent) {
-          console.log('Signal sent to Telegram successfully');
-        } else {
-          console.error('Failed to send signal to Telegram');
-        }
-      }
-    }
-  };
+  }, 20000); // בדיקה כל 20 שניות
   
-  // Start interval
-  intervalId = window.setInterval(runAnalysis, mergedOptions.interval);
-  
-  // Initial run
-  runAnalysis();
-  
-  // Return control object
   return {
     stop: () => {
-      isRunning = false;
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
+      console.log('Stopping real-time analysis');
+      clearInterval(intervalId);
     }
   };
 };

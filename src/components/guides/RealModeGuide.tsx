@@ -1,126 +1,101 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { AlertCircle, ToggleRight, CheckCircle2 } from 'lucide-react';
 import { useAppSettings } from '@/hooks/use-app-settings';
+import { Steps, Step } from '@/components/ui/steps';
+import { ShieldCheck, ExternalLink, Zap, Server, Cloud, LockKeyhole } from 'lucide-react';
 
 const RealModeGuide: React.FC = () => {
-  const { demoMode, toggleDemoMode } = useAppSettings();
-  
+  const { demoMode, toggleDemoMode } = useAppSettings((state: any) => ({
+    demoMode: state.demoMode,
+    toggleDemoMode: state.toggleDemoMode
+  }));
+
   return (
-    <div className="space-y-4">
-      {demoMode ? (
-        <Alert variant="warning">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>אתה במצב דמו</AlertTitle>
-          <AlertDescription className="mt-2">
-            <p className="mb-3">מצב דמו משתמש בנתונים מוגדרים מראש לצורכי הדגמה בלבד. כדי להשתמש בנתונים אמיתיים, עליך לעבור למצב אמיתי ולהגדיר את החיבורים הנדרשים.</p>
-            <Button onClick={toggleDemoMode} variant="outline" className="mt-2">
-              <ToggleRight className="h-4 w-4 mr-2" />
-              עבור למצב אמיתי
-            </Button>
-          </AlertDescription>
-        </Alert>
-      ) : (
-        <Alert variant="default">
-          <CheckCircle2 className="h-4 w-4" />
-          <AlertTitle>אתה במצב אמיתי</AlertTitle>
-          <AlertDescription>
-            המערכת תשתמש בחיבורים האמיתיים שהגדרת. וודא שכל החיבורים הנדרשים מוגדרים.
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-right">
-            לעבודה במצב אמיתי, נדרשים החיבורים הבאים:
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="bg-muted/20 p-3">
-              <div className="flex justify-between items-center">
-                <Badge variant="outline">חובה למטבעות</Badge>
-                <div className="font-medium">חיבור Binance</div>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2 text-right">
-                נדרש לקבלת נתוני מטבעות בזמן אמת ומידע על חשבון
-              </p>
-              <div className="mt-2 text-left">
-                <Button variant="outline" size="sm" asChild>
-                  <a href="/binance-integration">
-                    הגדר חיבור
-                  </a>
-                </Button>
-              </div>
-            </Card>
-            
-            <Card className="bg-muted/20 p-3">
-              <div className="flex justify-between items-center">
-                <Badge variant="outline">אופציונלי</Badge>
-                <div className="font-medium">חיבור TradingView</div>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2 text-right">
-                נדרש לניתוחים טכניים מתקדמים והתראות
-              </p>
-              <div className="mt-2 text-left">
-                <Button variant="outline" size="sm" asChild>
-                  <a href="/tradingview-integration">
-                    הגדר חיבור
-                  </a>
-                </Button>
-              </div>
-            </Card>
-            
-            <Card className="bg-muted/20 p-3">
-              <div className="flex justify-between items-center">
-                <Badge variant="outline">אופציונלי</Badge>
-                <div className="font-medium">חיבור Twitter/X</div>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2 text-right">
-                נדרש לניתוח סנטימנט והתראות מבוססות-טוויטר
-              </p>
-              <div className="mt-2 text-left">
-                <Button variant="outline" size="sm" asChild>
-                  <a href="/twitter-integration">
-                    הגדר חיבור
-                  </a>
-                </Button>
-              </div>
-            </Card>
-            
-            <Card className="bg-muted/20 p-3">
-              <div className="flex justify-between items-center">
-                <Badge variant="outline">מומלץ</Badge>
-                <div className="font-medium">הגדרות פרוקסי</div>
-              </div>
-              <p className="text-sm text-muted-foreground mt-2 text-right">
-                נדרש למקרים של חסימות IP או הגבלות בגישה לבורסות
-              </p>
-              <div className="mt-2 text-left">
-                <Button variant="outline" size="sm" asChild>
-                  <a href="/proxy-settings">
-                    הגדר פרוקסי
-                  </a>
-                </Button>
-              </div>
-            </Card>
-          </div>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="text-right text-xl lg:text-2xl">מדריך הגדרה למצב אמת</CardTitle>
+        <CardDescription className="text-right text-base">
+          הגדרות מומלצות להפעלה במצב אמת של המערכת לסביבת ייצור
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="mb-6 bg-muted p-4 rounded-lg text-right">
+          <h3 className="text-lg font-semibold mb-2">המערכת פועלת ב{demoMode ? 'מצב דמו' : 'מצב אמת'}</h3>
+          <p className="text-sm mb-3">
+            {demoMode 
+              ? 'במצב דמו, המערכת משתמשת בנתונים מדומים ולא מבצעת פעולות אמיתיות.' 
+              : 'במצב אמת, המערכת יכולה לבצע פעולות אמיתיות ולהשתמש בנתונים בזמן אמת.'}
+          </p>
+          <Button
+            variant={demoMode ? "default" : "outline"}
+            onClick={toggleDemoMode}
+            className="w-full"
+          >
+            <Zap className="mr-2 h-4 w-4" />
+            {demoMode ? 'עבור למצב אמת' : 'עבור למצב דמו'}
+          </Button>
+        </div>
+
+        <div className="space-y-8">
+          <h3 className="text-lg font-semibold text-right">שלבי הגדרה למצב אמת:</h3>
           
-          <div className="bg-primary/10 p-3 rounded-md text-right">
-            <h3 className="font-medium mb-1">שים לב:</h3>
-            <p className="text-sm">
-              כל המפתחות נשמרים במכשיר המקומי שלך בלבד ולא נשלחים לשרת. על מנת להשיג ביצועים מיטביים, 
-              מומלץ להגדיר את כל החיבורים האפשריים ולהשתמש בפרוקסי אם הגישה מוגבלת.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          <Steps>
+            <Step 
+              title="הגדרת שרת פרוקסי" 
+              icon={<Server className="h-5 w-5" />}
+            >
+              <p>שרת פרוקסי הכרחי כדי לעקוף מגבלות CORS ולשמור על מפתחות API מאובטחים.</p>
+              <p className="mt-1">
+                <a href="/proxy-guide" className="text-primary hover:underline">מדריך מפורט להגדרת שרת פרוקסי</a>
+              </p>
+            </Step>
+            
+            <Step 
+              title="הגדרת Binance API" 
+              icon={<LockKeyhole className="h-5 w-5" />}
+            >
+              <p>צור מפתחות API בפלטפורמת Binance והגדר הרשאות מתאימות לקריאת נתונים ומסחר.</p>
+              <p className="mt-1 text-muted-foreground">הרשאות מומלצות: קריאת מידע שוק, קריאת מידע חשבון, מסחר מלא (אם רוצים אוטומציה).</p>
+            </Step>
+            
+            <Step 
+              title="הגדרת אבטחת מידע" 
+              icon={<ShieldCheck className="h-5 w-5" />}
+            >
+              <p>מומלץ להגדיר IP whitelist בהגדרות ה-API של בינאנס לשרת הפרוקסי שלך בלבד.</p>
+              <p className="mt-1 text-muted-foreground">הגבל גישה למערכת עם אימות דו-שלבי וסיסמאות חזקות.</p>
+            </Step>
+            
+            <Step 
+              title="פריסה בענן" 
+              icon={<Cloud className="h-5 w-5" />}
+            >
+              <p>העלה את האפליקציה לשרת ענן או VPS כדי לאפשר פעילות 24/7.</p>
+              <p className="mt-1 text-muted-foreground">אפשרויות מומלצות: DigitalOcean, AWS, GCP, או Azure עם הגדרת SSL.</p>
+              <Button variant="outline" className="mt-3" asChild>
+                <a href="/deployment-guide">
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  מדריך פריסה מלא
+                </a>
+              </Button>
+            </Step>
+          </Steps>
+        </div>
+        
+        <div className="mt-8 bg-yellow-50 dark:bg-yellow-950/20 p-4 rounded-lg text-right border border-yellow-200 dark:border-yellow-800">
+          <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-400 mb-2">אזהרות חשובות</h3>
+          <ul className="list-disc list-inside space-y-1 text-sm">
+            <li>הפעל את המערכת תחילה עם סכומים קטנים כדי לוודא שהכל עובד כצפוי</li>
+            <li>הגדר התראות בזמן אמת על פעולות מסחר וכשלון פעולות</li>
+            <li>הקפד לגבות את מפתחות ה-API והסיסמאות במקום מאובטח</li>
+            <li>עקוב אחר לוגים של המערכת באופן קבוע לזיהוי בעיות</li>
+            <li>וודא שתוכנת אנטי-וירוס מעודכנת במחשב ממנו אתה מפעיל את המערכת</li>
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

@@ -1,4 +1,5 @@
 
+import React, { useEffect } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { toast } from 'sonner';
@@ -16,7 +17,7 @@ export const useAppSettings = create()(
       refreshInterval: 60000,
       
       toggleDemoMode: () => {
-        set((state) => {
+        set((state: any) => {
           const newDemoMode = !state.demoMode;
           
           // השמעת אירוע שינוי מצב דמו
@@ -41,26 +42,31 @@ export const useAppSettings = create()(
           console.log(`App mode changed to ${newDemoMode ? 'DEMO' : 'REAL'} mode`);
           
           return {
+            ...state,
             demoMode: newDemoMode
           };
         });
       },
       
-      toggleDarkMode: () => set((state) => ({
+      toggleDarkMode: () => set((state: any) => ({
+        ...state,
         darkMode: !state.darkMode
       })),
       
-      setLanguage: (language) => set({
+      setLanguage: (language: string) => set((state: any) => ({
+        ...state,
         language
-      }),
+      })),
       
-      toggleAutoRefresh: () => set((state) => ({
+      toggleAutoRefresh: () => set((state: any) => ({
+        ...state,
         autoRefresh: !state.autoRefresh
       })),
       
-      setRefreshInterval: (refreshInterval) => set({
+      setRefreshInterval: (refreshInterval: number) => set((state: any) => ({
+        ...state,
         refreshInterval
-      })
+      }))
     }),
     {
       name: 'app-settings'
@@ -69,23 +75,23 @@ export const useAppSettings = create()(
 );
 
 // Hook להאזנה לשינויים במצב דמו
-export const useDemoModeListener = (callback) => {
-  React.useEffect(() => {
-    const handleDemoModeChange = (event) => {
-      callback(event.detail.demoMode);
+export const useDemoModeListener = (callback: (demoMode: boolean) => void) => {
+  useEffect(() => {
+    const handleDemoModeChange = (event: CustomEvent) => {
+      callback((event as any).detail.demoMode);
     };
     
     // הוספת האזנה לאירוע
-    window.addEventListener(DEMO_MODE_CHANGE_EVENT, handleDemoModeChange);
+    window.addEventListener(DEMO_MODE_CHANGE_EVENT, handleDemoModeChange as EventListener);
     
     // ניקוי האזנה בעת פירוק הקומפוננטה
     return () => {
-      window.removeEventListener(DEMO_MODE_CHANGE_EVENT, handleDemoModeChange);
+      window.removeEventListener(DEMO_MODE_CHANGE_EVENT, handleDemoModeChange as EventListener);
     };
   }, [callback]);
   
   // החזרת הערך הנוכחי של מצב דמו
-  return useAppSettings((state) => state.demoMode);
+  return useAppSettings((state: any) => state.demoMode);
 };
 
 // בנוסף, נייצא גם גישה ישירה למצב הדמו

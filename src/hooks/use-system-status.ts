@@ -10,7 +10,9 @@ interface DataSource {
 }
 
 export const useSystemStatus = () => {
-  const { demoMode } = useAppSettings();
+  const { demoMode } = useAppSettings((state: any) => ({
+    demoMode: state.demoMode
+  }));
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'partial'>('disconnected');
   const [isRealTime, setIsRealTime] = useState<boolean>(isRealTimeMode());
   const [dataSources, setDataSources] = useState<DataSource[]>([
