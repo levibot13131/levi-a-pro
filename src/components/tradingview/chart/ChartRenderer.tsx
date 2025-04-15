@@ -8,13 +8,17 @@ interface ChartRendererProps {
   chartType: 'candle' | 'line' | 'bar';
   showVolume: boolean;
   isPositiveChange: boolean;
+  showPatterns?: boolean;  // Added missing prop
+  showSignals?: boolean;   // Added missing prop
 }
 
 const ChartRenderer: React.FC<ChartRendererProps> = ({ 
   chartData, 
   chartType,
   showVolume,
-  isPositiveChange 
+  isPositiveChange,
+  showPatterns = false,  // Set default values
+  showSignals = false    // Set default values
 }) => {
   const formatDate = (timestamp: number) => {
     const date = new Date(timestamp);
