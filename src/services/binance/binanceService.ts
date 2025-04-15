@@ -19,6 +19,14 @@ import {
 } from './marketData';
 
 /**
+ * Check if Binance is currently connected
+ */
+export const isBinanceConnected = (): boolean => {
+  const credentials = getBinanceCredentials();
+  return !!credentials?.isConnected;
+};
+
+/**
  * Test connection to Binance API
  */
 export const testBinanceConnection = async (): Promise<boolean> => {
@@ -44,8 +52,6 @@ export const testBinanceConnection = async (): Promise<boolean> => {
 
 // Re-export functions from other files for simpler imports
 export {
-  BinanceCredentials,
-  getBinanceCredentials,
   saveBinanceCredentials,
   disconnectBinance,
   validateBinanceCredentials,
@@ -56,6 +62,9 @@ export {
   setRealTimeMode,
   isRealTimeMode
 };
+
+// Re-export types properly with 'export type'
+export type { BinanceCredentials };
 
 // Add alias for backward compatibility
 export const clearBinanceCredentials = disconnectBinance;

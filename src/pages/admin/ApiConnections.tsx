@@ -106,7 +106,8 @@ const ApiConnections = () => {
       const credentials: BinanceCredentials = {
         apiKey: binanceApiKey,
         apiSecret: binanceApiSecret,
-        isConnected: true
+        isConnected: true,
+        lastConnected: Date.now()
       };
       
       const success = await validateBinanceCredentials(credentials);
@@ -234,7 +235,7 @@ const ApiConnections = () => {
             <CardHeader>
               <CardTitle className="text-right">חיבור ל-Binance</CardTitle>
               <CardDescription className="text-right">
-                הזן את פרטי ה-API ��לך ל-Binance כדי להתחבר
+                הזן את פרטי ה-API ���לך ל-Binance כדי להתחבר
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

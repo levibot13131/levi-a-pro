@@ -1,5 +1,5 @@
 
-// קובץ לניהול פרטי התחברות של Binance
+// Define the type of credentials stored for Binance
 export interface BinanceCredentials {
   apiKey: string;
   apiSecret: string;
@@ -7,47 +7,49 @@ export interface BinanceCredentials {
   lastConnected?: number;
 }
 
-const BINANCE_CREDS_KEY = 'levi_bot_binance_credentials';
+const BINANCE_CREDENTIALS_KEY = 'binance_credentials';
 
-// קבלת פרטי התחברות לבינאנס
+/**
+ * Saves Binance API credentials to localStorage
+ */
+export const saveBinanceCredentials = (credentials: BinanceCredentials): void => {
+  if (!credentials.apiKey || !credentials.apiSecret) {
+    console.error('Missing required Binance credentials');
+    return;
+  }
+  
+  // Add lastConnected timestamp if not provided
+  if (!credentials.lastConnected) {
+    credentials.lastConnected = Date.now();
+  }
+  
+  // Ensure isConnected is set
+  credentials.isConnected = true;
+  
+  // Store credentials in localStorage
+  localStorage.setItem(BINANCE_CREDENTIALS_KEY, JSON.stringify(credentials));
+  console.log('Binance credentials saved successfully');
+};
+
+/**
+ * Retrieves stored Binance API credentials from localStorage
+ */
 export const getBinanceCredentials = (): BinanceCredentials | null => {
+  const credentials = localStorage.getItem(BINANCE_CREDENTIALS_KEY);
+  if (!credentials) return null;
+  
   try {
-    const savedCreds = localStorage.getItem(BINANCE_CREDS_KEY);
-    if (savedCreds) {
-      return JSON.parse(savedCreds);
-    }
+    return JSON.parse(credentials) as BinanceCredentials;
   } catch (error) {
     console.error('Error parsing Binance credentials:', error);
-  }
-  return null;
-};
-
-// שמירת פרטי התחברות לבינאנס
-export const saveBinanceCredentials = (credentials: BinanceCredentials): void => {
-  try {
-    localStorage.setItem(BINANCE_CREDS_KEY, JSON.stringify(credentials));
-    console.log('Binance credentials saved');
-  } catch (error) {
-    console.error('Error saving Binance credentials:', error);
+    return null;
   }
 };
 
-// בדיקה האם מחובר לבינאנס
-export const isBinanceConnected = (): boolean => {
-  const creds = getBinanceCredentials();
-  return !!creds?.isConnected;
-};
-
-// ניתוק מבינאנס
+/**
+ * Clears stored Binance API credentials from localStorage
+ */
 export const disconnectBinance = (): void => {
-  try {
-    localStorage.removeItem(BINANCE_CREDS_KEY);
-    console.log('Disconnected from Binance');
-  } catch (error) {
-    console.error('Error disconnecting from Binance:', error);
-  }
+  localStorage.removeItem(BINANCE_CREDENTIALS_KEY);
+  console.log('Binance credentials removed');
 };
-
-// Adding the function alias for backward compatibility
-export const clearBinanceCredentials = disconnectBinance;
-

@@ -14,10 +14,10 @@ const convertSignal = (signal: RealTimeTradeSignal): TradeSignal => {
   return {
     id: signal.id,
     assetId: signal.asset,
-    type: signal.type === 'alert' ? 'buy' : signal.type,
+    type: signal.type === 'alert' ? 'buy' : signal.type as 'buy' | 'sell',
     message: signal.message,
     timestamp: typeof signal.timestamp === 'string' ? parseInt(signal.timestamp, 10) : signal.timestamp,
-    price: Number(signal.price) || 0,
+    price: typeof signal.price === 'string' ? Number(signal.price) : signal.price || 0,
     strength: 'medium',
     strategy: signal.source || 'real-time',
     timeframe: '1h',
