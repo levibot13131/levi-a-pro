@@ -45,8 +45,12 @@ export const setProxyConfig = (config: ProxyConfig): void => {
     
     if (config.isEnabled) {
       console.log('Proxy enabled with URL:', cleanConfig.baseUrl);
+      toast.success('הפרוקסי הופעל', {
+        description: `כתובת: ${cleanConfig.baseUrl}`
+      });
     } else {
       console.log('Proxy disabled');
+      toast.info('הפרוקסי הושבת');
     }
     
     // שליחת אירוע שינוי קונפיגורציה
@@ -64,7 +68,24 @@ export const setProxyConfig = (config: ProxyConfig): void => {
  */
 export const getApiBaseUrl = (): string => {
   const config = getProxyConfig();
-  return config.isEnabled && config.baseUrl ? config.baseUrl : '';
+  
+  // בדיקה מחמירה יותר שהפרוקסי מוגדר
+  if (config.isEnabled && config.baseUrl && config.baseUrl.trim().length > 0) {
+    // וידוא שהכתובת לא מסתיימת ב-/
+    let url = config.baseUrl.trim();
+    if (url.endsWith('/')) {
+      url = url.slice(0, -1);
+    }
+    
+    // וידוא שיש פרוטוקול
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
+    }
+    
+    return url;
+  }
+  
+  return '';
 };
 
 /**
@@ -94,5 +115,24 @@ export const listenToProxyChanges = (callback: (config: ProxyConfig) => void): (
   
   return () => {
     window.removeEventListener('proxy-config-changed', handleChange);
+  };
+};
+
+/**
+ * בדיקה האם הפרוקסי פעיל ומוגדר
+ */
+export const isProxyConfigured = (): boolean => {
+  const config = getProxyConfig();
+  return config.isEnabled && !!config.baseUrl && config.baseUrl.trim().length > 0;
+};
+
+/**
+ * קבלת סטטוס הקונפיגורציה של הפרוקסי
+ */
+export const getProxyStatus = (): { isEnabled: boolean; hasUrl: boolean } => {
+  const config = getProxyConfig();
+  return {
+    isEnabled: config.isEnabled,
+    hasUrl: !!config.baseUrl?.trim()
   };
 };

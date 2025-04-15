@@ -6,7 +6,7 @@ import { getTrackedAssets } from '@/services/assetTracking/storage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBinanceConnection } from '@/hooks/use-binance-connection';
 import { useBinanceData } from '@/hooks/use-binance-data';
-import { getProxyConfig, listenToProxyChanges } from '@/services/proxy/proxyConfig';
+import { getProxyConfig, listenToProxyChanges, isProxyConfigured } from '@/services/proxy/proxyConfig';
 
 import { useStoredSignals, clearStoredSignals } from '@/services/backtesting/realTimeAnalysis/signalStorage';
 import { startRealTimeAnalysis } from '@/services/backtesting/realTimeAnalysis/alertSystem';
@@ -45,7 +45,7 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
     };
   });
   
-  const { isConnected: isBinanceConnected } = useBinanceConnection();
+  const { isConnected: isBinanceConnected, refreshConnection } = useBinanceConnection();
   const mappedAssetIds = assetIds.map(id => {
     switch(id.toLowerCase()) {
       case 'bitcoin': return 'BTCUSDT';
@@ -55,7 +55,9 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
     }
   });
   
-  const { marketData: binanceMarketData } = useBinanceData(isBinanceConnected ? mappedAssetIds : []);
+  const { marketData: binanceMarketData, startRealTimeUpdates } = useBinanceData(
+    isBinanceConnected ? mappedAssetIds : []
+  );
   
   // האזנה לשינויים בהגדרות הפרוקסי
   useEffect(() => {
@@ -71,12 +73,18 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
         toast.success('פרוקסי הופעל', {
           description: 'התראות בזמן אמת ישתמשו כעת בפרוקסי'
         });
+        
+        // אם בינאנס מחובר, רענן את החיבור אחרי שינוי בהגדרות הפרוקסי
+        if (isBinanceConnected) {
+          refreshConnection();
+        }
       }
     });
     
     return () => unsubscribe();
-  }, [isActive]);
+  }, [isActive, isBinanceConnected, refreshConnection]);
   
+  // הפעלת מעקב בזמן אמת אחרי נכסים מסומנים
   useEffect(() => {
     if (assetIds.length === 0) {
       const trackedAssets = getTrackedAssets();
@@ -94,6 +102,7 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
     }
   }, [autoAlertsEnabled, assetIds.length, isActive]);
   
+  // עדכון התראות כל 5 שניות
   useEffect(() => {
     const interval = setInterval(() => {
       refetch();
@@ -107,6 +116,14 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
     };
   }, [alertInstance, refetch]);
   
+  // הפעלת Binance בזמן אמת אם המשתמש מחובר
+  useEffect(() => {
+    if (isBinanceConnected && isActive) {
+      console.log('Starting Binance real-time updates');
+      startRealTimeUpdates();
+    }
+  }, [isBinanceConnected, isActive, startRealTimeUpdates]);
+  
   const startAutomaticAlerts = (assets: string[]) => {
     if (!user) {
       toast.error("יש להתחבר כדי להפעיל התראות אוטומטיות");
@@ -118,11 +135,16 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
       return;
     }
     
-    // בדיקת הגדרות פרוקסי
-    const config = getProxyConfig();
-    if (!config.isEnabled || !config.baseUrl) {
+    // בדיקת הגדרות פרוקסי וחיבור לבינאנס
+    if (!proxyStatus.isEnabled || !proxyStatus.hasUrl) {
       toast.warning('התראות בזמן אמת עשויות לא לעבוד ללא פרוקסי', {
         description: 'מומלץ להגדיר פרוקסי עבור פונקציונליות מלאה'
+      });
+    }
+    
+    if (!isBinanceConnected) {
+      toast.warning('לא מחובר לבינאנס', {
+        description: 'נתוני מחיר בזמן אמת לא יהיו זמינים'
       });
     }
     
@@ -147,17 +169,30 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
       setIsActive(false);
       toast.info("ניתוח בזמן אמת הופסק");
     } else {
-      // בדיקת הגדרות פרוקסי לפני הפעלה
-      const config = getProxyConfig();
-      if (!config.isEnabled || !config.baseUrl) {
+      // בדיקת הגדרות פרוקסי
+      const isProxyReady = isProxyConfigured();
+      
+      if (!isProxyReady) {
         toast.warning('התראות בזמן אמת עשויות לא לעבוד ללא פרוקסי', {
           description: 'מומלץ להגדיר פרוקסי עבור פונקציונליות מלאה'
+        });
+      }
+      
+      if (!isBinanceConnected) {
+        toast.warning('לא מחובר לבינאנס', {
+          description: 'נתוני מחיר בזמן אמת לא יהיו זמינים'
         });
       }
       
       const instance = startRealTimeAnalysis(assetIds, settings);
       setAlertInstance(instance);
       setIsActive(true);
+      
+      // הפעלת עדכוני בינאנס אם המשתמש מחובר
+      if (isBinanceConnected) {
+        startRealTimeUpdates();
+      }
+      
       toast.success("ניתוח בזמן אמת הופעל", {
         description: "המערכת תתחיל לשלוח התראות בזמן אמת"
       });

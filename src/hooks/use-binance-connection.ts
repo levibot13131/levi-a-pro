@@ -10,11 +10,17 @@ import {
 export function useBinanceConnection() {
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [credentials, setCredentials] = useState<BinanceCredentials | null>(null);
+  const [isDevelopmentMode, setIsDevelopmentMode] = useState<boolean>(false);
   
   // Check connection status on mount
   useEffect(() => {
     const connected = isBinanceConnected();
     setIsConnected(connected);
+    
+    // בדיקה האם המערכת רצה במצב פיתוח
+    const isDevMode = process.env.NODE_ENV === 'development' || 
+                      !window.location.hostname.includes('lovable.app');
+    setIsDevelopmentMode(isDevMode);
     
     if (connected) {
       setCredentials(getBinanceCredentials());
@@ -43,6 +49,7 @@ export function useBinanceConnection() {
   return {
     isConnected,
     credentials,
+    isDevelopmentMode,
     disconnect,
     refreshConnection,
   };

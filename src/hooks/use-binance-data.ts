@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { getProxyStatus } from '../services/proxy/proxyConfig';
 
 export interface BinanceMarketData {
   symbol: string;
@@ -23,17 +24,18 @@ export interface BinanceFundamentalData {
   allTimeHighDate?: string;
   fundamentalScore?: number;
   socialMentions24h?: number;
-  sentiment?: number; // Added missing properties
+  sentiment?: number;
 }
 
 export interface UseBinanceDataReturn {
   marketData: Record<string, BinanceMarketData>;
-  fundamentalData: Record<string, BinanceFundamentalData>; // Added missing property
+  fundamentalData: Record<string, BinanceFundamentalData>;
   isConnected: boolean;
   isLoading: boolean;
   error: string | null;
   startRealTimeUpdates: () => void;
   stopRealTimeUpdates: () => void;
+  lastUpdateTime: number;
 }
 
 export const useBinanceData = (symbols: string[]): UseBinanceDataReturn => {
@@ -43,11 +45,21 @@ export const useBinanceData = (symbols: string[]): UseBinanceDataReturn => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updateInstance, setUpdateInstance] = useState<{ stop: () => void } | null>(null);
+  const [lastUpdateTime, setLastUpdateTime] = useState<number>(0);
+
+  // בדיקת הגדרות פרוקסי
+  const proxyStatus = getProxyStatus();
 
   useEffect(() => {
     const fetchInitialData = async () => {
       setIsLoading(true);
       try {
+        // בדיקה אם יש סימבולים להביא
+        if (symbols.length === 0) {
+          setIsLoading(false);
+          return;
+        }
+
         // Mock initial data loading
         const mockMarketData: Record<string, BinanceMarketData> = {};
         const mockFundamentalData: Record<string, BinanceFundamentalData> = {};
@@ -84,6 +96,9 @@ export const useBinanceData = (symbols: string[]): UseBinanceDataReturn => {
         setMarketData(mockMarketData);
         setFundamentalData(mockFundamentalData);
         setIsConnected(true);
+        setLastUpdateTime(Date.now());
+        
+        console.log(`נטענו נתוני בינאנס מוק עבור ${symbols.length} סימבולים`);
       } catch (err) {
         setError('Failed to fetch initial data');
         console.error('Error fetching Binance data:', err);
@@ -108,6 +123,8 @@ export const useBinanceData = (symbols: string[]): UseBinanceDataReturn => {
       return;
     }
     
+    console.log('Starting Binance real-time updates');
+    
     // Mock real-time updates
     const intervalId = setInterval(() => {
       setMarketData(prevData => {
@@ -126,6 +143,7 @@ export const useBinanceData = (symbols: string[]): UseBinanceDataReturn => {
           };
         });
         
+        setLastUpdateTime(Date.now());
         return newData;
       });
     }, 5000);
@@ -151,7 +169,8 @@ export const useBinanceData = (symbols: string[]): UseBinanceDataReturn => {
     isLoading,
     error,
     startRealTimeUpdates,
-    stopRealTimeUpdates
+    stopRealTimeUpdates,
+    lastUpdateTime
   };
 };
 
