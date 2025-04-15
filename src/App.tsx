@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
@@ -32,7 +33,7 @@ import ProxyGuide from './pages/ProxyGuide';
 import IntegrationStatus from './pages/IntegrationStatus';
 import ApiConnections from './pages/admin/ApiConnections';
 import AdvancedSettings from './pages/admin/AdvancedSettings';
-import ProxySettings from './pages/admin/ProxySettings';
+import ProxySettings from './pages/ProxySettings';
 
 function App() {
   return (
