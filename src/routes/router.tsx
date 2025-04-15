@@ -14,7 +14,10 @@ import Register from "../pages/Register";
 import AssetTracker from "../pages/AssetTracker";
 import BinanceIntegration from "../pages/BinanceIntegration";
 import TwitterIntegration from "../pages/TwitterIntegration";
+import TradingViewIntegration from "../pages/TradingViewIntegration";
+import CryptoSentiment from "../pages/CryptoSentiment";
 import FAQ from "../pages/FAQ";
+import DeploymentGuide from "../pages/DeploymentGuide";
 import RequireAuth from "@/components/auth/RequireAuth";
 
 const router = createBrowserRouter([
@@ -51,12 +54,20 @@ const router = createBrowserRouter([
         element: <DataConnections />,
       },
       {
-        path: "binance",
+        path: "binance-integration",
         element: <BinanceIntegration />,
       },
       {
-        path: "twitter",
+        path: "twitter-integration",
         element: <TwitterIntegration />,
+      },
+      {
+        path: "tradingview-integration",
+        element: <TradingViewIntegration />,
+      },
+      {
+        path: "crypto-sentiment",
+        element: <CryptoSentiment />,
       },
       {
         path: "settings",
@@ -65,6 +76,10 @@ const router = createBrowserRouter([
       {
         path: "proxy-settings",
         element: <ProxySettings />,
+      },
+      {
+        path: "deployment-guide",
+        element: <DeploymentGuide />,
       },
       {
         path: "faq",

@@ -1,39 +1,73 @@
 
 import { toast } from 'sonner';
 
-// Twitter API credentials storage key
-const TWITTER_API_KEYS_KEY = 'twitter_api_keys';
+// Key for storing Twitter credentials in local storage
+const TWITTER_AUTH_KEY = 'levi_bot_twitter_credentials';
 
-// Twitter API Credentials
+// Twitter credentials interface
 export interface TwitterCredentials {
   apiKey: string;
   apiSecret: string;
-  bearerToken: string;
+  accessToken?: string;
+  accessTokenSecret?: string;
   isConnected: boolean;
   lastConnected?: number;
+  username?: string;
 }
 
 /**
- * Save Twitter API credentials
+ * התחברות לטוויטר
  */
-export const saveTwitterCredentials = (credentials: Omit<TwitterCredentials, 'isConnected' | 'lastConnected'>): TwitterCredentials => {
-  const savedCreds: TwitterCredentials = {
-    ...credentials,
-    isConnected: true,
-    lastConnected: Date.now()
-  };
-  
-  localStorage.setItem(TWITTER_API_KEYS_KEY, JSON.stringify(savedCreds));
-  toast.success('התחברות ל-Twitter בוצעה בהצלחה');
-  
-  return savedCreds;
+export const connectToTwitter = async (credentials: Omit<TwitterCredentials, 'isConnected' | 'lastConnected'>): Promise<boolean> => {
+  try {
+    // בסביבת פיתוח נדמה התחברות מוצלחת
+    
+    // שמור את פרטי החיבור בלוקל סטורג'
+    const fullCredentials: TwitterCredentials = {
+      ...credentials,
+      isConnected: true,
+      lastConnected: Date.now()
+    };
+    
+    localStorage.setItem(TWITTER_AUTH_KEY, JSON.stringify(fullCredentials));
+    
+    // שליחת אירוע שינוי חיבור
+    window.dispatchEvent(new CustomEvent('twitter-connection-changed', {
+      detail: { isConnected: true }
+    }));
+    
+    // בסביבת אמת היינו עושים בדיקת תקפות של המפתחות מול ה-API
+    console.log('Connected to Twitter with credentials:', credentials);
+    
+    return true;
+  } catch (error) {
+    console.error('Error connecting to Twitter:', error);
+    toast.error('שגיאה בהתחברות לטוויטר', {
+      description: 'אנא בדוק את פרטי ההתחברות ונסה שוב'
+    });
+    return false;
+  }
 };
 
 /**
- * Get Twitter API credentials
+ * ניתוק מטוויטר
+ */
+export const disconnectFromTwitter = async (): Promise<void> => {
+  localStorage.removeItem(TWITTER_AUTH_KEY);
+  
+  // שליחת אירוע שינוי חיבור
+  window.dispatchEvent(new CustomEvent('twitter-connection-changed', {
+    detail: { isConnected: false }
+  }));
+  
+  console.log('Disconnected from Twitter');
+};
+
+/**
+ * קבלת פרטי חיבור לטוויטר
  */
 export const getTwitterCredentials = (): TwitterCredentials | null => {
-  const credentials = localStorage.getItem(TWITTER_API_KEYS_KEY);
+  const credentials = localStorage.getItem(TWITTER_AUTH_KEY);
   
   if (!credentials) return null;
   
@@ -46,46 +80,7 @@ export const getTwitterCredentials = (): TwitterCredentials | null => {
 };
 
 /**
- * Validate Twitter API credentials
- * In a real implementation, this would make a request to Twitter API
- */
-export const validateTwitterCredentials = async (
-  apiKey: string,
-  apiSecret: string,
-  bearerToken: string
-): Promise<boolean> => {
-  try {
-    // Simulate API validation delay
-    return new Promise(resolve => {
-      setTimeout(() => {
-        // Very basic validation
-        const valid = apiKey?.trim().length > 10 && 
-                     apiSecret?.trim().length > 10 && 
-                     bearerToken?.trim().length > 10;
-        
-        if (valid) {
-          saveTwitterCredentials({ apiKey, apiSecret, bearerToken });
-        }
-        
-        resolve(valid);
-      }, 1500);
-    });
-  } catch (error) {
-    console.error('Error validating Twitter credentials:', error);
-    return false;
-  }
-};
-
-/**
- * Disconnect from Twitter
- */
-export const disconnectTwitter = (): void => {
-  localStorage.removeItem(TWITTER_API_KEYS_KEY);
-  toast.info('החיבור ל-Twitter נותק');
-};
-
-/**
- * Check if connected to Twitter
+ * בדיקה האם מחובר לטוויטר
  */
 export const isTwitterConnected = (): boolean => {
   const credentials = getTwitterCredentials();
@@ -93,71 +88,78 @@ export const isTwitterConnected = (): boolean => {
 };
 
 /**
- * Get tweets from key figures
- * In a real implementation, this would make a request to Twitter API
+ * האזנה לשינויים בחיבור לטוויטר
  */
-export const getKeyFigureTweets = async (): Promise<any[]> => {
-  if (!isTwitterConnected()) {
-    toast.error('אנא התחבר ל-Twitter כדי לקבל ציוצים');
-    return [];
-  }
+export const listenToTwitterConnectionChanges = (callback: (isConnected: boolean) => void): () => void => {
+  const handleConnectionChange = (event: Event) => {
+    const customEvent = event as CustomEvent<{ isConnected: boolean }>;
+    callback(customEvent.detail.isConnected);
+  };
   
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
+  window.addEventListener('twitter-connection-changed', handleConnectionChange);
   
-  // Mock data - in a real app this would come from the Twitter API
+  return () => {
+    window.removeEventListener('twitter-connection-changed', handleConnectionChange);
+  };
+};
+
+/**
+ * ניתוח סנטימנט - דמו בלבד
+ * בסביבת אמת זה יתחבר ל-API של טוויטר
+ */
+export const analyzeSentiment = async (query: string, days: number = 7): Promise<any> => {
+  console.log(`Analyzing sentiment for ${query} over the last ${days} days`);
+  
+  // בדמו תחזיר נתונים מוגדרים מראש
+  return {
+    positive: 65,
+    negative: 15,
+    neutral: 20,
+    volume: 2487,
+    uniqueUsers: 1243,
+    totalImpact: 3800000,
+    trend: 'positive',
+    trendStrength: 'strong'
+  };
+};
+
+/**
+ * קבלת ציוצים לפי מילת מפתח - דמו בלבד
+ */
+export const getTweetsByKeyword = async (keyword: string, limit: number = 10): Promise<any[]> => {
+  console.log(`Getting tweets for keyword: ${keyword}, limit: ${limit}`);
+  
+  // בדמו נחזיר מערך נתונים קבוע
   return [
     {
       id: '1',
-      author: 'Vitalik Buterin',
-      username: 'VitalikButerin',
-      content: 'Excited about the upcoming Ethereum updates! More scalability and efficiency coming soon.',
-      timestamp: Date.now() - (2 * 60 * 60 * 1000), // 2 hours ago
-      likes: 3200,
-      retweets: 842,
+      text: `This is a tweet about ${keyword}`,
+      username: 'user1',
+      profileImageUrl: 'https://randomuser.me/api/portraits/men/1.jpg',
+      createdAt: new Date().toISOString(),
+      likes: 123,
+      retweets: 45,
       sentiment: 'positive'
     },
     {
       id: '2',
-      author: 'CZ Binance',
-      username: 'cz_binance',
-      content: 'Binance volume hit new all-time high today. Thank you for your support!',
-      timestamp: Date.now() - (5 * 60 * 60 * 1000), // 5 hours ago
-      likes: 5100,
-      retweets: 1240,
-      sentiment: 'positive'
+      text: `Another tweet about ${keyword} with some more text`,
+      username: 'user2',
+      profileImageUrl: 'https://randomuser.me/api/portraits/women/2.jpg',
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
+      likes: 88,
+      retweets: 12,
+      sentiment: 'neutral'
     },
     {
       id: '3',
-      author: 'Michael Saylor',
-      username: 'michael_saylor',
-      content: 'Bitcoin is digital energy. Its value is derived from its ability to provide final settlement to billions of people via an incorruptible, energy-backed monetary network.',
-      timestamp: Date.now() - (8 * 60 * 60 * 1000), // 8 hours ago
-      likes: 4800,
-      retweets: 1540,
-      sentiment: 'positive'
-    },
-    {
-      id: '4',
-      author: 'Elon Musk',
-      username: 'elonmusk',
-      content: 'Crypto seems promising, but please invest with caution.',
-      timestamp: Date.now() - (12 * 60 * 60 * 1000), // 12 hours ago
-      likes: 128000,
-      retweets: 24200,
-      sentiment: 'neutral'
+      text: `I'm not sure about ${keyword}, seems risky`,
+      username: 'user3',
+      profileImageUrl: 'https://randomuser.me/api/portraits/men/3.jpg',
+      createdAt: new Date(Date.now() - 7200000).toISOString(),
+      likes: 45,
+      retweets: 5,
+      sentiment: 'negative'
     }
   ];
-};
-
-/**
- * Get setup instructions for Twitter API
- */
-export const getTwitterSetupInstructions = (): string => {
-  return `
-1. צור חשבון פיתוח ב-Twitter Developer Portal: https://developer.twitter.com/
-2. צור פרויקט חדש ואפליקציה
-3. קבל את מפתחות ה-API (API Key, API Secret) ואת ה-Bearer Token
-4. הזן את הפרטים במערכת
-  `;
 };

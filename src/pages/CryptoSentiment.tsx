@@ -1,364 +1,562 @@
 
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getMarketSentiment, getSocialMentions, getInfluentialMentions, refreshSentimentData } from '@/services/crypto/cryptoSentimentService';
+import React, { useState, useEffect } from 'react';
+import { Container } from '@/components/ui/container';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ThumbsUp, ThumbsDown, RefreshCw, Twitter, MessageCircle, AlertTriangle } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { MessageCircle, Twitter, TrendingUp, Zap, Users, Bell, Link2, Filter, RefreshCw } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import TwitterConnectForm from '@/components/twitter/TwitterConnectForm';
+import { isTwitterConnected } from '@/services/twitter/twitterService';
+import { useAppSettings } from '@/hooks/use-app-settings';
+import TwitterMentionsTable from '@/components/twitter/TwitterMentionsTable';
+import TwitterSentimentChart from '@/components/twitter/TwitterSentimentChart';
+import { toast } from 'sonner';
 
-const CryptoSentiment = () => {
-  const { 
-    data: sentiment,
-    isLoading: sentimentLoading,
-    refetch: refetchSentiment
-  } = useQuery({
-    queryKey: ['marketSentiment'],
-    queryFn: getMarketSentiment,
-    refetchInterval: 5 * 60 * 1000 // 5 minutes
-  });
+const cryptoAssets = [
+  { id: "bitcoin", name: "Bitcoin", symbol: "BTC" },
+  { id: "ethereum", name: "Ethereum", symbol: "ETH" },
+  { id: "binancecoin", name: "Binance Coin", symbol: "BNB" },
+  { id: "solana", name: "Solana", symbol: "SOL" },
+  { id: "cardano", name: "Cardano", symbol: "ADA" },
+  { id: "xrp", name: "XRP", symbol: "XRP" },
+  { id: "polkadot", name: "Polkadot", symbol: "DOT" },
+  { id: "dogecoin", name: "Dogecoin", symbol: "DOGE" }
+];
+
+// נתוני דמו לניתוח סנטימנט
+const sentimentDemoData = [
+  { date: "01/04", positive: 65, negative: 35, neutral: 45, volume: 1200 },
+  { date: "02/04", positive: 70, negative: 30, neutral: 50, volume: 1300 },
+  { date: "03/04", positive: 60, negative: 40, neutral: 55, volume: 1100 },
+  { date: "04/04", positive: 75, negative: 25, neutral: 50, volume: 1500 },
+  { date: "05/04", positive: 80, negative: 20, neutral: 45, volume: 1800 },
+  { date: "06/04", positive: 85, negative: 15, neutral: 40, volume: 2000 },
+  { date: "07/04", positive: 75, negative: 25, neutral: 50, volume: 1600 },
+];
+
+// נתוני דמו לציוצים
+const tweetsDemoData = [
+  {
+    id: '1',
+    username: 'crypto_analyst',
+    text: 'Bitcoin מראה סימנים חזקים של התאוששות. אני צופה מחיר של $50,000 בקרוב. #BTC #Crypto',
+    createdAt: '2025-04-15T12:30:00Z',
+    likes: 120,
+    retweets: 45,
+    sentiment: 'positive',
+    profileImageUrl: 'https://randomuser.me/api/portraits/men/1.jpg'
+  },
+  {
+    id: '2',
+    username: 'eth_trader',
+    text: 'אתריום מתחת ל-$3000 היא הזדמנות קנייה מעולה כרגע. אל תפספסו את העליה הבאה! #ETH',
+    createdAt: '2025-04-15T11:20:00Z',
+    likes: 78,
+    retweets: 23,
+    sentiment: 'positive',
+    profileImageUrl: 'https://randomuser.me/api/portraits/women/2.jpg'
+  },
+  {
+    id: '3',
+    username: 'crypto_skeptic',
+    text: 'הסתכלו על העקומות ההיסטוריות, אנחנו בדרך למטה עם BTC. גל מימושים צפוי בקרוב.',
+    createdAt: '2025-04-15T10:45:00Z',
+    likes: 45,
+    retweets: 12,
+    sentiment: 'negative',
+    profileImageUrl: 'https://randomuser.me/api/portraits/men/3.jpg'
+  },
+  {
+    id: '4',
+    username: 'blockchain_dev',
+    text: 'ה-USDT ו-USDC ממשיכים להיות יציבים למרות התנודות בשוק. אלו סטייבלקוינס אמינים.',
+    createdAt: '2025-04-15T09:30:00Z',
+    likes: 32,
+    retweets: 8,
+    sentiment: 'neutral',
+    profileImageUrl: 'https://randomuser.me/api/portraits/women/4.jpg'
+  },
+  {
+    id: '5',
+    username: 'sol_investor',
+    text: 'סולנה (SOL) עם ביצועים מרשימים לאחרונה! הטכנולוגיה הזו תשנה את העולם. #SOL #Solana',
+    createdAt: '2025-04-15T08:15:00Z',
+    likes: 156,
+    retweets: 67,
+    sentiment: 'positive',
+    profileImageUrl: 'https://randomuser.me/api/portraits/men/5.jpg'
+  },
+];
+
+const CryptoSentiment: React.FC = () => {
+  const [isConnected, setIsConnected] = useState(false);
+  const [activeTab, setActiveTab] = useState('sentiment');
+  const [selectedAsset, setSelectedAsset] = useState('bitcoin');
+  const [isAutoRefresh, setIsAutoRefresh] = useState(false);
+  const [timeRange, setTimeRange] = useState('7');
+  const { demoMode } = useAppSettings();
   
-  const { 
-    data: socialMentions = [],
-    isLoading: mentionsLoading,
-    refetch: refetchMentions
-  } = useQuery({
-    queryKey: ['socialMentions'],
-    queryFn: () => getSocialMentions(undefined, 20),
-    refetchInterval: 3 * 60 * 1000 // 3 minutes
-  });
+  useEffect(() => {
+    // בדיקת מצב חיבור לטוויטר
+    const checkTwitterConnection = () => {
+      const connected = isTwitterConnected();
+      setIsConnected(connected);
+    };
+    
+    checkTwitterConnection();
+    
+    // הוספת האזנה לשינויים בחיבור
+    window.addEventListener('twitter-connection-changed', checkTwitterConnection);
+    
+    return () => {
+      window.removeEventListener('twitter-connection-changed', checkTwitterConnection);
+    };
+  }, []);
   
-  const { 
-    data: influentialMentions = [],
-    isLoading: influentialLoading,
-    refetch: refetchInfluential
-  } = useQuery({
-    queryKey: ['influentialMentions'],
-    queryFn: () => getInfluentialMentions(),
-    refetchInterval: 2 * 60 * 1000 // 2 minutes
-  });
-  
-  const handleRefresh = async () => {
-    await refreshSentimentData();
-    refetchSentiment();
-    refetchMentions();
-    refetchInfluential();
+  const handleRefresh = () => {
+    toast.info('מרענן נתונים...');
+    // בפרויקט אמיתי, כאן היינו מבצעים בקשת נתונים חדשה
+    setTimeout(() => {
+      toast.success('הנתונים התעדכנו בהצלחה');
+    }, 1000);
   };
   
-  // פונקציית עזר להצגת הסנטימנט
-  const renderSentimentBar = (value: number, label: string) => {
-    // המרה מסקאלה של -100 עד 100 לסקאלה של 0 עד 100
-    const normalizedValue = Math.max(0, Math.min(100, (value + 100) / 2));
-    
-    let textClass = 'text-yellow-500';
-    if (value > 30) textClass = 'text-green-500';
-    if (value < -30) textClass = 'text-red-500';
-    
-    return (
-      <div className="space-y-1 mb-4">
-        <div className="flex justify-between items-center">
-          <div className={textClass + ' font-medium'}>
-            {value > 0 ? '+' : ''}{value}
-          </div>
-          <div className="text-right font-medium">{label}</div>
-        </div>
-        <Progress value={normalizedValue} className="h-3" />
-      </div>
-    );
-  };
-  
-  // פונקציית עזר לפורמט תאריך
-  const formatDate = (timestamp: number) => {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / (1000 * 60));
-    
-    if (diffMins < 60) {
-      return `לפני ${diffMins} דקות`;
-    } else if (diffMins < 24 * 60) {
-      const hours = Math.floor(diffMins / 60);
-      return `לפני ${hours} שעות`;
+  const handleToggleAutoRefresh = () => {
+    setIsAutoRefresh(!isAutoRefresh);
+    if (!isAutoRefresh) {
+      toast.info('רענון אוטומטי הופעל', {
+        description: 'הנתונים יתעדכנו כל 5 דקות'
+      });
     } else {
-      return date.toLocaleDateString('he-IL');
+      toast.info('רענון אוטומטי הושבת');
     }
   };
   
-  // פונקציית עזר להצגת סנטימנט
-  const renderSentimentBadge = (score: number) => {
-    if (score > 30) {
-      return <Badge className="bg-green-500">חיובי</Badge>;
-    } else if (score < -30) {
-      return <Badge className="bg-red-500">שלילי</Badge>;
-    } else {
-      return <Badge variant="outline">נייטרלי</Badge>;
+  useEffect(() => {
+    let refreshInterval: number | undefined;
+    
+    if (isAutoRefresh && isConnected) {
+      refreshInterval = window.setInterval(() => {
+        handleRefresh();
+      }, 300000); // כל 5 דקות
     }
-  };
-  
-  // פונקציית עזר להצגת אייקון המקור
-  const getSourceIcon = (source: string) => {
-    switch (source) {
-      case 'twitter':
-        return <Twitter className="h-4 w-4" />;
-      case 'reddit':
-        return <AlertTriangle className="h-4 w-4" />;
-      case 'telegram':
-      case 'discord':
-      case 'news':
-      default:
-        return <MessageCircle className="h-4 w-4" />;
-    }
-  };
+    
+    return () => {
+      if (refreshInterval) {
+        clearInterval(refreshInterval);
+      }
+    };
+  }, [isAutoRefresh, isConnected]);
   
   return (
-    <div className="container py-6">
-      <div className="flex flex-col gap-2 md:flex-row md:justify-between md:items-center mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">סנטימנט שוק הקריפטו</h1>
+    <Container className="py-6">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">סנטימנט קריפטו</h1>
+          <p className="text-muted-foreground">ניתוח מגמות ונתונים מרשתות חברתיות</p>
+        </div>
         
-        <Button 
-          variant="outline" 
-          onClick={handleRefresh}
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className="h-4 w-4" />
-          רענן נתונים
-        </Button>
+        <div className="mt-4 md:mt-0 flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefresh} 
+            disabled={!isConnected}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            רענן נתונים
+          </Button>
+        </div>
       </div>
       
-      {/* כרטיס סנטימנט שוק כללי */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-right">סנטימנט שוק כללי</CardTitle>
-          <CardDescription className="text-right">
-            ניתוח תחושת השוק בקטגוריות השונות
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {sentimentLoading ? (
-            <div className="space-y-6">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <div className="flex justify-between">
-                    <Skeleton className="h-4 w-[60px]" />
-                    <Skeleton className="h-4 w-[100px]" />
+      {!isConnected ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-right">התחבר לטוויטר/X</CardTitle>
+            <CardDescription className="text-right">
+              חבר את המערכת לטוויטר כדי לקבל ניתוח סנטימנט בזמן אמת
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TwitterConnectForm 
+              onConnect={() => setIsConnected(true)} 
+              isConnected={isConnected}
+              onDisconnect={() => setIsConnected(false)}
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+            <Card className="flex-1">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-right text-lg">סינון נתונים</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="w-full md:w-1/3">
+                    <Label htmlFor="asset-select" className="block text-right mb-2">מטבע</Label>
+                    <Select value={selectedAsset} onValueChange={setSelectedAsset}>
+                      <SelectTrigger id="asset-select">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cryptoAssets.map(asset => (
+                          <SelectItem key={asset.id} value={asset.id}>
+                            <div className="flex items-center gap-2">
+                              <span>{asset.name}</span>
+                              <Badge variant="outline" className="ml-auto">{asset.symbol}</Badge>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Skeleton className="h-3 w-full" />
-                </div>
-              ))}
-            </div>
-          ) : sentiment ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <div className="flex justify-center items-center mb-6">
-                  <div className="relative w-32 h-32">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className={`text-4xl font-bold ${
-                        sentiment.overall > 30 ? 'text-green-500' : 
-                        sentiment.overall < -30 ? 'text-red-500' : 
-                        'text-yellow-500'
-                      }`}>
-                        {sentiment.overall > 0 ? '+' : ''}{sentiment.overall}
-                      </span>
+                  
+                  <div className="w-full md:w-1/3">
+                    <Label htmlFor="time-range" className="block text-right mb-2">טווח זמן</Label>
+                    <Select value={timeRange} onValueChange={setTimeRange}>
+                      <SelectTrigger id="time-range">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">יום אחד</SelectItem>
+                        <SelectItem value="7">שבוע</SelectItem>
+                        <SelectItem value="30">חודש</SelectItem>
+                        <SelectItem value="90">שלושה חודשים</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="w-full md:w-1/3 flex items-end">
+                    <div className="flex items-center justify-end w-full space-x-2">
+                      <div className="flex flex-col">
+                        <div className="flex items-center space-x-2">
+                          <Switch 
+                            id="auto-refresh" 
+                            checked={isAutoRefresh} 
+                            onCheckedChange={handleToggleAutoRefresh}
+                          />
+                          <Label htmlFor="auto-refresh" className="text-right">רענון אוטומטי</Label>
+                        </div>
+                        <span className="text-xs text-muted-foreground text-right">כל 5 דקות</span>
+                      </div>
                     </div>
-                    <svg viewBox="0 0 100 100" className="w-full h-full">
-                      <circle 
-                        cx="50" 
-                        cy="50" 
-                        r="45" 
-                        fill="none" 
-                        stroke="#e2e8f0" 
-                        strokeWidth="10"
-                      />
-                      <circle 
-                        cx="50" 
-                        cy="50" 
-                        r="45" 
-                        fill="none" 
-                        stroke={
-                          sentiment.overall > 30 ? '#10b981' : 
-                          sentiment.overall < -30 ? '#ef4444' : 
-                          '#eab308'
-                        }
-                        strokeWidth="10"
-                        strokeDasharray="282.7"
-                        strokeDashoffset={282.7 - ((sentiment.overall + 100) / 200) * 282.7}
-                        transform="rotate(-90 50 50)"
-                      />
-                    </svg>
                   </div>
                 </div>
-                <div className="flex justify-center items-center gap-4">
-                  <div className="flex items-center">
-                    <ThumbsUp className="h-5 w-5 text-green-500 mr-1" />
-                    <span className="text-sm text-muted-foreground">חיובי</span>
-                  </div>
-                  <div className="flex items-center">
-                    <ThumbsDown className="h-5 w-5 text-red-500 mr-1" />
-                    <span className="text-sm text-muted-foreground">שלילי</span>
-                  </div>
-                </div>
-                <div className="text-center mt-2 text-sm text-muted-foreground">
-                  עדכון אחרון: {formatDate(sentiment.lastUpdated)}
-                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="sentiment" className="flex gap-2 items-center">
+                <TrendingUp className="h-4 w-4" />
+                ניתוח סנטימנט
+              </TabsTrigger>
+              <TabsTrigger value="mentions" className="flex gap-2 items-center">
+                <Twitter className="h-4 w-4" />
+                אזכורים ברשתות
+              </TabsTrigger>
+              <TabsTrigger value="alerts" className="flex gap-2 items-center">
+                <Bell className="h-4 w-4" />
+                התראות סנטימנט
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="sentiment">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <Card className="md:col-span-2">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-right">ניתוח סנטימנט {cryptoAssets.find(a => a.id === selectedAsset)?.name}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <TwitterSentimentChart data={sentimentDemoData} />
+                  </CardContent>
+                </Card>
+                
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-right">סיכום נתונים</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <Badge variant="outline" className="bg-green-100 text-green-800">חיובי</Badge>
+                        <div className="font-semibold text-lg">75%</div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <Badge variant="outline" className="bg-red-100 text-red-800">שלילי</Badge>
+                        <div className="font-semibold text-lg">15%</div>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <Badge variant="outline" className="bg-gray-100 text-gray-800">ניטרלי</Badge>
+                        <div className="font-semibold text-lg">10%</div>
+                      </div>
+                      <div className="border-t pt-3 mt-3">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">ציוצים שנותחו</span>
+                          <span className="font-medium">2,487</span>
+                        </div>
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="text-sm text-muted-foreground">משתמשים ייחודיים</span>
+                          <span className="font-medium">1,243</span>
+                        </div>
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="text-sm text-muted-foreground">השפעה כוללת</span>
+                          <div className="flex items-center">
+                            <span className="font-medium">3.8M</span>
+                            <Zap className="h-3 w-3 text-yellow-500 ml-1" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
               
-              <div>
-                {renderSentimentBar(sentiment.bitcoin, 'Bitcoin')}
-                {renderSentimentBar(sentiment.ethereum, 'Ethereum')}
-                {renderSentimentBar(sentiment.altcoins, 'Altcoins')}
-                {renderSentimentBar(sentiment.defi, 'DeFi')}
-                {renderSentimentBar(sentiment.nfts, 'NFTs')}
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-6 text-muted-foreground">
-              לא ניתן לטעון נתוני סנטימנט
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      
-      {/* כרטיס אזכורים ברשתות חברתיות */}
-      <Tabs defaultValue="influential">
-        <TabsList className="w-full md:w-[400px]">
-          <TabsTrigger value="influential">אזכורים משפיעים</TabsTrigger>
-          <TabsTrigger value="all">כל האזכורים</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="influential">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right">אזכורים משפיעים</CardTitle>
-              <CardDescription className="text-right">
-                אזכורים מאנשי מפתח ומשפיענים בתחום הקריפטו
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {influentialLoading ? (
-                <div className="space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="border p-4 rounded-md space-y-2">
-                      <div className="flex justify-between">
-                        <Skeleton className="h-6 w-[80px]" />
-                        <Skeleton className="h-6 w-[120px]" />
-                      </div>
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-4/5" />
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-right flex justify-between">
+                    <Button variant="outline" size="sm">
+                      <Filter className="h-4 w-4 mr-2" />
+                      סנן תוצאות
+                    </Button>
+                    <span>ציוצים מובילים</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <TwitterMentionsTable tweets={tweetsDemoData} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="mentions">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-right">אזכורים ברשתות חברתיות</CardTitle>
+                  <CardDescription className="text-right">
+                    ניתוח תוכן והשפעה של אזכורים ברשתות עבור {cryptoAssets.find(a => a.id === selectedAsset)?.name}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <Card className="bg-muted/40">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg text-right">סך הכל אזכורים</CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex justify-between items-center">
+                        <Twitter className="h-8 w-8 text-primary" />
+                        <div className="text-3xl font-bold">12,354</div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-muted/40">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg text-right">משתמשים משפיעים</CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex justify-between items-center">
+                        <Users className="h-8 w-8 text-primary" />
+                        <div className="text-3xl font-bold">243</div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card className="bg-muted/40">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-lg text-right">השפעה פוטנציאלית</CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex justify-between items-center">
+                        <Zap className="h-8 w-8 text-primary" />
+                        <div className="text-3xl font-bold">26.7M</div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  
+                  <div className="border-t pt-4 mt-2">
+                    <div className="flex justify-between items-center mb-2">
+                      <Button variant="outline" size="sm">
+                        <Filter className="h-4 w-4 mr-2" />
+                        סנן תוצאות
+                      </Button>
+                      <h3 className="text-lg font-medium text-right">משתמשים משפיעים</h3>
                     </div>
-                  ))}
-                </div>
-              ) : influentialMentions.length > 0 ? (
-                <div className="space-y-4">
-                  {influentialMentions.map((mention, index) => (
-                    <div key={index} className="border p-4 rounded-md">
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center gap-1">
-                          {renderSentimentBadge(mention.sentimentScore)}
-                          <Badge variant="outline">{mention.assetSymbol}</Badge>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="flex items-center gap-1">
-                            {getSourceIcon(mention.source)}
-                            {mention.source}
-                          </Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {formatDate(mention.timestamp)}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-right my-2">{mention.content}</p>
-                      <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>{mention.engagement.toLocaleString()} אינטראקציות</span>
-                        {mention.url && (
-                          <a 
-                            href={mention.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline"
-                          >
-                            צפה במקור
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-6 text-muted-foreground">
-                  לא נמצאו אזכורים משפיעים
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="all">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right">כל האזכורים החברתיים</CardTitle>
-              <CardDescription className="text-right">
-                אזכורים מרשתות חברתיות ופלטפורמות שונות
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {mentionsLoading ? (
-                <div className="space-y-3">
-                  {[...Array(8)].map((_, i) => (
-                    <div key={i} className="border p-3 rounded-md space-y-2">
-                      <div className="flex justify-between">
-                        <Skeleton className="h-5 w-[70px]" />
-                        <Skeleton className="h-5 w-[100px]" />
-                      </div>
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-4/5" />
-                    </div>
-                  ))}
-                </div>
-              ) : socialMentions.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {socialMentions.map((mention, index) => (
-                    <div key={index} className={`border p-3 rounded-md ${
-                      mention.influential ? 'border-blue-200 bg-blue-50 dark:bg-blue-950/20' : ''
-                    }`}>
-                      <div className="flex justify-between items-start mb-2">
-                        <div className="flex items-center gap-1">
-                          {renderSentimentBadge(mention.sentimentScore)}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Badge variant="outline" className="flex items-center gap-1">
-                            {getSourceIcon(mention.source)}
-                            {mention.source}
-                          </Badge>
+                    
+                    <div className="space-y-4 mt-4">
+                      {/* רשימת משתמשים משפיעים - דמו */}
+                      <div className="flex items-center justify-between p-3 border rounded-md">
+                        <Button variant="ghost" size="sm">
+                          <Link2 className="h-4 w-4 mr-2" />
+                          עקוב
+                        </Button>
+                        <div className="flex items-center">
+                          <div className="text-right mr-3">
+                            <div className="font-medium">@crypto_analyst</div>
+                            <div className="text-sm text-muted-foreground">247K עוקבים</div>
+                          </div>
+                          <div className="h-10 w-10 rounded-full overflow-hidden">
+                            <img src="https://randomuser.me/api/portraits/men/1.jpg" alt="Profile" />
+                          </div>
                         </div>
                       </div>
                       
-                      <div className="space-y-2">
-                        <p className="text-right">{mention.content}</p>
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>{mention.engagement} אינטראקציות</span>
-                          <span className="flex items-center gap-1">
-                            <Badge variant="outline">{mention.assetSymbol}</Badge>
-                            {formatDate(mention.timestamp)}
-                          </span>
+                      <div className="flex items-center justify-between p-3 border rounded-md">
+                        <Button variant="ghost" size="sm">
+                          <Link2 className="h-4 w-4 mr-2" />
+                          עקוב
+                        </Button>
+                        <div className="flex items-center">
+                          <div className="text-right mr-3">
+                            <div className="font-medium">@eth_trader</div>
+                            <div className="text-sm text-muted-foreground">135K עוקבים</div>
+                          </div>
+                          <div className="h-10 w-10 rounded-full overflow-hidden">
+                            <img src="https://randomuser.me/api/portraits/women/2.jpg" alt="Profile" />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between p-3 border rounded-md">
+                        <Button variant="ghost" size="sm">
+                          <Link2 className="h-4 w-4 mr-2" />
+                          עקוב
+                        </Button>
+                        <div className="flex items-center">
+                          <div className="text-right mr-3">
+                            <div className="font-medium">@sol_investor</div>
+                            <div className="text-sm text-muted-foreground">98K עוקבים</div>
+                          </div>
+                          <div className="h-10 w-10 rounded-full overflow-hidden">
+                            <img src="https://randomuser.me/api/portraits/men/5.jpg" alt="Profile" />
+                          </div>
                         </div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-6 text-muted-foreground">
-                  לא נמצאו אזכורים ברשתות חברתיות
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="alerts">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-right">התראות סנטימנט</CardTitle>
+                  <CardDescription className="text-right">
+                    הגדר התראות מותאמות אישית עבור שינויים בסנטימנט השוק
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-right text-lg">התראות פעילות</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center p-3 border rounded-md">
+                            <div className="flex items-center">
+                              <Switch id="alert-1" defaultChecked />
+                            </div>
+                            <div className="text-right">
+                              <div className="font-medium">שינוי חד בסנטימנט Bitcoin</div>
+                              <div className="text-sm text-muted-foreground">מעל 15% בשעה</div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-between items-center p-3 border rounded-md">
+                            <div className="flex items-center">
+                              <Switch id="alert-2" defaultChecked />
+                            </div>
+                            <div className="text-right">
+                              <div className="font-medium">אזכורים גבוהים Ethereum</div>
+                              <div className="text-sm text-muted-foreground">מעל 5,000 ציוצים בשעה</div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex justify-between items-center p-3 border rounded-md">
+                            <div className="flex items-center">
+                              <Switch id="alert-3" />
+                            </div>
+                            <div className="text-right">
+                              <div className="font-medium">סנטימנט שלילי חריג</div>
+                              <div className="text-sm text-muted-foreground">מעל 70% שלילי עבור כל מטבע</div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-right text-lg">הוסף התראה חדשה</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          <div>
+                            <Label htmlFor="alert-name" className="block text-right mb-2">שם ההתראה</Label>
+                            <Input id="alert-name" placeholder="הזן שם להתראה" className="text-right" />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="alert-asset" className="block text-right mb-2">מטבע</Label>
+                            <Select defaultValue="bitcoin">
+                              <SelectTrigger id="alert-asset">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {cryptoAssets.map(asset => (
+                                  <SelectItem key={asset.id} value={asset.id}>
+                                    {asset.name} ({asset.symbol})
+                                  </SelectItem>
+                                ))}
+                                <SelectItem value="all">כל המטבעות</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="alert-type" className="block text-right mb-2">סוג התראה</Label>
+                            <Select defaultValue="sentiment-change">
+                              <SelectTrigger id="alert-type">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="sentiment-change">שינוי בסנטימנט</SelectItem>
+                                <SelectItem value="mentions-volume">כמות אזכורים</SelectItem>
+                                <SelectItem value="influencer-mention">אזכור ע"י משפיענים</SelectItem>
+                                <SelectItem value="price-sentiment">קורלציה מחיר-סנטימנט</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="alert-threshold" className="block text-right mb-2">סף התראה (%)</Label>
+                            <Input id="alert-threshold" type="number" defaultValue="15" className="text-right" />
+                          </div>
+                          
+                          <div>
+                            <Label htmlFor="alert-message" className="block text-right mb-2">הודעת התראה (אופציונלי)</Label>
+                            <Textarea id="alert-message" placeholder="הזן הודעה מותאמת אישית..." className="text-right" />
+                          </div>
+                          
+                          <Button className="w-full">הוסף התראה</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
+    </Container>
   );
 };
 

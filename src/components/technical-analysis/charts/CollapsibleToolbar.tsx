@@ -4,7 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { ArrowUpDown, BarChart2, ChevronDown, ChevronUp, LineChart, Volume2 } from 'lucide-react';
+import { 
+  ArrowUpDown, 
+  BarChart2, 
+  ChevronDown, 
+  ChevronUp, 
+  LineChart, 
+  Volume2, 
+  ToggleLeft, 
+  ToggleRight 
+} from 'lucide-react';
+import { useAppSettings } from '@/hooks/use-app-settings';
 
 interface CollapsibleToolbarProps {
   showVolume: boolean;
@@ -25,6 +35,7 @@ const CollapsibleToolbar: React.FC<CollapsibleToolbarProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [chartType, setChartType] = useState<'candle' | 'line' | 'bar'>('line');
+  const { demoMode, toggleDemoMode } = useAppSettings();
   
   return (
     <div className="relative mb-2">
@@ -40,6 +51,25 @@ const CollapsibleToolbar: React.FC<CollapsibleToolbarProps> = ({
         </Button>
         
         <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            onClick={toggleDemoMode}
+            className="flex items-center gap-1.5 text-xs"
+            size="sm"
+          >
+            {demoMode ? (
+              <>
+                <ToggleLeft className="h-4 w-4 text-amber-500" />
+                <span>מצב דמו</span>
+              </>
+            ) : (
+              <>
+                <ToggleRight className="h-4 w-4 text-green-500" />
+                <span>מצב אמיתי</span>
+              </>
+            )}
+          </Button>
+          
           <div className="flex items-center">
             <Label htmlFor="show-volume" className="ml-2 text-sm">
               נפח
