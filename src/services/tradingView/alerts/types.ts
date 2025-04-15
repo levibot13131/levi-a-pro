@@ -1,4 +1,3 @@
-
 export interface TradingViewAlert {
   id?: string;
   symbol: string;
@@ -14,6 +13,7 @@ export interface TradingViewAlert {
   source?: string;
   priority?: 'low' | 'medium' | 'high';
   chartUrl?: string;
+  confidence?: number;
 }
 
 export interface AlertDestination {
@@ -26,7 +26,6 @@ export interface AlertDestination {
   config?: Record<string, any>;
 }
 
-// Helper function to create a TradingView alert
 export function createTradingViewAlert(data: Partial<TradingViewAlert> & { symbol: string; message: string }): TradingViewAlert {
   return {
     symbol: data.symbol,
