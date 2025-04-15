@@ -118,7 +118,7 @@ export const startRealTimeMarketData = (symbols: string[]) => {
   };
   
   // Generate fundamental data for a symbol
-  export const getFundamentalData = (symbol: string) => {
+  const getFundamentalDataInternal = (symbol: string) => {
     const basePrice = getBasePrice(symbol);
     const marketCap = basePrice * (symbol.includes('BTC') ? 21000000 : 
                                   symbol.includes('ETH') ? 120000000 : 

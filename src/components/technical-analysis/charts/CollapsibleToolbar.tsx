@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { ArrowUpDown, BarChart2, ChevronDown, ChevronUp, Line, LineChart, Volume2 } from 'lucide-react';
+import { ArrowUpDown, BarChart2, ChevronDown, ChevronUp, LineChart, Volume2 } from 'lucide-react';
 
 interface CollapsibleToolbarProps {
   showVolume: boolean;
@@ -106,7 +106,7 @@ const CollapsibleToolbar: React.FC<CollapsibleToolbarProps> = ({
                   onCheckedChange={setShowPatterns} 
                 />
                 <Label htmlFor="show-patterns" className="text-sm flex items-center">
-                  <Line className="h-3 w-3 ml-1" />
+                  <LineChart className="h-3 w-3 ml-1" />
                   הצג תבניות
                 </Label>
               </div>
