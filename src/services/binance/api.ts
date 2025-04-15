@@ -17,11 +17,11 @@ export const fetchFromBinance = async (
   try {
     // Check if we need to use a proxy
     const proxyConfig = getProxyConfig();
-    const useProxy = !!proxyConfig?.enabled;
+    const useProxy = !!proxyConfig?.isEnabled;
     
     // Base URL with or without proxy
     const baseUrl = useProxy 
-      ? `${proxyConfig?.url}/binance`
+      ? `${proxyConfig?.baseUrl}/binance`
       : BINANCE_API_BASE;
     
     // Build URL with query parameters

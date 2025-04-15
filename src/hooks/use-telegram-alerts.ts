@@ -82,7 +82,7 @@ export const useTelegramAlerts = () => {
         message,
         timestamp: Date.now(),
         timeframe: '1h',
-        type: 'technical',
+        type: 'custom', // Changed from 'technical' to 'custom' to match allowed values
         indicators,
         details,
         source: 'binance-analysis',

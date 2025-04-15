@@ -37,12 +37,12 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
     
     // Get proxy configuration if needed
     const proxyConfig = getProxyConfig();
-    const useProxy = !!proxyConfig?.enabled;
+    const useProxy = !!proxyConfig?.isEnabled;
     
     // Create the WebSocket connection
     const streamName = interval ? `${symbol.toLowerCase()}@kline_${interval}` : `${symbol.toLowerCase()}@ticker`;
     const wsEndpoint = useProxy 
-      ? `${proxyConfig?.url}/binance/ws/${streamName}`
+      ? `${proxyConfig?.baseUrl}/binance/ws/${streamName}`
       : `wss://stream.binance.com:9443/ws/${streamName}`;
     
     console.log(`Connecting to Binance WebSocket: ${wsEndpoint}`);

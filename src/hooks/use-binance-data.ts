@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useAppSettings } from './use-app-settings';
@@ -20,7 +19,7 @@ import {
   BinanceStreamMessage 
 } from '@/services/binance/types';
 
-export { PriceData };
+export type { PriceData };
 
 export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
   const [loading, setLoading] = useState(true);
@@ -34,15 +33,12 @@ export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
     demoMode: state.demoMode
   }));
 
-  // Normalize symbols to always be an array for internal use
   const symbolsArray = Array.isArray(symbols) ? symbols : [symbols];
 
-  // Handle WebSocket/stream messages
   const handleStreamMessage = useCallback((message: BinanceStreamMessage) => {
     const { symbol, data, type } = message;
     
     if (type === 'ticker') {
-      // Update marketData
       setMarketData(prevData => ({
         ...prevData,
         [symbol]: {
@@ -56,7 +52,6 @@ export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
         }
       }));
       
-      // If this is the first symbol and we're maintaining priceData for backward compatibility
       if (symbol === symbolsArray[0]) {
         setPriceData({
           symbol,
@@ -71,7 +66,6 @@ export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
     }
   }, [symbolsArray]);
 
-  // Initialize data and subscriptions
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
@@ -79,31 +73,37 @@ export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
         setIsLoading(true);
         setError(null);
 
-        // Update real-time mode based on demoMode setting
         setRealTimeMode(!demoMode);
 
-        // Initial market data for all symbols
         const newMarketData: Record<string, MarketDataEntry> = {};
         
         for (const symbol of symbolsArray) {
           try {
-            // Fetch initial data
-            const data = demoMode 
-              ? await getFundamentalData(symbol) // Use mock data in demo mode
-              : await fetchFundamentalData(symbol); // Use real API in production
-            
-            newMarketData[symbol] = {
-              symbol,
-              price: data.price,
-              change24h: data.change24h,
-              high24h: data.high24h,
-              low24h: data.low24h,
-              volume24h: data.volume24h,
-              lastUpdated: Date.now()
-            };
+            if (demoMode) {
+              const data = await getFundamentalData(symbol);
+              newMarketData[symbol] = {
+                symbol,
+                price: data.price,
+                change24h: data.change24h,
+                high24h: data.high24h,
+                low24h: data.low24h,
+                volume24h: data.volume24h,
+                lastUpdated: Date.now()
+              };
+            } else {
+              const data = await fetchFundamentalData(symbol);
+              newMarketData[symbol] = {
+                symbol,
+                price: data.price,
+                change24h: data.change24h,
+                high24h: data.high24h,
+                low24h: data.low24h,
+                volume24h: data.volume24h,
+                lastUpdated: Date.now()
+              };
+            }
           } catch (err) {
             console.error(`Error fetching data for ${symbol}:`, err);
-            // Add fallback/empty data in case of error
             newMarketData[symbol] = {
               symbol,
               price: 0,
@@ -118,7 +118,6 @@ export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
         
         setMarketData(newMarketData);
         
-        // For backward compatibility with single symbol
         if (symbolsArray.length === 1) {
           const singleSymbol = symbolsArray[0];
           const singleData = newMarketData[singleSymbol];
@@ -149,7 +148,6 @@ export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
 
     fetchInitialData();
 
-    // Set up real-time data subscriptions
     const unsubscribe = subscribeToMarketData(
       symbolsArray,
       handleStreamMessage,
@@ -160,12 +158,10 @@ export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
     );
 
     return () => {
-      // Cleanup
       unsubscribe();
     };
   }, [symbolsArray.join(','), demoMode, handleStreamMessage]);
 
-  // Refresh data manually
   const refreshData = useCallback(async () => {
     try {
       setLoading(true);
@@ -173,12 +169,10 @@ export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
       const updatedMarketData = { ...marketData };
       
       for (const symbol of symbolsArray) {
-        // Fetch fresh data
         const data = demoMode
           ? await getFundamentalData(symbol)
           : await fetchFundamentalData(symbol);
         
-        // Update marketData entry
         updatedMarketData[symbol] = {
           symbol,
           price: data.price,
@@ -189,7 +183,6 @@ export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
           lastUpdated: Date.now()
         };
         
-        // For backward compatibility
         if (symbolsArray.length === 1) {
           setFundamentalData(data);
           
@@ -219,12 +212,10 @@ export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
     }
   }, [symbolsArray, marketData, demoMode]);
 
-  // Start real-time updates explicitly
   const startRealTimeUpdates = useCallback(() => {
     console.log('Starting real-time updates for', symbolsArray);
     setRealTimeMode(true);
     
-    // Force resubscribe to all symbols
     const cleanup = subscribeToMarketData(
       symbolsArray,
       handleStreamMessage,
@@ -237,7 +228,6 @@ export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
       description: `מקבל עדכונים בזמן אמת עבור ${symbolsArray.length} סמלים`
     });
     
-    // Returning the cleanup function (not calling it)
     return cleanup;
   }, [symbolsArray, handleStreamMessage]);
 
