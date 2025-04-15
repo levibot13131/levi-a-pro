@@ -6,7 +6,7 @@ import { getAssets } from '@/services/mockDataService';
 import { toast } from 'sonner';
 
 import { startRealTimeAnalysis } from '@/services/backtesting/realTimeAnalysis/alertSystem';
-import { useStoredSignals, getSignals } from '@/services/backtesting/realTimeAnalysis/signalStorage';
+import { useStoredSignals, getSignals, clearSignals } from '@/services/backtesting/realTimeAnalysis/signalStorage';
 import { TradeSignal as RealTimeTradeSignal } from '@/services/backtesting/realTimeAnalysis/signalStorage';
 
 // Helper function to convert RealTimeTradeSignal to TradeSignal
