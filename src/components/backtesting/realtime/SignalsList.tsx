@@ -6,9 +6,10 @@ import SignalCard from './SignalCard';
 
 interface SignalsListProps {
   signals: TradeSignal[];
+  marketData?: any;
 }
 
-const SignalsList: React.FC<SignalsListProps> = ({ signals }) => {
+const SignalsList: React.FC<SignalsListProps> = ({ signals, marketData }) => {
   const getSortedSignals = () => {
     return [...signals].sort((a, b) => b.timestamp - a.timestamp);
   };

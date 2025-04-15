@@ -10,6 +10,7 @@ interface AlertsControlsProps {
   handleClearSignals: () => void;
   enableAutomaticAlerts?: () => void;
   areAutoAlertsEnabled?: boolean;
+  isBinanceConnected: boolean;
 }
 
 const AlertsControls: React.FC<AlertsControlsProps> = ({
@@ -18,7 +19,8 @@ const AlertsControls: React.FC<AlertsControlsProps> = ({
   toggleRealTimeAlerts,
   handleClearSignals,
   enableAutomaticAlerts,
-  areAutoAlertsEnabled
+  areAutoAlertsEnabled,
+  isBinanceConnected
 }) => {
   return (
     <div className="flex flex-wrap gap-2 justify-end">

@@ -80,9 +80,11 @@ const AlertsCard: React.FC<AlertsCardProps> = ({
         <AlertsControls
           isActive={isActive}
           toggleRealTimeAlerts={toggleRealTimeAlerts}
-          signalCount={signals.length}
+          signalsCount={signals.length}
           handleClearSignals={handleClearSignals}
           isBinanceConnected={isBinanceConnected}
+          enableAutomaticAlerts={enableAutomaticAlerts}
+          areAutoAlertsEnabled={areAutoAlertsEnabled}
         />
         
         <div className="mt-4">
@@ -92,6 +94,8 @@ const AlertsCard: React.FC<AlertsCardProps> = ({
             <EmptySignalsState />
           ) : (
             <EmptyAlertsState 
+              isActive={isActive}
+              toggleRealTimeAlerts={toggleRealTimeAlerts}
               enableAutomaticAlerts={enableAutomaticAlerts} 
               areAutoAlertsEnabled={areAutoAlertsEnabled}
             />
