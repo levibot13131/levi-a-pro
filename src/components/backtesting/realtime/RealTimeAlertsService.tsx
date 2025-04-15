@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { BacktestSettings } from '@/services/backtesting/types';
@@ -5,6 +6,7 @@ import { getTrackedAssets } from '@/services/assetTracking/storage';
 import { useAuth } from '@/contexts/AuthContext';
 import { useBinanceConnection } from '@/hooks/use-binance-connection';
 import { useBinanceData } from '@/hooks/use-binance-data';
+import { getProxyConfig, listenToProxyChanges } from '@/services/proxy/proxyConfig';
 
 import { useStoredSignals, clearStoredSignals } from '@/services/backtesting/realTimeAnalysis/signalStorage';
 import { startRealTimeAnalysis } from '@/services/backtesting/realTimeAnalysis/alertSystem';
@@ -21,6 +23,7 @@ interface RealTimeAlertsServiceProps {
     areAutoAlertsEnabled: boolean;
     isBinanceConnected: boolean;
     binanceMarketData: any;
+    proxyStatus: { isEnabled: boolean; hasUrl: boolean };
   }) => React.ReactNode;
 }
 
@@ -34,6 +37,13 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
   const [alertInstance, setAlertInstance] = React.useState<{ stop: () => void } | null>(null);
   const { data: signals = [], refetch } = useStoredSignals();
   const [autoAlertsEnabled, setAutoAlertsEnabled] = useState(false);
+  const [proxyStatus, setProxyStatus] = useState(() => {
+    const config = getProxyConfig();
+    return { 
+      isEnabled: config.isEnabled, 
+      hasUrl: !!config.baseUrl?.trim() 
+    };
+  });
   
   const { isConnected: isBinanceConnected } = useBinanceConnection();
   const mappedAssetIds = assetIds.map(id => {
@@ -46,6 +56,26 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
   });
   
   const { marketData: binanceMarketData } = useBinanceData(isBinanceConnected ? mappedAssetIds : []);
+  
+  // האזנה לשינויים בהגדרות הפרוקסי
+  useEffect(() => {
+    const unsubscribe = listenToProxyChanges((config) => {
+      console.log('Proxy config changed in RealTimeAlertsService:', config);
+      setProxyStatus({
+        isEnabled: config.isEnabled,
+        hasUrl: !!config.baseUrl?.trim()
+      });
+      
+      // אם הפרוקסי הופעל והתראות פעילות, נודיע למשתמש
+      if (config.isEnabled && config.baseUrl && isActive) {
+        toast.success('פרוקסי הופעל', {
+          description: 'התראות בזמן אמת ישתמשו כעת בפרוקסי'
+        });
+      }
+    });
+    
+    return () => unsubscribe();
+  }, [isActive]);
   
   useEffect(() => {
     if (assetIds.length === 0) {
@@ -62,7 +92,7 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
         }
       }
     }
-  }, [autoAlertsEnabled, assetIds.length]);
+  }, [autoAlertsEnabled, assetIds.length, isActive]);
   
   useEffect(() => {
     const interval = setInterval(() => {
@@ -88,6 +118,14 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
       return;
     }
     
+    // בדיקת הגדרות פרוקסי
+    const config = getProxyConfig();
+    if (!config.isEnabled || !config.baseUrl) {
+      toast.warning('התראות בזמן אמת עשויות לא לעבוד ללא פרוקסי', {
+        description: 'מומלץ להגדיר פרוקסי עבור פונקציונליות מלאה'
+      });
+    }
+    
     const instance = startRealTimeAnalysis(assets, settings);
     setAlertInstance(instance);
     setIsActive(true);
@@ -109,6 +147,14 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
       setIsActive(false);
       toast.info("ניתוח בזמן אמת הופסק");
     } else {
+      // בדיקת הגדרות פרוקסי לפני הפעלה
+      const config = getProxyConfig();
+      if (!config.isEnabled || !config.baseUrl) {
+        toast.warning('התראות בזמן אמת עשויות לא לעבוד ללא פרוקסי', {
+          description: 'מומלץ להגדיר פרוקסי עבור פונקציונליות מלאה'
+        });
+      }
+      
       const instance = startRealTimeAnalysis(assetIds, settings);
       setAlertInstance(instance);
       setIsActive(true);
@@ -156,7 +202,8 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
         enableAutomaticAlerts,
         areAutoAlertsEnabled: autoAlertsEnabled,
         isBinanceConnected,
-        binanceMarketData
+        binanceMarketData,
+        proxyStatus
       })}
     </>
   );

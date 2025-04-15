@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useTradingViewConnection } from './use-tradingview-connection';
 import { useBinanceConnection } from './use-binance-connection';
 import { toast } from 'sonner';
+import { listenToProxyChanges, getProxyConfig } from '@/services/proxy/proxyConfig';
 
 export type ConnectionStatus = 'connected' | 'partial' | 'disconnected';
 export type DataSourceType = 'tradingview' | 'binance' | 'webhook' | 'internal';
@@ -32,6 +33,7 @@ export function useSystemStatus() {
     lastUpdated: null,
     activeFeatures: []
   });
+  const [proxyEnabled, setProxyEnabled] = useState(() => getProxyConfig().isEnabled);
   
   // בדיקת המערכת והגדרת הסטטוס
   useEffect(() => {
@@ -53,7 +55,7 @@ export function useSystemStatus() {
         {
           type: 'webhook',
           name: 'Webhook Alerts',
-          status: isTradingViewConnected ? 'active' : 'inactive'
+          status: (isTradingViewConnected && proxyEnabled) ? 'active' : 'inactive'
         },
         {
           type: 'internal',
@@ -85,6 +87,10 @@ export function useSystemStatus() {
         activeFeatures.push('מסחר אוטומטי', 'ספר הזמנות', 'ניתוח נוזלות');
       }
       
+      if (proxyEnabled) {
+        activeFeatures.push('ווב הוק', 'חיבור API');
+      }
+      
       setStatus({
         connectionStatus,
         dataSources,
@@ -98,10 +104,20 @@ export function useSystemStatus() {
     checkSystemStatus();
     
     // בדיקה תקופתית
-    const interval = setInterval(checkSystemStatus, 60000); // בדיקה כל דקה
+    const interval = setInterval(checkSystemStatus, 30000); // בדיקה כל 30 שניות
     
-    return () => clearInterval(interval);
-  }, [isTradingViewConnected, isBinanceConnected]);
+    // האזנה לשינויים בהגדרות פרוקסי
+    const unsubscribe = listenToProxyChanges((config) => {
+      console.log('Proxy config changed:', config);
+      setProxyEnabled(config.isEnabled);
+      checkSystemStatus();
+    });
+    
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
+  }, [isTradingViewConnected, isBinanceConnected, proxyEnabled]);
   
   // הפעלה של המערכת בזמן אמת
   const enableRealTimeMode = () => {
@@ -112,6 +128,14 @@ export function useSystemStatus() {
       return false;
     }
     
+    // בדיקה אם הפרוקסי מוגדר ופעיל
+    const proxyConfig = getProxyConfig();
+    if (!proxyConfig.isEnabled || !proxyConfig.baseUrl) {
+      toast.warning('מומלץ להגדיר פרוקסי לפני הפעלת מצב זמן אמת', {
+        description: 'המערכת תעבוד, אך ללא תמיכה בווב הוק ובהתראות מתקדמות'
+      });
+    }
+    
     toast.success('מצב זמן אמת הופעל', {
       description: 'המערכת תעדכן נתונים בזמן אמת'
     });
@@ -120,6 +144,7 @@ export function useSystemStatus() {
   
   return {
     ...status,
-    enableRealTimeMode
+    enableRealTimeMode,
+    isProxyEnabled: proxyEnabled
   };
 }

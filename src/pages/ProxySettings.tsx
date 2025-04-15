@@ -26,16 +26,35 @@ const ProxySettings = () => {
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'none' | 'success' | 'error'>('none');
 
+  // עדכון מהאחסון בעת טעינת הדף
+  useEffect(() => {
+    const config = getProxyConfig();
+    setProxyUrl(config.baseUrl);
+    setProxyEnabled(config.isEnabled);
+  }, []);
+
   const handleSaveProxy = () => {
     if (proxyEnabled && !proxyUrl.trim()) {
       toast.error('אנא הזן כתובת פרוקסי תקפה');
       return;
     }
 
+    // וידוא שה-URL כולל פרוטוקול
+    let finalUrl = proxyUrl.trim();
+    if (proxyEnabled && finalUrl && !finalUrl.startsWith('http')) {
+      finalUrl = `https://${finalUrl}`;
+      setProxyUrl(finalUrl);
+    }
+
     setProxyConfig({
-      baseUrl: proxyUrl.trim(),
+      baseUrl: finalUrl,
       isEnabled: proxyEnabled
     });
+    
+    // פעולה מיוחדת אחרי שמירה - רענון המערכת
+    window.dispatchEvent(new CustomEvent('proxy-config-changed'));
+    
+    toast.success('הגדרות הפרוקסי נשמרו בהצלחה');
   };
 
   const handleClearProxy = () => {
@@ -43,6 +62,7 @@ const ProxySettings = () => {
     setProxyUrl('');
     setProxyEnabled(false);
     setConnectionStatus('none');
+    window.dispatchEvent(new CustomEvent('proxy-config-changed'));
   };
 
   const testProxyConnection = async () => {
@@ -53,9 +73,24 @@ const ProxySettings = () => {
 
     setIsTestingConnection(true);
     setConnectionStatus('none');
+    
+    // וידוא שה-URL כולל פרוטוקול
+    let testUrl = proxyUrl.trim();
+    if (!testUrl.startsWith('http')) {
+      testUrl = `https://${testUrl}`;
+    }
 
     try {
-      const response = await axios.get(`${proxyUrl.trim()}/ping`, { timeout: 5000 });
+      // מנסה לבצע פינג לשרת הפרוקסי
+      const pingEndpoint = `${testUrl}/ping`;
+      console.log('Testing proxy connection to:', pingEndpoint);
+      
+      const response = await axios.get(pingEndpoint, { 
+        timeout: 5000,
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      console.log('Proxy test response:', response);
       
       if (response.status === 200) {
         setConnectionStatus('success');
@@ -69,9 +104,9 @@ const ProxySettings = () => {
       setConnectionStatus('error');
       
       // בסביבת פיתוח, נאפשר להמשיך גם אם החיבור נכשל
-      const isProduction = window.location.hostname.includes('lovable.app');
+      const isProduction = process.env.NODE_ENV === 'production';
       if (!isProduction) {
-        toast.warning('פרוקסי לא מגיב, אך מותר במצב פיתוח');
+        toast.warning('פרוקסי לא מגיב, אך מותר במצב פיתוח. ניתן להמשיך בהגדרות.');
       } else {
         toast.error('שגיאה בחיבור לפרוקסי, בדוק את הכתובת והזמינות');
       }
