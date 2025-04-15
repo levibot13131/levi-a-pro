@@ -29,9 +29,9 @@ const convertSignal = (signal: RealTimeTradeSignal): TradeSignal => {
     message: signal.message,
     timestamp: timestamp,
     price: price,
-    strength: 'medium', // This is a string enum in the TradeSignal type
+    strength: 'medium' as 'weak' | 'medium' | 'strong', // Fix: Using 'as' to ensure type compatibility
     strategy: signal.source || 'real-time',
-    timeframe: '1h', // This is a string enum in the TradeSignal type
+    timeframe: '1h' as '5m' | '15m' | '1h' | '4h' | '1d', // Fix: Using 'as' to ensure type compatibility
     createdAt: new Date(timestamp).toISOString(),
   };
 };
