@@ -20,7 +20,8 @@ const RealTimeAlerts: React.FC<RealTimeAlertsProps> = ({ assetIds, settings }) =
         enableAutomaticAlerts, 
         areAutoAlertsEnabled,
         isBinanceConnected,
-        binanceMarketData
+        binanceMarketData,
+        proxyStatus
       }) => (
         <AlertsCard
           signals={signals}
@@ -31,6 +32,7 @@ const RealTimeAlerts: React.FC<RealTimeAlertsProps> = ({ assetIds, settings }) =
           areAutoAlertsEnabled={areAutoAlertsEnabled}
           isBinanceConnected={isBinanceConnected}
           binanceMarketData={binanceMarketData}
+          proxyStatus={proxyStatus}
         />
       )}
     </RealTimeAlertsService>

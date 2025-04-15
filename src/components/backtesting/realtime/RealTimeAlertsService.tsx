@@ -58,7 +58,6 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
     mappedAssetIds
   );
   
-  // האזנה לשינויים בהגדרות הפרוקסי
   useEffect(() => {
     const unsubscribe = listenToProxyChanges((config) => {
       console.log('Proxy config changed in RealTimeAlertsService:', config);
@@ -67,13 +66,11 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
         hasUrl: !!config.baseUrl?.trim()
       });
       
-      // אם הפרוקסי הופעל והתראות פעילות, נודיע למשתמש
       if (config.isEnabled && config.baseUrl && isActive) {
         toast.success('פרוקסי הופעל', {
           description: 'התראות בזמן אמת ישתמשו כעת בפרוקסי'
         });
         
-        // אם בינאנס מחובר, רענן את החיבור אחרי שינוי בהגדרות הפרוקסי
         if (isBinanceConnected) {
           refreshConnection();
         }
@@ -83,7 +80,6 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
     return () => unsubscribe();
   }, [isActive, isBinanceConnected, refreshConnection]);
   
-  // הפעלת מעקב בזמן אמת אחרי נכסים מסומנים
   useEffect(() => {
     if (assetIds.length === 0) {
       const trackedAssets = getTrackedAssets();
@@ -101,7 +97,6 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
     }
   }, [autoAlertsEnabled, assetIds.length, isActive]);
   
-  // עדכון התראות כל 5 שניות
   useEffect(() => {
     const interval = setInterval(() => {
       refetch();
@@ -115,7 +110,6 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
     };
   }, [alertInstance, refetch]);
   
-  // הפעלת Binance בזמן אמת אם המשתמש מחובר
   useEffect(() => {
     if (isBinanceConnected && isActive) {
       console.log('Starting Binance real-time updates');
@@ -134,7 +128,6 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
       return;
     }
     
-    // בדיקת הגדרות פרוקסי וחיבור לבינאנס
     if (!proxyStatus.isEnabled || !proxyStatus.hasUrl) {
       toast.warning('התראות בזמן אמת עשויות לא לעבוד ללא פרוקסי', {
         description: 'מומלץ להגדיר פרוקסי עבור פונקציונליות מלאה'
@@ -168,7 +161,6 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
       setIsActive(false);
       toast.info("ניתוח בזמן אמת הופסק");
     } else {
-      // בדיקת הגדרות פרוקסי
       const isProxyReady = isProxyConfigured();
       
       if (!isProxyReady) {
@@ -187,7 +179,6 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
       setAlertInstance(instance);
       setIsActive(true);
       
-      // הפעלת עדכוני בינאנס אם המשתמש מחובר
       if (isBinanceConnected) {
         startRealTimeUpdates();
       }
@@ -236,7 +227,8 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
         enableAutomaticAlerts,
         areAutoAlertsEnabled: autoAlertsEnabled,
         isBinanceConnected,
-        binanceMarketData
+        binanceMarketData,
+        proxyStatus
       })}
     </>
   );
