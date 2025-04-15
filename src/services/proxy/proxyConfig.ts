@@ -68,6 +68,7 @@ export const setProxyConfig = (config: ProxyConfig): void => {
  */
 export const getApiBaseUrl = (): string => {
   const config = getProxyConfig();
+  console.log('Current proxy config:', config); // הוספנו לוג לדיבאג
   
   // בדיקה מחמירה יותר שהפרוקסי מוגדר
   if (config.isEnabled && config.baseUrl && config.baseUrl.trim().length > 0) {
@@ -82,9 +83,11 @@ export const getApiBaseUrl = (): string => {
       url = 'https://' + url;
     }
     
+    console.log('Using proxy URL:', url); // הוספנו לוג לדיבאג
     return url;
   }
   
+  console.log('Proxy not configured or disabled'); // הוספנו לוג לדיבאג
   return '';
 };
 

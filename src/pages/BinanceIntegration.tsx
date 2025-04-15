@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container } from '@/components/ui/container';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -10,11 +9,48 @@ import BinanceRealTimeStatus from '@/components/binance/BinanceRealTimeStatus';
 import { useAuth } from '@/contexts/AuthContext';
 import RequireAuth from '@/components/auth/RequireAuth';
 import { LineChart, Wallet, ArrowUpDown, Clock, Settings } from 'lucide-react';
+import { useBinanceData } from '@/hooks/use-binance-data';
+import { toast } from 'sonner';
 
 const BinanceIntegration = () => {
-  const { isConnected } = useBinanceConnection();
+  const { isConnected, refreshConnection } = useBinanceConnection();
   const [activeTab, setActiveTab] = useState('overview');
   const { isAdmin } = useAuth();
+  
+  const commonSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'DOGEUSDT', 'ADAUSDT'];
+  const { startRealTimeUpdates, refreshData } = useBinanceData(
+    isConnected ? commonSymbols : []
+  );
+  
+  useEffect(() => {
+    if (isConnected) {
+      startRealTimeUpdates();
+      
+      const handleRefreshRequest = () => {
+        console.log('Received binance refresh request');
+        refreshData();
+      };
+      
+      window.addEventListener('binance-refresh-request', handleRefreshRequest);
+      
+      return () => {
+        window.removeEventListener('binance-refresh-request', handleRefreshRequest);
+      };
+    }
+  }, [isConnected, startRealTimeUpdates, refreshData]);
+  
+  useEffect(() => {
+    const checkConnection = () => {
+      if (isConnected) {
+        startRealTimeUpdates();
+        toast.success('חיבור לבינאנס פעיל', {
+          description: 'נתונים בזמן אמת יוצגו כעת'
+        });
+      }
+    };
+    
+    checkConnection();
+  }, [isConnected, startRealTimeUpdates]);
 
   return (
     <RequireAuth>
@@ -104,7 +140,9 @@ const BinanceIntegration = () => {
 
             <TabsContent value="overview">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <BinanceConnectionStatus />
+                <BinanceConnectionStatus onStatusChange={(isActive) => {
+                  if (isActive) startRealTimeUpdates();
+                }} />
                 <BinanceRealTimeStatus />
               </div>
               
