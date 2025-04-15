@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { TwitterSentimentChart } from '@/components/twitter/TwitterSentimentChart';
+import TwitterSentimentChart from '@/components/twitter/TwitterSentimentChart';
 import TwitterMentionsTable from '@/components/twitter/TwitterMentionsTable';
 import { useAppSettings } from '@/hooks/use-app-settings';
 

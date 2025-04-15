@@ -1,122 +1,199 @@
 
-import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { MarketEvent } from '@/types/marketInformation';
+import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, Bell, BellOff, ExternalLink } from 'lucide-react';
+import { Calendar, ExternalLink, MapPin, Clock } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface EventsTabProps {
-  events: MarketEvent[];
-  focusedEventIds: Set<string>;
-  onFocus: (id: string) => void;
+  searchQuery: string;
 }
 
-const EventsTab: React.FC<EventsTabProps> = ({
-  events,
-  focusedEventIds,
-  onFocus
-}) => {
-  const formatDate = (dateStr: string, timeStr: string) => {
-    const date = new Date(dateStr);
-    const formattedDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-    return `${formattedDate} ${timeStr}`;
-  };
+const EventsTab: React.FC<EventsTabProps> = ({ searchQuery }) => {
+  const [activeTab, setActiveTab] = useState('upcoming');
   
-  const getImpactBadge = (impact: 'high' | 'medium' | 'low') => {
-    switch (impact) {
-      case 'high':
-        return <Badge className="bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">השפעה גבוהה</Badge>;
-      case 'medium':
-        return <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">השפעה בינונית</Badge>;
-      case 'low':
-        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">השפעה נמוכה</Badge>;
-      default:
-        return <Badge className="bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300">השפעה לא ידועה</Badge>;
-    }
+  const upcomingEvents = [
+    {
+      name: 'כנס בלוקצ׳יין תל אביב',
+      date: '2025-05-20',
+      endDate: '2025-05-21',
+      location: 'תל אביב, ישראל',
+      description: 'כנס הבלוקצ׳יין הגדול בישראל עם מרצים בינלאומיים ומקומיים',
+      category: 'כנס',
+      url: 'https://example.com/event1',
+      projects: ['Ethereum', 'Binance'],
+    },
+    {
+      name: 'Bitcoin Halving',
+      date: '2025-05-01',
+      endDate: '2025-05-01',
+      location: 'אירוע גלובלי',
+      description: 'הפחתת התגמול לכורים ברשת הביטקוין ב-50%, אירוע המתרחש כל 4 שנים',
+      category: 'אירוע רשת',
+      url: 'https://example.com/event2',
+      projects: ['Bitcoin'],
+    },
+    {
+      name: 'Token2049 Dubai',
+      date: '2025-04-30',
+      endDate: '2025-05-02',
+      location: 'דובאי, איחוד האמירויות',
+      description: 'כנס קריפטו וטוקנים בינלאומי עם מאות מציגים ואלפי משתתפים',
+      category: 'כנס',
+      url: 'https://example.com/event3',
+      projects: ['Multiple'],
+    },
+    {
+      name: 'Ethereum DevCon',
+      date: '2025-07-15',
+      endDate: '2025-07-18',
+      location: 'ברלין, גרמניה',
+      description: 'כנס המפתחים השנתי של קהילת אית׳ריום',
+      category: 'כנס מפתחים',
+      url: 'https://example.com/event4',
+      projects: ['Ethereum'],
+    },
+    {
+      name: 'Solana Breakpoint',
+      date: '2025-06-10',
+      endDate: '2025-06-12',
+      location: 'סיאול, דרום קוריאה',
+      description: 'כנס סולנה השנתי לחדשנות, פיתוח ומגמות עתידיות',
+      category: 'כנס',
+      url: 'https://example.com/event5',
+      projects: ['Solana'],
+    },
+  ];
+
+  const pastEvents = [
+    {
+      name: 'מיטאפ NFT ישראל',
+      date: '2025-03-15',
+      endDate: '2025-03-15',
+      location: 'תל אביב, ישראל',
+      description: 'מפגש קהילתי בנושא NFT, אמנות דיגיטלית וארנקים דיגיטליים',
+      category: 'מיטאפ',
+      url: 'https://example.com/past1',
+      projects: ['NFTs'],
+    },
+    {
+      name: 'Consensus 2024',
+      date: '2024-12-10',
+      endDate: '2024-12-12',
+      location: 'ניו יורק, ארה״ב',
+      description: 'כנס השנתי של CoinDesk עם אלפי משתתפים ומאות חברות',
+      category: 'כנס',
+      url: 'https://example.com/past2',
+      projects: ['Multiple'],
+    },
+    {
+      name: 'Cardano Summit',
+      date: '2024-11-20',
+      endDate: '2024-11-22',
+      location: 'מיאמי, ארה״ב',
+      description: 'הכנס השנתי של קהילת קרדנו',
+      category: 'כנס',
+      url: 'https://example.com/past3',
+      projects: ['Cardano'],
+    },
+  ];
+
+  const filterEvents = (events, query) => {
+    if (!query) return events;
+    return events.filter(event => 
+      event.name.toLowerCase().includes(query.toLowerCase()) ||
+      event.description.includes(query) ||
+      event.location.includes(query) ||
+      event.category.includes(query) ||
+      event.projects.some(project => project.toLowerCase().includes(query.toLowerCase()))
+    );
   };
-  
-  const getCategoryBadge = (category: string) => {
-    switch (category) {
-      case 'כלכלי':
-        return <Badge variant="outline" className="border-blue-500 text-blue-600 dark:border-blue-400 dark:text-blue-300">כלכלי</Badge>;
-      case 'קריפטו':
-        return <Badge variant="outline" className="border-purple-500 text-purple-600 dark:border-purple-400 dark:text-purple-300">קריפטו</Badge>;
-      case 'מניות':
-        return <Badge variant="outline" className="border-green-500 text-green-600 dark:border-green-400 dark:text-green-300">מניות</Badge>;
-      default:
-        return <Badge variant="outline">{category}</Badge>;
-    }
+
+  const filteredUpcoming = filterEvents(upcomingEvents, searchQuery);
+  const filteredPast = filterEvents(pastEvents, searchQuery);
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
   };
-  
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {events.map(event => (
-        <Card key={event.id}>
-          <CardContent className="pt-6">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                {getImpactBadge(event.impact)}
-              </div>
-              <div className="text-right">
-                <h3 className="font-bold text-lg">{event.title}</h3>
-                <div className="flex items-center justify-end gap-2 mt-1">
-                  {getCategoryBadge(event.category)}
-                  <span className="text-xs text-muted-foreground">
-                    {event.source}
-                  </span>
-                </div>
-              </div>
-            </div>
-            
-            <p className="text-sm text-muted-foreground mb-4 text-right">{event.description}</p>
-            
-            <div className="flex justify-between items-center">
-              <div className="flex items-center text-sm">
-                <CalendarIcon className="h-4 w-4 ml-2" />
-                <span>{formatDate(event.date, event.time)}</span>
-              </div>
-              
-              <div className="flex gap-2">
-                <Button
-                  variant={event.reminder ? "destructive" : "outline"}
-                  size="sm"
-                  onClick={() => onFocus(event.id)}
-                >
-                  {event.reminder ? (
-                    <>
-                      <BellOff className="h-4 w-4 ml-2" />
-                      בטל תזכורת
-                    </>
-                  ) : (
-                    <>
-                      <Bell className="h-4 w-4 ml-2" />
-                      הוסף תזכורת
-                    </>
-                  )}
-                </Button>
-                
-                {event.link && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => window.open(event.link, '_blank')}
-                  >
-                    <ExternalLink className="h-4 w-4 ml-2" />
-                    פרטים
-                  </Button>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-      
-      {events.length === 0 && (
-        <div className="col-span-full text-center py-12">
-          <p className="text-muted-foreground">לא נמצאו אירועים התואמים את החיפוש</p>
+
+  const EventCard = ({ event }) => (
+    <div className="p-4 border rounded-lg">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="font-medium text-lg">{event.name}</h3>
+            <Badge>{event.category}</Badge>
+          </div>
+          
+          <div className="flex items-center text-sm text-muted-foreground mb-1">
+            <Calendar className="h-4 w-4 ml-1" />
+            {formatDate(event.date)}
+            {event.endDate !== event.date && ` - ${formatDate(event.endDate)}`}
+          </div>
+          
+          <div className="flex items-center text-sm text-muted-foreground mb-3">
+            <MapPin className="h-4 w-4 ml-1" />
+            {event.location}
+          </div>
+          
+          <p className="text-sm mb-3">{event.description}</p>
+          
+          <div className="flex flex-wrap gap-2 mb-3">
+            {event.projects.map((project, idx) => (
+              <Badge key={idx} variant="outline">{project}</Badge>
+            ))}
+          </div>
         </div>
-      )}
+        
+        <Button variant="outline" size="sm" asChild className="mt-2 md:mt-0">
+          <a href={event.url} target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="h-4 w-4 ml-2" />
+            פרטים נוספים
+          </a>
+        </Button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="upcoming" className="flex items-center gap-1">
+            <Clock className="h-4 w-4" />
+            אירועים קרובים
+          </TabsTrigger>
+          <TabsTrigger value="past" className="flex items-center gap-1">
+            <Calendar className="h-4 w-4" />
+            אירועים קודמים
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="upcoming" className="space-y-4">
+          {filteredUpcoming.length > 0 ? (
+            filteredUpcoming.map((event, index) => (
+              <EventCard key={index} event={event} />
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <p>לא נמצאו אירועים עתידיים עבור "{searchQuery}"</p>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="past" className="space-y-4">
+          {filteredPast.length > 0 ? (
+            filteredPast.map((event, index) => (
+              <EventCard key={index} event={event} />
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <p>לא נמצאו אירועים קודמים עבור "{searchQuery}"</p>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

@@ -19,6 +19,14 @@ export interface TwitterCredentials {
   bearerToken: string;
   isConnected?: boolean;
   lastConnected?: number;
+  username?: string;
+}
+
+export interface TwitterConnectParams {
+  apiKey: string;
+  apiSecret: string;
+  accessToken?: string;
+  accessTokenSecret?: string;
 }
 
 // Mock data for key figure tweets
@@ -74,6 +82,68 @@ const mockKeyFigureTweets = [
     profileImageUrl: 'https://randomuser.me/api/portraits/men/15.jpg',
   },
 ];
+
+// Connect to Twitter
+export const connectToTwitter = async (params: TwitterConnectParams): Promise<boolean> => {
+  try {
+    const { apiKey, apiSecret, accessToken, accessTokenSecret } = params;
+    
+    if (!apiKey || !apiSecret) {
+      console.error('API key and secret are required');
+      return false;
+    }
+    
+    const credentials: TwitterCredentials = {
+      apiKey,
+      apiSecret,
+      bearerToken: accessToken || 'mock-token', // In a real app, you'd get this from Twitter
+      isConnected: true,
+      lastConnected: Date.now(),
+      username: 'api_user' // This would come from Twitter API in a real implementation
+    };
+    
+    saveTwitterCredentials(credentials);
+    
+    // Dispatch connection event
+    const event = new CustomEvent('twitter-connection-changed', { 
+      detail: { isConnected: true } 
+    });
+    window.dispatchEvent(event);
+    
+    return true;
+  } catch (error) {
+    console.error('Error connecting to Twitter:', error);
+    return false;
+  }
+};
+
+// Disconnect from Twitter
+export const disconnectFromTwitter = async (): Promise<boolean> => {
+  try {
+    const credentials = getTwitterCredentials();
+    
+    if (credentials) {
+      const updatedCredentials: TwitterCredentials = {
+        ...credentials,
+        isConnected: false,
+        lastConnected: Date.now()
+      };
+      
+      saveTwitterCredentials(updatedCredentials);
+      
+      // Dispatch disconnection event
+      const event = new CustomEvent('twitter-connection-changed', { 
+        detail: { isConnected: false } 
+      });
+      window.dispatchEvent(event);
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error disconnecting from Twitter:', error);
+    return false;
+  }
+};
 
 // Save Twitter credentials
 export const saveTwitterCredentials = (credentials: TwitterCredentials): void => {

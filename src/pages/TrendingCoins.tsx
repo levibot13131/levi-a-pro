@@ -26,8 +26,8 @@ const TrendingCoins = () => {
   const { startRealTimeUpdates, stopRealTimeUpdates, isRealTimeActive } = useTrendingCoins();
   
   // Sort coins by market cap
-  const sortedCoins = Object.entries(marketData)
-    .sort(([, a], [, b]) => b.price - a.price)
+  const sortedCoins = Object.entries(marketData || {})
+    .sort(([, a], [, b]) => (b.price || 0) - (a.price || 0))
     .map(([symbol]) => symbol);
   
   // Format number with commas
@@ -145,7 +145,7 @@ const TrendingCoins = () => {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {sortedCoins.map(symbol => {
-              const coin = marketData[symbol];
+              const coin = marketData?.[symbol] || { price: 0, change24h: 0, high24h: 0, low24h: 0, volume24h: 0, lastUpdated: Date.now() };
               return (
                 <Card 
                   key={symbol}

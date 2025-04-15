@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { BacktestSettings } from '@/services/backtesting/types';
@@ -56,7 +55,7 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
   });
   
   const { marketData: binanceMarketData, startRealTimeUpdates } = useBinanceData(
-    isBinanceConnected ? mappedAssetIds : []
+    mappedAssetIds
   );
   
   // האזנה לשינויים בהגדרות הפרוקסי
@@ -237,8 +236,7 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
         enableAutomaticAlerts,
         areAutoAlertsEnabled: autoAlertsEnabled,
         isBinanceConnected,
-        binanceMarketData,
-        proxyStatus
+        binanceMarketData
       })}
     </>
   );

@@ -1,104 +1,148 @@
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { MarketInfluencer } from '@/types/marketInformation';
-import { Button } from '@/components/ui/button';
-import { User, Users, Star, StarOff } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { toggleInfluencerFollow } from '@/services/marketInformation/influencersService';
+import { Button } from '@/components/ui/button';
+import { ExternalLink, Twitter } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tweet } from '@/services/twitter/twitterService';
 
 interface InfluencersTabProps {
-  influencers: MarketInfluencer[];
-  focusedInfluencerIds: Set<string>;
-  onFocus: (id: string) => void;
+  searchQuery: string;
+  tweets: Tweet[];
 }
 
-const InfluencersTab: React.FC<InfluencersTabProps> = ({
-  influencers,
-  focusedInfluencerIds,
-  onFocus
-}) => {
-  const formatNumber = (num: number): string => {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + 'M';
-    } else if (num >= 1000) {
-      return (num / 1000).toFixed(1) + 'K';
-    }
-    return num.toString();
-  };
-  
+const InfluencersTab: React.FC<InfluencersTabProps> = ({ searchQuery, tweets }) => {
+  const influencers = [
+    {
+      name: 'Vitalik Buterin',
+      handle: '@VitalikButerin',
+      bio: 'מייסד אית׳ריום, כותב ומפתח בלוקצ׳יין',
+      followers: '5.7M',
+      verified: true,
+      imageUrl: 'https://randomuser.me/api/portraits/men/12.jpg',
+      focus: ['Ethereum', 'L2', 'DeFi'],
+      sentiment: 'neutral' as const,
+    },
+    {
+      name: 'Elon Musk',
+      handle: '@elonmusk',
+      bio: 'CEO של טסלה וSpaceX, תומך בדוג׳קוין וביטקוין',
+      followers: '152M',
+      verified: true,
+      imageUrl: 'https://randomuser.me/api/portraits/men/11.jpg',
+      focus: ['Bitcoin', 'Dogecoin'],
+      sentiment: 'positive' as const,
+    },
+    {
+      name: 'CZ Binance',
+      handle: '@cz_binance',
+      bio: 'מייסד ומנכ״ל בורסת הקריפטו Binance',
+      followers: '8.5M',
+      verified: true,
+      imageUrl: 'https://randomuser.me/api/portraits/men/13.jpg',
+      focus: ['Binance', 'BNB', 'Exchanges'],
+      sentiment: 'positive' as const,
+    },
+    {
+      name: 'Michael Saylor',
+      handle: '@saylor',
+      bio: 'מנכ״ל MicroStrategy, אסטרטג ביטקוין',
+      followers: '3.1M',
+      verified: true,
+      imageUrl: 'https://randomuser.me/api/portraits/men/17.jpg',
+      focus: ['Bitcoin', 'Institutional'],
+      sentiment: 'positive' as const,
+    },
+    {
+      name: 'Peter Schiff',
+      handle: '@PeterSchiff',
+      bio: 'כלכלן, אוהב זהב, ביקורתי כלפי ביטקוין',
+      followers: '921K',
+      verified: false,
+      imageUrl: 'https://randomuser.me/api/portraits/men/14.jpg',
+      focus: ['Gold', 'Bitcoin', 'Economics'],
+      sentiment: 'negative' as const,
+    },
+  ];
+
+  const filteredInfluencers = searchQuery
+    ? influencers.filter(influencer => 
+        influencer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        influencer.handle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        influencer.bio.includes(searchQuery) ||
+        influencer.focus.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+    : influencers;
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {influencers.map(influencer => (
-        <Card key={influencer.id} className="overflow-hidden">
-          <div className="aspect-[3/1] bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 relative">
-            {influencer.avatarUrl ? (
-              <img 
-                src={influencer.avatarUrl} 
-                alt={influencer.name} 
-                className="h-16 w-16 rounded-full absolute bottom-0 right-4 transform translate-y-1/2 border-4 border-white dark:border-gray-800 object-cover"
-              />
-            ) : (
-              <div className="h-16 w-16 rounded-full absolute bottom-0 right-4 transform translate-y-1/2 border-4 border-white dark:border-gray-800 bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                <User className="h-8 w-8 text-gray-500 dark:text-gray-400" />
+    <div className="space-y-4">
+      {filteredInfluencers.length === 0 ? (
+        <div className="text-center py-8">
+          <p>לא נמצאו תוצאות עבור "{searchQuery}"</p>
+        </div>
+      ) : (
+        filteredInfluencers.map((influencer, index) => (
+          <div key={index} className="p-4 border rounded-lg space-y-3">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={influencer.imageUrl} alt={influencer.name} />
+                  <AvatarFallback>{influencer.name.substring(0, 2)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-medium">{influencer.name}</h3>
+                    {influencer.verified && (
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-100">
+                        מאומת
+                      </Badge>
+                    )}
+                    <Badge
+                      className={
+                        influencer.sentiment === 'positive' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
+                        influencer.sentiment === 'negative' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
+                        'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                      }
+                    >
+                      {influencer.sentiment === 'positive' ? 'חיובי' : 
+                       influencer.sentiment === 'negative' ? 'שלילי' : 'ניטרלי'}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-muted-foreground">{influencer.handle} • {influencer.followers} עוקבים</div>
+                </div>
               </div>
-            )}
-          </div>
-          
-          <CardContent className="pt-10">
-            <div className="flex justify-between items-start mb-3">
-              <div className="flex flex-col items-end">
-                <h3 className="font-bold text-lg">{influencer.name}</h3>
-                <span className="text-sm text-muted-foreground">{influencer.platform}</span>
-              </div>
-              
-              <div className="flex items-center text-sm">
-                <Users className="h-4 w-4 ml-1 text-blue-500" />
-                <span>{formatNumber(influencer.followers)}</span>
-              </div>
+              <Button variant="outline" size="sm" asChild>
+                <a href={`https://twitter.com/${influencer.handle.substring(1)}`} target="_blank" rel="noopener noreferrer">
+                  <Twitter className="h-4 w-4 mr-2" />
+                  עקוב
+                </a>
+              </Button>
             </div>
             
-            <p className="text-sm text-muted-foreground mb-4">{influencer.description}</p>
+            <p className="text-sm">{influencer.bio}</p>
             
-            <div className="flex flex-wrap gap-2 mb-5 justify-end">
-              {influencer.topics && influencer.topics.map((topic, index) => (
-                <Badge key={index} variant="outline" className="text-xs">
-                  {topic}
-                </Badge>
+            <div className="flex flex-wrap gap-2">
+              {influencer.focus.map((tag, idx) => (
+                <Badge key={idx} variant="outline">{tag}</Badge>
               ))}
             </div>
             
-            <div className="flex justify-between">
-              <Button
-                variant={influencer.isFollowed ? "default" : "outline"}
-                size="sm"
-                className="w-full"
-                onClick={() => {
-                  toggleInfluencerFollow(influencer.id);
-                  onFocus(influencer.id);
-                }}
-              >
-                {influencer.isFollowed ? (
-                  <>
-                    <StarOff className="h-4 w-4 ml-2" />
-                    הפסק לעקוב
-                  </>
-                ) : (
-                  <>
-                    <Star className="h-4 w-4 ml-2" />
-                    עקוב
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-      
-      {influencers.length === 0 && (
-        <div className="col-span-full text-center py-12">
-          <p className="text-muted-foreground">לא נמצאו משפיענים התואמים את החיפוש</p>
-        </div>
+            {/* Most recent tweet from this influencer, if available */}
+            {tweets.some(tweet => tweet.username.toLowerCase() === influencer.handle.substring(1).toLowerCase()) && (
+              <div className="mt-3 pt-3 border-t">
+                <div className="text-sm font-medium mb-1">ציוץ אחרון:</div>
+                {tweets.filter(tweet => tweet.username.toLowerCase() === influencer.handle.substring(1).toLowerCase())
+                  .slice(0, 1)
+                  .map(tweet => (
+                    <div key={tweet.id} className="text-sm bg-muted/50 p-2 rounded">
+                      {tweet.text}
+                    </div>
+                  ))
+                }
+              </div>
+            )}
+          </div>
+        ))
       )}
     </div>
   );

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Container } from '@/components/ui/container';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -21,10 +20,8 @@ const TwitterIntegration: React.FC = () => {
   const { demoMode } = useAppSettings();
   
   useEffect(() => {
-    // בדיקת חיבור קיים לטוויטר
     setIsConnected(isTwitterConnected());
     
-    // הוספת האזנה לשינויים בחיבור
     const handleConnectionChange = (event: CustomEvent<{ isConnected: boolean }>) => {
       setIsConnected(event.detail.isConnected);
     };
@@ -45,7 +42,6 @@ const TwitterIntegration: React.FC = () => {
   const handleRefresh = () => {
     setIsRefreshing(true);
     
-    // סימולציה של רענון נתונים
     setTimeout(() => {
       setIsRefreshing(false);
       toast.success('הנתונים התעדכנו בהצלחה');

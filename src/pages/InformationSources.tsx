@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
-import { SourcesTab } from '@/components/information-sources/SourcesTab';
-import { InfluencersTab } from '@/components/information-sources/InfluencersTab';
-import { EventsTab } from '@/components/information-sources/EventsTab';
+import SourcesTab from '@/components/information-sources/SourcesTab';
+import InfluencersTab from '@/components/information-sources/InfluencersTab';
+import EventsTab from '@/components/information-sources/EventsTab';
 import { getKeyFigureTweets } from '@/services/twitter/twitterService';
 
 const InformationSources: React.FC = () => {

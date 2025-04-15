@@ -21,7 +21,7 @@ const BinanceIntegration = () => {
   
   const commonSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'DOGEUSDT', 'ADAUSDT'];
   const { startRealTimeUpdates, refreshData } = useBinanceData(
-    isConnected ? commonSymbols : []
+    commonSymbols
   );
   
   useEffect(() => {
