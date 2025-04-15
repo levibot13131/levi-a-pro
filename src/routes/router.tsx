@@ -19,6 +19,9 @@ import CryptoSentiment from "../pages/CryptoSentiment";
 import FAQ from "../pages/FAQ";
 import DeploymentGuide from "../pages/DeploymentGuide";
 import RequireAuth from "@/components/auth/RequireAuth";
+import ProxyGuide from "../pages/ProxyGuide";
+import Home from "../pages/Home";
+import LinkPage from "../pages/LinkPage";
 
 const router = createBrowserRouter([
   {
@@ -27,6 +30,10 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
+        element: <Home />,
+      },
+      {
+        path: "dashboard",
         element: <Dashboard />,
       },
       {
@@ -85,6 +92,10 @@ const router = createBrowserRouter([
         path: "faq",
         element: <FAQ />,
       },
+      {
+        path: "links",
+        element: <LinkPage />,
+      },
     ],
   },
   {
@@ -94,6 +105,10 @@ const router = createBrowserRouter([
   {
     path: "/register",
     element: <Register />,
+  },
+  {
+    path: "/proxy-guide",
+    element: <ProxyGuide />,
   },
 ]);
 

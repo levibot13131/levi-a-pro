@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -14,21 +14,19 @@ import DeploymentGuide from './pages/DeploymentGuide';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/proxy-guide" element={<ProxyGuide />} />
-        <Route element={<Layout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/backtesting" element={<Backtesting />} />
-          <Route path="/trading" element={<TradingDashboard />} />
-          <Route path="/binance-integration" element={<BinanceIntegration />} />
-          <Route path="/tradingview-integration" element={<TradingViewIntegration />} />
-          <Route path="/deployment-guide" element={<DeploymentGuide />} />
-        </Route>
-      </Routes>
-    </Router>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/proxy-guide" element={<ProxyGuide />} />
+      <Route element={<Layout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/backtesting" element={<Backtesting />} />
+        <Route path="/trading" element={<TradingDashboard />} />
+        <Route path="/binance-integration" element={<BinanceIntegration />} />
+        <Route path="/tradingview-integration" element={<TradingViewIntegration />} />
+        <Route path="/deployment-guide" element={<DeploymentGuide />} />
+      </Route>
+    </Routes>
   );
 }
 
