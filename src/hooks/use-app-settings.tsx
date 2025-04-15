@@ -1,4 +1,5 @@
 
+import React, { useEffect } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { toast } from 'sonner';
@@ -68,7 +69,7 @@ export const useAppSettings = create<AppSettings>()(
 
 // Hook להאזנה לשינויים במצב דמו
 export const useDemoModeListener = (callback: (isDemoMode: boolean) => void) => {
-  React.useEffect(() => {
+  useEffect(() => {
     const handleDemoModeChange = (event: CustomEvent) => {
       callback(event.detail.demoMode);
     };

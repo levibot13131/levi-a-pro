@@ -1,165 +1,161 @@
 
-import { toast } from 'sonner';
+import { useAppSettings } from '@/hooks/use-app-settings';
 
-// Key for storing Twitter credentials in local storage
-const TWITTER_AUTH_KEY = 'levi_bot_twitter_credentials';
+// Type definitions
+export interface Tweet {
+  id: string;
+  username: string;
+  text: string;
+  createdAt: string;
+  likes: number;
+  retweets: number;
+  sentiment: 'positive' | 'negative' | 'neutral';
+  profileImageUrl: string;
+}
 
-// Twitter credentials interface
 export interface TwitterCredentials {
   apiKey: string;
   apiSecret: string;
-  accessToken?: string;
-  accessTokenSecret?: string;
-  isConnected: boolean;
+  bearerToken: string;
+  isConnected?: boolean;
   lastConnected?: number;
-  username?: string;
 }
 
-/**
- * התחברות לטוויטר
- */
-export const connectToTwitter = async (credentials: Omit<TwitterCredentials, 'isConnected' | 'lastConnected'>): Promise<boolean> => {
+// Mock data for key figure tweets
+const mockKeyFigureTweets = [
+  {
+    id: 't1',
+    username: 'elonmusk',
+    text: 'ביטקוין הוא עתיד המטבעות הדיגיטליים. טסלה מחזיקה BTC במאזן.',
+    createdAt: '2025-04-14T15:34:00Z',
+    likes: 85000,
+    retweets: 12000,
+    sentiment: 'positive' as const,
+    profileImageUrl: 'https://randomuser.me/api/portraits/men/11.jpg',
+  },
+  {
+    id: 't2',
+    username: 'VitalikButerin',
+    text: 'שכבת L2 של אית׳ריום ממשיכה להתפתח. סקלביליות היא המפתח לאימוץ המוני.',
+    createdAt: '2025-04-14T12:22:00Z',
+    likes: 12500,
+    retweets: 3200,
+    sentiment: 'positive' as const,
+    profileImageUrl: 'https://randomuser.me/api/portraits/men/12.jpg',
+  },
+  {
+    id: 't3',
+    username: 'cz_binance',
+    text: 'הנפח המסחרי בבורסת Binance שבר היום שיא חדש. התנודתיות בשוק מייצרת הזדמנויות.',
+    createdAt: '2025-04-14T10:15:00Z',
+    likes: 9800,
+    retweets: 2100,
+    sentiment: 'neutral' as const,
+    profileImageUrl: 'https://randomuser.me/api/portraits/men/13.jpg',
+  },
+  {
+    id: 't4',
+    username: 'PeterSchiff',
+    text: 'ביטקוין הוא בועה שתתפוצץ בקרוב. זהב הוא המקלט הבטוח האמיתי.',
+    createdAt: '2025-04-14T09:05:00Z',
+    likes: 3400,
+    retweets: 980,
+    sentiment: 'negative' as const,
+    profileImageUrl: 'https://randomuser.me/api/portraits/men/14.jpg',
+  },
+  {
+    id: 't5',
+    username: 'PlanB',
+    text: 'מודל S2F עדיין תקף. צפי למחיר BTC של $250K בסוף המחזור הנוכחי.',
+    createdAt: '2025-04-14T07:30:00Z',
+    likes: 15600,
+    retweets: 4200,
+    sentiment: 'positive' as const,
+    profileImageUrl: 'https://randomuser.me/api/portraits/men/15.jpg',
+  },
+];
+
+// Save Twitter credentials
+export const saveTwitterCredentials = (credentials: TwitterCredentials): void => {
+  localStorage.setItem('twitter_credentials', JSON.stringify(credentials));
+};
+
+// Get Twitter credentials
+export const getTwitterCredentials = (): TwitterCredentials | null => {
+  const storedCredentials = localStorage.getItem('twitter_credentials');
+  return storedCredentials ? JSON.parse(storedCredentials) : null;
+};
+
+// Check if Twitter is connected
+export const isTwitterConnected = (): boolean => {
+  const credentials = getTwitterCredentials();
+  return !!credentials?.isConnected;
+};
+
+// Get tweets from key crypto figures
+export const getKeyFigureTweets = async (asset: string = 'BTC'): Promise<Tweet[]> => {
+  const isDemoMode = useAppSettings.getState().demoMode;
+  
+  // In demo mode, return mock data
+  if (isDemoMode) {
+    console.log('Returning mock Twitter data (demo mode)');
+    return mockKeyFigureTweets;
+  }
+  
+  // Check if we have valid credentials
+  const credentials = getTwitterCredentials();
+  if (!credentials?.isConnected) {
+    console.log('No Twitter credentials found or not connected');
+    return [];
+  }
+  
   try {
-    // בסביבת פיתוח נדמה התחברות מוצלחת
+    // This would be a real API call in production
+    console.log(`Fetching Twitter data for ${asset} from API`);
     
-    // שמור את פרטי החיבור בלוקל סטורג'
-    const fullCredentials: TwitterCredentials = {
+    // For now, just return the mock data
+    // In a real implementation, this would use the Twitter API
+    return new Promise(resolve => {
+      setTimeout(() => {
+        resolve(mockKeyFigureTweets);
+      }, 500);
+    });
+  } catch (error) {
+    console.error('Error fetching Twitter data:', error);
+    return [];
+  }
+};
+
+// Function to validate Twitter credentials
+export const validateTwitterCredentials = async (credentials: TwitterCredentials): Promise<boolean> => {
+  try {
+    const isDemoMode = useAppSettings.getState().demoMode;
+    
+    // In demo mode, always return success
+    if (isDemoMode) {
+      const validatedCredentials: TwitterCredentials = {
+        ...credentials,
+        isConnected: true,
+        lastConnected: Date.now()
+      };
+      
+      saveTwitterCredentials(validatedCredentials);
+      return true;
+    }
+    
+    // In a real implementation, this would verify the credentials with Twitter API
+    
+    // For now, simulate successful validation
+    const validatedCredentials: TwitterCredentials = {
       ...credentials,
       isConnected: true,
       lastConnected: Date.now()
     };
     
-    localStorage.setItem(TWITTER_AUTH_KEY, JSON.stringify(fullCredentials));
-    
-    // שליחת אירוע שינוי חיבור
-    window.dispatchEvent(new CustomEvent('twitter-connection-changed', {
-      detail: { isConnected: true }
-    }));
-    
-    // בסביבת אמת היינו עושים בדיקת תקפות של המפתחות מול ה-API
-    console.log('Connected to Twitter with credentials:', credentials);
-    
+    saveTwitterCredentials(validatedCredentials);
     return true;
   } catch (error) {
-    console.error('Error connecting to Twitter:', error);
-    toast.error('שגיאה בהתחברות לטוויטר', {
-      description: 'אנא בדוק את פרטי ההתחברות ונסה שוב'
-    });
+    console.error('Error validating Twitter credentials:', error);
     return false;
   }
-};
-
-/**
- * ניתוק מטוויטר
- */
-export const disconnectFromTwitter = async (): Promise<void> => {
-  localStorage.removeItem(TWITTER_AUTH_KEY);
-  
-  // שליחת אירוע שינוי חיבור
-  window.dispatchEvent(new CustomEvent('twitter-connection-changed', {
-    detail: { isConnected: false }
-  }));
-  
-  console.log('Disconnected from Twitter');
-};
-
-/**
- * קבלת פרטי חיבור לטוויטר
- */
-export const getTwitterCredentials = (): TwitterCredentials | null => {
-  const credentials = localStorage.getItem(TWITTER_AUTH_KEY);
-  
-  if (!credentials) return null;
-  
-  try {
-    return JSON.parse(credentials) as TwitterCredentials;
-  } catch (error) {
-    console.error('Error parsing Twitter credentials:', error);
-    return null;
-  }
-};
-
-/**
- * בדיקה האם מחובר לטוויטר
- */
-export const isTwitterConnected = (): boolean => {
-  const credentials = getTwitterCredentials();
-  return credentials?.isConnected === true;
-};
-
-/**
- * האזנה לשינויים בחיבור לטוויטר
- */
-export const listenToTwitterConnectionChanges = (callback: (isConnected: boolean) => void): () => void => {
-  const handleConnectionChange = (event: Event) => {
-    const customEvent = event as CustomEvent<{ isConnected: boolean }>;
-    callback(customEvent.detail.isConnected);
-  };
-  
-  window.addEventListener('twitter-connection-changed', handleConnectionChange);
-  
-  return () => {
-    window.removeEventListener('twitter-connection-changed', handleConnectionChange);
-  };
-};
-
-/**
- * ניתוח סנטימנט - דמו בלבד
- * בסביבת אמת זה יתחבר ל-API של טוויטר
- */
-export const analyzeSentiment = async (query: string, days: number = 7): Promise<any> => {
-  console.log(`Analyzing sentiment for ${query} over the last ${days} days`);
-  
-  // בדמו תחזיר נתונים מוגדרים מראש
-  return {
-    positive: 65,
-    negative: 15,
-    neutral: 20,
-    volume: 2487,
-    uniqueUsers: 1243,
-    totalImpact: 3800000,
-    trend: 'positive',
-    trendStrength: 'strong'
-  };
-};
-
-/**
- * קבלת ציוצים לפי מילת מפתח - דמו בלבד
- */
-export const getTweetsByKeyword = async (keyword: string, limit: number = 10): Promise<any[]> => {
-  console.log(`Getting tweets for keyword: ${keyword}, limit: ${limit}`);
-  
-  // בדמו נחזיר מערך נתונים קבוע
-  return [
-    {
-      id: '1',
-      text: `This is a tweet about ${keyword}`,
-      username: 'user1',
-      profileImageUrl: 'https://randomuser.me/api/portraits/men/1.jpg',
-      createdAt: new Date().toISOString(),
-      likes: 123,
-      retweets: 45,
-      sentiment: 'positive'
-    },
-    {
-      id: '2',
-      text: `Another tweet about ${keyword} with some more text`,
-      username: 'user2',
-      profileImageUrl: 'https://randomuser.me/api/portraits/women/2.jpg',
-      createdAt: new Date(Date.now() - 3600000).toISOString(),
-      likes: 88,
-      retweets: 12,
-      sentiment: 'neutral'
-    },
-    {
-      id: '3',
-      text: `I'm not sure about ${keyword}, seems risky`,
-      username: 'user3',
-      profileImageUrl: 'https://randomuser.me/api/portraits/men/3.jpg',
-      createdAt: new Date(Date.now() - 7200000).toISOString(),
-      likes: 45,
-      retweets: 5,
-      sentiment: 'negative'
-    }
-  ];
 };
