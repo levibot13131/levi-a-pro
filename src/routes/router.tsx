@@ -23,6 +23,9 @@ import ProxyGuide from "../pages/ProxyGuide";
 import Home from "../pages/Home";
 import LinkPage from "../pages/LinkPage";
 import Profile from "../pages/Profile";
+import InformationSources from "../pages/InformationSources";
+import MarketNews from "../pages/MarketNews";
+import FundamentalData from "../pages/FundamentalData";
 
 const router = createBrowserRouter([
   {
@@ -100,6 +103,22 @@ const router = createBrowserRouter([
       {
         path: "profile",
         element: <Profile />,
+      },
+      {
+        path: "information-sources",
+        element: <InformationSources />,
+      },
+      {
+        path: "market-news",
+        element: <MarketNews />,
+      },
+      {
+        path: "market-data",
+        element: <MarketNews />,
+      },
+      {
+        path: "fundamental-data",
+        element: <FundamentalData />,
       },
     ],
   },

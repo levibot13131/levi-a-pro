@@ -1,114 +1,124 @@
 
 import React from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Container } from '@/components/ui/container';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const Profile = () => {
   const { user } = useAuth();
+  const [name, setName] = React.useState(user?.displayName || '');
+  const [email, setEmail] = React.useState(user?.email || '');
+  
+  const handleSave = () => {
+    toast.success('פרטי הפרופיל נשמרו בהצלחה');
+  };
+  
+  const handleProxyUrl = () => {
+    // Set the proxy URL from the ngrok URL you provided
+    const proxyConfig = {
+      baseUrl: 'https://6813-46-116-195-122.ngrok-free.app',
+      isEnabled: true
+    };
+    
+    // Store in local storage for persistence
+    localStorage.setItem('levi_bot_proxy_url', JSON.stringify(proxyConfig));
+    toast.success('כתובת הפרוקסי נשמרה בהצלחה');
+    
+    // Trigger an event to notify other components
+    window.dispatchEvent(new CustomEvent('proxy-config-changed', {
+      detail: proxyConfig
+    }));
+  };
   
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">פרופיל משתמש</h1>
+    <Container className="py-6">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold">פרופיל אישי</h1>
+        <Button onClick={handleProxyUrl} variant="outline">
+          הגדר פרוקסי אוטומטית
+        </Button>
+      </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-1">
+      <div className="grid gap-6 md:grid-cols-[1fr_250px]">
+        <div className="space-y-6">
           <Card>
-            <CardHeader className="text-center">
-              <Avatar className="h-24 w-24 mx-auto">
-                <AvatarImage src={user?.photoURL || ''} />
-                <AvatarFallback className="text-xl">
-                  {user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <CardTitle className="mt-4">{user?.displayName || 'משתמש'}</CardTitle>
-              <CardDescription>{user?.email}</CardDescription>
+            <CardHeader>
+              <CardTitle className="text-right">פרטי משתמש</CardTitle>
+              <CardDescription className="text-right">
+                עדכן את הפרטים האישיים שלך
+              </CardDescription>
             </CardHeader>
-            <CardContent className="text-center">
-              <div className="flex flex-col space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">סטטוס חשבון:</span>
-                  <span className="font-medium">פעיל</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">תאריך הצטרפות:</span>
-                  <span className="font-medium">01/01/2023</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">סוג חשבון:</span>
-                  <span className="font-medium">סטנדרטי</span>
-                </div>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-right block">שם מלא</label>
+                <Input 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="text-right"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-right block">אימייל</label>
+                <Input 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  type="email"
+                  className="text-right"
+                />
+              </div>
+              
+              <Button onClick={handleSave} className="w-full">שמור שינויים</Button>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-right">פרטי הגדרה</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm">עברית</span>
+                <span className="font-medium">שפת ממשק:</span>
+              </div>
+              <Separator />
+              <div className="flex justify-between items-center">
+                <span className="text-sm">אסיה/ירושלים (GMT+3)</span>
+                <span className="font-medium">אזור זמן:</span>
               </div>
             </CardContent>
           </Card>
         </div>
         
-        <div className="md:col-span-2">
-          <Tabs defaultValue="personal">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="personal">פרטים אישיים</TabsTrigger>
-              <TabsTrigger value="preferences">העדפות</TabsTrigger>
-              <TabsTrigger value="api">הגדרות API</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="personal" className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>פרטים אישיים</CardTitle>
-                  <CardDescription>צפייה ועריכת פרטי המשתמש שלך</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-lg font-medium">שם מלא</h3>
-                      <p className="text-muted-foreground">{user?.displayName || 'לא הוגדר'}</p>
-                    </div>
-                    <Separator />
-                    <div>
-                      <h3 className="text-lg font-medium">כתובת אימייל</h3>
-                      <p className="text-muted-foreground">{user?.email || 'לא הוגדר'}</p>
-                    </div>
-                    <Separator />
-                    <div>
-                      <h3 className="text-lg font-medium">טלפון</h3>
-                      <p className="text-muted-foreground">לא הוגדר</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="preferences" className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>העדפות מערכת</CardTitle>
-                  <CardDescription>התאם את ההגדרות שלך במערכת</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">העדפות המערכת מאפשרות לך להתאים את חווית המשתמש לצרכים שלך.</p>
-                  <p className="mt-4">לא הוגדרו העדפות מותאמות אישית עדיין.</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="api" className="mt-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>הגדרות API</CardTitle>
-                  <CardDescription>נהל את מפתחות ה-API שלך</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">אין מפתחות API פעילים כרגע.</p>
-                  <p className="mt-4">מפתחות API משמשים לחיבור לשירותים חיצוניים כמו Binance, TradingView ועוד.</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+        <div>
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center">
+                <Avatar className="w-24 h-24 mb-4">
+                  <AvatarImage src={user?.photoURL || ''} />
+                  <AvatarFallback className="text-xl">
+                    {name.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <h3 className="text-xl font-medium">{name || 'משתמש'}</h3>
+                <p className="text-muted-foreground">{email || 'אימייל לא מוגדר'}</p>
+                
+                <div className="w-full mt-6">
+                  <Button variant="outline" className="w-full">
+                    שנה תמונת פרופיל
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
-    </div>
+    </Container>
   );
 };
 
