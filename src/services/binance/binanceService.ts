@@ -52,6 +52,7 @@ export const testBinanceConnection = async (): Promise<boolean> => {
 
 // Re-export functions from other files for simpler imports
 export {
+  getBinanceCredentials,
   saveBinanceCredentials,
   disconnectBinance,
   validateBinanceCredentials,

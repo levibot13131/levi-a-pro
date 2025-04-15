@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { TradeSignal } from '@/types/asset';
@@ -11,17 +12,27 @@ import { TradeSignal as RealTimeTradeSignal } from '@/services/backtesting/realT
 
 // Helper function to convert RealTimeTradeSignal to TradeSignal
 const convertSignal = (signal: RealTimeTradeSignal): TradeSignal => {
+  // Convert timestamp to number
+  const timestamp = typeof signal.timestamp === 'string' 
+    ? parseInt(signal.timestamp, 10) 
+    : signal.timestamp;
+  
+  // Convert price to number
+  const price = typeof signal.price === 'string' 
+    ? Number(signal.price) 
+    : (signal.price || 0);
+  
   return {
     id: signal.id,
     assetId: signal.asset,
     type: signal.type === 'alert' ? 'buy' : signal.type as 'buy' | 'sell',
     message: signal.message,
-    timestamp: typeof signal.timestamp === 'string' ? parseInt(signal.timestamp, 10) : signal.timestamp,
-    price: typeof signal.price === 'string' ? Number(signal.price) : signal.price || 0,
-    strength: 'medium',
+    timestamp: timestamp,
+    price: price,
+    strength: 'medium', // This is a string enum in the TradeSignal type
     strategy: signal.source || 'real-time',
-    timeframe: '1h',
-    createdAt: new Date(typeof signal.timestamp === 'string' ? parseInt(signal.timestamp, 10) : signal.timestamp).toISOString(),
+    timeframe: '1h', // This is a string enum in the TradeSignal type
+    createdAt: new Date(timestamp).toISOString(),
   };
 };
 
