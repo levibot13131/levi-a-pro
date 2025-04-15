@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { TradeSignal } from '@/types/asset';
@@ -29,10 +28,10 @@ const convertSignal = (signal: RealTimeTradeSignal): TradeSignal => {
     message: signal.message,
     timestamp: timestamp,
     price: price,
-    strength: 'medium' as 'weak' | 'medium' | 'strong', // Fix: Using 'as' to ensure type compatibility
+    strength: 'medium' as 'weak' | 'medium' | 'strong',
     strategy: signal.source || 'real-time',
-    timeframe: '1h' as '5m' | '15m' | '1h' | '4h' | '1d', // Fix: Using 'as' to ensure type compatibility
-    createdAt: new Date(timestamp).toISOString(),
+    timeframe: '1h' as '5m' | '15m' | '1h' | '4h' | '1d',
+    createdAt: Number(new Date(timestamp).getTime()), // Fix: Using Number() to ensure numeric type
   };
 };
 
