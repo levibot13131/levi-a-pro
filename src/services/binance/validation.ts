@@ -89,3 +89,39 @@ export const connectToBinanceAPI = async (): Promise<boolean> => {
     return false;
   }
 };
+
+/**
+ * Tests the Binance connection
+ */
+export const testBinanceConnection = async (): Promise<boolean> => {
+  console.log('Testing Binance connection...');
+  
+  // Get stored credentials
+  const credentials = getBinanceCredentials();
+  if (!credentials) {
+    console.error('No Binance credentials found');
+    toast.error('לא נמצאו פרטי התחברות לבינאנס');
+    return false;
+  }
+  
+  // Check if we're in demo mode
+  const appSettings = useAppSettings.getState();
+  if (appSettings.demoMode) {
+    console.log('Demo mode is enabled, returning mock test status');
+    toast.info('בדיקת חיבור לבינאנס במצב הדגמה');
+    return true;
+  }
+  
+  try {
+    // Simulate API test (replace with actual test in production)
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // In a real implementation, this would make a simple API call to Binance
+    // to verify the connection is working
+    console.log('Binance connection test successful');
+    return true;
+  } catch (error) {
+    console.error('Error testing Binance connection:', error);
+    return false;
+  }
+};

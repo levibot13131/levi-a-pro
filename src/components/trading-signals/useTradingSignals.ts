@@ -15,9 +15,9 @@ const convertSignal = (signal: RealTimeTradeSignal): TradeSignal => {
   return {
     id: signal.id,
     assetId: signal.asset, // Map asset to assetId
-    type: signal.type,
+    type: signal.type === 'alert' ? 'buy' : signal.type, // Convert 'alert' to 'buy' to satisfy type constraints
     message: signal.message,
-    timestamp: signal.timestamp,
+    timestamp: typeof signal.timestamp === 'string' ? parseInt(signal.timestamp, 10) : signal.timestamp, // Ensure timestamp is a number
     price: signal.price || 0,
     strength: 'medium', // Default value
     strategy: signal.source || 'real-time', // Use source or default

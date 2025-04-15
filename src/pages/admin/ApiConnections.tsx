@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -106,7 +105,8 @@ const ApiConnections = () => {
     try {
       const credentials: BinanceCredentials = {
         apiKey: binanceApiKey,
-        apiSecret: binanceApiSecret
+        apiSecret: binanceApiSecret,
+        isConnected: true
       };
       
       const success = await validateBinanceCredentials(credentials);
@@ -234,7 +234,7 @@ const ApiConnections = () => {
             <CardHeader>
               <CardTitle className="text-right">חיבור ל-Binance</CardTitle>
               <CardDescription className="text-right">
-                הזן את פרטי ה-API שלך ל-Binance כדי להתחבר
+                הזן את פרטי ה-API ��לך ל-Binance כדי להתחבר
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
