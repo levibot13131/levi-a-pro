@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { TradeSignal } from '@/types/asset';
@@ -14,15 +13,15 @@ import { TradeSignal as RealTimeTradeSignal } from '@/services/backtesting/realT
 const convertSignal = (signal: RealTimeTradeSignal): TradeSignal => {
   return {
     id: signal.id,
-    assetId: signal.asset, // Map asset to assetId
-    type: signal.type === 'alert' ? 'buy' : signal.type, // Convert 'alert' to 'buy' to satisfy type constraints
+    assetId: signal.asset,
+    type: signal.type === 'alert' ? 'buy' : signal.type,
     message: signal.message,
-    timestamp: typeof signal.timestamp === 'string' ? parseInt(signal.timestamp, 10) : signal.timestamp, // Ensure timestamp is a number
-    price: signal.price || 0,
-    strength: 'medium', // Default value
-    strategy: signal.source || 'real-time', // Use source or default
-    timeframe: '1h', // Default value
-    createdAt: new Date(signal.timestamp).toISOString(),
+    timestamp: typeof signal.timestamp === 'string' ? parseInt(signal.timestamp, 10) : signal.timestamp,
+    price: Number(signal.price) || 0,
+    strength: 'medium',
+    strategy: signal.source || 'real-time',
+    timeframe: '1h',
+    createdAt: new Date(typeof signal.timestamp === 'string' ? parseInt(signal.timestamp, 10) : signal.timestamp).toISOString(),
   };
 };
 
@@ -40,7 +39,6 @@ export const useTradingSignals = () => {
   
   const { data: realTimeSignalsRaw = [], refetch: refetchRealTimeSignals } = useStoredSignals();
   
-  // Convert RealTimeTradeSignal to TradeSignal
   const realTimeSignals = realTimeSignalsRaw.map(convertSignal);
   
   const { data: analyses, isLoading: analysesLoading } = useQuery({
