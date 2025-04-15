@@ -1,36 +1,35 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useAppSettings } from './use-app-settings';
-import { startRealTimeMarketData, listenToBinanceUpdates, getFundamentalData, CurrencyData } from '../services/binance/marketData';
+import { 
+  getFundamentalData, 
+  isRealTimeMode, 
+  setRealTimeMode
+} from '@/services/binance/marketData';
+import { 
+  subscribeToMarketData, 
+  closeAllConnections 
+} from '@/services/binance/websocket';
+import { 
+  fetchFundamentalData 
+} from '@/services/binance/api';
+import { 
+  PriceData, 
+  MarketDataEntry, 
+  BinanceStreamMessage 
+} from '@/services/binance/types';
 
-export interface PriceData {
-  symbol: string;
-  price: number;
-  change: number;
-  high24h: number;
-  low24h: number;
-  volume: number;
-  lastUpdate: number;
-}
-
-interface MarketDataEntry {
-  symbol: string;
-  price: number;
-  change24h: number;
-  high24h: number;
-  low24h: number;
-  volume24h: number;
-  lastUpdated: number;
-}
+export { PriceData };
 
 export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [priceData, setPriceData] = useState<PriceData | null>(null);
-  const [fundamentalData, setFundamentalData] = useState<CurrencyData | null>(null);
+  const [fundamentalData, setFundamentalData] = useState<any | null>(null);
   const [marketData, setMarketData] = useState<Record<string, MarketDataEntry>>({});
   const [isLoading, setIsLoading] = useState(true);
+  
   const { demoMode } = useAppSettings((state: any) => ({
     demoMode: state.demoMode
   }));
@@ -38,6 +37,41 @@ export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
   // Normalize symbols to always be an array for internal use
   const symbolsArray = Array.isArray(symbols) ? symbols : [symbols];
 
+  // Handle WebSocket/stream messages
+  const handleStreamMessage = useCallback((message: BinanceStreamMessage) => {
+    const { symbol, data, type } = message;
+    
+    if (type === 'ticker') {
+      // Update marketData
+      setMarketData(prevData => ({
+        ...prevData,
+        [symbol]: {
+          symbol,
+          price: data.price,
+          change24h: data.change,
+          high24h: data.high24h,
+          low24h: data.low24h,
+          volume24h: data.volume24h || 0,
+          lastUpdated: Date.now()
+        }
+      }));
+      
+      // If this is the first symbol and we're maintaining priceData for backward compatibility
+      if (symbol === symbolsArray[0]) {
+        setPriceData({
+          symbol,
+          price: data.price,
+          change: data.change,
+          high24h: data.high24h,
+          low24h: data.low24h,
+          volume: data.volume24h || 0,
+          lastUpdate: Date.now()
+        });
+      }
+    }
+  }, [symbolsArray]);
+
+  // Initialize data and subscriptions
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
@@ -45,61 +79,61 @@ export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
         setIsLoading(true);
         setError(null);
 
-        // In demo mode, generate mock data
-        if (demoMode) {
-          const newMarketData: Record<string, MarketDataEntry> = {};
-          
-          for (const symbol of symbolsArray) {
-            const mockPrice = symbol.includes('BTC') ? 42000 + (Math.random() * 2000) : 
-                             symbol.includes('ETH') ? 2000 + (Math.random() * 500) :
-                             500 + (Math.random() * 100);
+        // Update real-time mode based on demoMode setting
+        setRealTimeMode(!demoMode);
+
+        // Initial market data for all symbols
+        const newMarketData: Record<string, MarketDataEntry> = {};
+        
+        for (const symbol of symbolsArray) {
+          try {
+            // Fetch initial data
+            const data = demoMode 
+              ? await getFundamentalData(symbol) // Use mock data in demo mode
+              : await fetchFundamentalData(symbol); // Use real API in production
             
             newMarketData[symbol] = {
               symbol,
-              price: mockPrice,
-              change24h: (Math.random() * 10) - 5, // -5% to +5%
-              high24h: mockPrice * 1.05,
-              low24h: mockPrice * 0.95,
-              volume24h: Math.random() * 1000000000,
+              price: data.price,
+              change24h: data.change24h,
+              high24h: data.high24h,
+              low24h: data.low24h,
+              volume24h: data.volume24h,
+              lastUpdated: Date.now()
+            };
+          } catch (err) {
+            console.error(`Error fetching data for ${symbol}:`, err);
+            // Add fallback/empty data in case of error
+            newMarketData[symbol] = {
+              symbol,
+              price: 0,
+              change24h: 0,
+              high24h: 0,
+              low24h: 0,
+              volume24h: 0,
               lastUpdated: Date.now()
             };
           }
+        }
+        
+        setMarketData(newMarketData);
+        
+        // For backward compatibility with single symbol
+        if (symbolsArray.length === 1) {
+          const singleSymbol = symbolsArray[0];
+          const singleData = newMarketData[singleSymbol];
           
-          setMarketData(newMarketData);
+          setPriceData({
+            symbol: singleData.symbol,
+            price: singleData.price,
+            change: singleData.change24h,
+            high24h: singleData.high24h,
+            low24h: singleData.low24h,
+            volume: singleData.volume24h,
+            lastUpdate: singleData.lastUpdated
+          });
           
-          // For backward compatibility
-          if (symbolsArray.length === 1) {
-            const singleSymbol = symbolsArray[0];
-            const singleData = newMarketData[singleSymbol];
-            
-            setPriceData({
-              symbol: singleData.symbol,
-              price: singleData.price,
-              change: singleData.change24h,
-              high24h: singleData.high24h,
-              low24h: singleData.low24h,
-              volume: singleData.volume24h,
-              lastUpdate: singleData.lastUpdated
-            });
-            
-            const fundData = await getFundamentalData(singleSymbol);
-            setFundamentalData(fundData);
-          }
-        } else {
-          // Start real binance data connection
-          for (const symbol of symbolsArray) {
-            const success = startRealTimeMarketData(symbol);
-            
-            if (!success) {
-              throw new Error('Failed to connect to Binance API');
-            }
-          }
-          
-          // For backward compatibility with single symbol case
-          if (symbolsArray.length === 1) {
-            const fundData = await getFundamentalData(symbolsArray[0]);
-            setFundamentalData(fundData);
-          }
+          setFundamentalData(await getFundamentalData(singleSymbol));
         }
       } catch (err) {
         console.error('Error fetching Binance data:', err);
@@ -115,62 +149,59 @@ export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
 
     fetchInitialData();
 
-    // Set up real-time updates
-    const unsubscribe = listenToBinanceUpdates((data) => {
-      // Update both priceData and marketData
-      setPriceData(prevData => ({
-        ...prevData,
-        ...data,
-        lastUpdate: Date.now()
-      }));
-      
-      setMarketData(prevData => {
-        // If symbol exists in the update, update it
-        if (data.symbol) {
-          const symbol = data.symbol;
-          return {
-            ...prevData,
-            [symbol]: {
-              ...prevData[symbol],
-              ...data,
-              lastUpdated: Date.now()
-            }
-          };
-        }
-        return prevData;
-      });
-    });
+    // Set up real-time data subscriptions
+    const unsubscribe = subscribeToMarketData(
+      symbolsArray,
+      handleStreamMessage,
+      (error) => {
+        console.error('WebSocket error:', error);
+        setError('WebSocket connection error');
+      }
+    );
 
     return () => {
       // Cleanup
       unsubscribe();
     };
-  }, [symbolsArray.join(','), demoMode]);
+  }, [symbolsArray.join(','), demoMode, handleStreamMessage]);
 
-  const refreshData = async () => {
+  // Refresh data manually
+  const refreshData = useCallback(async () => {
     try {
       setLoading(true);
       
       const updatedMarketData = { ...marketData };
       
       for (const symbol of symbolsArray) {
-        // Fetch fundamental data
-        const fundData = await getFundamentalData(symbol);
+        // Fetch fresh data
+        const data = demoMode
+          ? await getFundamentalData(symbol)
+          : await fetchFundamentalData(symbol);
         
         // Update marketData entry
-        if (updatedMarketData[symbol]) {
-          updatedMarketData[symbol] = {
-            ...updatedMarketData[symbol],
-            price: fundData.price,
-            change24h: fundData.change24h,
-            volume24h: fundData.volume24h,
-            lastUpdated: Date.now()
-          };
-        }
+        updatedMarketData[symbol] = {
+          symbol,
+          price: data.price,
+          change24h: data.change24h,
+          high24h: data.high24h,
+          low24h: data.low24h,
+          volume24h: data.volume24h,
+          lastUpdated: Date.now()
+        };
         
         // For backward compatibility
         if (symbolsArray.length === 1) {
-          setFundamentalData(fundData);
+          setFundamentalData(data);
+          
+          setPriceData({
+            symbol,
+            price: data.price,
+            change: data.change24h,
+            high24h: data.high24h,
+            low24h: data.low24h,
+            volume: data.volume24h,
+            lastUpdate: Date.now()
+          });
         }
       }
       
@@ -186,14 +217,29 @@ export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [symbolsArray, marketData, demoMode]);
 
-  const startRealTimeUpdates = () => {
+  // Start real-time updates explicitly
+  const startRealTimeUpdates = useCallback(() => {
     console.log('Starting real-time updates for', symbolsArray);
-    for (const symbol of symbolsArray) {
-      startRealTimeMarketData(symbol);
-    }
-  };
+    setRealTimeMode(true);
+    
+    // Force resubscribe to all symbols
+    const cleanup = subscribeToMarketData(
+      symbolsArray,
+      handleStreamMessage,
+      (error) => {
+        console.error('WebSocket error:', error);
+      }
+    );
+    
+    toast.success('עדכוני זמן אמת הופעלו', {
+      description: `מקבל עדכונים בזמן אמת עבור ${symbolsArray.length} סמלים`
+    });
+    
+    // Returning the cleanup function (not calling it)
+    return cleanup;
+  }, [symbolsArray, handleStreamMessage]);
 
   return {
     loading,

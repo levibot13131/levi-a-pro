@@ -150,6 +150,7 @@ export interface TradeSignal {
   confidence?: number;
   indicator?: string;
   description?: string;
+  message?: string; // Added message property
 }
 
 export interface MarketAnalysis {
