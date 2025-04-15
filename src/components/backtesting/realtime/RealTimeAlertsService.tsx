@@ -7,7 +7,7 @@ import { useBinanceConnection } from '@/hooks/use-binance-connection';
 import { useBinanceData } from '@/hooks/use-binance-data';
 import { getProxyConfig, listenToProxyChanges, isProxyConfigured } from '@/services/proxy/proxyConfig';
 
-import { useStoredSignals, clearStoredSignals } from '@/services/backtesting/realTimeAnalysis/signalStorage';
+import { useStoredSignals, clearSignals } from '@/services/backtesting/realTimeAnalysis/signalStorage';
 import { startRealTimeAnalysis } from '@/services/backtesting/realTimeAnalysis/alertSystem';
 
 interface RealTimeAlertsServiceProps {
@@ -190,7 +190,7 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({
   };
   
   const handleClearSignals = () => {
-    clearStoredSignals();
+    clearSignals();
     toast.info("כל ההתראות נמחקו");
     refetch();
   };

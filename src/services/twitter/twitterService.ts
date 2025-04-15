@@ -94,3 +94,45 @@ export const disconnectFromTwitter = (): void => {
     toast.error('שגיאה בהתנתקות מטוויטר');
   }
 };
+
+// פונקציה לשליפת נתוני סנטימנט מטוויטר
+export const fetchTwitterSentiment = async (cryptoName: string, days: number = 7): Promise<any[]> => {
+  console.log(`Fetching Twitter sentiment for ${cryptoName} over ${days} days`);
+  
+  // Generate mock data
+  const generateSentimentData = (days: number) => {
+    const data = [];
+    const today = new Date();
+    
+    for (let i = 0; i < days; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - (days - i - 1));
+      
+      // Random sentiment values
+      const positive = 30 + Math.floor(Math.random() * 40); // 30-70%
+      const neutral = Math.floor(Math.random() * 20); // 0-20%
+      const negative = 100 - positive - neutral;
+      
+      // Mentions and volume with some randomness but trending
+      const baseVolume = 500 + (i * 50); // Base volume increases over time
+      const randomFactor = 0.8 + (Math.random() * 0.4); // 0.8-1.2 random factor
+      
+      data.push({
+        date: date.toISOString().split('T')[0],
+        positive,
+        neutral,
+        negative,
+        mentions: Math.floor(baseVolume * randomFactor * 1.5),
+        volume: Math.floor(baseVolume * randomFactor),
+        sentimentScore: ((positive * 1) + (neutral * 0.5) + (negative * 0)) / 100,
+      });
+    }
+    
+    return data;
+  };
+  
+  // Wait for a short time to simulate API call
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  return generateSentimentData(days);
+};

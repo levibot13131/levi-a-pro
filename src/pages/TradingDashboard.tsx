@@ -2,7 +2,7 @@
 import React from 'react';
 import { Container } from '@/components/ui/container';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RequireAuth } from '@/components/auth/RequireAuth';
+import RequireAuth from '@/components/auth/RequireAuth';
 
 const TradingDashboard: React.FC = () => {
   return (

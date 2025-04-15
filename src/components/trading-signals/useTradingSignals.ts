@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { TradeSignal } from '@/types/asset';
@@ -6,7 +7,24 @@ import { getAssets } from '@/services/mockDataService';
 import { toast } from 'sonner';
 
 import { startRealTimeAnalysis } from '@/services/backtesting/realTimeAnalysis/alertSystem';
-import { useStoredSignals } from '@/services/backtesting/realTimeAnalysis/signalStorage';
+import { useStoredSignals, getSignals } from '@/services/backtesting/realTimeAnalysis/signalStorage';
+import { TradeSignal as RealTimeTradeSignal } from '@/services/backtesting/realTimeAnalysis/signalStorage';
+
+// Helper function to convert RealTimeTradeSignal to TradeSignal
+const convertSignal = (signal: RealTimeTradeSignal): TradeSignal => {
+  return {
+    id: signal.id,
+    assetId: signal.asset, // Map asset to assetId
+    type: signal.type,
+    message: signal.message,
+    timestamp: signal.timestamp,
+    price: signal.price || 0,
+    strength: 'medium', // Default value
+    strategy: signal.source || 'real-time', // Use source or default
+    timeframe: '1h', // Default value
+    createdAt: new Date(signal.timestamp).toISOString(),
+  };
+};
 
 export const useTradingSignals = () => {
   const [selectedAssetId, setSelectedAssetId] = useState<string>('all');
@@ -20,7 +38,10 @@ export const useTradingSignals = () => {
     queryFn: () => getTradeSignals(selectedAssetId !== 'all' ? selectedAssetId : undefined),
   });
   
-  const { data: realTimeSignals = [], refetch: refetchRealTimeSignals } = useStoredSignals();
+  const { data: realTimeSignalsRaw = [], refetch: refetchRealTimeSignals } = useStoredSignals();
+  
+  // Convert RealTimeTradeSignal to TradeSignal
+  const realTimeSignals = realTimeSignalsRaw.map(convertSignal);
   
   const { data: analyses, isLoading: analysesLoading } = useQuery({
     queryKey: ['marketAnalyses', selectedAssetId, selectedAnalysisType],
@@ -36,7 +57,8 @@ export const useTradingSignals = () => {
   });
   
   const allSignals: TradeSignal[] = (() => {
-    const combined = [...(mockSignals || []), ...realTimeSignals];
+    const mockSignalsArray = mockSignals || [];
+    const combined = [...mockSignalsArray, ...realTimeSignals];
     return combined.sort((a, b) => b.timestamp - a.timestamp);
   })();
   

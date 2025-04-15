@@ -7,7 +7,20 @@ import { toast } from 'sonner';
 // האירוע המותאם אישית לשינוי מצב דמו
 export const DEMO_MODE_CHANGE_EVENT = 'demo-mode-change';
 
-export const useAppSettings = create()(
+export interface AppSettingsState {
+  demoMode: boolean;
+  darkMode: boolean;
+  language: string;
+  autoRefresh: boolean;
+  refreshInterval: number;
+  toggleDemoMode: () => void;
+  toggleDarkMode: () => void;
+  setLanguage: (language: string) => void;
+  toggleAutoRefresh: () => void;
+  setRefreshInterval: (refreshInterval: number) => void;
+}
+
+export const useAppSettings = create<AppSettingsState>()(
   persist(
     (set, get) => ({
       demoMode: true,
@@ -17,7 +30,7 @@ export const useAppSettings = create()(
       refreshInterval: 60000,
       
       toggleDemoMode: () => {
-        set((state: any) => {
+        set((state) => {
           const newDemoMode = !state.demoMode;
           
           // השמעת אירוע שינוי מצב דמו
@@ -48,22 +61,22 @@ export const useAppSettings = create()(
         });
       },
       
-      toggleDarkMode: () => set((state: any) => ({
+      toggleDarkMode: () => set((state) => ({
         ...state,
         darkMode: !state.darkMode
       })),
       
-      setLanguage: (language: string) => set((state: any) => ({
+      setLanguage: (language: string) => set((state) => ({
         ...state,
         language
       })),
       
-      toggleAutoRefresh: () => set((state: any) => ({
+      toggleAutoRefresh: () => set((state) => ({
         ...state,
         autoRefresh: !state.autoRefresh
       })),
       
-      setRefreshInterval: (refreshInterval: number) => set((state: any) => ({
+      setRefreshInterval: (refreshInterval: number) => set((state) => ({
         ...state,
         refreshInterval
       }))
@@ -91,7 +104,7 @@ export const useDemoModeListener = (callback: (demoMode: boolean) => void) => {
   }, [callback]);
   
   // החזרת הערך הנוכחי של מצב דמו
-  return useAppSettings((state: any) => state.demoMode);
+  return useAppSettings((state) => state.demoMode);
 };
 
 // בנוסף, נייצא גם גישה ישירה למצב הדמו

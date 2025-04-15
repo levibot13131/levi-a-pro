@@ -47,3 +47,7 @@ export const disconnectBinance = (): void => {
     console.error('Error disconnecting from Binance:', error);
   }
 };
+
+// Adding the function alias for backward compatibility
+export const clearBinanceCredentials = disconnectBinance;
+

@@ -12,6 +12,7 @@ import TradingSignalsHeader from '@/components/trading-signals/TradingSignalsHea
 import SetupGuide from '@/components/trading-signals/SetupGuide';
 import { useTradingSignals } from '@/components/trading-signals/useTradingSignals';
 import { useSignalAnalysis } from '@/components/trading-signals/useSignalAnalysis';
+import { TradeSignal } from '@/types/asset';
 
 const TradingSignals = () => {
   const {
@@ -87,9 +88,9 @@ const TradingSignals = () => {
             selectedAssetId={selectedAssetId}
             setSelectedAssetId={setSelectedAssetId}
             assets={assets}
-            allSignals={allSignals}
+            allSignals={allSignals as TradeSignal[]}
             signalsLoading={signalsLoading}
-            realTimeSignals={realTimeSignals}
+            realTimeSignals={realTimeSignals as TradeSignal[]}
             formatDate={formatDate}
             getAssetName={getAssetName}
             realTimeActive={realTimeActive}
