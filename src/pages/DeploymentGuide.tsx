@@ -1,541 +1,433 @@
 
 import React from 'react';
 import { Container } from '@/components/ui/container';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { CheckCircle2, Info, Server, Globe, Key, Workflow, Code, ExternalLink } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CheckCircle2, Server, Globe, Database, Key, FileKey, Shield } from 'lucide-react';
+import { Steps, Step } from '@/components/ui/steps';
 
-const DeploymentGuide: React.FC = () => {
+const DeploymentGuide = () => {
   return (
-    <Container className="py-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">מדריך התקנה והפעלה</h1>
-        <p className="text-muted-foreground">הנחיות להתקנה, הגדרה והפעלה של Levi-A-Pro</p>
-      </div>
-      
-      <Alert className="mb-6">
-        <Info className="h-4 w-4" />
-        <AlertTitle>מידע חשוב</AlertTitle>
-        <AlertDescription>
-          מדריך זה מיועד למשתמשים שמעוניינים להפעיל את Levi-A-Pro בסביבת ייצור.
-          עקוב אחר ההנחיות בקפידה כדי להבטיח התקנה והפעלה מוצלחות.
-        </AlertDescription>
-      </Alert>
-      
-      <Tabs defaultValue="requirements">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="requirements">דרישות מערכת</TabsTrigger>
-          <TabsTrigger value="installation">התקנה</TabsTrigger>
-          <TabsTrigger value="configuration">הגדרות</TabsTrigger>
-          <TabsTrigger value="deployment">העלאה לשרת</TabsTrigger>
+    <Container className="py-8">
+      <h1 className="text-3xl font-bold mb-2 text-right">מדריך הפצה לסביבת ייצור</h1>
+      <p className="text-muted-foreground mb-6 text-right">כל השלבים להשקת המערכת בסביבת אמת</p>
+
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="grid grid-cols-5 mb-4">
+          <TabsTrigger value="overview">סקירה כללית</TabsTrigger>
+          <TabsTrigger value="proxy">הגדרת פרוקסי</TabsTrigger>
+          <TabsTrigger value="api-keys">מפתחות API</TabsTrigger>
+          <TabsTrigger value="server">הגדרת שרת</TabsTrigger>
+          <TabsTrigger value="security">אבטחה</TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="requirements">
+
+        <TabsContent value="overview" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-right">דרישות מערכת</CardTitle>
+              <CardTitle className="text-right">סקירת תהליך ההפצה</CardTitle>
               <CardDescription className="text-right">
-                המשאבים הנדרשים להפעלת המערכת
+                השלבים המרכזיים להשקת המערכת בסביבת אמת
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-lg font-medium">חומרה</h3>
-                      <Server className="h-5 w-5 text-primary" />
-                    </div>
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex justify-between">
-                        <Badge variant="outline">מינימום</Badge>
-                        <span>מעבד כפול, 4GB RAM</span>
-                      </li>
-                      <li className="flex justify-between">
-                        <Badge variant="outline">מומלץ</Badge>
-                        <span>מעבד 4 ליבות, 8GB RAM</span>
-                      </li>
-                      <li className="flex justify-between">
-                        <Badge variant="outline">אחסון</Badge>
-                        <span>20GB SSD</span>
-                      </li>
-                    </ul>
-                  </Card>
-                  
-                  <Card className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-lg font-medium">תוכנה</h3>
-                      <Code className="h-5 w-5 text-primary" />
-                    </div>
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex justify-between">
-                        <Badge variant="outline">מערכת הפעלה</Badge>
-                        <span>Linux / Windows / macOS</span>
-                      </li>
-                      <li className="flex justify-between">
-                        <Badge variant="outline">Node.js</Badge>
-                        <span>18.x ומעלה</span>
-                      </li>
-                      <li className="flex justify-between">
-                        <Badge variant="outline">NPM</Badge>
-                        <span>8.x ומעלה</span>
-                      </li>
-                    </ul>
-                  </Card>
-                  
-                  <Card className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-lg font-medium">תקשורת</h3>
-                      <Globe className="h-5 w-5 text-primary" />
-                    </div>
-                    <ul className="space-y-2 text-sm">
-                      <li className="flex justify-between">
-                        <Badge variant="outline">אינטרנט</Badge>
-                        <span>חיבור יציב, 10Mbps+</span>
-                      </li>
-                      <li className="flex justify-between">
-                        <Badge variant="outline">פורטים</Badge>
-                        <span>80, 443 (אופציונלי)</span>
-                      </li>
-                      <li className="flex justify-between">
-                        <Badge variant="outline">IP</Badge>
-                        <span>רצוי קבוע</span>
-                      </li>
-                    </ul>
-                  </Card>
-                </div>
-                
-                <Card className="p-4">
-                  <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
-                    <Key className="h-5 w-5 text-primary" />
-                    חיבורים חיצוניים נדרשים
-                  </h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between border-b pb-2">
-                      <div>
-                        <Badge>חובה</Badge>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-medium">Binance API</div>
-                        <div className="text-sm text-muted-foreground">מפתח API וסוד לגישה לנתוני מסחר ומחירים</div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between border-b pb-2">
-                      <div>
-                        <Badge variant="outline">מומלץ</Badge>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-medium">TradingView</div>
-                        <div className="text-sm text-muted-foreground">חשבון TradingView לניתוחים מתקדמים והתראות</div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between">
-                      <div>
-                        <Badge variant="outline">אופציונלי</Badge>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-medium">Twitter/X API</div>
-                        <div className="text-sm text-muted-foreground">גישה ל-API של טוויטר לניתוח סנטימנט</div>
-                      </div>
-                    </div>
+            <CardContent className="space-y-4">
+              <Alert>
+                <CheckCircle2 className="h-4 w-4" />
+                <AlertTitle className="text-right">הקדמה</AlertTitle>
+                <AlertDescription className="text-right">
+                  מערכת Levi Bot מורכבת מממשק משתמש (React), חיבורים ל-API חיצוניים (Binance, TradingView) ושירותים נוספים. 
+                  להפעלה מלאה בסביבת אמת, יש לוודא שכל המרכיבים מוגדרים ופועלים כראוי.
+                </AlertDescription>
+              </Alert>
+              
+              <Steps>
+                <Step icon={<Server />} title="הגדרת פרוקסי" className="text-right">
+                  הקמת שרת פרוקסי חיונית לביצוע בקשות API מאובטחות לשירותים כמו Binance ו-TradingView.
+                </Step>
+                <Step icon={<Key />} title="הגדרת מפתחות API" className="text-right">
+                  יצירת חשבונות ומפתחות API אמיתיים עבור כל השירותים החיצוניים (Binance, TradingView).
+                </Step>
+                <Step icon={<Globe />} title="הגדרת דומיין" className="text-right">
+                  רכישת דומיין והגדרתו לשימוש עם המערכת.
+                </Step>
+                <Step icon={<Database />} title="הגדרת בסיס נתונים" className="text-right">
+                  הקמת בסיס נתונים לשמירת מידע משתמשים, העדפות ונתונים היסטוריים.
+                </Step>
+                <Step icon={<Shield />} title="אבטחה" className="text-right">
+                  הגדרת SSL, הגנה מפני התקפות, וניהול הרשאות.
+                </Step>
+              </Steps>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="proxy" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-right">הגדרת שרת פרוקסי</CardTitle>
+              <CardDescription className="text-right">
+                הוראות מפורטות להגדרת שרת פרוקסי עבור גישת API
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert>
+                <AlertTitle className="text-right">למה נדרש פרוקסי?</AlertTitle>
+                <AlertDescription className="text-right">
+                  שרתי פרוקסי נדרשים כדי לעקוף מגבלות CORS ולאבטח מפתחות API. בסביבת אמת, הדפדפן לא יכול לגשת ישירות לממשקי API רבים.
+                </AlertDescription>
+              </Alert>
+
+              <Steps>
+                <Step 
+                  title="בחירת ספק שרת" 
+                  className="text-right"
+                >
+                  מומלץ להשתמש ב-Digital Ocean, AWS, או Heroku. לדוגמה, ניתן להקים Droplet ב-Digital Ocean (מחיר התחלתי כ-5$ לחודש).
+                </Step>
+                <Step 
+                  title="התקנת Node.js ו-Express" 
+                  className="text-right"
+                >
+                  <div className="font-mono text-sm bg-muted p-2 rounded mt-2 text-right">
+                    <p>ssh root@your-server-ip</p>
+                    <p>apt update && apt upgrade -y</p>
+                    <p>curl -fsSL https://deb.nodesource.com/setup_18.x | bash -</p>
+                    <p>apt-get install -y nodejs</p>
+                    <p>mkdir -p /var/www/proxy</p>
+                    <p>cd /var/www/proxy</p>
+                    <p>npm init -y</p>
+                    <p>npm install express cors axios dotenv helmet</p>
                   </div>
-                </Card>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="installation">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right">התקנה</CardTitle>
-              <CardDescription className="text-right">
-                הנחיות להורדה והתקנה של המערכת
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-right mb-2">1. הורדה והתקנה מ-GitHub</h3>
-                
-                <div className="bg-muted p-4 rounded-md overflow-auto">
-                  <pre className="text-xs">
-                    <code>
-                      # Clone the repository{'\n'}
-                      git clone https://github.com/yourusername/levi-a-pro.git{'\n\n'}
-                      # Navigate to the project directory{'\n'}
-                      cd levi-a-pro{'\n\n'}
-                      # Install dependencies{'\n'}
-                      npm install{'\n\n'}
-                      # Build for production{'\n'}
-                      npm run build
-                    </code>
-                  </pre>
-                </div>
-                
-                <h3 className="text-lg font-medium text-right mb-2 mt-4">2. התקנה באמצעות NPM (אלטרנטיבה)</h3>
-                
-                <div className="bg-muted p-4 rounded-md overflow-auto">
-                  <pre className="text-xs">
-                    <code>
-                      # Install the package globally{'\n'}
-                      npm install -g levi-a-pro{'\n\n'}
-                      # Create a new levi-a-pro instance{'\n'}
-                      npx create-levi-app my-trading-bot{'\n\n'}
-                      # Navigate to the project directory{'\n'}
-                      cd my-trading-bot{'\n\n'}
-                      # Start the development server{'\n'}
-                      npm run dev
-                    </code>
-                  </pre>
-                </div>
-                
-                <h3 className="text-lg font-medium text-right mb-2 mt-4">3. הפעלה בסביבת פיתוח</h3>
-                
-                <div className="bg-muted p-4 rounded-md overflow-auto">
-                  <pre className="text-xs">
-                    <code>
-                      # Start development server{'\n'}
-                      npm run dev{'\n\n'}
-                      # The application will be available at:{'\n'}
-                      # http://localhost:5173
-                    </code>
-                  </pre>
-                </div>
-                
-                <Alert className="mt-4">
-                  <CheckCircle2 className="h-4 w-4" />
-                  <AlertTitle>עצות להתקנה מוצלחת</AlertTitle>
-                  <AlertDescription>
-                    <ul className="list-disc list-inside space-y-1 mt-2">
-                      <li>וודא שיש לך הרשאות מתאימות בתיקיית ההתקנה</li>
-                      <li>הגדר את Node.js ל-Active LTS לביצועים וזמינות מיטביים</li>
-                      <li>השתמש ב-Node Version Manager (nvm) לניהול קל של גרסאות Node.js</li>
-                      <li>אם אתה נתקל בשגיאות התקנה, נסה לנקות את מטמון ה-npm עם <code>npm cache clean --force</code></li>
-                    </ul>
-                  </AlertDescription>
-                </Alert>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="configuration">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right">הגדרות</CardTitle>
-              <CardDescription className="text-right">
-                הגדרת המערכת לסביבת ייצור
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium text-right mb-2">1. הגדרת קובץ הקונפיגורציה</h3>
-                
-                <div className="bg-muted p-4 rounded-md overflow-auto">
-                  <pre className="text-xs">
-                    <code>
-                      // config.js{'\n\n'}
-                      module.exports = {'{'}
-                      {'\n'}  // Server configuration
-                      {'\n'}  server: {'{'}
-                      {'\n'}    port: process.env.PORT || 3000,
-                      {'\n'}    host: '0.0.0.0',
-                      {'\n'}    cors: {'{'}
-                      {'\n'}      origin: '*', // Restrict in production
-                      {'\n'}      methods: ['GET', 'POST']
-                      {'\n'}    {'}'}
-                      {'\n'}  {'}'},{'\n'}
-                      {'\n'}  // API configuration
-                      {'\n'}  api: {'{'}
-                      {'\n'}    binance: {'{'}
-                      {'\n'}      useTestnet: false, // Set to false for real trading
-                      {'\n'}      reconnectInterval: 5000,
-                      {'\n'}      maxReconnectAttempts: 5
-                      {'\n'}    {'}'},
-                      {'\n'}    tradingview: {'{'}
-                      {'\n'}      syncInterval: 60000 // 1 minute
-                      {'\n'}    {'}'}
-                      {'\n'}  {'}'},{'\n'}
-                      {'\n'}  // Logging configuration
-                      {'\n'}  logging: {'{'}
-                      {'\n'}    level: 'info', // 'debug', 'info', 'warn', 'error'
-                      {'\n'}    file: './logs/app.log',
-                      {'\n'}    maxSize: '10m',
-                      {'\n'}    maxFiles: 5
-                      {'\n'}  {'}'}
-                      {'\n'}{'}'}
-                    </code>
-                  </pre>
-                </div>
-                
-                <h3 className="text-lg font-medium text-right mb-2 mt-4">2. הגדרת משתני סביבה</h3>
-                
-                <div className="bg-muted p-4 rounded-md overflow-auto">
-                  <pre className="text-xs">
-                    <code>
-                      # .env file (do not commit to version control){'\n\n'}
-                      # Server{'\n'}
-                      PORT=3000{'\n'}
-                      NODE_ENV=production{'\n\n'}
-                      # Proxy{'\n'}
-                      PROXY_URL=https://your-proxy-url.com{'\n'}
-                      PROXY_ENABLED=true{'\n\n'}
-                      # Security{'\n'}
-                      JWT_SECRET=your_secret_key_here{'\n'}
-                      SESSION_SECRET=your_session_secret_here{'\n\n'}
-                      # API Keys (DO NOT COMMIT){'\n'}
-                      # These should be entered via the UI in production{'\n'}
-                      BINANCE_API_KEY={'\n'}
-                      BINANCE_API_SECRET={'\n'}
-                      TRADINGVIEW_USERNAME={'\n'}
-                      TRADINGVIEW_PASSWORD={'\n'}
-                      TWITTER_API_KEY={'\n'}
-                      TWITTER_API_SECRET={'\n'}
-                    </code>
-                  </pre>
-                </div>
-                
-                <Alert className="mt-4">
-                  <Info className="h-4 w-4" />
-                  <AlertTitle>הערה חשובה לגבי אבטחה</AlertTitle>
-                  <AlertDescription>
-                    <p className="mb-2">אל תשמור מפתחות API ומידע רגיש אחר בקוד או בקבצי קונפיגורציה שמתווספים לניהול גרסאות.</p>
-                    <p>בסביבת ייצור, מומלץ להזין את מפתחות ה-API דרך ממשק המשתמש או לשמור אותם במנהל סודות מאובטח.</p>
-                  </AlertDescription>
-                </Alert>
-                
-                <h3 className="text-lg font-medium text-right mb-2 mt-4">3. הגדרת פרוקסי (מומלץ)</h3>
-                
-                <Card className="p-4">
-                  <p className="text-right mb-3">
-                    לביצועים מיטביים ולהתגברות על מגבלות IP, מומלץ להגדיר פרוקסי עבור בקשות API.
-                  </p>
-                  
-                  <div className="flex justify-between items-center">
-                    <Button variant="outline" size="sm" asChild>
-                      <a href="/proxy-settings">
-                        הגדר פרוקסי
-                      </a>
-                    </Button>
-                    
-                    <div className="text-right">
-                      <h4 className="font-medium">אפשרויות פרוקסי מומלצות:</h4>
-                      <ul className="text-sm space-y-1 mt-1">
-                        <li>Nginx כפרוקסי הפוך</li>
-                        <li>Cloudflare Workers</li>
-                        <li>AWS API Gateway</li>
-                        <li>CORS Anywhere (לפיתוח בלבד)</li>
-                      </ul>
-                    </div>
+                </Step>
+                <Step 
+                  title="יצירת קוד הפרוקסי" 
+                  className="text-right"
+                >
+                  צור קובץ app.js:
+                  <div className="font-mono text-sm bg-muted p-2 rounded mt-2 text-right">
+                    <pre dir="ltr">{`
+const express = require('express');
+const cors = require('cors');
+const axios = require('axios');
+const helmet = require('helmet');
+require('dotenv').config();
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Security
+app.use(helmet());
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*'
+}));
+app.use(express.json());
+
+// Binance proxy route
+app.use('/api/binance', async (req, res) => {
+  try {
+    const endpoint = req.path;
+    const method = req.method.toLowerCase();
+    const data = method === 'get' ? req.query : req.body;
+    
+    const response = await axios({
+      method,
+      url: \`https://api.binance.com\${endpoint}\`,
+      params: method === 'get' ? data : undefined,
+      data: method !== 'get' ? data : undefined,
+      headers: {
+        'X-MBX-APIKEY': req.headers['x-mbx-apikey']
+      }
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      error: error.message,
+      data: error.response?.data
+    });
+  }
+});
+
+// TradingView proxy route
+app.use('/api/tradingview', async (req, res) => {
+  try {
+    const response = await axios({
+      method: req.method.toLowerCase(),
+      url: \`https://pine-api.tradingview.com\${req.path}\`,
+      data: req.body,
+      headers: {
+        'Authorization': req.headers['authorization'],
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    res.status(error.response?.status || 500).json({
+      error: error.message,
+      data: error.response?.data
+    });
+  }
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date() });
+});
+
+app.listen(PORT, () => {
+  console.log(\`Proxy server running on port \${PORT}\`);
+});
+                    `}</pre>
                   </div>
-                </Card>
-              </div>
+                </Step>
+                <Step 
+                  title="הפעלת השרת" 
+                  className="text-right"
+                >
+                  <div className="font-mono text-sm bg-muted p-2 rounded mt-2 text-right">
+                    <p>npm install -g pm2</p>
+                    <p>pm2 start app.js --name "api-proxy"</p>
+                    <p>pm2 startup</p>
+                    <p>pm2 save</p>
+                  </div>
+                </Step>
+                <Step 
+                  title="הגדרת NGINX (אופציונלי)" 
+                  className="text-right"
+                >
+                  NGINX יעזור לנתב בקשות ולהוסיף שכבת אבטחה נוספת:
+                  <div className="font-mono text-sm bg-muted p-2 rounded mt-2 text-right">
+                    <p>apt install -y nginx certbot python3-certbot-nginx</p>
+                  </div>
+                  צור קובץ קונפיגורציה:
+                  <div className="font-mono text-sm bg-muted p-2 rounded mt-2 text-right">
+                    <pre dir="ltr">{`
+server {
+    listen 80;
+    server_name proxy.yourdomain.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+                    `}</pre>
+                  </div>
+                  <p className="mt-2">הפעל את NGINX והגדר SSL:</p>
+                  <div className="font-mono text-sm bg-muted p-2 rounded mt-2 text-right">
+                    <p>ln -s /etc/nginx/sites-available/proxy.yourdomain.com /etc/nginx/sites-enabled/</p>
+                    <p>nginx -t</p>
+                    <p>systemctl restart nginx</p>
+                    <p>certbot --nginx -d proxy.yourdomain.com</p>
+                  </div>
+                </Step>
+              </Steps>
             </CardContent>
           </Card>
         </TabsContent>
-        
-        <TabsContent value="deployment">
+
+        <TabsContent value="api-keys" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-right">העלאה לשרת</CardTitle>
+              <CardTitle className="text-right">הגדרת מפתחות API</CardTitle>
               <CardDescription className="text-right">
-                הנחיות לפרישת המערכת בסביבת ייצור
+                הוראות ליצירת וניהול מפתחות API אמיתיים
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <Card className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-lg font-medium">שרת פרטי / VPS</h3>
-                      <Server className="h-5 w-5 text-primary" />
-                    </div>
-                    
-                    <div className="bg-muted p-3 rounded-md overflow-auto mb-3">
-                      <pre className="text-xs">
-                        <code>
-                          # Install PM2 globally{'\n'}
-                          npm install -g pm2{'\n\n'}
-                          # Start the application with PM2{'\n'}
-                          pm2 start npm --name "levi-a-pro" -- start{'\n\n'}
-                          # Ensure app starts on system reboot{'\n'}
-                          pm2 startup{'\n'}
-                          pm2 save
-                        </code>
-                      </pre>
-                    </div>
-                    
-                    <div className="text-sm space-y-1">
-                      <p>✓ שליטה מלאה בסביבה</p>
-                      <p>✓ יכולת התאמה מקסימלית</p>
-                      <p>✓ רמת אבטחה גבוהה</p>
-                      <p>✗ דורש תחזוקה רבה יותר</p>
-                    </div>
-                  </Card>
+            <CardContent>
+              <Steps>
+                <Step title="Binance API" className="text-right">
+                  <ol className="list-decimal list-inside space-y-2 mt-2">
+                    <li>היכנס לחשבון ה-Binance שלך</li>
+                    <li>עבור ל-API Management</li>
+                    <li>צור API Key חדש בהגדרות "Read Info" ו-"Enable Trading" בלבד (לא לאפשר משיכות!)</li>
+                    <li>הגבל את הגישה לפי IP של שרת הפרוקסי</li>
+                    <li>שמור את המפתח והסוד בצורה מאובטחת</li>
+                  </ol>
+                </Step>
+                
+                <Step title="TradingView API" className="text-right">
+                  <ol className="list-decimal list-inside space-y-2 mt-2">
+                    <li>היכנס לחשבון ה-TradingView שלך (חשבון מסוג premium או Pro נדרש)</li>
+                    <li>עבור להגדרות פרופיל</li>
+                    <li>חפש את אפשרות ה-API Keys או Developer Access</li>
+                    <li>צור מפתח חדש עם הרשאות לגישת קריאה</li>
+                  </ol>
+                </Step>
+                
+                <Step title="הגדרת מפתחות במערכת" className="text-right">
+                  <ol className="list-decimal list-inside space-y-2 mt-2">
+                    <li>בעמודי האינטגרציה השונים (Binance, TradingView), הזן את המפתחות כנדרש</li>
+                    <li>וודא שכתובת הפרוקסי מוגדרת בהגדרות המערכת</li>
+                    <li>בדוק את הסטטוס על ידי ניסיון חיבור</li>
+                  </ol>
+                </Step>
+                
+                <Step title="בדיקת קישוריות" className="text-right">
+                  <p>לאחר הזנת כל המפתחות, בצע את הבדיקות הבאות:</p>
+                  <ul className="list-disc list-inside space-y-2 mt-2">
+                    <li>עבור ל"בדיקת חיבור" בכל ממשק אינטגרציה</li>
+                    <li>ודא שהנתונים מתקבלים בזמן אמת</li>
+                    <li>בדוק שהלוגים לא מציגים שגיאות CORS או חיבור</li>
+                  </ul>
+                </Step>
+              </Steps>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="server" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-right">הגדרת שרת לאפליקציה</CardTitle>
+              <CardDescription className="text-right">
+                הוראות להעלאת האפליקציה לאוויר
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Steps>
+                <Step title="בניית האפליקציה" className="text-right">
+                  <div className="font-mono text-sm bg-muted p-2 rounded mt-2 text-right">
+                    <p>npm run build</p>
+                  </div>
+                  <p className="mt-2">לאחר הבנייה, התיקייה 'dist' תכיל את הקבצים הסטטיים של האפליקציה.</p>
+                </Step>
+                
+                <Step title="אפשרויות הפצה" className="text-right">
+                  <p className="font-semibold">אפשרות 1: שירותי אחסון סטטיים</p>
+                  <ul className="list-disc list-inside space-y-1 mt-1 mb-3">
+                    <li>Netlify</li>
+                    <li>Vercel</li>
+                    <li>GitHub Pages</li>
+                    <li>Firebase Hosting</li>
+                  </ul>
                   
-                  <Card className="p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-lg font-medium">שירותי ענן</h3>
-                      <Globe className="h-5 w-5 text-primary" />
-                    </div>
-                    
-                    <ul className="space-y-3 mb-3">
-                      <li className="flex justify-between items-center">
-                        <Button variant="outline" size="sm" asChild>
-                          <a href="https://vercel.com" target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="h-3 w-3 mr-1" />
-                            פרטים
-                          </a>
-                        </Button>
-                        <div className="text-right">
-                          <div className="font-medium">Vercel</div>
-                          <div className="text-xs text-muted-foreground">מתאים לממשק משתמש בלבד</div>
-                        </div>
-                      </li>
-                      
-                      <li className="flex justify-between items-center">
-                        <Button variant="outline" size="sm" asChild>
-                          <a href="https://aws.amazon.com" target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="h-3 w-3 mr-1" />
-                            פרטים
-                          </a>
-                        </Button>
-                        <div className="text-right">
-                          <div className="font-medium">AWS</div>
-                          <div className="text-xs text-muted-foreground">פתרון מלא, EC2/ECS/Lambda</div>
-                        </div>
-                      </li>
-                      
-                      <li className="flex justify-between items-center">
-                        <Button variant="outline" size="sm" asChild>
-                          <a href="https://cloud.digitalocean.com" target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="h-3 w-3 mr-1" />
-                            פרטים
-                          </a>
-                        </Button>
-                        <div className="text-right">
-                          <div className="font-medium">DigitalOcean</div>
-                          <div className="text-xs text-muted-foreground">App Platform או Droplets</div>
-                        </div>
-                      </li>
+                  <p className="font-semibold">אפשרות 2: שרת מותאם אישית</p>
+                  <div className="font-mono text-sm bg-muted p-2 rounded mt-2 text-right">
+                    <pre dir="ltr">{`
+# ב-Digital Ocean או AWS:
+# העלה את תיקיית dist לשרת
+scp -r ./dist root@your-server-ip:/var/www/levi-bot
+
+# התקן nginx
+apt install -y nginx
+
+# צור קובץ קונפיגורציה
+cat > /etc/nginx/sites-available/levi-bot << EOF
+server {
+    listen 80;
+    server_name app.yourdomain.com;
+    
+    root /var/www/levi-bot;
+    index index.html;
+    
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+EOF
+
+# הפעל את האתר
+ln -s /etc/nginx/sites-available/levi-bot /etc/nginx/sites-enabled/
+nginx -t
+systemctl restart nginx
+
+# הוסף SSL
+certbot --nginx -d app.yourdomain.com
+                    `}</pre>
+                  </div>
+                </Step>
+                
+                <Step title="הגדרת דומיין" className="text-right">
+                  <ol className="list-decimal list-inside space-y-2 mt-2">
+                    <li>רכוש דומיין דרך ספק כגון Namecheap, GoDaddy וכדומה</li>
+                    <li>הוסף רשומות DNS שמפנות לשרת שלך:</li>
+                    <ul className="list-disc list-inside ml-6 space-y-1">
+                      <li>רשומת A: app.yourdomain.com ➡ IP של השרת שלך</li>
+                      <li>רשומת A: proxy.yourdomain.com ➡ IP של שרת הפרוקסי</li>
                     </ul>
-                    
-                    <div className="text-sm space-y-1">
-                      <p>✓ קל לפרישה וניהול</p>
-                      <p>✓ סקלביליות אוטומטית</p>
-                      <p>✓ תמיכה בזמינות גבוהה</p>
-                      <p>✗ עלות גבוהה יותר</p>
-                    </div>
-                  </Card>
-                </div>
+                    <li>המתן לעדכון ה-DNS (עשוי לקחת עד 48 שעות)</li>
+                  </ol>
+                </Step>
+
+                <Step title="עדכוני קונפיגורציה" className="text-right">
+                  <p className="mb-2">עדכן בהגדרות המערכת את כתובות הפרוקסי הנכונות:</p>
+                  <div className="p-2 bg-muted rounded">
+                    <p dir="ltr">Proxy URL: https://proxy.yourdomain.com</p>
+                  </div>
+                </Step>
+              </Steps>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="security" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-right">הגדרות אבטחה</CardTitle>
+              <CardDescription className="text-right">
+                צעדים להבטחת אבטחת המערכת
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert>
+                <FileKey className="h-4 w-4" />
+                <AlertTitle className="text-right">אבטחת מפתחות API</AlertTitle>
+                <AlertDescription className="text-right">
+                  מפתחות API הם הנכס הרגיש ביותר שלך. אל תשתף אותם, אל תאחסן אותם בקוד גלוי, והשתמש תמיד בפרוקסי.
+                </AlertDescription>
+              </Alert>
+              
+              <Steps>
+                <Step title="הגבלת IP בשירותים חיצוניים" className="text-right">
+                  <p className="mt-2">הגדר את מפתחות ה-API של Binance ו-TradingView לאפשר גישה רק מ-IP של שרת הפרוקסי שלך.</p>
+                </Step>
                 
-                <h3 className="text-lg font-medium text-right mb-2">הגדרת HTTPS (חובה לסביבת ייצור)</h3>
+                <Step title="שימוש ב-HTTPS" className="text-right">
+                  <p className="mt-2">ודא שכל התקשורת, כולל האפליקציה והפרוקסי, משתמשת ב-HTTPS עם SSL תקף.</p>
+                </Step>
                 
-                <div className="bg-muted p-4 rounded-md overflow-auto">
-                  <pre className="text-xs">
-                    <code>
-                      # Using Certbot with Nginx{'\n\n'}
-                      # Install Certbot{'\n'}
-                      sudo apt-get update{'\n'}
-                      sudo apt-get install certbot python3-certbot-nginx{'\n\n'}
-                      # Obtain and install certificate{'\n'}
-                      sudo certbot --nginx -d yourdomain.com
-                    </code>
-                  </pre>
-                </div>
+                <Step title="הגבלת CORS" className="text-right">
+                  <p className="mt-2">הגדר את שרת הפרוקסי לקבל בקשות רק מהדומיין שלך:</p>
+                  <div className="font-mono text-sm bg-muted p-2 rounded mt-2 text-right">
+                    <pre dir="ltr">
+                      {`// In .env file on proxy server:
+ALLOWED_ORIGINS=https://app.yourdomain.com`}
+                    </pre>
+                  </div>
+                </Step>
                 
-                <Card className="mt-4">
-                  <CardHeader>
-                    <CardTitle className="text-right">רשימת תיוג להשקה</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-end">
-                        <span className="text-right">בדיקת HTTPS ואבטחת תקשורת</span>
-                        <div className="h-5 w-5 ml-2 rounded-full border border-primary flex items-center justify-center">
-                          <CheckCircle2 className="h-3 w-3 text-primary" />
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-end">
-                        <span className="text-right">הגדרת לוגים וניטור</span>
-                        <div className="h-5 w-5 ml-2 rounded-full border border-primary flex items-center justify-center">
-                          <CheckCircle2 className="h-3 w-3 text-primary" />
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-end">
-                        <span className="text-right">בדיקת חיבורים לבורסות ומקורות מידע</span>
-                        <div className="h-5 w-5 ml-2 rounded-full border border-primary flex items-center justify-center">
-                          <CheckCircle2 className="h-3 w-3 text-primary" />
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-end">
-                        <span className="text-right">הגדרת גיבויים</span>
-                        <div className="h-5 w-5 ml-2 rounded-full border border-primary flex items-center justify-center">
-                          <CheckCircle2 className="h-3 w-3 text-primary" />
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-end">
-                        <span className="text-right">בדיקות עומסים</span>
-                        <div className="h-5 w-5 ml-2 rounded-full border border-primary flex items-center justify-center">
-                          <CheckCircle2 className="h-3 w-3 text-primary" />
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center justify-end">
-                        <span className="text-right">הגדרת התראות מערכת</span>
-                        <div className="h-5 w-5 ml-2 rounded-full border border-primary flex items-center justify-center">
-                          <CheckCircle2 className="h-3 w-3 text-primary" />
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                <Step title="מערכת היררכית" className="text-right">
+                  <p className="mt-2">הגדר הרשאות משתמשים בהתאם לרמות גישה:</p>
+                  <ul className="list-disc list-inside space-y-1 mt-2">
+                    <li>מנהל מערכת: גישה מלאה</li>
+                    <li>מנהל: גישה למרבית התכונות, ללא הגדרות מערכת</li>
+                    <li>משתמש: גישה מוגבלת לצפייה ופעולות בסיסיות</li>
+                  </ul>
+                </Step>
+                
+                <Step title="גיבוי נתונים" className="text-right">
+                  <p className="mt-2">הגדר גיבויים אוטומטיים לנתוני המערכת, במיוחד הגדרות משתמשים ואסטרטגיות.</p>
+                </Step>
+                
+                <Step title="ניטור" className="text-right">
+                  <p className="mt-2">הוסף מערכת ניטור לזיהוי גישות חשודות או פעילות חריגה:</p>
+                  <ul className="list-disc list-inside space-y-1 mt-2">
+                    <li>הגדר התראות על ניסיונות כניסה מרובים</li>
+                    <li>נטר בקשות API חריגות</li>
+                    <li>הגדר התראות על שינויי הרשאות</li>
+                  </ul>
+                </Step>
+              </Steps>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-      
-      <div className="mt-6 border-t pt-6">
-        <h2 className="text-xl font-medium text-right mb-4">תמיכה טכנית</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="p-4">
-            <h3 className="font-medium text-right mb-2">תיעוד טכני</h3>
-            <p className="text-sm text-right mb-3">קרא את התיעוד המלא עם הוראות מפורטות והסברים.</p>
-            <Button variant="outline" size="sm" className="w-full">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              צפה בתיעוד
-            </Button>
-          </Card>
-          
-          <Card className="p-4">
-            <h3 className="font-medium text-right mb-2">קהילת פיתוח</h3>
-            <p className="text-sm text-right mb-3">הצטרף לקהילת המפתחים שלנו לשאלות, עדכונים ותמיכה.</p>
-            <Button variant="outline" size="sm" className="w-full">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              הצטרף לקהילה
-            </Button>
-          </Card>
-          
-          <Card className="p-4">
-            <h3 className="font-medium text-right mb-2">תמיכה ישירה</h3>
-            <p className="text-sm text-right mb-3">צור קשר עם צוות התמיכה הטכנית שלנו לסיוע מקצועי.</p>
-            <Button variant="outline" size="sm" className="w-full">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              שלח בקשת תמיכה
-            </Button>
-          </Card>
-        </div>
-      </div>
     </Container>
   );
 };

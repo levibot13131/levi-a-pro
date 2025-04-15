@@ -1,5 +1,4 @@
 
-import React, { useEffect } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { toast } from 'sonner';
@@ -7,35 +6,24 @@ import { toast } from 'sonner';
 // האירוע המותאם אישית לשינוי מצב דמו
 export const DEMO_MODE_CHANGE_EVENT = 'demo-mode-change';
 
-interface AppSettings {
-  demoMode: boolean;
-  darkMode: boolean;
-  language: 'he' | 'en';
-  autoRefresh: boolean;
-  refreshInterval: number;
-  toggleDemoMode: () => void;
-  toggleDarkMode: () => void;
-  setLanguage: (lang: 'he' | 'en') => void;
-  toggleAutoRefresh: () => void;
-  setRefreshInterval: (interval: number) => void;
-}
-
-export const useAppSettings = create<AppSettings>()(
+export const useAppSettings = create()(
   persist(
     (set, get) => ({
-      demoMode: true, // ברירת מחדל היא מצב דמו
+      demoMode: true,
       darkMode: true,
       language: 'he',
       autoRefresh: true,
-      refreshInterval: 60000, // 1 דקה
+      refreshInterval: 60000,
       
       toggleDemoMode: () => {
-        set(state => {
+        set((state) => {
           const newDemoMode = !state.demoMode;
           
           // השמעת אירוע שינוי מצב דמו
-          const event = new CustomEvent(DEMO_MODE_CHANGE_EVENT, { 
-            detail: { demoMode: newDemoMode } 
+          const event = new CustomEvent(DEMO_MODE_CHANGE_EVENT, {
+            detail: {
+              demoMode: newDemoMode
+            }
           });
           window.dispatchEvent(event);
           
@@ -52,45 +40,52 @@ export const useAppSettings = create<AppSettings>()(
           
           console.log(`App mode changed to ${newDemoMode ? 'DEMO' : 'REAL'} mode`);
           
-          return { demoMode: newDemoMode };
+          return {
+            demoMode: newDemoMode
+          };
         });
       },
       
-      toggleDarkMode: () => set(state => ({ darkMode: !state.darkMode })),
-      setLanguage: (language) => set({ language }),
-      toggleAutoRefresh: () => set(state => ({ autoRefresh: !state.autoRefresh })),
-      setRefreshInterval: (refreshInterval) => set({ refreshInterval }),
+      toggleDarkMode: () => set((state) => ({
+        darkMode: !state.darkMode
+      })),
+      
+      setLanguage: (language) => set({
+        language
+      }),
+      
+      toggleAutoRefresh: () => set((state) => ({
+        autoRefresh: !state.autoRefresh
+      })),
+      
+      setRefreshInterval: (refreshInterval) => set({
+        refreshInterval
+      })
     }),
     {
-      name: 'app-settings',
+      name: 'app-settings'
     }
   )
 );
 
 // Hook להאזנה לשינויים במצב דמו
-export const useDemoModeListener = (callback: (isDemoMode: boolean) => void) => {
-  useEffect(() => {
-    const handleDemoModeChange = (event: CustomEvent) => {
+export const useDemoModeListener = (callback) => {
+  React.useEffect(() => {
+    const handleDemoModeChange = (event) => {
       callback(event.detail.demoMode);
     };
     
     // הוספת האזנה לאירוע
-    window.addEventListener(
-      DEMO_MODE_CHANGE_EVENT,
-      handleDemoModeChange as EventListener
-    );
+    window.addEventListener(DEMO_MODE_CHANGE_EVENT, handleDemoModeChange);
     
     // ניקוי האזנה בעת פירוק הקומפוננטה
     return () => {
-      window.removeEventListener(
-        DEMO_MODE_CHANGE_EVENT,
-        handleDemoModeChange as EventListener
-      );
+      window.removeEventListener(DEMO_MODE_CHANGE_EVENT, handleDemoModeChange);
     };
   }, [callback]);
   
   // החזרת הערך הנוכחי של מצב דמו
-  return useAppSettings(state => state.demoMode);
+  return useAppSettings((state) => state.demoMode);
 };
 
 // בנוסף, נייצא גם גישה ישירה למצב הדמו

@@ -85,6 +85,20 @@ const BinanceRealTimeStatus: React.FC = () => {
         description: 'המערכת תציג נתוני דמו'
       });
     }
+    
+    // הוספת קישור למדריך ההגדרה
+    if (newValue) {
+      setTimeout(() => {
+        toast.info(
+          <div className="flex flex-col">
+            <span>לפרטים על הגדרה מלאה בסביבת אמת</span>
+            <Link to="/deployment-guide" className="text-primary underline">
+              עבור למדריך ההפצה המלא
+            </Link>
+          </div>
+        );
+      }, 2000);
+    }
   };
   
   const proxyConfig = getProxyConfig();
@@ -180,6 +194,16 @@ const BinanceRealTimeStatus: React.FC = () => {
                 <p className="text-sm text-muted-foreground">
                   המערכת פועלת במצב דמו. התחבר לבינאנס להפעלת מצב זמן אמת.
                 </p>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="p-0 h-auto"
+                  asChild
+                >
+                  <Link to="/deployment-guide">
+                    למדריך הפצה מלא
+                  </Link>
+                </Button>
               </div>
             </div>
           )}

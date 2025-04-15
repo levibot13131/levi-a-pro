@@ -198,9 +198,9 @@ export const useBinanceData = (symbols: string | string[] = 'BTCUSDT') => {
     error,
     priceData,
     fundamentalData,
-    refreshData,
     marketData,
     isLoading,
+    refreshData,
     startRealTimeUpdates
   };
 };

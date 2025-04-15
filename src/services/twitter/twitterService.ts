@@ -1,231 +1,143 @@
 
-import { useAppSettings } from '@/hooks/use-app-settings';
+import { toast } from 'sonner';
 
-// Type definitions
-export interface Tweet {
-  id: string;
-  username: string;
-  text: string;
-  createdAt: string;
-  likes: number;
-  retweets: number;
-  sentiment: 'positive' | 'negative' | 'neutral';
-  profileImageUrl: string;
-}
+// Storage key for Twitter credentials
+const TWITTER_AUTH_KEY = 'twitter_auth_credentials';
 
+// Twitter credentials interface
 export interface TwitterCredentials {
   apiKey: string;
   apiSecret: string;
   bearerToken: string;
-  isConnected?: boolean;
+  username: string;
+  isConnected: boolean;
   lastConnected?: number;
-  username?: string;
 }
 
-export interface TwitterConnectParams {
-  apiKey: string;
-  apiSecret: string;
-  accessToken?: string;
-  accessTokenSecret?: string;
-}
+/**
+ * Save Twitter API credentials
+ */
+export const saveTwitterCredentials = (credentials: TwitterCredentials): void => {
+  localStorage.setItem(TWITTER_AUTH_KEY, JSON.stringify({
+    ...credentials,
+    isConnected: true,
+    lastConnected: Date.now()
+  }));
+};
 
-// Mock data for key figure tweets
-const mockKeyFigureTweets = [
-  {
-    id: 't1',
-    username: 'elonmusk',
-    text: 'ביטקוין הוא עתיד המטבעות הדיגיטליים. טסלה מחזיקה BTC במאזן.',
-    createdAt: '2025-04-14T15:34:00Z',
-    likes: 85000,
-    retweets: 12000,
-    sentiment: 'positive' as const,
-    profileImageUrl: 'https://randomuser.me/api/portraits/men/11.jpg',
-  },
-  {
-    id: 't2',
-    username: 'VitalikButerin',
-    text: 'שכבת L2 של אית׳ריום ממשיכה להתפתח. סקלביליות היא המפתח לאימוץ המוני.',
-    createdAt: '2025-04-14T12:22:00Z',
-    likes: 12500,
-    retweets: 3200,
-    sentiment: 'positive' as const,
-    profileImageUrl: 'https://randomuser.me/api/portraits/men/12.jpg',
-  },
-  {
-    id: 't3',
-    username: 'cz_binance',
-    text: 'הנפח המסחרי בבורסת Binance שבר היום שיא חדש. התנודתיות בשוק מייצרת הזדמנויות.',
-    createdAt: '2025-04-14T10:15:00Z',
-    likes: 9800,
-    retweets: 2100,
-    sentiment: 'neutral' as const,
-    profileImageUrl: 'https://randomuser.me/api/portraits/men/13.jpg',
-  },
-  {
-    id: 't4',
-    username: 'PeterSchiff',
-    text: 'ביטקוין הוא בועה שתתפוצץ בקרוב. זהב הוא המקלט הבטוח האמיתי.',
-    createdAt: '2025-04-14T09:05:00Z',
-    likes: 3400,
-    retweets: 980,
-    sentiment: 'negative' as const,
-    profileImageUrl: 'https://randomuser.me/api/portraits/men/14.jpg',
-  },
-  {
-    id: 't5',
-    username: 'PlanB',
-    text: 'מודל S2F עדיין תקף. צפי למחיר BTC של $250K בסוף המחזור הנוכחי.',
-    createdAt: '2025-04-14T07:30:00Z',
-    likes: 15600,
-    retweets: 4200,
-    sentiment: 'positive' as const,
-    profileImageUrl: 'https://randomuser.me/api/portraits/men/15.jpg',
-  },
-];
-
-// Connect to Twitter
-export const connectToTwitter = async (params: TwitterConnectParams): Promise<boolean> => {
+/**
+ * Get Twitter API credentials
+ */
+export const getTwitterCredentials = (): TwitterCredentials | null => {
+  const credentials = localStorage.getItem(TWITTER_AUTH_KEY);
+  
+  if (!credentials) return null;
+  
   try {
-    const { apiKey, apiSecret, accessToken, accessTokenSecret } = params;
+    return JSON.parse(credentials) as TwitterCredentials;
+  } catch (error) {
+    console.error('Error parsing Twitter credentials:', error);
+    return null;
+  }
+};
+
+/**
+ * Connect to Twitter API
+ */
+export const connectToTwitter = async (
+  apiKey: string,
+  apiSecret: string,
+  bearerToken: string,
+  username: string
+): Promise<boolean> => {
+  try {
+    // Simulate API validation
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    if (!apiKey || !apiSecret) {
-      console.error('API key and secret are required');
+    // In a real implementation, validate the API credentials
+    const isValid = apiKey && apiSecret && bearerToken && username;
+    
+    if (isValid) {
+      saveTwitterCredentials({
+        apiKey,
+        apiSecret,
+        bearerToken,
+        username,
+        isConnected: true
+      });
+      
+      toast.success('התחברות לטוויטר הצליחה', {
+        description: `חיבור API הוגדר עבור המשתמש ${username}`
+      });
+      return true;
+    } else {
+      toast.error('פרטי API לא תקינים', {
+        description: 'אנא וודא שהזנת את כל פרטי ה-API הנדרשים'
+      });
       return false;
     }
-    
-    const credentials: TwitterCredentials = {
-      apiKey,
-      apiSecret,
-      bearerToken: accessToken || 'mock-token', // In a real app, you'd get this from Twitter
-      isConnected: true,
-      lastConnected: Date.now(),
-      username: 'api_user' // This would come from Twitter API in a real implementation
-    };
-    
-    saveTwitterCredentials(credentials);
-    
-    // Dispatch connection event
-    const event = new CustomEvent('twitter-connection-changed', { 
-      detail: { isConnected: true } 
-    });
-    window.dispatchEvent(event);
-    
-    return true;
   } catch (error) {
     console.error('Error connecting to Twitter:', error);
+    toast.error('שגיאה בהתחברות לטוויטר', {
+      description: 'אנא וודא שפרטי ה-API תקינים ונסה שוב'
+    });
     return false;
   }
 };
 
-// Disconnect from Twitter
-export const disconnectFromTwitter = async (): Promise<boolean> => {
-  try {
-    const credentials = getTwitterCredentials();
-    
-    if (credentials) {
-      const updatedCredentials: TwitterCredentials = {
-        ...credentials,
-        isConnected: false,
-        lastConnected: Date.now()
-      };
-      
-      saveTwitterCredentials(updatedCredentials);
-      
-      // Dispatch disconnection event
-      const event = new CustomEvent('twitter-connection-changed', { 
-        detail: { isConnected: false } 
-      });
-      window.dispatchEvent(event);
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error disconnecting from Twitter:', error);
-    return false;
-  }
+/**
+ * Disconnect from Twitter
+ */
+export const disconnectFromTwitter = (): void => {
+  localStorage.removeItem(TWITTER_AUTH_KEY);
+  toast.info('החיבור לטוויטר נותק');
 };
 
-// Save Twitter credentials
-export const saveTwitterCredentials = (credentials: TwitterCredentials): void => {
-  localStorage.setItem('twitter_credentials', JSON.stringify(credentials));
-};
-
-// Get Twitter credentials
-export const getTwitterCredentials = (): TwitterCredentials | null => {
-  const storedCredentials = localStorage.getItem('twitter_credentials');
-  return storedCredentials ? JSON.parse(storedCredentials) : null;
-};
-
-// Check if Twitter is connected
+/**
+ * Check if connected to Twitter
+ */
 export const isTwitterConnected = (): boolean => {
   const credentials = getTwitterCredentials();
   return !!credentials?.isConnected;
 };
 
-// Get tweets from key crypto figures
-export const getKeyFigureTweets = async (asset: string = 'BTC'): Promise<Tweet[]> => {
-  const isDemoMode = useAppSettings.getState().demoMode;
-  
-  // In demo mode, return mock data
-  if (isDemoMode) {
-    console.log('Returning mock Twitter data (demo mode)');
-    return mockKeyFigureTweets;
-  }
-  
-  // Check if we have valid credentials
-  const credentials = getTwitterCredentials();
-  if (!credentials?.isConnected) {
-    console.log('No Twitter credentials found or not connected');
-    return [];
-  }
-  
+/**
+ * Fetch Twitter sentiment data (mock implementation)
+ */
+export const fetchTwitterSentiment = async (
+  keyword: string, 
+  days: number = 7
+): Promise<any[]> => {
   try {
-    // This would be a real API call in production
-    console.log(`Fetching Twitter data for ${asset} from API`);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // For now, just return the mock data
-    // In a real implementation, this would use the Twitter API
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve(mockKeyFigureTweets);
-      }, 500);
-    });
-  } catch (error) {
-    console.error('Error fetching Twitter data:', error);
-    return [];
-  }
-};
-
-// Function to validate Twitter credentials
-export const validateTwitterCredentials = async (credentials: TwitterCredentials): Promise<boolean> => {
-  try {
-    const isDemoMode = useAppSettings.getState().demoMode;
+    // Generate mock sentiment data
+    const data = [];
+    const now = new Date();
     
-    // In demo mode, always return success
-    if (isDemoMode) {
-      const validatedCredentials: TwitterCredentials = {
-        ...credentials,
-        isConnected: true,
-        lastConnected: Date.now()
-      };
+    for (let i = days - 1; i >= 0; i--) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
       
-      saveTwitterCredentials(validatedCredentials);
-      return true;
+      const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
+      const positive = 30 + Math.random() * 40;
+      const negative = 10 + Math.random() * 20;
+      const neutral = 100 - positive - negative;
+      
+      data.push({
+        date: dateStr,
+        positive,
+        negative,
+        neutral,
+        volume: 1000 + Math.random() * 5000
+      });
     }
     
-    // In a real implementation, this would verify the credentials with Twitter API
-    
-    // For now, simulate successful validation
-    const validatedCredentials: TwitterCredentials = {
-      ...credentials,
-      isConnected: true,
-      lastConnected: Date.now()
-    };
-    
-    saveTwitterCredentials(validatedCredentials);
-    return true;
+    return data;
   } catch (error) {
-    console.error('Error validating Twitter credentials:', error);
-    return false;
+    console.error('Error fetching Twitter sentiment:', error);
+    toast.error('שגיאה בטעינת נתוני סנטימנט מטוויטר');
+    return [];
   }
 };

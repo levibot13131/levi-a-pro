@@ -1,212 +1,145 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Loader, MessageCircle, ExternalLink } from 'lucide-react';
-import { toast } from 'sonner';
 import { connectToTwitter, disconnectFromTwitter } from '@/services/twitter/twitterService';
+import { toast } from 'sonner';
+import { Loader2, Info } from 'lucide-react';
 
 interface TwitterConnectFormProps {
-  onConnect: () => void;
-  isConnected: boolean;
-  onDisconnect: () => void;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConnectSuccess: () => void;
 }
 
 const TwitterConnectForm: React.FC<TwitterConnectFormProps> = ({
-  onConnect,
-  isConnected,
-  onDisconnect
+  isOpen,
+  onOpenChange,
+  onConnectSuccess
 }) => {
   const [apiKey, setApiKey] = useState('');
   const [apiSecret, setApiSecret] = useState('');
-  const [accessToken, setAccessToken] = useState('');
-  const [accessTokenSecret, setAccessTokenSecret] = useState('');
+  const [bearerToken, setBearerToken] = useState('');
+  const [username, setUsername] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [autoAnalysis, setAutoAnalysis] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!apiKey || !apiSecret) {
-      toast.error('נא להזין לפחות מפתח API וסוד API');
+  const handleConnect = async () => {
+    if (!apiKey || !apiSecret || !bearerToken || !username) {
+      toast.error('כל השדות נדרשים');
       return;
     }
-    
+
     setIsLoading(true);
-    
     try {
-      const success = await connectToTwitter({
-        apiKey,
-        apiSecret,
-        accessToken,
-        accessTokenSecret
-      });
-      
+      const success = await connectToTwitter(apiKey, apiSecret, bearerToken, username);
+
       if (success) {
-        onConnect();
-        toast.success('התחברות לטוויטר הצליחה');
-      } else {
-        toast.error('שגיאה בהתחברות לטוויטר');
+        onConnectSuccess();
+        onOpenChange(false);
       }
     } catch (error) {
-      console.error('Error connecting to Twitter:', error);
-      toast.error('שגיאה בהתחברות לטוויטר');
+      toast.error('שגיאה בתהליך ההתחברות', {
+        description: 'אנא נסה שנית מאוחר יותר'
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDisconnect = async () => {
-    try {
-      await disconnectFromTwitter();
-      onDisconnect();
-      setAutoAnalysis(false);
-      toast.info('החיבור לטוויטר נותק');
-    } catch (error) {
-      console.error('Error disconnecting from Twitter:', error);
-      toast.error('שגיאה בניתוק מטוויטר');
-    }
-  };
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <Card>
-        {isConnected ? (
-          <CardContent className="pt-6">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Switch 
-                  id="auto-analysis"
-                  checked={autoAnalysis}
-                  onCheckedChange={setAutoAnalysis}
-                />
-                <Label htmlFor="auto-analysis" className="text-right">ניתוח אוטומטי</Label>
-              </div>
-              
-              <p className="text-sm text-muted-foreground text-right">
-                כאשר ניתוח אוטומטי מופעל, המערכת תנתח מגמות וסנטימנט בזמן אמת ותיצור התראות לפי הצורך.
-              </p>
-              
-              <Button 
-                variant="destructive"
-                className="w-full mt-4"
-                onClick={handleDisconnect}
-              >
-                נתק מטוויטר
-              </Button>
-            </div>
-          </CardContent>
-        ) : (
-          <div>
-            <CardHeader>
-              <CardTitle className="text-right">התחברות לטוויטר</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="api-key" className="text-right block">מפתח API</Label>
-                  <Input
-                    id="api-key"
-                    type="text"
-                    value={apiKey}
-                    onChange={e => setApiKey(e.target.value)}
-                    placeholder="הזן את מפתח ה-API שלך"
-                    className="text-left"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="api-secret" className="text-right block">סוד API</Label>
-                  <Input
-                    id="api-secret"
-                    type="password"
-                    value={apiSecret}
-                    onChange={e => setApiSecret(e.target.value)}
-                    placeholder="הזן את סוד ה-API שלך"
-                    className="text-left"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="access-token" className="text-right block">אסימון גישה (אופציונלי)</Label>
-                  <Input
-                    id="access-token"
-                    type="text"
-                    value={accessToken}
-                    onChange={e => setAccessToken(e.target.value)}
-                    placeholder="הזן את אסימון הגישה"
-                    className="text-left"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="access-token-secret" className="text-right block">סוד אסימון גישה (אופציונלי)</Label>
-                  <Input
-                    id="access-token-secret"
-                    type="password"
-                    value={accessTokenSecret}
-                    onChange={e => setAccessTokenSecret(e.target.value)}
-                    placeholder="הזן את סוד אסימון הגישה"
-                    className="text-left"
-                  />
-                </div>
-                
-                <Button 
-                  type="submit" 
-                  className="w-full mt-4"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader className="h-4 w-4 mr-2 animate-spin" />
-                      מתחבר...
-                    </>
-                  ) : (
-                    <>
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      התחבר לטוויטר
-                    </>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </div>
-        )}
-      </Card>
-      
-      <Card className="bg-muted/40">
-        <CardHeader>
-          <CardTitle className="text-right">הנחיות חיבור לטוויטר</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <ol className="list-decimal list-inside space-y-2 text-right">
-            <li>היכנס ל<a href="https://developer.twitter.com/en/portal/dashboard" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">פורטל המפתחים של טוויטר</a></li>
-            <li>צור פרויקט חדש ואפליקציה</li>
-            <li>וודא שהאפליקציה מוגדרת עם הרשאות קריאה (Read)</li>
-            <li>העתק את ה-API Key וה-API Secret</li>
-            <li>אם נדרש, צור גם את ה-Access Token וה-Access Token Secret</li>
-          </ol>
-          
-          <div className="bg-primary/10 p-3 rounded-md text-right">
-            <p className="text-sm">
-              <strong>שים לב:</strong> המפתחות נשמרים בדפדפן שלך בלבד ולא נשלחים לשרת.
-            </p>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-right">התחברות לטוויטר (Twitter)</DialogTitle>
+        </DialogHeader>
+        
+        <div className="flex items-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md mb-4">
+          <Info className="text-blue-500 h-5 w-5 mr-2" />
+          <p className="text-sm text-right">
+            הגדר את פרטי הגישה ל-Twitter API כדי לקבל נתוני סנטימנט וטרנדים בזמן אמת.
+          </p>
+        </div>
+        
+        <div className="space-y-4">
+          <div className="text-right">
+            <Label htmlFor="username" className="block mb-1">שם משתמש Twitter</Label>
+            <Input
+              id="username"
+              placeholder="הזן את שם המשתמש שלך בטוויטר"
+              dir="ltr"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
           </div>
           
-          <div className="flex justify-end">
-            <Button variant="outline" size="sm" asChild className="mt-2">
-              <a href="https://developer.twitter.com/en/docs/twitter-api" target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                תיעוד Twitter API
-              </a>
-            </Button>
+          <div className="text-right">
+            <Label htmlFor="apiKey" className="block mb-1">API Key</Label>
+            <Input
+              id="apiKey"
+              placeholder="הזן את מפתח ה-API"
+              dir="ltr"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+            />
           </div>
-        </CardContent>
-      </Card>
-    </div>
+          
+          <div className="text-right">
+            <Label htmlFor="apiSecret" className="block mb-1">API Secret</Label>
+            <Input
+              id="apiSecret"
+              placeholder="הזן את ה-API Secret"
+              dir="ltr"
+              type="password"
+              value={apiSecret}
+              onChange={(e) => setApiSecret(e.target.value)}
+            />
+          </div>
+          
+          <div className="text-right">
+            <Label htmlFor="bearerToken" className="block mb-1">Bearer Token</Label>
+            <Input
+              id="bearerToken"
+              placeholder="הזן את ה-Bearer Token"
+              dir="ltr"
+              type="password"
+              value={bearerToken}
+              onChange={(e) => setBearerToken(e.target.value)}
+            />
+          </div>
+        </div>
+        
+        <p className="text-xs text-muted-foreground mt-1 text-right">
+          פרטי ה-API נשמרים באופן מקומי בדפדפן שלך בלבד ולא נשלחים לשרתים חיצוניים.
+        </p>
+        
+        <DialogFooter className="sm:justify-end">
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+          >
+            ביטול
+          </Button>
+          <Button 
+            type="button"
+            onClick={handleConnect}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                מתחבר...
+              </>
+            ) : (
+              'התחבר'
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

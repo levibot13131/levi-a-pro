@@ -1,48 +1,38 @@
 
-import React, { createContext, useContext } from 'react';
+import React from 'react';
 import { cn } from '@/lib/utils';
 
-interface StepsContextProps {
-  activeStep?: number;
+interface StepProps {
+  title: string;
+  icon?: React.ReactNode;
+  children?: React.ReactNode;
+  className?: string;
 }
 
-const StepsContext = createContext<StepsContextProps>({
-  activeStep: 0,
-});
+interface StepsProps {
+  children: React.ReactNode;
+  className?: string;
+}
 
-// Steps component 
-const Steps = React.forwardRef<
-  HTMLDivElement, 
-  React.HTMLAttributes<HTMLDivElement> & StepsContextProps
->(({ className, activeStep = 0, ...props }, ref) => (
-  <StepsContext.Provider value={{ activeStep }}>
-    <div 
-      ref={ref} 
-      className={cn("space-y-4", className)} 
-      {...props} 
-    />
-  </StepsContext.Provider>
-));
-Steps.displayName = "Steps";
-
-// Step component 
-const Step = React.forwardRef<
-  HTMLDivElement, 
-  React.HTMLAttributes<HTMLDivElement> & { index?: number }
->(({ className, index, children, ...props }, ref) => {
+export const Step = ({ title, icon, children, className }: StepProps) => {
   return (
-    <div 
-      ref={ref} 
-      className={cn(
-        "relative border p-4 rounded-md",
-        className
-      )} 
-      {...props}
-    >
+    <div className={cn("border-l pl-6 pb-6 border-muted-foreground/20 last:border-l-0 last:pb-0 relative", className)}>
+      <div className="absolute -left-[5px] h-[10px] w-[10px] rounded-full bg-primary" />
+      <h3 className="font-medium text-lg mb-2 flex items-center gap-2">
+        {icon && <span className="text-primary">{icon}</span>}
+        {title}
+      </h3>
+      <div className="text-sm text-muted-foreground">
+        {children}
+      </div>
+    </div>
+  );
+};
+
+export const Steps = ({ children, className }: StepsProps) => {
+  return (
+    <div className={cn("space-y-0", className)}>
       {children}
     </div>
   );
-});
-Step.displayName = "Step";
-
-export { Steps, Step };
+};
