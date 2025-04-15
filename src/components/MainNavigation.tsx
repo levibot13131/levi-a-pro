@@ -19,6 +19,7 @@ import {
   Briefcase,
   Lightbulb,
   Globe,
+  Link as LinkIcon,
 } from 'lucide-react';
 
 const MainNavigation = () => {
@@ -40,6 +41,7 @@ const MainNavigation = () => {
     // Special section
     { name: 'פרופיל', path: '/profile', icon: <UserCircle className="ml-2 h-5 w-5" /> },
     { name: 'הגדרות', path: '/settings', icon: <Settings className="ml-2 h-5 w-5" /> },
+    { name: 'הגדרות פרוקסי', path: '/proxy-settings', icon: <LinkIcon className="ml-2 h-5 w-5" /> },
   ];
 
   return (

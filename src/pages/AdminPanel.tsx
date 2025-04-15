@@ -13,7 +13,8 @@ import {
   Activity, 
   Link, 
   BarChart2,
-  AlertTriangle
+  AlertTriangle,
+  Sliders
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -64,6 +65,13 @@ const AdminPanel = () => {
       path: '/admin/settings'
     },
     {
+      id: 'advanced',
+      title: 'הגדרות מתקדמות',
+      description: 'הגדרות מתקדמות, חיבורי API ופרוקסי',
+      icon: Sliders,
+      path: '/admin/advanced-settings'
+    },
+    {
       id: 'data',
       title: 'ניהול נתונים',
       description: 'גישה לבסיס הנתונים, גיבויים ומחיקות',
@@ -97,6 +105,13 @@ const AdminPanel = () => {
       description: 'ניהול חיבורים לשירותים חיצוניים ומפתחות API',
       icon: Link,
       path: '/admin/api-connections'
+    },
+    {
+      id: 'proxy',
+      title: 'הגדרות פרוקסי',
+      description: 'הגדרת פרוקסי לחיבור לשירותים חיצוניים',
+      icon: Link,
+      path: '/proxy-settings'
     },
     {
       id: 'analytics',
@@ -149,7 +164,7 @@ const AdminPanel = () => {
         <TabsContent value="system" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {modules
-              .filter(m => ['settings', 'security', 'logs', 'api', 'alerts'].includes(m.id))
+              .filter(m => ['settings', 'security', 'logs', 'api', 'alerts', 'advanced', 'proxy'].includes(m.id))
               .map((module) => (
                 <AdminModule
                   key={module.id}

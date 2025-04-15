@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Users, Settings } from 'lucide-react';
+import { Users, Settings, Link as LinkIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const AdminMenu: React.FC = () => {
@@ -43,6 +43,34 @@ const AdminMenu: React.FC = () => {
           <Link to="/system-settings">
             <Settings className="ml-2 h-4 w-4" />
             הגדרות מערכת
+          </Link>
+        </Button>
+
+        <Button
+          variant={location.pathname === '/admin/advanced-settings' ? 'default' : 'ghost'}
+          className={cn(
+            'justify-start',
+            location.pathname === '/admin/advanced-settings' && 'bg-primary text-primary-foreground'
+          )}
+          asChild
+        >
+          <Link to="/admin/advanced-settings">
+            <Settings className="ml-2 h-4 w-4" />
+            הגדרות מתקדמות
+          </Link>
+        </Button>
+
+        <Button
+          variant={location.pathname === '/proxy-settings' ? 'default' : 'ghost'}
+          className={cn(
+            'justify-start',
+            location.pathname === '/proxy-settings' && 'bg-primary text-primary-foreground'
+          )}
+          asChild
+        >
+          <Link to="/proxy-settings">
+            <LinkIcon className="ml-2 h-4 w-4" />
+            הגדרות פרוקסי
           </Link>
         </Button>
       </div>

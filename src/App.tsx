@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/toaster';
@@ -32,6 +31,8 @@ import RiskManagement from './pages/RiskManagement';
 import ProxyGuide from './pages/ProxyGuide';
 import IntegrationStatus from './pages/IntegrationStatus';
 import ApiConnections from './pages/admin/ApiConnections';
+import AdvancedSettings from './pages/admin/AdvancedSettings';
+import ProxySettings from './pages/admin/ProxySettings';
 
 function App() {
   return (
@@ -62,8 +63,10 @@ function App() {
             <Route path="/journal" element={<Journal />} />
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/admin/api-connections" element={<ApiConnections />} />
+            <Route path="/admin/advanced-settings" element={<AdvancedSettings />} />
             <Route path="/market-data" element={<MarketData />} />
             <Route path="/risk-management" element={<RiskManagement />} />
+            <Route path="/proxy-settings" element={<ProxySettings />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

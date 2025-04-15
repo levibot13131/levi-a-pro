@@ -1,10 +1,12 @@
+
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { Loader, RefreshCw, Save, Settings, Trash2, MessageSquare, Database, HardDrive } from 'lucide-react';
+import { Loader, RefreshCw, Save, Settings, Trash2, MessageSquare, Database, HardDrive, Link as LinkIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import TelegramConfig from '@/components/messaging/TelegramConfig';
 import { getProxyConfig, setProxyConfig, clearProxyConfig } from '@/services/proxy/proxyConfig';
@@ -84,10 +86,18 @@ const AdvancedSettings = () => {
     <div className="container mx-auto py-6 px-4 md:px-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">הגדרות מתקדמות</h1>
-        <Button variant="outline" onClick={handleResetCredentials}>
-          <Trash2 className="h-4 w-4 ml-2" />
-          איפוס כל פרטי ההתחברות
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link to="/proxy-settings">
+              <LinkIcon className="ml-2 h-4 w-4" />
+              הגדרות פרוקסי מפורטות
+            </Link>
+          </Button>
+          <Button variant="outline" onClick={handleResetCredentials}>
+            <Trash2 className="h-4 w-4 ml-2" />
+            איפוס כל פרטי ההתחברות
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="space-y-6">
@@ -132,12 +142,15 @@ const AdvancedSettings = () => {
                   value={proxyUrl}
                   onChange={(e) => setProxyUrl(e.target.value)}
                   disabled={!proxyEnabled}
+                  dir="ltr"
+                  className="text-left"
                 />
-                <div className="flex space-x-2">
+                <div className="flex gap-2 justify-end">
                   <Button 
                     variant="outline" 
                     onClick={handleClearProxy}
                     disabled={!proxyUrl}
+                    size="sm"
                   >
                     <Trash2 className="h-4 w-4 ml-2" />
                     נקה
@@ -145,9 +158,18 @@ const AdvancedSettings = () => {
                   <Button 
                     onClick={handleSaveProxy}
                     disabled={!proxyEnabled || !proxyUrl}
+                    size="sm"
                   >
                     <Save className="h-4 w-4 ml-2" />
                     שמור
+                  </Button>
+                </div>
+                <div className="flex justify-center mt-4">
+                  <Button variant="outline" asChild>
+                    <Link to="/proxy-settings">
+                      <Settings className="ml-2 h-4 w-4" />
+                      הגדרות פרוקסי מתקדמות
+                    </Link>
                   </Button>
                 </div>
               </div>
