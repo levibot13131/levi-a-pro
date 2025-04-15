@@ -22,6 +22,7 @@ import RequireAuth from "@/components/auth/RequireAuth";
 import ProxyGuide from "../pages/ProxyGuide";
 import Home from "../pages/Home";
 import LinkPage from "../pages/LinkPage";
+import Profile from "../pages/Profile";
 
 const router = createBrowserRouter([
   {
@@ -95,6 +96,10 @@ const router = createBrowserRouter([
       {
         path: "links",
         element: <LinkPage />,
+      },
+      {
+        path: "profile",
+        element: <Profile />,
       },
     ],
   },
