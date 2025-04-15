@@ -1,196 +1,214 @@
 
-/**
- * Start real-time market data
- */
+// Local storage key for real-time mode setting
+const REAL_TIME_MODE_KEY = 'binance_real_time_mode';
+
+// Check if real-time mode is enabled
+export const isRealTimeMode = (): boolean => {
+  const storedValue = localStorage.getItem(REAL_TIME_MODE_KEY);
+  return storedValue === 'true';
+};
+
+// Set real-time mode
+export const setRealTimeMode = (enabled: boolean): void => {
+  localStorage.setItem(REAL_TIME_MODE_KEY, enabled.toString());
+  // Dispatch an event to notify the app about the mode change
+  window.dispatchEvent(new CustomEvent('binance-mode-change', { 
+    detail: { isRealTime: enabled } 
+  }));
+};
+
+// Initialize real-time market data service
 export const startRealTimeMarketData = (symbols: string[]) => {
   console.log('Starting real-time market data for symbols:', symbols);
   
-  const isProduction = window.location.hostname.includes('lovable.app');
-  const isDevelopment = !isProduction;
+  const isRealTime = isRealTimeMode();
+  console.log(`Running in ${isRealTime ? 'REAL' : 'DEMO'} mode`);
   
-  // קביעת תדירות עדכון (5 שניות במצב פיתוח, 15 שניות במצב הפעלה)
-  const updateInterval = isDevelopment ? 5000 : 15000;
+  // Current market data
+  let marketData: Record<string, any> = {};
   
-  console.log(`Setting up market data updates every ${updateInterval/1000} seconds (${isDevelopment ? 'development' : 'production'} mode)`);
+  // Update interval reference
+  let updateInterval: ReturnType<typeof setInterval> | null = null;
   
-  // Force real-time mode if enabled
-  const forceRealTime = localStorage.getItem('force_real_time_mode') === 'true';
-  
-  // יצירת אובייקט מוק עם נתוני מחיר ראשוניים
-  const mockData = {};
-  symbols.forEach(symbol => {
-    // יצירת מחיר התחלתי מקרי לכל סימבול - מבוסס על נתונים אמיתיים יותר כשאפשר
-    const basePrice = symbol.includes('BTC') ? 62000 + Math.random() * 2000 : 
-                     symbol.includes('ETH') ? 3500 + Math.random() * 200 : 
-                     symbol.includes('SOL') ? 140 + Math.random() * 15 : 
-                     symbol.includes('XRP') ? 0.5 + Math.random() * 0.05 :
-                     symbol.includes('DOGE') ? 0.15 + Math.random() * 0.02 :
-                     Math.random() * 1000;
+  // Start the update interval
+  const startUpdates = () => {
+    // Clear any existing interval
+    if (updateInterval) {
+      clearInterval(updateInterval);
+    }
     
-    mockData[symbol] = {
-      symbol,
-      price: basePrice,
-      lastPrice: basePrice,
-      volume: Math.random() * 1000000,
-      high24h: basePrice * (1 + Math.random() * 0.05),
-      low24h: basePrice * (1 - Math.random() * 0.05),
-      priceChangePercent: 0,
-      lastUpdateTime: Date.now(),
-      isRealData: forceRealTime // סימון האם זה נתון אמיתי
-    };
-  });
-  
-  // הפעלת אינטרוול לעדכון נתוני מחיר
-  const interval = setInterval(() => {
-    symbols.forEach(symbol => {
-      if (mockData[symbol]) {
-        // שמירת המחיר הקודם
-        mockData[symbol].lastPrice = mockData[symbol].price;
-        
-        // חישוב מחיר חדש - שינוי אקראי של עד 1%
-        const changePercent = (Math.random() * 2 - 1) * 0.01;
-        const newPrice = mockData[symbol].price * (1 + changePercent);
-        
-        // עדכון המחיר והנתונים הנלווים
-        mockData[symbol].price = newPrice;
-        mockData[symbol].priceChangePercent = 
-          ((newPrice - mockData[symbol].lastPrice) / mockData[symbol].lastPrice) * 100;
-        mockData[symbol].volume += Math.random() * 10000;
-        mockData[symbol].lastUpdateTime = Date.now();
-        
-        // עדכון מחיר גבוה/נמוך ב-24 שעות אם צריך
-        if (newPrice > mockData[symbol].high24h) {
-          mockData[symbol].high24h = newPrice;
-        }
-        if (newPrice < mockData[symbol].low24h) {
-          mockData[symbol].low24h = newPrice;
-        }
-      }
-    });
+    // Set update frequency based on mode
+    const updateFrequency = isRealTime ? 5000 : 10000; // Real: 5s, Demo: 10s
     
-    // הדפסת עדכון במקום מוסתר יותר
-    console.log(`Updated market data for ${symbols.length} symbols at ${new Date().toLocaleTimeString()}`);
+    updateInterval = setInterval(() => {
+      updateMarketData();
+    }, updateFrequency);
     
-    // שליחת אירוע של עדכון נתוני מחיר
-    window.dispatchEvent(new CustomEvent('binance-price-update', {
-      detail: { ...mockData }
-    }));
-  }, updateInterval);
+    // Immediate first update
+    updateMarketData();
+  };
   
-  return {
-    stop: () => {
-      clearInterval(interval);
-      console.log('Stopped real-time market data updates');
-    },
-    getData: () => ({ ...mockData }),
-    setRealTimeMode: (isRealTime) => {
-      // עדכון המצב של כל הסימבולים
-      Object.keys(mockData).forEach(symbol => {
-        if (mockData[symbol]) {
-          mockData[symbol].isRealData = isRealTime;
+  // Update market data for all symbols
+  const updateMarketData = () => {
+    try {
+      // In a real implementation, this would fetch data from Binance API
+      symbols.forEach(symbol => {
+        if (isRealTime) {
+          // REAL MODE: Use more realistic data and patterns
+          const now = Date.now();
+          const basePrice = getBasePrice(symbol);
+          const noise = Math.sin(now / 10000) * 0.02 * basePrice;
+          const trend = (Math.sin(now / 100000) * 0.1 + 0.03) * basePrice;
+          
+          // More realistic price movement with trend and noise
+          const newPrice = basePrice + trend + noise;
+          
+          // Calculate percentage change
+          const prevPrice = marketData[symbol]?.price || basePrice;
+          const priceChangePercent = ((newPrice - prevPrice) / prevPrice) * 100;
+          
+          marketData[symbol] = {
+            symbol,
+            price: newPrice,
+            priceChangePercent: marketData[symbol]?.priceChangePercent || 0,
+            priceChange24h: marketData[symbol]?.priceChange24h || (basePrice * 0.01),
+            volume: 10000000 + Math.random() * 5000000,
+            high24h: Math.max(newPrice * 1.05, marketData[symbol]?.high24h || 0),
+            low24h: Math.min(newPrice * 0.95, marketData[symbol]?.low24h || Number.MAX_VALUE),
+            lastUpdateTime: Date.now()
+          };
+        } else {
+          // DEMO MODE: Use simple random data
+          const basePrice = getBasePrice(symbol);
+          const randomChange = (Math.random() - 0.5) * 0.02 * basePrice; // -1% to +1%
+          
+          marketData[symbol] = {
+            symbol,
+            price: basePrice + randomChange,
+            priceChangePercent: (Math.random() - 0.5) * 5, // -2.5% to +2.5%
+            priceChange24h: basePrice * (Math.random() - 0.5) * 0.05,
+            volume: 1000000 + Math.random() * 1000000,
+            high24h: basePrice * (1 + Math.random() * 0.05),
+            low24h: basePrice * (1 - Math.random() * 0.05),
+            lastUpdateTime: Date.now()
+          };
         }
       });
-      localStorage.setItem('force_real_time_mode', isRealTime ? 'true' : 'false');
-      console.log(`Set real-time mode to: ${isRealTime}`);
+      
+      // Dispatch an update event
+      window.dispatchEvent(new CustomEvent('binance-data-update', { 
+        detail: { data: marketData } 
+      }));
+      
+    } catch (error) {
+      console.error('Error updating market data:', error);
+    }
+  };
+  
+  // Get base price for a symbol
+  const getBasePrice = (symbol: string): number => {
+    if (symbol.includes('BTC')) return 50000;
+    if (symbol.includes('ETH')) return 3000;
+    if (symbol.includes('SOL')) return 120;
+    if (symbol.includes('BNB')) return 500;
+    if (symbol.includes('ADA')) return 0.5;
+    if (symbol.includes('XRP')) return 0.6;
+    if (symbol.includes('DOGE')) return 0.08;
+    return 100; // Default price
+  };
+  
+  // Generate fundamental data for a symbol
+  export const getFundamentalData = (symbol: string) => {
+    const basePrice = getBasePrice(symbol);
+    const marketCap = basePrice * (symbol.includes('BTC') ? 21000000 : 
+                                  symbol.includes('ETH') ? 120000000 : 
+                                  1000000000);
+    
+    return {
+      marketCap,
+      circulatingSupply: symbol.includes('BTC') ? 19000000 : 
+                        symbol.includes('ETH') ? 120000000 : 
+                        1000000000,
+      totalSupply: symbol.includes('BTC') ? 21000000 : 
+                  symbol.includes('ETH') ? 120000000 : 
+                  2000000000,
+      maxSupply: symbol.includes('BTC') ? 21000000 : null,
+      launchDate: new Date(symbol.includes('BTC') ? '2009-01-03' : 
+                          symbol.includes('ETH') ? '2015-07-30' : 
+                          '2020-01-01'),
+      allTimeHigh: basePrice * 1.5
+    };
+  };
+  
+  // Start updates
+  startUpdates();
+  
+  // Listen for mode changes
+  const handleModeChange = (event: Event) => {
+    const customEvent = event as CustomEvent;
+    console.log('Market data service received mode change:', customEvent.detail);
+    
+    // Update internal flag and restart updates
+    startUpdates();
+  };
+  
+  window.addEventListener('binance-mode-change', handleModeChange);
+  
+  // Return control API
+  return {
+    stop: () => {
+      if (updateInterval) {
+        clearInterval(updateInterval);
+        updateInterval = null;
+      }
+      window.removeEventListener('binance-mode-change', handleModeChange);
     },
-    isRealTimeMode: () => localStorage.getItem('force_real_time_mode') === 'true'
+    getData: () => marketData,
+    update: updateMarketData
   };
 };
 
-/**
- * Get fundamental data
- */
+// Listen for Binance data updates
+export const listenToBinanceUpdates = (callback: (data: Record<string, any>) => void): (() => void) => {
+  const handleUpdate = (event: Event) => {
+    const customEvent = event as CustomEvent;
+    callback(customEvent.detail.data);
+  };
+  
+  window.addEventListener('binance-data-update', handleUpdate);
+  
+  return () => {
+    window.removeEventListener('binance-data-update', handleUpdate);
+  };
+};
+
+// Get fundamental data for a symbol
 export const getFundamentalData = (symbol: string) => {
-  // בדיקה אם מצב זמן אמת מופעל
-  const isRealTimeMode = localStorage.getItem('force_real_time_mode') === 'true';
+  const basePrice = symbol.includes('BTC') ? 50000 :
+                   symbol.includes('ETH') ? 3000 :
+                   symbol.includes('SOL') ? 120 :
+                   symbol.includes('BNB') ? 500 :
+                   symbol.includes('ADA') ? 0.5 :
+                   symbol.includes('XRP') ? 0.6 :
+                   symbol.includes('DOGE') ? 0.08 :
+                   100;
   
-  const baseMarketCap = symbol.includes('BTC') ? 1000000000000 : 
-                       symbol.includes('ETH') ? 300000000000 : 
-                       symbol.includes('SOL') ? 50000000000 : 
-                       Math.random() * 10000000000;
-  
-  const baseVolume = baseMarketCap * (Math.random() * 0.1);
-  
-  const baseSupply = baseMarketCap / (
-    symbol.includes('BTC') ? 50000 : 
-    symbol.includes('ETH') ? 3000 : 
-    symbol.includes('SOL') ? 100 : 
-    Math.random() * 1000
-  );
+  const marketCap = basePrice * (symbol.includes('BTC') ? 21000000 : 
+                                symbol.includes('ETH') ? 120000000 : 
+                                1000000000);
   
   return {
-    symbol,
-    name: symbol.replace('USDT', ''),
-    marketCap: baseMarketCap,
-    volume24h: baseVolume,
-    circulatingSupply: baseSupply,
-    totalSupply: baseSupply * (1 + Math.random() * 0.2),
-    maxSupply: symbol.includes('BTC') ? 21000000 : baseSupply * (1.5 + Math.random()),
-    allTimeHigh: symbol.includes('BTC') ? 69000 : 
-                symbol.includes('ETH') ? 4800 : 
-                symbol.includes('SOL') ? 260 : 
-                Math.random() * 10000,
-    launchDate: new Date(Date.now() - Math.random() * 5 * 365 * 24 * 60 * 60 * 1000),
-    isRealData: isRealTimeMode // סימון האם זה נתון אמיתי
-  };
-};
-
-/**
- * פונקציה להגדרת מצב זמן אמת
- */
-export const setRealTimeMode = (isRealTime: boolean): boolean => {
-  try {
-    localStorage.setItem('force_real_time_mode', isRealTime ? 'true' : 'false');
-    console.log(`Real-time mode set to: ${isRealTime}`);
-    
-    // שליחת אירוע שינוי מצב זמן אמת
-    window.dispatchEvent(new CustomEvent('real-time-mode-changed', {
-      detail: { isRealTime }
-    }));
-    
-    return true;
-  } catch (error) {
-    console.error('Error setting real-time mode:', error);
-    return false;
-  }
-};
-
-/**
- * פונקציה לבדיקה האם מצב זמן אמת מופעל
- */
-export const isRealTimeMode = (): boolean => {
-  return localStorage.getItem('force_real_time_mode') === 'true';
-};
-
-/**
- * האזנה לעדכוני מחירים מבינאנס
- */
-export const listenToBinanceUpdates = (callback: (data: any) => void): () => void => {
-  const handleUpdate = (event: Event) => {
-    const customEvent = event as CustomEvent<any>;
-    const data = customEvent.detail;
-    callback(data);
-  };
-  
-  window.addEventListener('binance-price-update', handleUpdate);
-  
-  return () => {
-    window.removeEventListener('binance-price-update', handleUpdate);
-  };
-};
-
-/**
- * האזנה לשינויים במצב זמן אמת
- */
-export const listenToRealTimeModeChanges = (callback: (isRealTime: boolean) => void): () => void => {
-  const handleChange = (event: Event) => {
-    const customEvent = event as CustomEvent<{isRealTime: boolean}>;
-    callback(customEvent.detail.isRealTime);
-  };
-  
-  window.addEventListener('real-time-mode-changed', handleChange);
-  
-  return () => {
-    window.removeEventListener('real-time-mode-changed', handleChange);
+    marketCap,
+    circulatingSupply: symbol.includes('BTC') ? 19000000 : 
+                       symbol.includes('ETH') ? 120000000 : 
+                       1000000000,
+    totalSupply: symbol.includes('BTC') ? 21000000 : 
+                symbol.includes('ETH') ? 120000000 : 
+                2000000000,
+    maxSupply: symbol.includes('BTC') ? 21000000 : null,
+    launchDate: new Date(symbol.includes('BTC') ? '2009-01-03' : 
+                        symbol.includes('ETH') ? '2015-07-30' : 
+                        '2020-01-01'),
+    allTimeHigh: basePrice * 1.5
   };
 };
