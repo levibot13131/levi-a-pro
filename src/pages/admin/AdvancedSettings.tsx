@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { Loader, RefreshCw, Save, Settings, Trash2, MessageSquare, Database, HardDrive } from 'lucide-react';
 import { toast } from 'sonner';
 import TelegramConfig from '@/components/messaging/TelegramConfig';
+import { getProxyConfig, setProxyConfig, clearProxyConfig } from '@/services/proxy/proxyConfig';
 
 import { 
   clearTelegramCredentials, 
@@ -26,6 +29,8 @@ import {
 const AdvancedSettings = () => {
   const [activeTab, setActiveTab] = useState('messaging');
   const [isClearingCache, setIsClearingCache] = useState(false);
+  const [proxyUrl, setProxyUrl] = useState(getProxyConfig().baseUrl);
+  const [proxyEnabled, setProxyEnabled] = useState(getProxyConfig().isEnabled);
 
   // Stats
   const telegramConfigured = !!getTelegramBotToken() && !!getTelegramChatId();
@@ -62,6 +67,19 @@ const AdvancedSettings = () => {
     }
   };
 
+  const handleSaveProxy = () => {
+    setProxyConfig({
+      baseUrl: proxyUrl,
+      isEnabled: proxyEnabled
+    });
+  };
+
+  const handleClearProxy = () => {
+    clearProxyConfig();
+    setProxyUrl('');
+    setProxyEnabled(false);
+  };
+
   return (
     <div className="container mx-auto py-6 px-4 md:px-6">
       <div className="flex justify-between items-center mb-6">
@@ -93,6 +111,49 @@ const AdvancedSettings = () => {
         </TabsContent>
 
         <TabsContent value="system" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-right">הגדרות פרוקסי</CardTitle>
+              <CardDescription className="text-right">
+                הגדר את כתובת הפרוקסי לתקשורת עם שירותים חיצוניים
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Switch 
+                  checked={proxyEnabled}
+                  onCheckedChange={setProxyEnabled}
+                />
+                <span>הפעל פרוקסי</span>
+              </div>
+              <div className="space-y-2">
+                <Input
+                  placeholder="הכנס כתובת פרוקסי"
+                  value={proxyUrl}
+                  onChange={(e) => setProxyUrl(e.target.value)}
+                  disabled={!proxyEnabled}
+                />
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleClearProxy}
+                    disabled={!proxyUrl}
+                  >
+                    <Trash2 className="h-4 w-4 ml-2" />
+                    נקה
+                  </Button>
+                  <Button 
+                    onClick={handleSaveProxy}
+                    disabled={!proxyEnabled || !proxyUrl}
+                  >
+                    <Save className="h-4 w-4 ml-2" />
+                    שמור
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-right">הגדרות מערכת</CardTitle>

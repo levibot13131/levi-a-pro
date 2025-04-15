@@ -1,5 +1,6 @@
 import { toast } from 'sonner';
 import axios from 'axios';
+import { getApiBaseUrl } from '../proxy/proxyConfig';
 
 // Key for storing Binance credentials in local storage
 const BINANCE_AUTH_KEY = 'levi_bot_binance_credentials';
@@ -17,10 +18,7 @@ export interface BinanceCredentials {
  */
 export const validateBinanceCredentials = async (credentials: BinanceCredentials): Promise<boolean> => {
   try {
-    // Check if we are in development or production environment
     const isProduction = window.location.hostname.includes('lovable.app');
-    
-    // In production, we need to use the environment variables or credentials provided
     const apiKey = credentials.apiKey?.trim();
     const apiSecret = credentials.apiSecret?.trim();
     
@@ -30,25 +28,21 @@ export const validateBinanceCredentials = async (credentials: BinanceCredentials
     }
     
     try {
-      // Test the connection with a simple account endpoint
       const timestamp = Date.now();
       const recvWindow = 5000;
+      const baseUrl = getApiBaseUrl();
       
-      // Since we can't use the secret directly in the frontend for security reasons,
-      // we'll just validate that the API key has correct format and length
-      // In a real app, this would be handled by a backend service that can securely use the apiSecret
+      // Use proxy if configured, otherwise direct connection
+      const testEndpoint = baseUrl 
+        ? `${baseUrl}/api/binance/account?timestamp=${timestamp}&recvWindow=${recvWindow}`
+        : `https://api.binance.com/api/v3/account?timestamp=${timestamp}&recvWindow=${recvWindow}`;
       
-      const testEndpoint = `https://api.binance.com/api/v3/account?timestamp=${timestamp}&recvWindow=${recvWindow}`;
-      
-      // Important: In a production environment, this call would likely fail due to CORS and signature requirements
-      // You would need a backend proxy to make this call securely
       await axios.get(testEndpoint, {
         headers: {
           'X-MBX-APIKEY': apiKey
         }
       });
       
-      // If we get here, save the credentials
       saveBinanceCredentials({
         ...credentials,
         isConnected: true,
@@ -60,7 +54,6 @@ export const validateBinanceCredentials = async (credentials: BinanceCredentials
     } catch (error) {
       console.error('Error connecting to Binance:', error);
       
-      // For development purposes, allow connection even if actual API call fails
       if (isProduction === false) {
         saveBinanceCredentials({
           ...credentials,
@@ -116,11 +109,9 @@ export const testBinanceConnection = async (): Promise<boolean> => {
   }
   
   try {
-    // Try a simple API call to test the connection
     const timestamp = Date.now();
     
     try {
-      // In a real implementation, this would be a call to the Binance API
       const response = await axios.get(`https://api.binance.com/api/v3/time`, {
         headers: {
           'X-MBX-APIKEY': credentials.apiKey
@@ -137,7 +128,6 @@ export const testBinanceConnection = async (): Promise<boolean> => {
     } catch (error) {
       console.error('Error testing Binance connection:', error);
       
-      // For development purposes, return success even if API call fails
       const isProduction = window.location.hostname.includes('lovable.app');
       if (!isProduction) {
         toast.success('החיבור לבינאנס פעיל (מצב פיתוח)');
@@ -160,15 +150,12 @@ export const testBinanceConnection = async (): Promise<boolean> => {
 export const startRealTimeMarketData = (symbols: string[]) => {
   console.log('Starting real-time market data for symbols:', symbols);
   
-  // Check if we are in development or production environment
   const isProduction = window.location.hostname.includes('lovable.app');
   
   if (isProduction) {
     console.log('In production environment, using simulated data updates');
-    // Simulated interval for production
     const interval = setInterval(() => {
       console.log('Simulated market data update for:', symbols);
-      // In a real implementation, this would trigger an event that components can listen to
     }, 15000);
     
     return {
@@ -179,13 +166,10 @@ export const startRealTimeMarketData = (symbols: string[]) => {
     };
   }
   
-  // Simulated interval for development
   const interval = setInterval(() => {
-    // Lógica de atualização de dados em tempo real
     console.log('Updating market data for symbols:', symbols);
   }, 15000);
   
-  // Retorno da função para parar os atualizações
   return {
     stop: () => {
       clearInterval(interval);
