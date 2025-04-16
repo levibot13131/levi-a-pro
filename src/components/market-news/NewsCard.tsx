@@ -31,8 +31,12 @@ const NewsCard: React.FC<NewsCardProps> = ({ item, getSentimentBadge, formatDate
   // Use provided function or default
   const renderSentimentBadge = getSentimentBadge || defaultGetSentimentBadge;
   
-  // Format date
-  const formattedDate = formatDate ? formatDate(item.publishedAt) : formatTimeAgo(item.publishedAt);
+  // Format date - use timestamp as number for formatTimeAgo
+  const formattedDate = formatDate 
+    ? formatDate(item.publishedAt) 
+    : formatTimeAgo(typeof item.publishedAt === 'string' 
+        ? new Date(item.publishedAt).getTime() 
+        : item.publishedAt);
 
   return (
     <Card className="overflow-hidden flex flex-col">

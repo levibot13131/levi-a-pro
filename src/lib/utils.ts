@@ -66,3 +66,14 @@ export const truncateText = (text: string, maxLength: number): string => {
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength) + '...';
 };
+
+// Add formatPrice function
+export const formatPrice = (price: number): string => {
+  if (price < 1) {
+    return price.toFixed(6);
+  } else if (price < 1000) {
+    return price.toFixed(2);
+  } else {
+    return price.toLocaleString(undefined, { maximumFractionDigits: 2 });
+  }
+};

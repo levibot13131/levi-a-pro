@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatTimeAgo } from '@/lib/utils';
-import { Twitter, Reddit, MessageCircle, Heart, Repeat, CheckCircle } from 'lucide-react';
+import { Twitter, MessageCircle, Heart, Repeat, CheckCircle } from 'lucide-react';
 
 interface SocialPost {
   id: string;
@@ -69,7 +69,8 @@ const SocialTab: React.FC<SocialTabProps> = ({ socialPosts, isLoading }) => {
       case 'twitter':
         return <Twitter className="h-4 w-4 text-[#1DA1F2]" />;
       case 'reddit':
-        return <Reddit className="h-4 w-4 text-[#FF4500]" />;
+        // Using MessageCircle with reddit color instead of Reddit icon since it's not available
+        return <MessageCircle className="h-4 w-4 text-[#FF4500]" />;
       case 'telegram':
         return <MessageCircle className="h-4 w-4 text-[#0088cc]" />;
       default:

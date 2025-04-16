@@ -79,9 +79,12 @@ const generateMockSignals = (assetId: string): TradeSignal[] => {
   ];
 };
 
-const CustomSignals: React.FC<CustomSignalsProps> = ({ assetId, formatPrice }) => {
+const CustomSignals: React.FC<CustomSignalsProps> = ({ assetId, formatPrice: propsFormatPrice }) => {
   const [activeTab, setActiveTab] = useState('current');
   const signals = generateMockSignals(assetId);
+  
+  // Use the formatPrice from props if provided, otherwise use the imported one
+  const priceFormatter = propsFormatPrice || formatPrice;
   
   // Group signals
   const currentSignals = signals.filter(signal => 
@@ -135,7 +138,7 @@ const CustomSignals: React.FC<CustomSignalsProps> = ({ assetId, formatPrice }) =
                   <div className="grid grid-cols-2 gap-2 mb-3">
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">מחיר כניסה</p>
-                      <p className="font-medium">{formatPrice(signal.price)}</p>
+                      <p className="font-medium">{priceFormatter(signal.price)}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">ביטחון</p>
@@ -143,11 +146,11 @@ const CustomSignals: React.FC<CustomSignalsProps> = ({ assetId, formatPrice }) =
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">סטופ לוס</p>
-                      <p className="font-medium">{formatPrice(signal.stopLoss || 0)}</p>
+                      <p className="font-medium">{priceFormatter(signal.stopLoss || 0)}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">יעד מחיר</p>
-                      <p className="font-medium">{formatPrice(signal.targetPrice || 0)}</p>
+                      <p className="font-medium">{priceFormatter(signal.targetPrice || 0)}</p>
                     </div>
                   </div>
                   
@@ -186,7 +189,7 @@ const CustomSignals: React.FC<CustomSignalsProps> = ({ assetId, formatPrice }) =
                   <div className="grid grid-cols-2 gap-2 mb-2">
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">מחיר כניסה</p>
-                      <p className="font-medium">{formatPrice(signal.price)}</p>
+                      <p className="font-medium">{priceFormatter(signal.price)}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">תוצאה</p>
