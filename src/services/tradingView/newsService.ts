@@ -12,7 +12,8 @@ let cachedNews: TradingViewNewsItem[] = [];
 export const getTradingViewNews = async (limit: number = 10): Promise<TradingViewNewsItem[]> => {
   const credentials = getTradingViewCredentials();
   
-  if (!credentials?.isConnected) {
+  // Fix: Check for credentials existence, not isConnected property
+  if (!credentials) {
     return [];
   }
   

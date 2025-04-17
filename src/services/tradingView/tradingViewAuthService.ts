@@ -6,6 +6,7 @@ export interface TradingViewCredentials {
   password?: string; // We won't store this in localStorage for security
   apiKey?: string;   // Alternative to password
   lastConnected: number;
+  isConnected?: boolean; // Added for backward compatibility
 }
 
 // Check if TradingView is connected
@@ -19,7 +20,10 @@ export const getTradingViewCredentials = (): TradingViewCredentials | null => {
   try {
     const storedCredentials = localStorage.getItem('tradingview_auth_credentials');
     if (!storedCredentials) return null;
-    return JSON.parse(storedCredentials);
+    const credentials = JSON.parse(storedCredentials);
+    // Add isConnected property for backward compatibility
+    credentials.isConnected = true;
+    return credentials;
   } catch (error) {
     console.error('Error parsing TradingView credentials:', error);
     return null;
@@ -42,7 +46,8 @@ export const validateTradingViewCredentials = async (
     const enhancedCredentials: TradingViewCredentials = {
       username: credentials.username,
       apiKey: credentials.apiKey,
-      lastConnected: Date.now()
+      lastConnected: Date.now(),
+      isConnected: true
     };
     
     localStorage.setItem('tradingview_auth_credentials', JSON.stringify(enhancedCredentials));

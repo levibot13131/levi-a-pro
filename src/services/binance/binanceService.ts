@@ -6,6 +6,7 @@ export interface BinanceCredentials {
   apiSecret: string;
   testnet: boolean;
   lastConnected: number;
+  isConnected?: boolean; // Added for backward compatibility
 }
 
 // Check if Binance is connected
@@ -19,7 +20,11 @@ export const getBinanceCredentials = (): BinanceCredentials | null => {
   try {
     const storedCredentials = localStorage.getItem('binance_api_keys');
     if (!storedCredentials) return null;
-    return JSON.parse(storedCredentials);
+    
+    const credentials = JSON.parse(storedCredentials);
+    // Add isConnected property for backward compatibility
+    credentials.isConnected = true;
+    return credentials;
   } catch (error) {
     console.error('Error parsing Binance credentials:', error);
     return null;
@@ -28,14 +33,15 @@ export const getBinanceCredentials = (): BinanceCredentials | null => {
 
 // Connect to Binance with API keys
 export const connectToBinance = async (
-  credentials: Omit<BinanceCredentials, 'lastConnected'>
+  credentials: Omit<BinanceCredentials, 'lastConnected' | 'isConnected'>
 ): Promise<boolean> => {
   try {
     // In a real application, we would validate these credentials with the Binance API
     // For this demo, we'll just simulate a successful connection
     const enhancedCredentials: BinanceCredentials = {
       ...credentials,
-      lastConnected: Date.now()
+      lastConnected: Date.now(),
+      isConnected: true
     };
     
     localStorage.setItem('binance_api_keys', JSON.stringify(enhancedCredentials));
@@ -86,7 +92,8 @@ export const validateBinanceCredentials = async (
       apiKey: credentials.apiKey,
       apiSecret: credentials.apiSecret,
       testnet: credentials.testnet ?? false,
-      lastConnected: Date.now()
+      lastConnected: Date.now(),
+      isConnected: true
     };
     
     // Store the credentials
@@ -109,7 +116,8 @@ export const saveBinanceCredentials = (credentials: any): void => {
     apiKey: credentials.apiKey,
     apiSecret: credentials.apiSecret,
     testnet: credentials.testnet ?? false,
-    lastConnected: Date.now()
+    lastConnected: Date.now(),
+    isConnected: true
   };
   
   localStorage.setItem('binance_api_keys', JSON.stringify(enhancedCredentials));

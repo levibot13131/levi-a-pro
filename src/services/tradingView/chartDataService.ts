@@ -1,4 +1,3 @@
-
 import { TradingViewChartData } from './types';
 import { getTradingViewCredentials } from './tradingViewAuthService';
 import { toast } from 'sonner';
@@ -13,7 +12,8 @@ let lastSyncTimestamp: number = 0;
 export const getChartData = async (symbol: string, timeframe: string = '1D'): Promise<TradingViewChartData | null> => {
   const credentials = getTradingViewCredentials();
   
-  if (!credentials?.isConnected) {
+  // Fix: Check for credentials existence, not isConnected property
+  if (!credentials) {
     return null;
   }
   

@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { Container } from '@/components/ui/container';
-import MarketOverview from '@/pages/market/MarketOverview';
+import { Container } from '../components/ui/container';
+import MarketOverview from './market/MarketOverview';
 
 // Since other dashboard components are not in the allowed files, 
 // I'll replace them with placeholders to make the dashboard functional

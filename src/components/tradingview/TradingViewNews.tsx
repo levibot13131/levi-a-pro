@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
@@ -37,8 +38,8 @@ const TradingViewNews: React.FC<TradingViewNewsProps> = ({
     try {
       const data = await fetchNews(limit);
       if (data && data.length > 0) {
-        // Properly set as state action
-        setNewsItems(() => data);
+        // Fix: Use direct assignment instead of function to avoid type issues
+        setNewsItems(data);
         setError(null);
       } else {
         setNewsItems([]);

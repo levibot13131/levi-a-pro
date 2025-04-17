@@ -21,8 +21,8 @@ export function useChartData(symbol: string, timeframe: string) {
     try {
       const data = await fetchChartData(symbol, timeframe);
       if (data) {
-        // Use a function to set the new state to avoid type issues
-        setChartData(() => data);
+        // Fix: Use proper setState syntax with function to avoid type issues
+        setChartData(data);
         setError(null);
       } else {
         setError('לא ניתן לטעון את נתוני הגרף');
