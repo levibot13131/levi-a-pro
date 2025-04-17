@@ -1,6 +1,6 @@
 
 import React, { useEffect, useMemo } from 'react';
-import { useRealTimeStatus } from '@/hooks/use-realtime-status';
+import { useRealtimeStatus } from '@/hooks/use-realtime-status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
