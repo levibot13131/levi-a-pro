@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -57,11 +58,18 @@ const getTwitterCredentials = () => {
   };
 };
 
+// Update props interface to include optional isConnected and onDisconnect
 interface TwitterConnectFormProps {
+  isConnected?: boolean;
+  onDisconnect?: () => void;
   onConnect: (credentials: any) => void;
 }
 
-const TwitterConnectForm: React.FC<TwitterConnectFormProps> = ({ onConnect }) => {
+const TwitterConnectForm: React.FC<TwitterConnectFormProps> = ({ 
+  isConnected = false, 
+  onDisconnect, 
+  onConnect 
+}) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const savedCredentials = getTwitterCredentials();
   
@@ -103,6 +111,12 @@ const TwitterConnectForm: React.FC<TwitterConnectFormProps> = ({ onConnect }) =>
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+  
+  const handleDisconnect = () => {
+    if (onDisconnect) {
+      onDisconnect();
     }
   };
   
@@ -176,7 +190,16 @@ const TwitterConnectForm: React.FC<TwitterConnectFormProps> = ({ onConnect }) =>
               )}
             />
             
-            <div className="flex justify-end">
+            <div className="flex justify-end space-x-2">
+              {isConnected && onDisconnect && (
+                <Button 
+                  type="button" 
+                  variant="destructive"
+                  onClick={handleDisconnect}
+                >
+                  התנתק
+                </Button>
+              )}
               <Button 
                 type="submit" 
                 disabled={isSubmitting}
