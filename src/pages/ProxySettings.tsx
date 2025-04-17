@@ -80,19 +80,32 @@ const ProxySettings = () => {
       testUrl = `https://${testUrl}`;
     }
 
+    // בדיקה אם ה-URL מסתיים בסלאש
+    if (testUrl.endsWith('/')) {
+      testUrl = testUrl.slice(0, -1);
+    }
+
     try {
-      // מנסה לבצע פינג לשרת הפרוקסי
-      const pingEndpoint = `${testUrl}/ping`;
-      console.log('Testing proxy connection to:', pingEndpoint);
+      console.log('Testing proxy connection to:', testUrl);
       
-      const response = await axios.get(pingEndpoint, { 
-        timeout: 5000,
+      // נסה קודם בדיקה פשוטה - CORS אמור להיות פתוח בשרת הפרוקסי
+      const response = await axios.get(`${testUrl}/ping`, { 
+        timeout: 8000,
         headers: { 'Accept': 'application/json' }
+      }).catch(async () => {
+        // אם זה נכשל, ננסה בשיטת HEAD
+        return await axios.head(`${testUrl}`, { timeout: 8000 });
+      }).catch(async () => {
+        // אם גם זה נכשל, ננסה לבדוק אם השרת מגיב בכלל
+        return await axios.options(`${testUrl}`, { 
+          timeout: 8000,
+          headers: { 'Access-Control-Request-Method': 'GET' }
+        });
       });
       
       console.log('Proxy test response:', response);
       
-      if (response.status === 200) {
+      if (response && (response.status === 200 || response.status === 204)) {
         setConnectionStatus('success');
         toast.success('חיבור לפרוקסי פעיל ותקין');
       } else {

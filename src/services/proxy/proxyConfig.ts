@@ -36,9 +36,21 @@ export const getProxyConfig = (): ProxyConfig => {
 export const setProxyConfig = (config: ProxyConfig): void => {
   try {
     // וידוא שה-URL נקי
+    let finalUrl = config.baseUrl.trim();
+
+    // וידוא שיש פרוטוקול
+    if (finalUrl && !finalUrl.startsWith('http')) {
+      finalUrl = `https://${finalUrl}`;
+    }
+
+    // וידוא שאין סלאש בסוף
+    if (finalUrl && finalUrl.endsWith('/')) {
+      finalUrl = finalUrl.slice(0, -1);
+    }
+    
     const cleanConfig = {
       ...config,
-      baseUrl: config.baseUrl.trim()
+      baseUrl: finalUrl
     };
     
     localStorage.setItem(PROXY_URL_KEY, JSON.stringify(cleanConfig));
@@ -68,11 +80,11 @@ export const setProxyConfig = (config: ProxyConfig): void => {
  */
 export const getApiBaseUrl = (): string => {
   const config = getProxyConfig();
-  console.log('Current proxy config:', config); // הוספנו לוג לדיבאג
+  console.log('Current proxy config:', config);
   
   // בדיקה מחמירה יותר שהפרוקסי מוגדר
   if (config.isEnabled && config.baseUrl && config.baseUrl.trim().length > 0) {
-    // וידוא שהכתובת לא מסתיימת ב-/
+    // וידוא שהכתובת נקייה
     let url = config.baseUrl.trim();
     if (url.endsWith('/')) {
       url = url.slice(0, -1);
@@ -83,11 +95,11 @@ export const getApiBaseUrl = (): string => {
       url = 'https://' + url;
     }
     
-    console.log('Using proxy URL:', url); // הוספנו לוג לדיבאג
+    console.log('Using proxy URL:', url);
     return url;
   }
   
-  console.log('Proxy not configured or disabled'); // הוספנו לוג לדיבאג
+  console.log('Proxy not configured or disabled');
   return '';
 };
 
@@ -138,4 +150,41 @@ export const getProxyStatus = (): { isEnabled: boolean; hasUrl: boolean } => {
     isEnabled: config.isEnabled,
     hasUrl: !!config.baseUrl?.trim()
   };
+};
+
+/**
+ * Get the full URL for an API endpoint
+ * @param endpoint The API endpoint path (e.g., '/binance/ticker')
+ * @returns The full URL with the proxy base URL
+ */
+export const getProxyUrl = (endpoint: string): string => {
+  const baseUrl = getApiBaseUrl();
+  
+  if (!baseUrl) {
+    return endpoint; // Return original endpoint if no proxy is configured
+  }
+  
+  // Ensure endpoint starts with a slash if not empty
+  if (endpoint && !endpoint.startsWith('/')) {
+    endpoint = '/' + endpoint;
+  }
+  
+  return `${baseUrl}${endpoint}`;
+};
+
+/**
+ * Build a full URL for direct proxy pass-through
+ * For use with /proxy?url= pattern
+ */
+export const buildProxyPassthroughUrl = (targetUrl: string): string => {
+  const baseUrl = getApiBaseUrl();
+  
+  if (!baseUrl) {
+    return targetUrl; // Return original URL if no proxy is configured
+  }
+  
+  // Encode the target URL to ensure it's properly transmitted
+  const encodedUrl = encodeURIComponent(targetUrl);
+  
+  return `${baseUrl}/proxy?url=${encodedUrl}`;
 };
