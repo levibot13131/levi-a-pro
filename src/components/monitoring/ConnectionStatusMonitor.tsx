@@ -1,4 +1,3 @@
-
 import React, { useEffect, useMemo } from 'react';
 import { useRealtimeStatus } from '@/hooks/use-realtime-status';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,7 +28,7 @@ const ConnectionStatusMonitor: React.FC<ConnectionStatusMonitorProps> = ({
     toggleAutoRefresh,
     startUpdates,
     stopUpdates
-  } = useRealTimeStatus(true);
+  } = useRealtimeStatus(true);
   
   // Calculate overall connection health
   const connectionHealth = useMemo(() => {
