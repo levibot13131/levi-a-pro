@@ -15,10 +15,6 @@ interface ConnectionStatusMonitorProps {
   showControls?: boolean;
 }
 
-/**
- * Component for monitoring and displaying the status of real-time connections.
- * Includes automatic refresh and manual controls for real-time services.
- */
 const ConnectionStatusMonitor: React.FC<ConnectionStatusMonitorProps> = ({
   monitorInterval = 60000, // Default: check every minute
   showControls = true
