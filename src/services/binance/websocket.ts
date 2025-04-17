@@ -1,8 +1,7 @@
-
 import { toast } from 'sonner';
 import { getBinanceCredentials } from './credentials';
 import { BinanceSocketConfig, BinanceStreamMessage } from './types';
-import { getProxyConfig } from '@/services/proxy/proxyConfig';
+import { getProxyConfig, isProxyConfigured } from '@/services/proxy/proxyConfig';
 import { isRealTimeMode } from './marketData';
 
 // Store active websocket connections
@@ -35,15 +34,21 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
       return () => {}; // Return empty cleanup function
     }
     
-    // Get proxy configuration if needed
-    const proxyConfig = getProxyConfig();
-    const useProxy = !!proxyConfig?.isEnabled;
-    
     // Create the WebSocket connection
     const streamName = interval ? `${symbol.toLowerCase()}@kline_${interval}` : `${symbol.toLowerCase()}@ticker`;
-    const wsEndpoint = useProxy 
-      ? `${proxyConfig?.baseUrl}/binance/ws/${streamName}`
-      : `wss://stream.binance.com:9443/ws/${streamName}`;
+    
+    // Determine the WebSocket URL based on proxy configuration
+    let wsEndpoint = '';
+    const proxyConfig = getProxyConfig();
+    const useProxy = proxyConfig?.isEnabled && !!proxyConfig?.baseUrl;
+    
+    if (useProxy) {
+      // Use the proxy server's websocket endpoint
+      wsEndpoint = `${proxyConfig.baseUrl.replace('https://', 'wss://').replace('http://', 'ws://')}/binance/ws/${streamName}`;
+    } else {
+      // Direct connection to Binance (fallback)
+      wsEndpoint = `wss://stream.binance.com:9443/ws/${streamName}`;
+    }
     
     console.log(`Connecting to Binance WebSocket: ${wsEndpoint}`);
     
@@ -51,44 +56,54 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
     let ws = activeConnections.get(streamName);
     
     if (!ws || ws.readyState === WebSocket.CLOSED) {
-      ws = new WebSocket(wsEndpoint);
-      
-      ws.onopen = () => {
-        console.log(`WebSocket connected: ${streamName}`);
-        toast.success('התחברות לנתוני בינאנס בזמן אמת');
-      };
-      
-      ws.onmessage = (event) => {
-        try {
-          const rawData = JSON.parse(event.data);
-          const streamMessage = parseWebSocketMessage(rawData, symbol);
-          
-          // Call all registered callbacks for this symbol
-          const callbacks = messageCallbacks.get(symbol) || new Set();
-          callbacks.forEach(callback => callback(streamMessage));
-          
-          // Call the specific callback for this connection if provided
-          if (onMessage) {
-            onMessage(streamMessage);
+      try {
+        ws = new WebSocket(wsEndpoint);
+        
+        ws.onopen = () => {
+          console.log(`WebSocket connected: ${streamName}`);
+          toast.success('התחברות לנתוני בינאנס בזמן אמת');
+        };
+        
+        ws.onmessage = (event) => {
+          try {
+            const rawData = JSON.parse(event.data);
+            const streamMessage = parseWebSocketMessage(rawData, symbol);
+            
+            // Call all registered callbacks for this symbol
+            const callbacks = messageCallbacks.get(symbol) || new Set();
+            callbacks.forEach(callback => callback(streamMessage));
+            
+            // Call the specific callback for this connection if provided
+            if (onMessage) {
+              onMessage(streamMessage);
+            }
+          } catch (err) {
+            console.error('Error processing WebSocket message:', err);
           }
-        } catch (err) {
-          console.error('Error processing WebSocket message:', err);
-        }
-      };
-      
-      ws.onerror = (error) => {
-        console.error(`WebSocket error: ${streamName}`, error);
-        if (onError) onError(error);
-        toast.error('שגיאה בחיבור לנתוני בינאנס בזמן אמת');
-      };
-      
-      ws.onclose = () => {
-        console.log(`WebSocket closed: ${streamName}`);
-        activeConnections.delete(streamName);
-      };
-      
-      // Store the connection
-      activeConnections.set(streamName, ws);
+        };
+        
+        ws.onerror = (error) => {
+          console.error(`WebSocket error: ${streamName}`, error);
+          if (onError) onError(error);
+          toast.error('שגיאה בחיבור לנתוני בינאנס בזמן אמת');
+        };
+        
+        ws.onclose = () => {
+          console.log(`WebSocket closed: ${streamName}`);
+          activeConnections.delete(streamName);
+        };
+        
+        // Store the connection
+        activeConnections.set(streamName, ws);
+      } catch (wsError) {
+        console.error('Error creating WebSocket connection:', wsError);
+        if (onError) onError(wsError);
+        
+        // Fall back to simulation if WebSocket fails
+        console.log('Falling back to simulated data due to WebSocket error');
+        const intervalId = simulateWebSocketMessages(symbol, onMessage);
+        return () => clearInterval(intervalId);
+      }
     }
     
     // Register the callback if provided
@@ -265,4 +280,30 @@ export const closeAllConnections = (): void => {
   
   activeConnections.clear();
   messageCallbacks.clear();
+};
+
+/**
+ * Reset and reconnect all active WebSocket connections
+ * Useful when proxy settings change
+ */
+export const reconnectAllWebSockets = (): void => {
+  // Store the current connections and callbacks
+  const existingConnections = new Map(activeConnections);
+  const existingCallbacks = new Map(messageCallbacks);
+  
+  // Close all existing connections
+  closeAllConnections();
+  
+  // Re-establish connections with the same callbacks
+  existingCallbacks.forEach((callbacks, symbol) => {
+    callbacks.forEach(callback => {
+      createBinanceWebSocket({
+        symbol,
+        onMessage: callback,
+        onError: (error) => console.error(`Reconnection error for ${symbol}:`, error)
+      });
+    });
+  });
+  
+  console.log(`Reconnected ${existingConnections.size} WebSocket connections`);
 };

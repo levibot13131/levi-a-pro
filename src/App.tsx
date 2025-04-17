@@ -8,12 +8,26 @@ import { initializeTradingViewServices } from './services/tradingView/startup';
 import { useAuth } from './contexts/AuthContext';
 import router from './routes/router';
 import { useAppSettings } from './hooks/use-app-settings';
+import { initializeProxySettings, testProxyConnection } from './services/proxy/proxyConfig';
+import { reconnectAllWebSockets } from './services/binance/websocket';
 
 const App: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const demoMode = useAppSettings((state) => state.demoMode);
   
   useEffect(() => {
+    // Initialize the proxy settings first
+    initializeProxySettings();
+    
+    // Test the proxy connection
+    testProxyConnection()
+      .then(success => {
+        console.log('Initial proxy test:', success ? 'success' : 'failed');
+      })
+      .catch(err => {
+        console.error('Error testing proxy:', err);
+      });
+    
     // Initialize all real-time services when the app loads
     const initializeServices = async () => {
       try {
@@ -35,6 +49,19 @@ const App: React.FC = () => {
     };
     
     initializeServices();
+    
+    // Listen for proxy configuration changes
+    const handleProxyConfigChange = () => {
+      console.log('Proxy configuration changed, reconnecting WebSockets');
+      // Reconnect all WebSockets with the new proxy configuration
+      reconnectAllWebSockets();
+    };
+    
+    window.addEventListener('proxy-config-changed', handleProxyConfigChange);
+    
+    return () => {
+      window.removeEventListener('proxy-config-changed', handleProxyConfigChange);
+    };
   }, [isAuthenticated, demoMode]);
   
   return (
@@ -46,3 +73,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+

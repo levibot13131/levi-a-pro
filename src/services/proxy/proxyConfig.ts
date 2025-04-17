@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 
 const PROXY_URL_KEY = 'levi_bot_proxy_url';
@@ -24,6 +23,17 @@ export const getProxyConfig = (): ProxyConfig => {
     console.error('Error parsing proxy config:', error);
   }
   
+  // Check for environment variable as fallback
+  const envProxyUrl = import.meta.env.VITE_PROXY_URL || 'https://tuition-colony-climb-gently.trycloudflare.com';
+  
+  // If no saved config but we have an env URL, create a default enabled config
+  if (envProxyUrl) {
+    return {
+      baseUrl: envProxyUrl,
+      isEnabled: true
+    };
+  }
+  
   return {
     baseUrl: '',
     isEnabled: false
@@ -35,15 +45,15 @@ export const getProxyConfig = (): ProxyConfig => {
  */
 export const setProxyConfig = (config: ProxyConfig): void => {
   try {
-    // וידוא שה-URL נקי
+    // Clean the URL
     let finalUrl = config.baseUrl.trim();
 
-    // וידוא שיש פרוטוקול
+    // Ensure protocol
     if (finalUrl && !finalUrl.startsWith('http')) {
       finalUrl = `https://${finalUrl}`;
     }
 
-    // וידוא שאין סלאש בסוף
+    // Remove trailing slash
     if (finalUrl && finalUrl.endsWith('/')) {
       finalUrl = finalUrl.slice(0, -1);
     }
@@ -65,7 +75,7 @@ export const setProxyConfig = (config: ProxyConfig): void => {
       toast.info('הפרוקסי הושבת');
     }
     
-    // שליחת אירוע שינוי קונפיגורציה
+    // Dispatch configuration change event
     window.dispatchEvent(new CustomEvent('proxy-config-changed', {
       detail: cleanConfig
     }));
@@ -187,4 +197,58 @@ export const buildProxyPassthroughUrl = (targetUrl: string): string => {
   const encodedUrl = encodeURIComponent(targetUrl);
   
   return `${baseUrl}/proxy?url=${encodedUrl}`;
+};
+
+/**
+ * Check if the proxy configuration is valid and the server is responding
+ */
+export const testProxyConnection = async (): Promise<boolean> => {
+  const config = getProxyConfig();
+  if (!config.isEnabled || !config.baseUrl) {
+    return false;
+  }
+
+  try {
+    // Test the ping endpoint
+    const response = await fetch(`${config.baseUrl}/ping`, { 
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      mode: 'cors'
+    });
+
+    if (response.ok) {
+      console.log('Proxy connection successful');
+      return true;
+    }
+    
+    // If ping fails, try a basic OPTIONS request
+    const optionsResponse = await fetch(config.baseUrl, { 
+      method: 'OPTIONS',
+      mode: 'cors'
+    });
+    
+    return optionsResponse.ok;
+  } catch (error) {
+    console.error('Error testing proxy connection:', error);
+    return false;
+  }
+};
+
+/**
+ * Initialize proxy settings from environment or saved config
+ */
+export const initializeProxySettings = (): void => {
+  const envProxyUrl = import.meta.env.VITE_PROXY_URL || 'https://tuition-colony-climb-gently.trycloudflare.com';
+  const savedConfig = getProxyConfig();
+  
+  // If no saved config but we have an env URL, set it up
+  if (!savedConfig.baseUrl && envProxyUrl) {
+    setProxyConfig({
+      baseUrl: envProxyUrl,
+      isEnabled: true
+    });
+    console.log('Proxy initialized from environment:', envProxyUrl);
+  } else if (savedConfig.baseUrl) {
+    console.log('Using saved proxy configuration:', savedConfig.baseUrl);
+  }
 };

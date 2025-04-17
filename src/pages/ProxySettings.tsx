@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Code } from '@/components/ui/code';
 import { 
   Settings, 
   Link as LinkIcon, 
@@ -14,10 +15,19 @@ import {
   Trash2, 
   RefreshCw,
   ExternalLink,
-  AlertTriangle
+  AlertTriangle,
+  CheckCircle,
+  Terminal,
+  Server
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { getProxyConfig, setProxyConfig, clearProxyConfig } from '@/services/proxy/proxyConfig';
+import { 
+  getProxyConfig, 
+  setProxyConfig, 
+  clearProxyConfig, 
+  testProxyConnection,
+  initializeProxySettings 
+} from '@/services/proxy/proxyConfig';
 import axios from 'axios';
 
 const ProxySettings = () => {
@@ -25,13 +35,32 @@ const ProxySettings = () => {
   const [proxyEnabled, setProxyEnabled] = useState(getProxyConfig().isEnabled);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'none' | 'success' | 'error'>('none');
-
-  // עדכון מהאחסון בעת טעינת הדף
+  const [diagnosticLogs, setDiagnosticLogs] = useState<string[]>([]);
+  
+  // Initialize from the environment or storage on page load
   useEffect(() => {
+    initializeProxySettings();
     const config = getProxyConfig();
     setProxyUrl(config.baseUrl);
     setProxyEnabled(config.isEnabled);
+    
+    // Test connection on load if proxy is enabled
+    if (config.isEnabled && config.baseUrl) {
+      setTimeout(() => {
+        testProxyConnection()
+          .then(success => {
+            setConnectionStatus(success ? 'success' : 'error');
+          })
+          .catch(() => {
+            setConnectionStatus('error');
+          });
+      }, 1000);
+    }
   }, []);
+
+  const addDiagnosticLog = (message: string) => {
+    setDiagnosticLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] ${message}`]);
+  };
 
   const handleSaveProxy = () => {
     if (proxyEnabled && !proxyUrl.trim()) {
@@ -39,7 +68,7 @@ const ProxySettings = () => {
       return;
     }
 
-    // וידוא שה-URL כולל פרוטוקול
+    // Ensure the URL includes protocol
     let finalUrl = proxyUrl.trim();
     if (proxyEnabled && finalUrl && !finalUrl.startsWith('http')) {
       finalUrl = `https://${finalUrl}`;
@@ -51,10 +80,16 @@ const ProxySettings = () => {
       isEnabled: proxyEnabled
     });
     
-    // פעולה מיוחדת אחרי שמירה - רענון המערכת
+    // Dispatch config change event
     window.dispatchEvent(new CustomEvent('proxy-config-changed'));
     
     toast.success('הגדרות הפרוקסי נשמרו בהצלחה');
+    addDiagnosticLog(`Proxy settings saved: ${finalUrl} (${proxyEnabled ? 'enabled' : 'disabled'})`);
+    
+    // Test the connection after saving
+    if (proxyEnabled && finalUrl) {
+      setTimeout(() => testProxyConnection(), 500);
+    }
   };
 
   const handleClearProxy = () => {
@@ -62,7 +97,9 @@ const ProxySettings = () => {
     setProxyUrl('');
     setProxyEnabled(false);
     setConnectionStatus('none');
+    setDiagnosticLogs([]);
     window.dispatchEvent(new CustomEvent('proxy-config-changed'));
+    addDiagnosticLog('Proxy settings cleared');
   };
 
   const testProxyConnection = async () => {
@@ -74,49 +111,91 @@ const ProxySettings = () => {
     setIsTestingConnection(true);
     setConnectionStatus('none');
     
-    // וידוא שה-URL כולל פרוטוקול
+    // Clean up the URL
     let testUrl = proxyUrl.trim();
     if (!testUrl.startsWith('http')) {
       testUrl = `https://${testUrl}`;
     }
-
-    // בדיקה אם ה-URL מסתיים בסלאש
     if (testUrl.endsWith('/')) {
       testUrl = testUrl.slice(0, -1);
     }
+    
+    addDiagnosticLog(`Testing connection to ${testUrl}...`);
 
     try {
-      console.log('Testing proxy connection to:', testUrl);
+      // Try multiple test methods sequentially
+      let success = false;
       
-      // נסה קודם בדיקה פשוטה - CORS אמור להיות פתוח בשרת הפרוקסי
-      const response = await axios.get(`${testUrl}/ping`, { 
-        timeout: 8000,
-        headers: { 'Accept': 'application/json' }
-      }).catch(async () => {
-        // אם זה נכשל, ננסה בשיטת HEAD
-        return await axios.head(`${testUrl}`, { timeout: 8000 });
-      }).catch(async () => {
-        // אם גם זה נכשל, ננסה לבדוק אם השרת מגיב בכלל
-        return await axios.options(`${testUrl}`, { 
+      // Method 1: /ping endpoint
+      try {
+        addDiagnosticLog(`Trying /ping endpoint...`);
+        const pingResponse = await axios.get(`${testUrl}/ping`, { 
           timeout: 8000,
-          headers: { 'Access-Control-Request-Method': 'GET' }
+          headers: { 'Accept': 'application/json' }
         });
-      });
+        
+        addDiagnosticLog(`Ping response: ${pingResponse.status} ${JSON.stringify(pingResponse.data)}`);
+        if (pingResponse.status === 200) {
+          success = true;
+        }
+      } catch (pingError) {
+        addDiagnosticLog(`Ping failed: ${(pingError as Error).message}`);
+      }
       
-      console.log('Proxy test response:', response);
+      // Method 2: HEAD request to root
+      if (!success) {
+        try {
+          addDiagnosticLog(`Trying HEAD request...`);
+          const headResponse = await axios.head(testUrl, { timeout: 8000 });
+          addDiagnosticLog(`HEAD response: ${headResponse.status}`);
+          if (headResponse.status === 200 || headResponse.status === 204) {
+            success = true;
+          }
+        } catch (headError) {
+          addDiagnosticLog(`HEAD failed: ${(headError as Error).message}`);
+        }
+      }
       
-      if (response && (response.status === 200 || response.status === 204)) {
-        setConnectionStatus('success');
+      // Method 3: OPTIONS request for CORS check
+      if (!success) {
+        try {
+          addDiagnosticLog(`Trying OPTIONS request...`);
+          const optionsResponse = await axios.options(testUrl, { 
+            timeout: 8000,
+            headers: { 'Access-Control-Request-Method': 'GET' }
+          });
+          addDiagnosticLog(`OPTIONS response: ${optionsResponse.status}`);
+          if (optionsResponse.status === 200 || optionsResponse.status === 204) {
+            success = true;
+          }
+        } catch (optionsError) {
+          addDiagnosticLog(`OPTIONS failed: ${(optionsError as Error).message}`);
+        }
+      }
+      
+      // Update connection status
+      setConnectionStatus(success ? 'success' : 'error');
+      
+      if (success) {
         toast.success('חיבור לפרוקסי פעיל ותקין');
+        addDiagnosticLog('Connection test successful');
       } else {
-        setConnectionStatus('error');
-        toast.error('שגיאה בחיבור לפרוקסי');
+        // In development, allow failing tests
+        const isProduction = process.env.NODE_ENV === 'production';
+        if (!isProduction) {
+          toast.warning('פרוקסי לא מגיב, אך מותר במצב פיתוח. ניתן להמשיך בהגדרות.');
+          addDiagnosticLog('Connection failed, but allowed in development mode');
+        } else {
+          toast.error('שגיאה בחיבור לפרוקסי, בדוק את הכתובת והזמינות');
+          addDiagnosticLog('Connection test failed');
+        }
       }
     } catch (error) {
       console.error('Error testing proxy connection:', error);
       setConnectionStatus('error');
+      addDiagnosticLog(`Connection test error: ${(error as Error).message}`);
       
-      // בסביבת פיתוח, נאפשר להמשיך גם אם החיבור נכשל
+      // In development, allow failing tests
       const isProduction = process.env.NODE_ENV === 'production';
       if (!isProduction) {
         toast.warning('פרוקסי לא מגיב, אך מותר במצב פיתוח. ניתן להמשיך בהגדרות.');
@@ -164,7 +243,7 @@ const ProxySettings = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium block text-right">כתובת פרוקסי (מלאה כולל http/https)</label>
                 <Input
-                  placeholder="לדוגמה: https://your-proxy-url.ngrok.io"
+                  placeholder="לדוגמה: https://tuition-colony-climb-gently.trycloudflare.com"
                   value={proxyUrl}
                   onChange={(e) => setProxyUrl(e.target.value)}
                   dir="ltr"
@@ -208,11 +287,10 @@ const ProxySettings = () => {
 
               {connectionStatus === 'success' && (
                 <Alert variant="default" className="bg-green-50 text-green-900 border-green-200">
-                  <div className="flex items-center">
-                    <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
-                    <AlertTitle className="text-right">החיבור לפרוקסי תקין</AlertTitle>
-                  </div>
+                  <CheckCircle className="h-4 w-4 text-green-500 ml-2" />
+                  <AlertTitle className="text-right">החיבור לפרוקסי תקין</AlertTitle>
                   <AlertDescription className="text-right mt-2">
+                    פרוקסי עם כתובת {proxyUrl} פעיל ועובד כראוי. 
                     ניתן להשתמש בפרוקסי זה לתקשורת עם שירותים חיצוניים.
                   </AlertDescription>
                 </Alert>
@@ -224,8 +302,31 @@ const ProxySettings = () => {
                   <AlertTitle className="text-right">שגיאה בחיבור לפרוקסי</AlertTitle>
                   <AlertDescription className="text-right mt-2">
                     לא ניתן להתחבר לפרוקסי בכתובת שסופקה. אנא בדוק את הכתובת והאם הפרוקסי פעיל.
+                    <br />
+                    בדוק שה-CORS מוגדר נכון בצד השרת ושהוא מאפשר בקשות מהדומיין הזה.
                   </AlertDescription>
                 </Alert>
+              )}
+              
+              {/* Diagnostic logs */}
+              {diagnosticLogs.length > 0 && (
+                <div className="mt-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setDiagnosticLogs([])}
+                    >
+                      נקה לוגים
+                    </Button>
+                    <h3 className="text-sm font-medium">לוגים אבחוניים</h3>
+                  </div>
+                  <Code className="text-xs overflow-auto h-40 dir-ltr">
+                    {diagnosticLogs.map((log, index) => (
+                      <div key={index} className="whitespace-pre-wrap">{log}</div>
+                    ))}
+                  </Code>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -257,6 +358,21 @@ const ProxySettings = () => {
                   מדריך מפורט להגדרת פרוקסי
                 </Link>
               </Button>
+              
+              <Button variant="outline" size="sm" className="w-full flex items-center" onClick={() => {
+                window.open('https://tuition-colony-climb-gently.trycloudflare.com/ping', '_blank');
+              }}>
+                <Terminal className="ml-2 h-4 w-4" />
+                בדוק את נקודת הקצה /ping
+              </Button>
+              
+              <Button variant="outline" size="sm" className="w-full flex items-center" onClick={() => {
+                navigator.clipboard.writeText('https://tuition-colony-climb-gently.trycloudflare.com');
+                toast.success('כתובת הפרוקסי הועתקה');
+              }}>
+                <Server className="ml-2 h-4 w-4" />
+                העתק כתובת Cloudflare
+              </Button>
             </CardContent>
           </Card>
 
@@ -278,6 +394,12 @@ const ProxySettings = () => {
                     <code className="bg-muted p-1 rounded mt-1 text-left break-all">{proxyUrl}</code>
                   </div>
                 )}
+                <div className="flex justify-between items-center mt-2">
+                  <span className={connectionStatus === 'success' ? 'text-green-500' : 'text-red-500'}>
+                    {connectionStatus === 'success' ? 'תקין' : connectionStatus === 'error' ? 'בעיה' : 'לא נבדק'}
+                  </span>
+                  <span className="font-medium">בדיקת חיבור:</span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -288,3 +410,4 @@ const ProxySettings = () => {
 };
 
 export default ProxySettings;
+
