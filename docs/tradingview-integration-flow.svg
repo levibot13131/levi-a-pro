@@ -1,0 +1,117 @@
+
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#f8fafc" rx="5" ry="5"/>
+  
+  <!-- Title -->
+  <text x="400" y="30" font-family="Arial" font-size="20" text-anchor="middle" font-weight="bold">TradingView Integration Data Flow</text>
+  
+  <!-- External TradingView -->
+  <rect x="50" y="70" width="700" height="60" fill="#dbeafe" rx="5" ry="5" stroke="#3b82f6" stroke-width="1"/>
+  <text x="400" y="105" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">TradingView External Services</text>
+  
+  <!-- Service Layer -->
+  <rect x="50" y="160" width="700" height="120" fill="#e2e8f0" rx="5" ry="5" stroke="#94a3b8" stroke-width="1"/>
+  <text x="400" y="185" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">Service Layer</text>
+  
+  <!-- Auth Service -->
+  <rect x="80" y="200" width="200" height="60" fill="#f1f5f9" rx="5" ry="5" stroke="#94a3b8" stroke-width="1"/>
+  <text x="180" y="225" font-family="Arial" font-size="12" text-anchor="middle" font-weight="bold">tradingViewAuthService.ts</text>
+  <text x="180" y="245" font-family="Arial" font-size="10" text-anchor="middle">Authentication, Credentials Management</text>
+  
+  <!-- Sync Service -->
+  <rect x="300" y="200" width="200" height="60" fill="#f1f5f9" rx="5" ry="5" stroke="#94a3b8" stroke-width="1"/>
+  <text x="400" y="225" font-family="Arial" font-size="12" text-anchor="middle" font-weight="bold">index.ts (Sync Functions)</text>
+  <text x="400" y="245" font-family="Arial" font-size="10" text-anchor="middle">Data Synchronization Management</text>
+  
+  <!-- Data Service -->
+  <rect x="520" y="200" width="200" height="60" fill="#f1f5f9" rx="5" ry="5" stroke="#94a3b8" stroke-width="1"/>
+  <text x="620" y="225" font-family="Arial" font-size="12" text-anchor="middle" font-weight="bold">index.ts (Data Functions)</text>
+  <text x="620" y="245" font-family="Arial" font-size="10" text-anchor="middle">Chart Data, News Fetching</text>
+  
+  <!-- Hook Layer -->
+  <rect x="50" y="310" width="700" height="140" fill="#e2e8f0" rx="5" ry="5" stroke="#94a3b8" stroke-width="1"/>
+  <text x="400" y="335" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">Hook Layer</text>
+  
+  <!-- Auth Hook -->
+  <rect x="80" y="360" width="200" height="70" fill="#f1f5f9" rx="5" ry="5" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="180" y="380" font-family="Arial" font-size="12" text-anchor="middle" font-weight="bold">useTradingViewAuth.ts</text>
+  <text x="180" y="400" font-family="Arial" font-size="10" text-anchor="middle">isConnected, credentials</text>
+  <text x="180" y="415" font-family="Arial" font-size="10" text-anchor="middle">connect(), disconnect()</text>
+  
+  <!-- Sync Hook -->
+  <rect x="300" y="360" width="200" height="70" fill="#f1f5f9" rx="5" ry="5" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="400" y="380" font-family="Arial" font-size="12" text-anchor="middle" font-weight="bold">useTradingViewSync.ts</text>
+  <text x="400" y="400" font-family="Arial" font-size="10" text-anchor="middle">syncEnabled, isSyncing, lastSyncTime</text>
+  <text x="400" y="415" font-family="Arial" font-size="10" text-anchor="middle">manualSync(), toggleAutoSync()</text>
+  
+  <!-- Data Hook -->
+  <rect x="520" y="360" width="200" height="70" fill="#f1f5f9" rx="5" ry="5" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="620" y="380" font-family="Arial" font-size="12" text-anchor="middle" font-weight="bold">useTradingViewData.ts</text>
+  <text x="620" y="400" font-family="Arial" font-size="10" text-anchor="middle">fetchChartData(), fetchNews()</text>
+  
+  <!-- Integration Hook -->
+  <rect x="200" y="450" width="400" height="30" fill="#bfdbfe" rx="5" ry="5" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="400" y="470" font-family="Arial" font-size="12" text-anchor="middle" font-weight="bold">useTradingViewIntegration.ts (Combines all hooks)</text>
+  
+  <!-- Component Layer -->
+  <rect x="50" y="480" width="700" height="100" fill="#e2e8f0" rx="5" ry="5" stroke="#94a3b8" stroke-width="1"/>
+  <text x="400" y="505" font-family="Arial" font-size="14" text-anchor="middle" font-weight="bold">Component Layer</text>
+  
+  <!-- Chart Component -->
+  <rect x="80" y="525" width="200" height="40" fill="#f1f5f9" rx="5" ry="5" stroke="#94a3b8" stroke-width="1"/>
+  <text x="180" y="550" font-family="Arial" font-size="12" text-anchor="middle">TradingViewChart.tsx</text>
+  
+  <!-- Chart Renderer -->
+  <rect x="300" y="525" width="200" height="40" fill="#f1f5f9" rx="5" ry="5" stroke="#94a3b8" stroke-width="1"/>
+  <text x="400" y="550" font-family="Arial" font-size="12" text-anchor="middle">ChartRenderer.tsx</text>
+  
+  <!-- Chart Types -->
+  <rect x="520" y="525" width="200" height="40" fill="#f1f5f9" rx="5" ry="5" stroke="#94a3b8" stroke-width="1"/>
+  <text x="620" y="550" font-family="Arial" font-size="12" text-anchor="middle">AreaChart, BarChart, LineChart</text>
+  
+  <!-- Connection Lines -->
+  <!-- External to Service -->
+  <line x1="400" y1="130" x2="400" y2="160" stroke="#3b82f6" stroke-width="2" stroke-dasharray="5,5"/>
+  
+  <!-- Service Interconnections -->
+  <path d="M 280 230 C 290 230, 290 230, 300 230" stroke="#94a3b8" stroke-width="1.5" fill="none"/>
+  <path d="M 500 230 C 510 230, 510 230, 520 230" stroke="#94a3b8" stroke-width="1.5" fill="none"/>
+  
+  <!-- Service to Hooks -->
+  <line x1="180" y1="260" x2="180" y2="360" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="400" y1="260" x2="400" y2="360" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="620" y1="260" x2="620" y2="360" stroke="#3b82f6" stroke-width="2"/>
+  
+  <!-- Hook connections to Integration Hook -->
+  <line x1="180" y1="430" x2="300" y2="465" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="400" y1="430" x2="400" y2="450" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="620" y1="430" x2="500" y2="465" stroke="#3b82f6" stroke-width="2"/>
+  
+  <!-- Integration Hook to Components -->
+  <line x1="300" y1="480" x2="180" y2="525" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="400" y1="480" x2="400" y2="525" stroke="#3b82f6" stroke-width="2"/>
+  <line x1="500" y1="480" x2="620" y2="525" stroke="#3b82f6" stroke-width="2"/>
+  
+  <!-- Component connections -->
+  <path d="M 280 545 C 290 545, 290 545, 300 545" stroke="#94a3b8" stroke-width="1.5" fill="none"/>
+  <path d="M 500 545 C 510 545, 510 545, 520 545" stroke="#94a3b8" stroke-width="1.5" fill="none"/>
+  
+  <!-- Chart Integration Data Flow -->
+  <rect x="50" y="10" width="150" height="20" fill="none" rx="3" ry="3" stroke="#94a3b8" stroke-width="1"/>
+  <text x="125" y="25" font-family="Arial" font-size="12" text-anchor="middle">Integration Flow</text>
+  
+  <!-- useChartData -->
+  <rect x="100" y="545" width="500" height="40" fill="#eff6ff" rx="5" ry="5" stroke="#3b82f6" stroke-width="1" opacity="0.5"/>
+  <text x="350" y="570" font-family="Arial" font-size="12" text-anchor="middle" font-weight="bold">useChartData Hook (Consumes useIntegration + Adds chart processing)</text>
+  
+  <!-- Legend -->
+  <rect x="600" y="40" width="150" height="20" fill="none" rx="3" ry="3" stroke="#94a3b8" stroke-width="1"/>
+  <text x="675" y="55" font-family="Arial" font-size="12" text-anchor="middle">Data Flow Legend</text>
+  
+  <line x1="615" y1="70" x2="635" y2="70" stroke="#3b82f6" stroke-width="2" stroke-dasharray="5,5"/>
+  <text x="680" y="75" font-family="Arial" font-size="10" text-anchor="middle">External API calls</text>
+  
+  <line x1="615" y1="85" x2="635" y2="85" stroke="#3b82f6" stroke-width="2"/>
+  <text x="680" y="90" font-family="Arial" font-size="10" text-anchor="middle">Internal data flow</text>
+</svg>

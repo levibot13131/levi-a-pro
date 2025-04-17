@@ -13,6 +13,15 @@ This platform provides real-time trading analytics and visualization for financi
 - Trading signals and alerts
 - Customizable watchlists and asset tracking
 
+## Architecture Documentation
+
+For detailed architecture diagrams and data flow visualizations:
+
+- [Overall Architecture Diagram](./docs/architecture-diagram.svg)
+- [TradingView Integration Flow](./docs/tradingview-integration-flow.svg)
+- [Real-Time Sync Architecture](./docs/realtime-sync-flow.svg)
+- [Comprehensive Architecture Documentation](./docs/diagrams.md)
+
 ## TradingView Integration
 
 ### Overview
@@ -217,6 +226,25 @@ To use the TradingView integration:
 1. Ensure you have a valid TradingView account
 2. Configure the connection in the TradingView Integration page
 3. Enable auto-sync or perform manual syncs as needed
+
+## Troubleshooting
+
+If you encounter issues with the TradingView integration:
+
+1. **Connection Problems**
+   - Verify your TradingView credentials
+   - Check internet connectivity
+   - Clear localStorage and try reconnecting
+
+2. **Sync Issues**
+   - Try a manual sync to reset the sync state
+   - Disable and re-enable auto-sync
+   - Check console for specific error messages
+
+3. **Chart Rendering Issues**
+   - Verify the symbol format is correct
+   - Try different timeframes
+   - Check if data is available for the selected asset
 
 ## Additional Resources
 
