@@ -1,89 +1,84 @@
 
 # Architecture Diagrams
 
-This document provides an overview of the architecture diagrams that illustrate the structure and data flow of the Real-Time Trading & Analytics Platform.
+## Diagram Legend
 
-## Main Architecture Diagram
+### Color Coding
 
-![Main Architecture](./architecture-diagram.svg)
+The architecture diagrams use a consistent color palette to represent different layers and services:
 
-This diagram shows the overall architecture of the platform, including:
+- **Blue (#3b82f6)**: TradingView-related components and services
+  - Represents authentication, data synchronization, and chart-related functionality
 
-- External data sources (TradingView, Binance, Twitter)
-- Service layer components
-- Custom hooks layer
-- Component layer with UI elements
+- **Purple (#8b5cf6)**: Binance-related components and services
+  - Indicates WebSocket connections, market data, and Binance-specific integrations
 
-The architecture follows a clear separation of concerns, with each layer having specific responsibilities:
+- **Green (#10b981)**: Twitter and Social Data components
+  - Highlights social media integration, sentiment analysis, and external data sources
 
-1. **External Data Sources Layer**: Interfaces with third-party APIs and services
-2. **Service Layer**: Provides core functionality for data retrieval, authentication, and synchronization
-3. **Custom Hooks Layer**: React hooks that encapsulate business logic and state management
-4. **Component Layer**: UI components that render the data and provide user interaction
+- **Gray (#94a3b8)**: Architectural connections and generic services
+  - Used for interconnections between layers, service boundaries, and general infrastructure
 
-## TradingView Integration Flow
+### Visual Elements
 
-![TradingView Integration](./tradingview-integration-flow.svg)
+#### Rectangles and Boxes
 
-This diagram focuses specifically on the TradingView integration, showing:
+- **Solid Rectangles**: Primary service or component containers
+- **Rounded Corners**: Indicates a modular, self-contained component
+- **Opacity Variations**: Represents hierarchical or nested components
+  - Full opacity: Main service layer
+  - Reduced opacity: Sub-components or specialized services
 
-- Authentication flow
-- Data synchronization mechanisms
-- Chart data processing
-- Component rendering pipeline
+#### Connection Lines
 
-The TradingView integration is structured around three main services:
-- `tradingViewAuthService.ts`: Manages user authentication and credentials
-- `syncService.ts`: Handles real-time data synchronization
-- Data services: Fetch chart data and other information
+- **Solid Lines**: Direct data flow or functional dependencies
+- **Dashed Lines**: External API calls or optional/conditional connections
 
-These services are exposed through specialized hooks:
-- `useTradingViewAuth`: Authentication state and methods
-- `useTradingViewSync`: Synchronization state and controls
-- `useTradingViewData`: Data fetching methods
+#### Icons and Symbols
 
-The `useTradingViewIntegration` hook combines all these hooks to provide a unified API for components.
+While the current diagrams don't use icons, future iterations may include:
+- 🔒 Authentication-related components
+- 🔄 Synchronization or real-time update services
+- 📊 Data visualization and charting components
 
-## Real-Time Sync Architecture
+### Interpreting the Diagrams
 
-![Real-Time Sync Flow](./realtime-sync-flow.svg)
+1. **Layer Progression**: 
+   - Left to Right: External Services → Service Layer → Hook Layer → Component Layer
+   - Top to Bottom: Architectural hierarchy and data flow
 
-This diagram illustrates the real-time synchronization architecture, showing:
+2. **Color Flow**: 
+   - Follow the color-coded components to trace service-specific interactions
+   - Blue (TradingView) → Purple (Binance) → Green (Twitter)
 
-- Real-time service layer components
-- Integration with different data sources
-- Component updates based on real-time data
+3. **Line Connections**:
+   - Solid lines show direct, critical dependencies
+   - Dashed lines indicate optional or external interactions
 
-The real-time sync architecture is built around `useRealTimeSync`, a custom hook that provides:
-- Interval-based polling
-- WebSocket connection management
-- Real-time state updates
-- Automatic and manual synchronization control
+## Extending the Diagrams
 
-Each data source (TradingView, Binance, Twitter) has its own integration with the real-time system, allowing for customized behavior while maintaining a consistent approach to real-time updates.
+### For Contributors
 
-## Data Flow
+When adding new components or services to the architecture:
 
-The data flows through the system as follows:
+1. Respect the existing color coding
+2. Maintain the layer-based structure
+3. Use dashed lines for optional or external connections
+4. Add sub-components with reduced opacity
+5. Keep the visual hierarchy clear
 
-1. External APIs provide data through REST or WebSocket connections
-2. Service layer processes and normalizes this data
-3. Custom hooks manage state and provide reactive updates
-4. Components render the data and respond to changes
+### Updating Process
 
-This architecture ensures that:
-- Data is consistent across the application
-- UI components are updated efficiently
-- Real-time updates are handled gracefully
-- The system is resilient to connection issues
+- Fork the project
+- Edit the SVG files in a vector graphics editor
+- Maintain the established visual language
+- Update the legend in `diagrams.md` to reflect any new visual elements
 
-## Extending the Architecture
+## Examples of Future Extensions
 
-To extend this architecture:
+- Adding a new data source (e.g., CoinMarketCap)
+- Introducing a new hook for specialized data processing
+- Creating additional integration layers
 
-1. Add new services for additional data sources
-2. Create specialized hooks for those services
-3. Integrate with the real-time sync system
-4. Create or update components to display the new data
+```
 
-This modular approach allows for easy extension without disrupting existing functionality.

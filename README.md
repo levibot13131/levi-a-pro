@@ -1,4 +1,3 @@
-
 # Real-Time Trading & Analytics Platform
 
 ## Project Overview
@@ -15,12 +14,18 @@ This platform provides real-time trading analytics and visualization for financi
 
 ## Architecture Documentation
 
-For detailed architecture diagrams and data flow visualizations:
+For a comprehensive understanding of our system's architecture, we provide detailed visual guides:
 
 - [Overall Architecture Diagram](./docs/architecture-diagram.svg)
 - [TradingView Integration Flow](./docs/tradingview-integration-flow.svg)
 - [Real-Time Sync Architecture](./docs/realtime-sync-flow.svg)
-- [Comprehensive Architecture Documentation](./docs/diagrams.md)
+
+### Diagram Legend
+
+Refer to our [diagrams.md](./docs/diagrams.md) for a detailed explanation of:
+- Color coding
+- Visual elements
+- How to interpret the architecture diagrams
 
 ## TradingView Integration
 
