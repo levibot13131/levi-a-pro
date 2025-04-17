@@ -1,7 +1,7 @@
 
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import TwitterConnectForm from '../TwitterConnectForm';
-import { vi } from 'vitest';
 import userEvent from '@testing-library/user-event';
 
 describe('TwitterConnectForm', () => {

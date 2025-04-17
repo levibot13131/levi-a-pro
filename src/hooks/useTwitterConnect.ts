@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { getTwitterCredentials } from '@/services/twitter/twitterService';
 
-// Form schema for Twitter API credentials
-const twitterFormSchema = z.object({
+// Form schema for Twitter API credentials - now explicitly exported
+export const twitterFormSchema = z.object({
   apiKey: z.string().min(10, {
     message: 'API Key is required and must be valid',
   }),
