@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Lock, Key, LogIn, LogOut } from 'lucide-react';
 import { useBinanceConnection } from '@/hooks/use-binance-connection';
-import { saveBinanceCredentials, disconnectBinance, testBinanceConnection } from '@/services/binance/binanceService';
+import { connectToBinance, disconnectBinance, testBinanceConnection } from '@/services/binance/binanceService';
 import { toast } from 'sonner';
 
 interface BinanceConnectButtonProps {
@@ -31,29 +31,33 @@ const BinanceConnectButton: React.FC<BinanceConnectButtonProps> = ({ onConnectSu
     setIsTesting(true);
     
     try {
-      // שמירת הפרטים
-      saveBinanceCredentials({
+      // Connect to Binance with credentials
+      const success = await connectToBinance({
         apiKey,
         apiSecret,
-        isConnected: true
+        testnet: false
       });
       
-      // בדיקת חיבור
-      const testResult = await testBinanceConnection();
-      
-      if (testResult) {
-        toast.success('התחברות לבינאנס בוצעה בהצלחה');
-        refreshConnection();
-        setShowDialog(false);
+      if (success) {
+        // Test the connection
+        const testResult = await testBinanceConnection();
         
-        if (onConnectSuccess) {
-          onConnectSuccess();
+        if (testResult) {
+          toast.success('התחברות לבינאנס בוצעה בהצלחה');
+          refreshConnection();
+          setShowDialog(false);
+          
+          if (onConnectSuccess) {
+            onConnectSuccess();
+          }
+        } else {
+          toast.error('בדיקת חיבור נכשלה', {
+            description: 'המפתחות שהוזנו אינם תקפים או שיש בעיה בחיבור'
+          });
+          disconnectBinance();
         }
       } else {
-        toast.error('בדיקת חיבור נכשלה', {
-          description: 'המפתחות שהוזנו אינם תקפים או שיש בעיה בחיבור'
-        });
-        disconnectBinance();
+        toast.error('שגיאה בהתחברות לבינאנס');
       }
     } catch (error) {
       console.error('Connection error:', error);
@@ -145,7 +149,13 @@ const BinanceConnectButton: React.FC<BinanceConnectButtonProps> = ({ onConnectSu
             
             <Button 
               type="button"
-              onClick={fillTestCredentials}
+              onClick={() => {
+                setApiKey('demo_api_key_12345678901234567890');
+                setApiSecret('demo_api_secret_12345678901234567890abcdefghijklmnopqrstuvwxyz');
+                toast.info('מפתחות דמו הוזנו', {
+                  description: 'ניתן להשתמש במפתחות אלו לבדיקת המערכת'
+                });
+              }}
               variant="ghost"
               size="sm"
               className="justify-start mt-1"

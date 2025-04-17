@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useTradingViewIntegration } from './use-tradingview-integration';
-import { TradingViewChartData } from '../services/tradingView/tradingViewIntegrationService';
+import { TradingViewChartData } from '../services/tradingView/types';
 
 export function useChartData(symbol: string, timeframe: string) {
   const [chartData, setChartData] = useState<TradingViewChartData | null>(null);
@@ -21,7 +21,8 @@ export function useChartData(symbol: string, timeframe: string) {
     try {
       const data = await fetchChartData(symbol, timeframe);
       if (data) {
-        setChartData(data);
+        // Use a function to set the new state to avoid type issues
+        setChartData(() => data);
         setError(null);
       } else {
         setError('לא ניתן לטעון את נתוני הגרף');

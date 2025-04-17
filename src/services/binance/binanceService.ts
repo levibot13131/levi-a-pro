@@ -70,3 +70,48 @@ export const testBinanceConnection = async (): Promise<boolean> => {
     return false;
   }
 };
+
+// Validate Binance credentials (used in ApiConnections.tsx)
+export const validateBinanceCredentials = async (
+  credentials: Partial<BinanceCredentials>
+): Promise<boolean> => {
+  if (!credentials.apiKey || !credentials.apiSecret) {
+    toast.error('חסרים פרטי התחברות לבינאנס');
+    return false;
+  }
+  
+  try {
+    // Enhance credentials with default values if needed
+    const enhancedCredentials = {
+      apiKey: credentials.apiKey,
+      apiSecret: credentials.apiSecret,
+      testnet: credentials.testnet ?? false,
+      lastConnected: Date.now()
+    };
+    
+    // Store the credentials
+    localStorage.setItem('binance_api_keys', JSON.stringify(enhancedCredentials));
+    
+    // Test the connection
+    return await testBinanceConnection();
+  } catch (error) {
+    console.error('Error validating Binance credentials:', error);
+    return false;
+  }
+};
+
+// For backward compatibility with existing code, alias clearBinanceCredentials to disconnectBinance
+export const clearBinanceCredentials = disconnectBinance;
+
+// For backward compatibility with credentials object shape
+export const saveBinanceCredentials = (credentials: any): void => {
+  const enhancedCredentials: BinanceCredentials = {
+    apiKey: credentials.apiKey,
+    apiSecret: credentials.apiSecret,
+    testnet: credentials.testnet ?? false,
+    lastConnected: Date.now()
+  };
+  
+  localStorage.setItem('binance_api_keys', JSON.stringify(enhancedCredentials));
+  toast.success('פרטי התחברות לבינאנס נשמרו בהצלחה');
+};

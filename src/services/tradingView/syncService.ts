@@ -13,7 +13,7 @@ let syncInterval: number | null = null;
 export const syncWithTradingView = async (): Promise<boolean> => {
   const credentials = getTradingViewCredentials();
   
-  if (!credentials?.isConnected) {
+  if (!credentials) {
     toast.error('אינך מחובר לחשבון TradingView', {
       description: 'אנא התחבר תחילה לחשבון TradingView'
     });
@@ -49,7 +49,7 @@ export const syncWithTradingView = async (): Promise<boolean> => {
 export const initializeTradingViewSync = () => {
   const credentials = getTradingViewCredentials();
   
-  if (!credentials?.isConnected) {
+  if (!credentials) {
     return false;
   }
   

@@ -1,8 +1,7 @@
-
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { ThemeProvider } from './providers/theme-provider';
+import { ThemeProvider } from './components/theme-provider';
 import { startRealTimeUpdates } from './services/realtime/realtimeService';
 import { initializeTradingViewServices } from './services/tradingView/startup';
 
@@ -12,12 +11,14 @@ import Layout from './components/layout/Layout';
 // Page components
 import Dashboard from './pages/Dashboard';
 import Assets from './pages/Assets';
-import Alerts from './pages/Alerts';
-import Signals from './pages/Signals';
-import Settings from './pages/Settings';
-import TradingViewIntegration from './pages/TradingViewIntegration';
-import CryptoSentiment from './pages/CryptoSentiment';
-import TwitterIntegration from './pages/TwitterIntegration';
+
+// Create placeholder components for missing pages
+const Alerts = () => <div>Alerts Page</div>;
+const Signals = () => <div>Signals Page</div>;
+const Settings = () => <div>Settings Page</div>;
+const TradingViewIntegration = () => <div>TradingView Integration Page</div>;
+const CryptoSentiment = () => <div>Crypto Sentiment Page</div>;
+const TwitterIntegration = () => <div>Twitter Integration Page</div>;
 
 const App: React.FC = () => {
   useEffect(() => {

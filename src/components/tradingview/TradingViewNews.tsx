@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Badge } from '../ui/badge';
 import { useTradingViewIntegration } from '../../hooks/use-tradingview-integration';
-import { TradingViewNewsItem } from '../../services/tradingView/tradingViewIntegrationService';
+import { TradingViewNewsItem } from '../../services/tradingView/types';
 import { Skeleton } from '../ui/skeleton';
 import { RefreshCw, ExternalLink } from 'lucide-react';
 
@@ -38,7 +37,8 @@ const TradingViewNews: React.FC<TradingViewNewsProps> = ({
     try {
       const data = await fetchNews(limit);
       if (data && data.length > 0) {
-        setNewsItems(data);
+        // Properly set as state action
+        setNewsItems(() => data);
         setError(null);
       } else {
         setNewsItems([]);

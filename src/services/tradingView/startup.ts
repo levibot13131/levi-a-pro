@@ -1,6 +1,6 @@
 
 import { toast } from 'sonner';
-import { initializeRealTimeUpdates } from '../testIntegrations';
+import { initializeTradingViewSync } from './syncService';
 import { initializeTradingView } from './tradingViewAuthService';
 
 export const initializeTradingViewServices = (): boolean => {
@@ -10,9 +10,9 @@ export const initializeTradingViewServices = (): boolean => {
     // Initialize TradingView auth
     const authInitialized = initializeTradingView();
     
-    // Initialize real-time updates
+    // Initialize real-time updates through TradingView sync
     console.log('🚀 Initializing real-time updates...');
-    const realTimeInitialized = initializeRealTimeUpdates();
+    const realTimeInitialized = initializeTradingViewSync();
     
     if (realTimeInitialized) {
       console.log('✅ Real-time updates initialized successfully');
