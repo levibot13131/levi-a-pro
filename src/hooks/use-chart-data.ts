@@ -1,15 +1,27 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTradingViewIntegration } from './use-tradingview-integration';
-import { TradingViewChartData } from '../services/tradingView/types';
+import { TradingViewChartData, ChartDataPoint } from '../services/tradingView/types';
+
+/**
+ * Calculates percentage change between first and last data points
+ */
+const calculatePercentChange = (data: ChartDataPoint[]): string | null => {
+  if (!data || data.length < 2) return null;
+  
+  const firstPrice = data[0].price;
+  const lastPrice = data[data.length - 1].price;
+  const change = ((lastPrice - firstPrice) / firstPrice) * 100;
+  
+  return change.toFixed(2);
+};
 
 /**
  * Hook for fetching and managing chart data from TradingView
- * @param symbol - The trading symbol to get chart data for
- * @param timeframe - The chart timeframe (e.g., '1h', '4h', '1D')
- * @returns Object containing chart data, loading state, error state, and helper functions
+ * @param symbol - Trading symbol (e.g., 'BTCUSD')
+ * @param timeframe - Chart timeframe (e.g., '1D', '4h')
  */
-export function useChartData(symbol: string, timeframe: string) {
+export function useChartData(symbol: string, timeframe: string = '1D') {
   const [chartData, setChartData] = useState<TradingViewChartData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -29,17 +41,9 @@ export function useChartData(symbol: string, timeframe: string) {
     setIsLoading(true);
     try {
       const data = await fetchChartData(symbol, timeframe);
+      
       if (data) {
-        // Ensure data conforms to expected format
-        const formattedData: TradingViewChartData = {
-          symbol: data.symbol,
-          timeframe: data.timeframe,
-          data: data.data,
-          indicators: data.indicators || [],
-          lastUpdate: data.lastUpdate || data.lastUpdated || Date.now()
-        };
-        
-        setChartData(formattedData);
+        setChartData(data);
         setError(null);
       } else {
         setError('לא ניתן לטעון את נתוני הגרף');
@@ -56,41 +60,33 @@ export function useChartData(symbol: string, timeframe: string) {
   useEffect(() => {
     loadChartData();
   }, [loadChartData]);
-
+  
   // Set up automatic refresh every 10 seconds
   useEffect(() => {
     if (!isConnected) return;
     
-    const interval = setInterval(() => {
-      loadChartData();
-    }, 10000); // Refresh every 10 seconds
-    
+    const interval = setInterval(loadChartData, 10000);
     return () => clearInterval(interval);
   }, [isConnected, loadChartData]);
-
-  /**
-   * Calculates the percentage change between first and last price points
-   * @returns Formatted percentage change or null if insufficient data
-   */
-  const getPercentChange = useCallback(() => {
-    if (!chartData || !chartData.data || chartData.data.length < 2) return null;
+  
+  // Memoized data processing
+  const chartProcessedData = useMemo(() => {
+    if (!chartData?.data) return null;
     
-    const firstPrice = chartData.data[0].price;
-    const lastPrice = chartData.data[chartData.data.length - 1].price;
-    const change = ((lastPrice - firstPrice) / firstPrice) * 100;
-    
-    return change.toFixed(2);
+    return {
+      percentChange: calculatePercentChange(chartData.data),
+      isPositiveChange: calculatePercentChange(chartData.data) 
+        ? parseFloat(calculatePercentChange(chartData.data)!) >= 0 
+        : false
+    };
   }, [chartData]);
-
-  const percentChange = getPercentChange();
-  const isPositiveChange = percentChange && parseFloat(percentChange) >= 0;
   
   return {
     chartData,
     isLoading,
     error,
     loadChartData,
-    percentChange,
-    isPositiveChange
+    ...chartProcessedData
   };
 }
+
