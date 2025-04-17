@@ -1,3 +1,4 @@
+
 import { toast } from 'sonner';
 import { getBinanceCredentials } from './credentials';
 import { BinanceSocketConfig, BinanceStreamMessage } from './types';
@@ -44,10 +45,25 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
     
     if (useProxy) {
       // Use the proxy server's websocket endpoint
-      wsEndpoint = `${proxyConfig.baseUrl.replace('https://', 'wss://').replace('http://', 'ws://')}/binance/ws/${streamName}`;
+      let proxyBase = proxyConfig.baseUrl;
+      
+      // Ensure protocol is correct
+      proxyBase = proxyBase.replace('https://', 'wss://').replace('http://', 'ws://');
+      if (!proxyBase.startsWith('wss://') && !proxyBase.startsWith('ws://')) {
+        proxyBase = 'wss://' + proxyBase;
+      }
+      
+      // Remove trailing slash if present
+      if (proxyBase.endsWith('/')) {
+        proxyBase = proxyBase.slice(0, -1);
+      }
+      
+      wsEndpoint = `${proxyBase}/binance/ws/${streamName}`;
+      console.log(`Using proxy for Binance WebSocket: ${wsEndpoint}`);
     } else {
       // Direct connection to Binance (fallback)
       wsEndpoint = `wss://stream.binance.com:9443/ws/${streamName}`;
+      console.log(`Direct connection to Binance WebSocket: ${wsEndpoint}`);
     }
     
     console.log(`Connecting to Binance WebSocket: ${wsEndpoint}`);
@@ -86,11 +102,26 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
           console.error(`WebSocket error: ${streamName}`, error);
           if (onError) onError(error);
           toast.error('שגיאה בחיבור לנתוני בינאנס בזמן אמת');
+          
+          // Try to reconnect on error after a delay
+          setTimeout(() => {
+            if (ws && ws.readyState === WebSocket.CLOSED) {
+              console.log(`Attempting to reconnect WebSocket: ${streamName}`);
+              activeConnections.delete(streamName);
+              createBinanceWebSocket(config);
+            }
+          }, 5000);
         };
         
         ws.onclose = () => {
           console.log(`WebSocket closed: ${streamName}`);
           activeConnections.delete(streamName);
+          
+          // Try to reconnect on close after a delay
+          setTimeout(() => {
+            console.log(`Attempting to reconnect closed WebSocket: ${streamName}`);
+            createBinanceWebSocket(config);
+          }, 5000);
         };
         
         // Store the connection
@@ -210,6 +241,8 @@ function simulateWebSocketMessages(
                    symbol.includes('ETH') ? 2500 : 
                    symbol.includes('SOL') ? 120 : 
                    symbol.includes('BNB') ? 350 : 50;
+  
+  console.log(`Starting simulated data for ${symbol} with base price ${basePrice}`);
   
   return setInterval(() => {
     const time = Date.now();

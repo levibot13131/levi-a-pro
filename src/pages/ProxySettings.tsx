@@ -81,14 +81,18 @@ const ProxySettings = () => {
     });
     
     // Dispatch config change event
-    window.dispatchEvent(new CustomEvent('proxy-config-changed'));
+    window.dispatchEvent(new CustomEvent('proxy-config-changed', {
+      detail: { enabled: proxyEnabled, url: finalUrl }
+    }));
     
     toast.success('הגדרות הפרוקסי נשמרו בהצלחה');
     addDiagnosticLog(`Proxy settings saved: ${finalUrl} (${proxyEnabled ? 'enabled' : 'disabled'})`);
     
     // Test the connection after saving
     if (proxyEnabled && finalUrl) {
-      setTimeout(() => testProxyConnection(), 500);
+      setTimeout(() => {
+        testProxyConnectionHandler();
+      }, 500);
     }
   };
 
@@ -102,7 +106,7 @@ const ProxySettings = () => {
     addDiagnosticLog('Proxy settings cleared');
   };
 
-  const testProxyConnection = async () => {
+  const testProxyConnectionHandler = async () => {
     if (!proxyUrl.trim()) {
       toast.error('אנא הזן כתובת פרוקסי לבדיקה');
       return;
@@ -268,7 +272,7 @@ const ProxySettings = () => {
                 </Button>
                 <Button 
                   variant="outline" 
-                  onClick={testProxyConnection}
+                  onClick={testProxyConnectionHandler}
                   size="sm"
                   disabled={isTestingConnection || !proxyUrl.trim()}
                 >
@@ -410,4 +414,3 @@ const ProxySettings = () => {
 };
 
 export default ProxySettings;
-

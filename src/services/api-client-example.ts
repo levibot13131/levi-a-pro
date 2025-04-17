@@ -14,6 +14,7 @@ const apiInstance = axios.create({
 // Add a request interceptor to handle API keys and other headers
 apiInstance.interceptors.request.use((config) => {
   // Add any common headers or authentication here
+  console.log(`Sending request to: ${config.url}`);
   return config;
 }, (error) => {
   return Promise.reject(error);
@@ -31,31 +32,52 @@ export const apiClient = {
       headers['X-MBX-APIKEY'] = apiKey;
     }
     
-    const response = await apiInstance.get(url, { 
-      params,
-      headers
-    });
+    console.log(`Making Binance request to: ${url}`);
     
-    return response.data;
+    try {
+      const response = await apiInstance.get(url, { 
+        params,
+        headers
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error(`Binance API error (${endpoint}):`, error);
+      throw error;
+    }
   },
   
   // 2. Pass-through approach - use with generic proxy endpoint
   async getExternalData(targetUrl: string) {
     const url = buildProxyPassthroughUrl(targetUrl);
-    const response = await apiInstance.get(url);
-    return response.data;
+    console.log(`Fetching external data via proxy: ${url}`);
+    
+    try {
+      const response = await apiInstance.get(url);
+      return response.data;
+    } catch (error) {
+      console.error(`External API error (${targetUrl}):`, error);
+      throw error;
+    }
   },
   
   // 3. Authenticated request example
   async getAuthenticatedData(endpoint: string, apiKey: string) {
     const url = getProxyUrl(endpoint);
-    const response = await apiInstance.get(url, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'X-API-KEY': apiKey
-      }
-    });
-    return response.data;
+    console.log(`Making authenticated request to: ${url}`);
+    
+    try {
+      const response = await apiInstance.get(url, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'X-API-KEY': apiKey
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Authenticated API error (${endpoint}):`, error);
+      throw error;
+    }
   },
   
   // 4. Flexible request method for any external API
@@ -73,6 +95,10 @@ export const apiClient = {
       requestUrl = url.startsWith('http') 
         ? buildProxyPassthroughUrl(url) 
         : getProxyUrl(url);
+      
+      console.log(`Using proxy for request to: ${url} => ${requestUrl}`);
+    } else {
+      console.log(`Direct request to: ${url} (proxy bypassed)`);
     }
     
     try {
@@ -94,4 +120,3 @@ export const apiClient = {
 
 // Export the axios instance for direct use
 export { apiInstance };
-
