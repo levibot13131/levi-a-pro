@@ -17,16 +17,28 @@ export interface TradingViewChartData {
   timeframe: string;
   indicators: string[];
   lastUpdate: number; // Timestamp when data was last updated
-  data: {
-    timestamp: number;
-    price: number;
-    volume?: number;
-    open?: number;
-    high?: number;
-    low?: number;
-    close?: number;
-  }[];
+  data: TradingViewDataPoint[];
   lastUpdated?: number; // For backward compatibility
+}
+
+/**
+ * Represents a single data point in a TradingView chart
+ * @property timestamp - Unix timestamp in milliseconds
+ * @property price - Current price
+ * @property volume - Optional trading volume
+ * @property open - Optional opening price
+ * @property high - Optional highest price in the period
+ * @property low - Optional lowest price in the period
+ * @property close - Optional closing price
+ */
+export interface TradingViewDataPoint {
+  timestamp: number;
+  price: number;
+  volume?: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  close?: number;
 }
 
 /**
@@ -58,4 +70,20 @@ export interface TradingViewNewsItem {
   // For backward compatibility
   content?: string;
   publishedAt?: string;
+}
+
+/**
+ * Represents TradingView authentication credentials
+ * @property username - TradingView account username
+ * @property password - TradingView account password (not stored persistently)
+ * @property apiKey - TradingView API key
+ * @property lastConnected - Timestamp of last successful connection
+ * @property isConnected - Backward compatibility flag
+ */
+export interface TradingViewCredentials {
+  username: string;
+  password?: string;
+  apiKey?: string;
+  lastConnected: number;
+  isConnected?: boolean;
 }
