@@ -2,7 +2,7 @@
 import { toast } from 'sonner';
 import { getBinanceCredentials } from './credentials';
 import { BinanceSocketConfig, BinanceStreamMessage } from './types';
-import { getProxyConfig, isProxyConfigured } from '@/services/proxy/proxyConfig';
+import { getProxyConfig, isProxyConfigured, getApiBaseUrl } from '@/services/proxy/proxyConfig';
 import { isRealTimeMode } from './marketData';
 
 // Store active websocket connections
@@ -30,9 +30,7 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
     // Check credentials
     const credentials = getBinanceCredentials();
     if (!credentials?.isConnected) {
-      console.error('No valid Binance credentials');
-      onError?.({ message: 'No valid Binance credentials' });
-      return () => {}; // Return empty cleanup function
+      console.warn('No valid Binance credentials, will attempt to connect anyway');
     }
     
     // Create the WebSocket connection
@@ -41,38 +39,30 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
     // Determine the WebSocket URL based on proxy configuration
     let wsEndpoint = '';
     const proxyConfig = getProxyConfig();
-    const useProxy = proxyConfig?.isEnabled && !!proxyConfig?.baseUrl;
     
-    if (useProxy) {
-      // Use the proxy server's websocket endpoint
-      let proxyBase = proxyConfig.baseUrl;
-      
-      // Ensure protocol is correct
-      proxyBase = proxyBase.replace('https://', 'wss://').replace('http://', 'ws://');
-      if (!proxyBase.startsWith('wss://') && !proxyBase.startsWith('ws://')) {
-        proxyBase = 'wss://' + proxyBase;
-      }
-      
-      // Remove trailing slash if present
-      if (proxyBase.endsWith('/')) {
-        proxyBase = proxyBase.slice(0, -1);
-      }
-      
-      wsEndpoint = `${proxyBase}/binance/ws/${streamName}`;
-      console.log(`Using proxy for Binance WebSocket: ${wsEndpoint}`);
-    } else {
-      // Direct connection to Binance (fallback)
-      wsEndpoint = `wss://stream.binance.com:9443/ws/${streamName}`;
-      console.log(`Direct connection to Binance WebSocket: ${wsEndpoint}`);
+    // Always use the proxy for WebSockets unless explicitly disabled
+    let proxyBase = proxyConfig.baseUrl || 'https://tuition-colony-climb-gently.trycloudflare.com';
+    
+    // Ensure protocol is correct for WebSockets
+    proxyBase = proxyBase.replace('https://', 'wss://').replace('http://', 'ws://');
+    if (!proxyBase.startsWith('wss://') && !proxyBase.startsWith('ws://')) {
+      proxyBase = 'wss://' + proxyBase;
     }
     
-    console.log(`Connecting to Binance WebSocket: ${wsEndpoint}`);
+    // Remove trailing slash if present
+    if (proxyBase.endsWith('/')) {
+      proxyBase = proxyBase.slice(0, -1);
+    }
+    
+    wsEndpoint = `${proxyBase}/binance/ws/${streamName}`;
+    console.log(`Using proxy for Binance WebSocket: ${wsEndpoint}`);
     
     // Check if connection already exists
     let ws = activeConnections.get(streamName);
     
     if (!ws || ws.readyState === WebSocket.CLOSED) {
       try {
+        console.log(`Creating new WebSocket connection to: ${wsEndpoint}`);
         ws = new WebSocket(wsEndpoint);
         
         ws.onopen = () => {
@@ -83,6 +73,8 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
         ws.onmessage = (event) => {
           try {
             const rawData = JSON.parse(event.data);
+            console.log(`WebSocket data received for ${streamName}:`, rawData);
+            
             const streamMessage = parseWebSocketMessage(rawData, symbol);
             
             // Call all registered callbacks for this symbol
@@ -135,6 +127,8 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
         const intervalId = simulateWebSocketMessages(symbol, onMessage);
         return () => clearInterval(intervalId);
       }
+    } else {
+      console.log(`Reusing existing WebSocket connection for ${streamName}`);
     }
     
     // Register the callback if provided
@@ -324,6 +318,8 @@ export const reconnectAllWebSockets = (): void => {
   const existingConnections = new Map(activeConnections);
   const existingCallbacks = new Map(messageCallbacks);
   
+  console.log(`Reconnecting ${existingConnections.size} WebSocket connections...`);
+  
   // Close all existing connections
   closeAllConnections();
   
@@ -339,4 +335,9 @@ export const reconnectAllWebSockets = (): void => {
   });
   
   console.log(`Reconnected ${existingConnections.size} WebSocket connections`);
+  
+  // Notify user
+  if (existingConnections.size > 0) {
+    toast.success(`${existingConnections.size} WebSocket connections reconnected`);
+  }
 };

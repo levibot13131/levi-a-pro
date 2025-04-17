@@ -1,6 +1,6 @@
 
 import axios from 'axios';
-import { getProxyUrl, buildProxyPassthroughUrl, isProxyConfigured } from './proxy/proxyConfig';
+import { getProxyUrl, buildProxyPassthroughUrl, isProxyConfigured, getApiBaseUrl } from './proxy/proxyConfig';
 
 // Create an axios instance for API requests
 const apiInstance = axios.create({
@@ -15,8 +15,38 @@ const apiInstance = axios.create({
 apiInstance.interceptors.request.use((config) => {
   // Add any common headers or authentication here
   console.log(`Sending request to: ${config.url}`);
+  
+  // Log full request details in development
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Full request config:', {
+      url: config.url,
+      method: config.method,
+      headers: config.headers,
+      params: config.params
+    });
+  }
+  
   return config;
 }, (error) => {
+  console.error('Request interceptor error:', error);
+  return Promise.reject(error);
+});
+
+// Add a response interceptor for better error handling
+apiInstance.interceptors.response.use((response) => {
+  return response;
+}, (error) => {
+  if (error.response) {
+    console.error(`API error response (${error.config?.url}):`, {
+      status: error.response.status,
+      data: error.response.data,
+      headers: error.response.headers
+    });
+  } else if (error.request) {
+    console.error(`API no response (${error.config?.url}):`, error.request);
+  } else {
+    console.error(`API request error:`, error.message);
+  }
   return Promise.reject(error);
 });
 
@@ -90,8 +120,10 @@ export const apiClient = {
     const opts = options || {};
     let requestUrl = url;
     
-    // Use proxy if specified or if globally enabled
-    if (opts.useProxy !== false && isProxyConfigured()) {
+    // Always use proxy if not explicitly disabled
+    const useProxy = opts.useProxy !== false;
+    
+    if (useProxy) {
       requestUrl = url.startsWith('http') 
         ? buildProxyPassthroughUrl(url) 
         : getProxyUrl(url);
@@ -114,6 +146,54 @@ export const apiClient = {
     } catch (error) {
       console.error(`API ${method} request failed:`, error);
       throw error;
+    }
+  },
+  
+  // 5. Test connection to any endpoint
+  async testConnection(url: string): Promise<boolean> {
+    try {
+      const response = await axios.get(url, { 
+        timeout: 10000,
+        headers: { 'Accept': 'application/json' }
+      });
+      return response.status === 200;
+    } catch (error) {
+      console.error('Connection test failed:', error);
+      return false;
+    }
+  },
+  
+  // 6. Test the proxy connection directly
+  async testProxyConnection(): Promise<boolean> {
+    const baseUrl = getApiBaseUrl();
+    try {
+      // Try ping endpoint
+      const pingUrl = `${baseUrl}/ping`;
+      console.log(`Testing proxy ping: ${pingUrl}`);
+      
+      const response = await axios.get(pingUrl, { 
+        timeout: 10000,
+        headers: { 'Accept': 'application/json' }
+      });
+      
+      console.log(`Proxy ping response:`, response.status, response.data);
+      return response.status === 200;
+    } catch (error) {
+      console.error('Proxy ping test failed:', error);
+      
+      // Try root endpoint as fallback
+      try {
+        const rootUrl = getApiBaseUrl();
+        console.log(`Testing proxy root: ${rootUrl}`);
+        
+        const rootResponse = await axios.get(rootUrl, { timeout: 10000 });
+        console.log(`Proxy root response:`, rootResponse.status);
+        
+        return rootResponse.status === 200;
+      } catch (rootError) {
+        console.error('Proxy root test also failed:', rootError);
+        return false;
+      }
     }
   }
 };

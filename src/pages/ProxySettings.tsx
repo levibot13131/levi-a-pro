@@ -50,9 +50,11 @@ const ProxySettings = () => {
         testProxyConnection()
           .then(success => {
             setConnectionStatus(success ? 'success' : 'error');
+            addDiagnosticLog(`Initial connection test: ${success ? 'SUCCESS' : 'FAILED'}`);
           })
-          .catch(() => {
+          .catch((err) => {
             setConnectionStatus('error');
+            addDiagnosticLog(`Error during connection test: ${err.message}`);
           });
       }, 1000);
     }
@@ -174,6 +176,23 @@ const ProxySettings = () => {
           }
         } catch (optionsError) {
           addDiagnosticLog(`OPTIONS failed: ${(optionsError as Error).message}`);
+        }
+      }
+      
+      // Try a direct simple fetch as last resort
+      if (!success) {
+        try {
+          addDiagnosticLog(`Trying simple fetch request...`);
+          const response = await fetch(testUrl, { 
+            method: 'GET',
+            mode: 'cors'
+          });
+          addDiagnosticLog(`Simple fetch response: ${response.status}`);
+          if (response.ok) {
+            success = true;
+          }
+        } catch (fetchError) {
+          addDiagnosticLog(`Simple fetch failed: ${(fetchError as Error).message}`);
         }
       }
       

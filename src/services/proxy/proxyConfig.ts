@@ -2,6 +2,7 @@
 import { toast } from 'sonner';
 
 const PROXY_URL_KEY = 'levi_bot_proxy_url';
+const DEFAULT_PROXY_URL = 'https://tuition-colony-climb-gently.trycloudflare.com';
 
 /**
  * Default proxy configuration
@@ -24,20 +25,10 @@ export const getProxyConfig = (): ProxyConfig => {
     console.error('Error parsing proxy config:', error);
   }
   
-  // Check for environment variable as fallback
-  const envProxyUrl = import.meta.env.VITE_PROXY_URL || 'https://tuition-colony-climb-gently.trycloudflare.com';
-  
-  // If no saved config but we have an env URL, create a default enabled config
-  if (envProxyUrl) {
-    return {
-      baseUrl: envProxyUrl,
-      isEnabled: true
-    };
-  }
-  
+  // Always use the Cloudflare URL as fallback
   return {
-    baseUrl: '',
-    isEnabled: false
+    baseUrl: DEFAULT_PROXY_URL,
+    isEnabled: true
   };
 };
 
@@ -91,9 +82,8 @@ export const setProxyConfig = (config: ProxyConfig): void => {
  */
 export const getApiBaseUrl = (): string => {
   const config = getProxyConfig();
-  console.log('Current proxy config:', config);
   
-  // בדיקה מחמירה יותר שהפרוקסי מוגדר
+  // הבדיקה מחמירה יותר שהפרוקסי מוגדר
   if (config.isEnabled && config.baseUrl && config.baseUrl.trim().length > 0) {
     // וידוא שהכתובת נקייה
     let url = config.baseUrl.trim();
@@ -110,8 +100,9 @@ export const getApiBaseUrl = (): string => {
     return url;
   }
   
-  console.log('Proxy not configured or disabled');
-  return '';
+  // אם אין פרוקסי, נחזיר את ברירת המחדל
+  console.log('No custom proxy configured, using default:', DEFAULT_PROXY_URL);
+  return DEFAULT_PROXY_URL;
 };
 
 /**
@@ -123,7 +114,7 @@ export const clearProxyConfig = (): void => {
   
   // שליחת אירוע ניקוי קונפיגורציה
   window.dispatchEvent(new CustomEvent('proxy-config-changed', {
-    detail: { baseUrl: '', isEnabled: false }
+    detail: { baseUrl: DEFAULT_PROXY_URL, isEnabled: true }
   }));
 };
 
@@ -210,25 +201,48 @@ export const testProxyConnection = async (): Promise<boolean> => {
   }
 
   try {
-    // Test the ping endpoint
-    const response = await fetch(`${config.baseUrl}/ping`, { 
+    // First try the ping endpoint
+    console.log(`Testing proxy connection to ${config.baseUrl}/ping`);
+    const pingResponse = await fetch(`${config.baseUrl}/ping`, { 
       method: 'GET',
       headers: { 'Accept': 'application/json' },
-      mode: 'cors'
+      mode: 'cors',
+      timeout: 5000
     });
 
-    if (response.ok) {
-      console.log('Proxy connection successful');
+    if (pingResponse.ok) {
+      console.log('Proxy ping test successful');
       return true;
     }
     
-    // If ping fails, try a basic OPTIONS request
-    const optionsResponse = await fetch(config.baseUrl, { 
-      method: 'OPTIONS',
-      mode: 'cors'
+    // If ping fails, try a basic root request
+    console.log(`Ping failed, trying root URL ${config.baseUrl}`);
+    const rootResponse = await fetch(config.baseUrl, { 
+      method: 'GET',
+      mode: 'cors',
+      timeout: 5000
     });
     
-    return optionsResponse.ok;
+    if (rootResponse.ok) {
+      console.log('Proxy root test successful');
+      return true;
+    }
+    
+    // If both fail, try an OPTIONS request
+    console.log('Root test failed, trying OPTIONS request');
+    const optionsResponse = await fetch(config.baseUrl, { 
+      method: 'OPTIONS',
+      mode: 'cors',
+      timeout: 5000
+    });
+    
+    if (optionsResponse.ok) {
+      console.log('Proxy OPTIONS test successful');
+      return true;
+    }
+    
+    console.log('All proxy tests failed');
+    return false;
   } catch (error) {
     console.error('Error testing proxy connection:', error);
     return false;
@@ -239,17 +253,30 @@ export const testProxyConnection = async (): Promise<boolean> => {
  * Initialize proxy settings from environment or saved config
  */
 export const initializeProxySettings = (): void => {
-  const envProxyUrl = import.meta.env.VITE_PROXY_URL || 'https://tuition-colony-climb-gently.trycloudflare.com';
   const savedConfig = getProxyConfig();
   
-  // If no saved config but we have an env URL, set it up
-  if (!savedConfig.baseUrl && envProxyUrl) {
+  // Always set the Cloudflare URL as default if nothing is saved
+  if (!savedConfig.baseUrl) {
     setProxyConfig({
-      baseUrl: envProxyUrl,
+      baseUrl: DEFAULT_PROXY_URL,
       isEnabled: true
     });
-    console.log('Proxy initialized from environment:', envProxyUrl);
-  } else if (savedConfig.baseUrl) {
+    console.log('Proxy initialized with default Cloudflare URL:', DEFAULT_PROXY_URL);
+  } else {
     console.log('Using saved proxy configuration:', savedConfig.baseUrl);
   }
+  
+  // Test the connection on initialization
+  testProxyConnection()
+    .then(success => {
+      console.log(`Initial proxy test: ${success ? 'SUCCESS' : 'FAILED'}`);
+      if (success) {
+        toast.success('Proxy connection verified', {
+          description: 'External services are now connected'
+        });
+      }
+    })
+    .catch(err => {
+      console.error('Error during initial proxy test:', err);
+    });
 };

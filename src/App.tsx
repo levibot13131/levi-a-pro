@@ -10,6 +10,7 @@ import router from './routes/router';
 import { useAppSettings } from './hooks/use-app-settings';
 import { initializeProxySettings, testProxyConnection, getProxyConfig } from './services/proxy/proxyConfig';
 import { reconnectAllWebSockets } from './services/binance/websocket';
+import { apiClient } from './services/api-client-example';
 
 const App: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -27,6 +28,14 @@ const App: React.FC = () => {
     testProxyConnection()
       .then(success => {
         console.log('Initial proxy test:', success ? 'success' : 'failed');
+        if (success) {
+          // Also test direct API connectivity
+          return apiClient.testProxyConnection();
+        }
+        return false;
+      })
+      .then(apiSuccess => {
+        console.log('API connectivity test:', apiSuccess ? 'success' : 'failed');
       })
       .catch(err => {
         console.error('Error testing proxy:', err);
@@ -67,6 +76,15 @@ const App: React.FC = () => {
       testProxyConnection()
         .then(success => {
           console.log('Proxy test after config change:', success ? 'success' : 'failed');
+          if (success) {
+            toast.success('Proxy connection verified', { 
+              description: 'All services will now use the new proxy settings'
+            });
+          } else {
+            toast.warning('Proxy connection failed', {
+              description: 'Services may not function correctly'
+            });
+          }
         })
         .catch(err => {
           console.error('Error testing proxy after config change:', err);
