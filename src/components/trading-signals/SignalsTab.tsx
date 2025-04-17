@@ -8,6 +8,9 @@ import { TradeSignal, Asset } from '@/types/asset';
 import SignalCard from './SignalCard';
 import { getAlertDestinations } from '@/services/tradingView/alerts/destinations';
 
+/**
+ * Props for the SignalsTab component
+ */
 interface SignalsTabProps {
   selectedAssetId: string;
   setSelectedAssetId: (id: string) => void;
@@ -21,6 +24,9 @@ interface SignalsTabProps {
   toggleRealTimeAnalysis: () => void;
 }
 
+/**
+ * Component that displays trading signals with filtering and actions
+ */
 const SignalsTab: React.FC<SignalsTabProps> = ({
   selectedAssetId,
   setSelectedAssetId,
@@ -33,6 +39,7 @@ const SignalsTab: React.FC<SignalsTabProps> = ({
   realTimeActive,
   toggleRealTimeAnalysis
 }) => {
+  // Check if there are any active alert destinations
   const hasActiveDestinations = getAlertDestinations().some(dest => dest.active);
 
   return (

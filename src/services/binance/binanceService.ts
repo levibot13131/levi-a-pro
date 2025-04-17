@@ -1,6 +1,14 @@
 
 import { toast } from 'sonner';
 
+/**
+ * Interface for Binance API credentials
+ * @property apiKey - Binance API key
+ * @property apiSecret - Binance API secret
+ * @property testnet - Whether to use Binance testnet
+ * @property lastConnected - Timestamp of last successful connection
+ * @property isConnected - Deprecated; use lastConnected to determine connection status
+ */
 export interface BinanceCredentials {
   apiKey: string;
   apiSecret: string;
@@ -9,13 +17,19 @@ export interface BinanceCredentials {
   isConnected?: boolean; // Added for backward compatibility
 }
 
-// Check if Binance is connected
+/**
+ * Checks if Binance is connected
+ * @returns boolean indicating connection status
+ */
 export const isBinanceConnected = (): boolean => {
   const credentials = getBinanceCredentials();
   return !!credentials;
 };
 
-// Get Binance credentials from localStorage
+/**
+ * Gets Binance credentials from localStorage
+ * @returns BinanceCredentials or null if not found/invalid
+ */
 export const getBinanceCredentials = (): BinanceCredentials | null => {
   try {
     const storedCredentials = localStorage.getItem('binance_api_keys');
@@ -35,7 +49,11 @@ export const getBinanceCredentials = (): BinanceCredentials | null => {
   }
 };
 
-// Connect to Binance with API keys
+/**
+ * Connects to Binance with API keys
+ * @param credentials - Object containing apiKey, apiSecret, and testnet flag
+ * @returns Promise resolving to boolean indicating success
+ */
 export const connectToBinance = async (
   credentials: Omit<BinanceCredentials, 'lastConnected' | 'isConnected'>
 ): Promise<boolean> => {
@@ -59,13 +77,18 @@ export const connectToBinance = async (
   }
 };
 
-// Disconnect from Binance
+/**
+ * Disconnects from Binance
+ */
 export const disconnectBinance = (): void => {
   localStorage.removeItem('binance_api_keys');
   toast.success('התנתקת בהצלחה מבינאנס');
 };
 
-// Test Binance API connection
+/**
+ * Tests Binance API connection
+ * @returns Promise resolving to boolean indicating success
+ */
 export const testBinanceConnection = async (): Promise<boolean> => {
   const credentials = getBinanceCredentials();
   if (!credentials) return false;
@@ -82,7 +105,11 @@ export const testBinanceConnection = async (): Promise<boolean> => {
   }
 };
 
-// Validate Binance credentials (used in ApiConnections.tsx)
+/**
+ * Validates Binance credentials and connects if valid
+ * @param credentials - Object containing apiKey, apiSecret, and optional testnet flag
+ * @returns Promise resolving to boolean indicating success
+ */
 export const validateBinanceCredentials = async (
   credentials: Partial<BinanceCredentials>
 ): Promise<boolean> => {
@@ -115,7 +142,10 @@ export const validateBinanceCredentials = async (
 // For backward compatibility with existing code, alias clearBinanceCredentials to disconnectBinance
 export const clearBinanceCredentials = disconnectBinance;
 
-// For backward compatibility with credentials object shape
+/**
+ * Saves Binance credentials
+ * @param credentials - Object containing credential information
+ */
 export const saveBinanceCredentials = (credentials: any): void => {
   const enhancedCredentials: BinanceCredentials = {
     apiKey: credentials.apiKey,

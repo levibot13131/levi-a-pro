@@ -12,15 +12,27 @@ import {
   TradingViewNewsItem
 } from '../services/tradingView';
 import { toast } from 'sonner';
+import { useRealTimeSync } from './use-realtime-sync';
 
+/**
+ * Hook for managing TradingView integration, data fetching, and real-time sync
+ * @returns Object containing connection state, sync methods, and data fetching functions
+ */
 export function useTradingViewIntegration() {
   const { isConnected } = useTradingViewConnection();
   const [syncEnabled, setSyncEnabled] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
-  const [realTimeUpdateInterval, setRealTimeUpdateInterval] = useState<NodeJS.Timeout | null>(null);
   const syncInProgress = useRef(false);
   
+  // Get real-time sync functions from custom hook
+  const { 
+    realTimeUpdateInterval,
+    startRealTimeUpdates,
+    stopRealTimeUpdates 
+  } = useRealTimeSync(isConnected, manualSync);
+  
+  // Initialize sync status
   useEffect(() => {
     // Check initial sync status
     const syncStatus = isSyncActive();
@@ -53,43 +65,14 @@ export function useTradingViewIntegration() {
     return () => {
       stopRealTimeUpdates();
     };
-  }, [isConnected]);
-
-  const startRealTimeUpdates = useCallback(() => {
-    if (realTimeUpdateInterval) {
-      clearInterval(realTimeUpdateInterval);
-    }
-    
-    const interval = setInterval(async () => {
-      if (syncInProgress.current) {
-        console.log('Previous sync still in progress, skipping...');
-        return;
-      }
-      
-      if (isConnected) {
-        console.log('Auto-sync triggered');
-        syncInProgress.current = true;
-        try {
-          await manualSync(false);
-        } finally {
-          syncInProgress.current = false;
-        }
-      }
-    }, 30000); // Update every 30 seconds
-    
-    setRealTimeUpdateInterval(interval);
-    console.log('Real-time TradingView updates started');
-  }, [isConnected]);
+  }, [isConnected, startRealTimeUpdates, stopRealTimeUpdates]);
   
-  const stopRealTimeUpdates = useCallback(() => {
-    if (realTimeUpdateInterval) {
-      clearInterval(realTimeUpdateInterval);
-      setRealTimeUpdateInterval(null);
-      console.log('Real-time TradingView updates stopped');
-    }
-  }, [realTimeUpdateInterval]);
-  
-  const manualSync = async (showToast: boolean = true) => {
+  /**
+   * Manually trigger a TradingView sync
+   * @param showToast - Whether to show success/error toasts
+   * @returns Promise resolving to boolean indicating success
+   */
+  async function manualSync(showToast: boolean = true) {
     if (!isConnected) {
       if (showToast) {
         toast.error("לא ניתן לסנכרן", {
@@ -138,8 +121,11 @@ export function useTradingViewIntegration() {
     } finally {
       setIsSyncing(false);
     }
-  };
+  }
   
+  /**
+   * Toggle automatic sync on/off
+   */
   const toggleAutoSync = useCallback(() => {
     if (syncEnabled) {
       stopTradingViewSync();
@@ -171,7 +157,16 @@ export function useTradingViewIntegration() {
     }
   }, [syncEnabled, isConnected, startRealTimeUpdates, stopRealTimeUpdates]);
   
-  const fetchChartData = useCallback(async (symbol: string, timeframe: string = '1D'): Promise<TradingViewChartData | null> => {
+  /**
+   * Fetch chart data for a specific symbol and timeframe
+   * @param symbol - Trading symbol (e.g., 'BTCUSD')
+   * @param timeframe - Chart timeframe (e.g., '1D', '4h')
+   * @returns Promise resolving to chart data or null
+   */
+  const fetchChartData = useCallback(async (
+    symbol: string, 
+    timeframe: string = '1D'
+  ): Promise<TradingViewChartData | null> => {
     try {
       return await getChartData(symbol, timeframe);
     } catch (error) {
@@ -180,7 +175,14 @@ export function useTradingViewIntegration() {
     }
   }, []);
   
-  const fetchNews = useCallback(async (limit: number = 10): Promise<TradingViewNewsItem[]> => {
+  /**
+   * Fetch news from TradingView
+   * @param limit - Maximum number of news items to return
+   * @returns Promise resolving to array of news items
+   */
+  const fetchNews = useCallback(async (
+    limit: number = 10
+  ): Promise<TradingViewNewsItem[]> => {
     try {
       return await getTradingViewNews(limit);
     } catch (error) {

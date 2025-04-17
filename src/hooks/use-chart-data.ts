@@ -3,6 +3,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTradingViewIntegration } from './use-tradingview-integration';
 import { TradingViewChartData } from '../services/tradingView/types';
 
+/**
+ * Hook for fetching and managing chart data from TradingView
+ * @param symbol - The trading symbol to get chart data for
+ * @param timeframe - The chart timeframe (e.g., '1h', '4h', '1D')
+ * @returns Object containing chart data, loading state, error state, and helper functions
+ */
 export function useChartData(symbol: string, timeframe: string) {
   const [chartData, setChartData] = useState<TradingViewChartData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -10,6 +16,9 @@ export function useChartData(symbol: string, timeframe: string) {
   
   const { fetchChartData, isConnected } = useTradingViewIntegration();
   
+  /**
+   * Loads chart data for the specified symbol and timeframe
+   */
   const loadChartData = useCallback(async () => {
     if (!isConnected) {
       setError('אנא התחבר ל-TradingView תחילה');
@@ -21,7 +30,7 @@ export function useChartData(symbol: string, timeframe: string) {
     try {
       const data = await fetchChartData(symbol, timeframe);
       if (data) {
-        // Convert data to expected format if necessary
+        // Ensure data conforms to expected format
         const formattedData: TradingViewChartData = {
           symbol: data.symbol,
           timeframe: data.timeframe,
@@ -59,6 +68,10 @@ export function useChartData(symbol: string, timeframe: string) {
     return () => clearInterval(interval);
   }, [isConnected, loadChartData]);
 
+  /**
+   * Calculates the percentage change between first and last price points
+   * @returns Formatted percentage change or null if insufficient data
+   */
   const getPercentChange = useCallback(() => {
     if (!chartData || !chartData.data || chartData.data.length < 2) return null;
     
