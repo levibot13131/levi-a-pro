@@ -7,15 +7,18 @@ import { startRealTimeUpdates } from './services/realtime/realtimeService';
 import { initializeTradingViewServices } from './services/tradingView/startup';
 import { useAuth } from './contexts/AuthContext';
 import router from './routes/router';
+import { useAppSettings } from './hooks/use-app-settings';
 
 const App: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  const demoMode = useAppSettings((state) => state.demoMode);
   
   useEffect(() => {
     // Initialize all real-time services when the app loads
     const initializeServices = async () => {
       try {
         console.log('Initializing application services...');
+        console.log(`Current mode: ${demoMode ? 'DEMO' : 'PRODUCTION'}`);
         
         // Initialize TradingView services if user is authenticated
         if (isAuthenticated) {
@@ -32,7 +35,7 @@ const App: React.FC = () => {
     };
     
     initializeServices();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, demoMode]);
   
   return (
     <ThemeProvider defaultTheme="light" storageKey="ui-theme">

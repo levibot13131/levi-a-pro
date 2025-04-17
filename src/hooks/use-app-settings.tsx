@@ -1,25 +1,29 @@
+
 import React, { useEffect } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { toast } from 'sonner';
 
-// האירוע המותאם אישית לשינוי מצב דמו
+// Custom event for demo mode change
 export const DEMO_MODE_CHANGE_EVENT = 'demo-mode-change';
 
 // Get demo mode from environment or default to true
 const getInitialDemoMode = (): boolean => {
-  // Check environment variable first
+  // Check environment variable first (highest priority)
   const envDemoMode = import.meta.env.VITE_DEMO_MODE;
   if (envDemoMode !== undefined) {
+    console.log('Demo mode from environment:', envDemoMode);
     return envDemoMode === 'true' || envDemoMode === true;
   }
   
   // If not in env, check localStorage
   const storedDemoMode = localStorage.getItem('app_demo_mode');
   if (storedDemoMode !== null) {
+    console.log('Demo mode from localStorage:', storedDemoMode);
     return storedDemoMode === 'true';
   }
   
+  console.log('Using default demo mode: true');
   return true; // Default to demo mode if not specified
 };
 
@@ -50,7 +54,7 @@ export const useAppSettings = create<AppSettingsState>()(
           const newDemoMode = !state.demoMode;
           localStorage.setItem('app_demo_mode', String(newDemoMode));
           
-          // השמעת אירוע שינוי מצב דמו
+          // Dispatch custom event for demo mode change
           const event = new CustomEvent(DEMO_MODE_CHANGE_EVENT, {
             detail: {
               demoMode: newDemoMode
@@ -58,7 +62,7 @@ export const useAppSettings = create<AppSettingsState>()(
           });
           window.dispatchEvent(event);
           
-          // הצגת הודעת טוסט על השינוי
+          // Show toast notification about the change
           if (newDemoMode) {
             toast.info('עברת למצב דמו', {
               description: 'כל הנתונים הם לצורכי הדגמה בלבד'
@@ -104,25 +108,25 @@ export const useAppSettings = create<AppSettingsState>()(
   )
 );
 
-// Hook להאזנה לשינויים במצב דמו
+// Hook for listening to demo mode changes
 export const useDemoModeListener = (callback: (demoMode: boolean) => void) => {
   useEffect(() => {
     const handleDemoModeChange = (event: CustomEvent) => {
       callback((event as any).detail.demoMode);
     };
     
-    // הוספת האזנה לאירוע
+    // Add event listener
     window.addEventListener(DEMO_MODE_CHANGE_EVENT, handleDemoModeChange as EventListener);
     
-    // ניקוי האזנה בעת פירוק הקומפוננטה
+    // Clean up event listener when component unmounts
     return () => {
       window.removeEventListener(DEMO_MODE_CHANGE_EVENT, handleDemoModeChange as EventListener);
     };
   }, [callback]);
   
-  // החזרת הערך הנוכחי של מצב דמו
+  // Return current demo mode value
   return useAppSettings((state) => state.demoMode);
 };
 
-// בנוסף, נייצא גם גישה ישירה למצב הדמו
+// Direct access to demo mode
 export const isDemoMode = () => useAppSettings.getState().demoMode;

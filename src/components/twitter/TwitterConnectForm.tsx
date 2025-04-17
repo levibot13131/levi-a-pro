@@ -1,150 +1,198 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { LogOut, Twitter } from 'lucide-react';
-import { connectToTwitter, disconnectFromTwitter } from '@/services/twitter/twitterService';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 
-export interface TwitterConnectFormProps {
-  isConnected: boolean;
-  onDisconnect: () => void;
+// Form schema for Twitter API credentials
+const formSchema = z.object({
+  apiKey: z.string().min(10, {
+    message: 'API Key is required and must be valid',
+  }),
+  apiSecret: z.string().min(10, {
+    message: 'API Secret is required and must be valid',
+  }),
+  bearerToken: z.string().min(10, {
+    message: 'Bearer Token is required and must be valid',
+  }),
+});
+
+// Get Twitter API keys from environment variables or localStorage
+const getTwitterCredentials = () => {
+  // Check environment variables first
+  const envApiKey = import.meta.env.VITE_TWITTER_API_KEY;
+  const envApiSecret = import.meta.env.VITE_TWITTER_API_SECRET;
+  const envBearerToken = import.meta.env.VITE_TWITTER_BEARER_TOKEN;
+  
+  // If all environment variables are set, use them
+  if (envApiKey && envApiSecret && envBearerToken) {
+    console.log('Using Twitter API credentials from environment variables');
+    return {
+      apiKey: envApiKey,
+      apiSecret: envApiSecret,
+      bearerToken: envBearerToken,
+    };
+  }
+  
+  // Otherwise, try to get from localStorage
+  try {
+    const stored = localStorage.getItem('twitter_api_keys');
+    if (stored) {
+      console.log('Using Twitter API credentials from localStorage');
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.error('Failed to parse stored Twitter credentials:', error);
+  }
+  
+  // Return empty values if nothing found
+  return {
+    apiKey: '',
+    apiSecret: '',
+    bearerToken: '',
+  };
+};
+
+interface TwitterConnectFormProps {
+  onConnect: (credentials: any) => void;
 }
 
-const TwitterConnectForm: React.FC<TwitterConnectFormProps> = ({ 
-  isConnected,
-  onDisconnect
-}) => {
-  const [apiKey, setApiKey] = useState('');
-  const [apiSecret, setApiSecret] = useState('');
-  const [bearerToken, setBearerToken] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+const TwitterConnectForm: React.FC<TwitterConnectFormProps> = ({ onConnect }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const savedCredentials = getTwitterCredentials();
   
-  const handleConnect = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    try {
-      const success = await connectToTwitter({
-        apiKey,
-        apiSecret,
-        bearerToken,
-      });
-      
-      if (success) {
-        setApiKey('');
-        setApiSecret('');
-        setBearerToken('');
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      apiKey: savedCredentials.apiKey || '',
+      apiSecret: savedCredentials.apiSecret || '',
+      bearerToken: savedCredentials.bearerToken || '',
+    },
+  });
+  
+  // Auto-connect if we have environment variables
+  useEffect(() => {
+    if (savedCredentials.apiKey && savedCredentials.apiSecret && savedCredentials.bearerToken) {
+      // If the credentials came from environment variables, connect automatically
+      if (import.meta.env.VITE_TWITTER_API_KEY) {
+        handleConnect(savedCredentials);
       }
+    }
+  }, []);
+  
+  const handleConnect = async (values: z.infer<typeof formSchema>) => {
+    setIsSubmitting(true);
+    try {
+      // Store credentials in localStorage
+      localStorage.setItem('twitter_api_keys', JSON.stringify(values));
+      
+      // Call the onConnect callback
+      onConnect(values);
+      
+      toast.success('התחברות לטוויטר הצליחה', {
+        description: 'התחברת בהצלחה לחשבון הטוויטר',
+      });
     } catch (error) {
-      toast.error('שגיאה בהתחברות לטוויטר');
-      console.error('Error connecting to Twitter:', error);
+      console.error('Failed to connect to Twitter:', error);
+      toast.error('התחברות לטוויטר נכשלה', {
+        description: 'אנא בדוק את פרטי ההתחברות ונסה שוב',
+      });
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
-  
-  const handleDisconnect = () => {
-    disconnectFromTwitter();
-    onDisconnect();
-  };
-  
-  if (isConnected) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-right">מחובר לטוויטר</CardTitle>
-          <CardDescription className="text-right">
-            אתה מחובר כעת לחשבון הטוויטר שלך
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground text-right mb-4">
-            המפתחות נשמרים מקומית במכשיר שלך ולא נשלחים לשרת.
-          </p>
-        </CardContent>
-        <CardFooter className="flex justify-end">
-          <Button variant="destructive" onClick={handleDisconnect}>
-            <LogOut className="ml-2 h-4 w-4" />
-            התנתק מטוויטר
-          </Button>
-        </CardFooter>
-      </Card>
-    );
-  }
   
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-right">התחבר לטוויטר</CardTitle>
+        <CardTitle className="text-right">התחברות לטוויטר</CardTitle>
         <CardDescription className="text-right">
-          הזן את פרטי API של טוויטר שלך כדי להתחבר
+          נדרשים מפתחות API של טוויטר לצורך ניתוח סנטימנט ומעקב אחר מידע
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleConnect} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="api-key" className="text-right block">מפתח API</Label>
-            <Input 
-              id="api-key"
-              placeholder="הזן את מפתח ה-API שלך"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              dir="ltr"
-              className="text-left"
-              required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleConnect)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="apiKey"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-right block">API Key</FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      placeholder="הזן את ה-API Key שלך" 
+                      className="text-right dir-rtl"
+                    />
+                  </FormControl>
+                  <FormDescription className="text-right">
+                    ניתן להשיג מחשבון המפתחים של טוויטר
+                  </FormDescription>
+                  <FormMessage className="text-right" />
+                </FormItem>
+              )}
             />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="api-secret" className="text-right block">מפתח סודי של API</Label>
-            <Input 
-              id="api-secret"
-              type="password"
-              placeholder="הזן את המפתח הסודי של ה-API שלך"
-              value={apiSecret}
-              onChange={(e) => setApiSecret(e.target.value)}
-              dir="ltr"
-              className="text-left"
-              required
+            
+            <FormField
+              control={form.control}
+              name="apiSecret"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-right block">API Secret</FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      type="password" 
+                      placeholder="הזן את ה-API Secret שלך" 
+                      className="text-right dir-rtl"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-right" />
+                </FormItem>
+              )}
             />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="bearer-token" className="text-right block">Bearer Token</Label>
-            <Input 
-              id="bearer-token"
-              type="password"
-              placeholder="הזן את Bearer Token שלך"
-              value={bearerToken}
-              onChange={(e) => setBearerToken(e.target.value)}
-              dir="ltr"
-              className="text-left"
-              required
+            
+            <FormField
+              control={form.control}
+              name="bearerToken"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-right block">Bearer Token</FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      type="password" 
+                      placeholder="הזן את ה-Bearer Token שלך" 
+                      className="text-right dir-rtl"
+                    />
+                  </FormControl>
+                  <FormMessage className="text-right" />
+                </FormItem>
+              )}
             />
-          </div>
-          
-          <p className="text-xs text-muted-foreground text-right">
-            מפתחות אלו נשמרים מקומית במכשיר שלך בלבד ולא נשלחים לשום שרת.
-            <a href="https://developer.twitter.com/en/portal/dashboard" 
-               target="_blank" 
-               rel="noopener noreferrer"
-               className="text-primary hover:underline block"
-            >
-              למידע על איך להשיג את המפתחות, בקר בפורטל המפתחים של טוויטר
-            </a>
-          </p>
-          
-          <div className="pt-2 flex justify-end">
-            <Button type="submit" disabled={isLoading}>
-              <Twitter className="ml-2 h-4 w-4" />
-              {isLoading ? 'מתחבר...' : 'התחבר לטוויטר'}
-            </Button>
-          </div>
-        </form>
+            
+            <div className="flex justify-end">
+              <Button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="mt-2"
+              >
+                {isSubmitting ? 'מתחבר...' : 'התחבר'}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </CardContent>
+      <CardFooter className="bg-muted/50 flex justify-end">
+        <p className="text-sm text-muted-foreground text-right">
+          הערה: הנתונים יישמרו באופן מקומי בדפדפן שלך בלבד
+        </p>
+      </CardFooter>
     </Card>
   );
 };

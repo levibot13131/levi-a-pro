@@ -1,3 +1,4 @@
+
 import { createBrowserRouter } from "react-router-dom";
 import Layout from "../components/layout/Layout";
 import RequireAuth from "@/components/auth/RequireAuth";
@@ -30,6 +31,10 @@ import Profile from "../pages/Profile";
 import InformationSources from "../pages/InformationSources";
 import MarketNews from "../pages/MarketNews";
 import FundamentalData from "../pages/FundamentalData";
+import Admin from "../pages/Admin";
+import UserManagement from "../pages/UserManagement";
+import TradingDashboard from "../pages/TradingDashboard";
+import Missing from "../pages/Missing";
 
 const router = createBrowserRouter([
   {
@@ -137,6 +142,18 @@ const router = createBrowserRouter([
         element: <RequireAuth><FundamentalData /></RequireAuth>,
       },
       {
+        path: "admin",
+        element: <RequireAuth><Admin /></RequireAuth>,
+      },
+      {
+        path: "user-management",
+        element: <RequireAuth><UserManagement /></RequireAuth>,
+      },
+      {
+        path: "trading-dashboard",
+        element: <RequireAuth><TradingDashboard /></RequireAuth>,
+      },
+      {
         path: "unauthorized",
         element: <Unauthorized />,
       },
@@ -157,6 +174,14 @@ const router = createBrowserRouter([
   {
     path: "/proxy-guide",
     element: <ProxyGuide />,
+  },
+  {
+    path: "/404",
+    element: <NotFound />,
+  },
+  {
+    path: "/missing",
+    element: <Missing />,
   },
 ]);
 
