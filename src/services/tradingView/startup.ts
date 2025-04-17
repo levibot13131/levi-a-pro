@@ -1,36 +1,43 @@
 
+import { isTradingViewConnected, initializeTradingView } from './tradingViewAuthService';
 import { toast } from 'sonner';
-import { initializeTradingViewSync } from './syncService';
-import { initializeTradingView } from './tradingViewAuthService';
 
+/**
+ * Initialize TradingView services if user is authenticated and connected to TradingView
+ * @returns Boolean indicating whether services were successfully initialized
+ */
 export const initializeTradingViewServices = (): boolean => {
   try {
-    console.log('🚀 Initializing TradingView services...');
+    console.log('Initializing TradingView services...');
     
-    // Initialize TradingView auth
-    const authInitialized = initializeTradingView();
-    
-    // Initialize real-time updates through TradingView sync
-    console.log('🚀 Initializing real-time updates...');
-    const realTimeInitialized = initializeTradingViewSync();
-    
-    if (realTimeInitialized) {
-      console.log('✅ Real-time updates initialized successfully');
-    } else {
-      console.log('❌ Failed to initialize real-time updates');
+    // Check if TradingView is connected
+    if (!isTradingViewConnected()) {
+      console.log('TradingView not connected, skipping service initialization');
+      return false;
     }
     
-    const success = authInitialized && realTimeInitialized;
+    // Initialize TradingView
+    const initialized = initializeTradingView();
     
-    if (success) {
-      console.log('✅ TradingView services initialized successfully');
+    if (initialized) {
+      console.log('TradingView services initialized successfully');
     } else {
-      console.log('❌ Some TradingView services failed to initialize');
+      console.warn('Failed to initialize TradingView services');
     }
     
-    return success;
+    return initialized;
   } catch (error) {
     console.error('Error initializing TradingView services:', error);
+    toast.error('שגיאה באתחול שירותי TradingView');
     return false;
   }
 };
+
+// Auto-initialize TradingView services when this module is loaded
+// Only if TradingView is connected
+if (isTradingViewConnected()) {
+  console.log('Auto-initializing TradingView services on module load');
+  initializeTradingViewServices();
+} else {
+  console.log('TradingView not connected, skipping auto-initialization');
+}

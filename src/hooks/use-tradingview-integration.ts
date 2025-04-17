@@ -12,7 +12,7 @@ export function useTradingViewIntegration() {
   // Get authentication state and methods
   const auth = useTradingViewAuth();
   
-  // Get sync state and methods
+  // Get sync state and methods - only initialize if connected
   const sync = useTradingViewSync(auth.isConnected);
   
   // Get data fetching methods
