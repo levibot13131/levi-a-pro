@@ -6,6 +6,7 @@ import { getTwitterCredentials } from '@/services/twitter/twitterService';
 import TwitterConnectForm from '@/components/twitter/TwitterConnectForm';
 import TrendingTopicsPanel from '@/components/twitter/TrendingTopicsPanel';
 import SentimentOverview from '@/components/twitter/SentimentOverview';
+import { connectToTwitter } from '@/services/twitter/twitterService';
 
 interface TwitterConnectedViewProps {
   isConnected: boolean;
@@ -17,6 +18,14 @@ const TwitterConnectedView: React.FC<TwitterConnectedViewProps> = ({
   onDisconnect 
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
+
+  const handleConnect = async (credentials: any) => {
+    try {
+      await connectToTwitter(credentials);
+    } catch (error) {
+      console.error('Error connecting to Twitter', error);
+    }
+  };
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -109,6 +118,7 @@ const TwitterConnectedView: React.FC<TwitterConnectedViewProps> = ({
           <TwitterConnectForm
             isConnected={true}
             onDisconnect={onDisconnect}
+            onConnect={handleConnect}
           />
         )}
         
