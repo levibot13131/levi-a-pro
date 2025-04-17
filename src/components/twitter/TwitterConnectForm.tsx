@@ -1,68 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { toast } from 'sonner';
+import TwitterFormFields from './TwitterFormFields';
+import { useTwitterConnect, TwitterFormData } from '@/hooks/useTwitterConnect';
 
-// Form schema for Twitter API credentials
-const formSchema = z.object({
-  apiKey: z.string().min(10, {
-    message: 'API Key is required and must be valid',
-  }),
-  apiSecret: z.string().min(10, {
-    message: 'API Secret is required and must be valid',
-  }),
-  bearerToken: z.string().min(10, {
-    message: 'Bearer Token is required and must be valid',
-  }),
-});
-
-// Get Twitter API keys from environment variables or localStorage
-const getTwitterCredentials = () => {
-  // Check environment variables first
-  const envApiKey = import.meta.env.VITE_TWITTER_API_KEY;
-  const envApiSecret = import.meta.env.VITE_TWITTER_API_SECRET;
-  const envBearerToken = import.meta.env.VITE_TWITTER_BEARER_TOKEN;
-  
-  // If all environment variables are set, use them
-  if (envApiKey && envApiSecret && envBearerToken) {
-    console.log('Using Twitter API credentials from environment variables');
-    return {
-      apiKey: envApiKey,
-      apiSecret: envApiSecret,
-      bearerToken: envBearerToken,
-    };
-  }
-  
-  // Otherwise, try to get from localStorage
-  try {
-    const stored = localStorage.getItem('twitter_api_keys');
-    if (stored) {
-      console.log('Using Twitter API credentials from localStorage');
-      return JSON.parse(stored);
-    }
-  } catch (error) {
-    console.error('Failed to parse stored Twitter credentials:', error);
-  }
-  
-  // Return empty values if nothing found
-  return {
-    apiKey: '',
-    apiSecret: '',
-    bearerToken: '',
-  };
-};
-
-// Update props interface to include optional isConnected and onDisconnect
 interface TwitterConnectFormProps {
   isConnected?: boolean;
   onDisconnect?: () => void;
-  onConnect: (credentials: any) => void;
+  onConnect: (credentials: TwitterFormData) => void;
 }
 
 const TwitterConnectForm: React.FC<TwitterConnectFormProps> = ({ 
@@ -70,53 +19,19 @@ const TwitterConnectForm: React.FC<TwitterConnectFormProps> = ({
   onDisconnect, 
   onConnect 
 }) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const savedCredentials = getTwitterCredentials();
+  const { isSubmitting, setIsSubmitting, defaultValues, twitterFormSchema } = useTwitterConnect();
   
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      apiKey: savedCredentials.apiKey || '',
-      apiSecret: savedCredentials.apiSecret || '',
-      bearerToken: savedCredentials.bearerToken || '',
-    },
+  const form = useForm<TwitterFormData>({
+    resolver: zodResolver(twitterFormSchema),
+    defaultValues,
   });
   
-  // Auto-connect if we have environment variables
-  useEffect(() => {
-    if (savedCredentials.apiKey && savedCredentials.apiSecret && savedCredentials.bearerToken) {
-      // If the credentials came from environment variables, connect automatically
-      if (import.meta.env.VITE_TWITTER_API_KEY) {
-        handleConnect(savedCredentials);
-      }
-    }
-  }, []);
-  
-  const handleConnect = async (values: z.infer<typeof formSchema>) => {
+  const handleConnect = async (values: TwitterFormData) => {
     setIsSubmitting(true);
     try {
-      // Store credentials in localStorage
-      localStorage.setItem('twitter_api_keys', JSON.stringify(values));
-      
-      // Call the onConnect callback
-      onConnect(values);
-      
-      toast.success('התחברות לטוויטר הצליחה', {
-        description: 'התחברת בהצלחה לחשבון הטוויטר',
-      });
-    } catch (error) {
-      console.error('Failed to connect to Twitter:', error);
-      toast.error('התחברות לטוויטר נכשלה', {
-        description: 'אנא בדוק את פרטי ההתחברות ונסה שוב',
-      });
+      await onConnect(values);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-  
-  const handleDisconnect = () => {
-    if (onDisconnect) {
-      onDisconnect();
     }
   };
   
@@ -131,71 +46,14 @@ const TwitterConnectForm: React.FC<TwitterConnectFormProps> = ({
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleConnect)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="apiKey"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-right block">API Key</FormLabel>
-                  <FormControl>
-                    <Input 
-                      {...field} 
-                      placeholder="הזן את ה-API Key שלך" 
-                      className="text-right dir-rtl"
-                    />
-                  </FormControl>
-                  <FormDescription className="text-right">
-                    ניתן להשיג מחשבון המפתחים של טוויטר
-                  </FormDescription>
-                  <FormMessage className="text-right" />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="apiSecret"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-right block">API Secret</FormLabel>
-                  <FormControl>
-                    <Input 
-                      {...field} 
-                      type="password" 
-                      placeholder="הזן את ה-API Secret שלך" 
-                      className="text-right dir-rtl"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-right" />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="bearerToken"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-right block">Bearer Token</FormLabel>
-                  <FormControl>
-                    <Input 
-                      {...field} 
-                      type="password" 
-                      placeholder="הזן את ה-Bearer Token שלך" 
-                      className="text-right dir-rtl"
-                    />
-                  </FormControl>
-                  <FormMessage className="text-right" />
-                </FormItem>
-              )}
-            />
+            <TwitterFormFields form={form} />
             
             <div className="flex justify-end space-x-2">
               {isConnected && onDisconnect && (
                 <Button 
                   type="button" 
                   variant="destructive"
-                  onClick={handleDisconnect}
+                  onClick={onDisconnect}
                 >
                   התנתק
                 </Button>
