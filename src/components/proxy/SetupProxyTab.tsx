@@ -1,101 +1,102 @@
 
 import React from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { CheckCircle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Code } from '@/components/ui/code';
+import { Info, Server, Shield, Globe } from 'lucide-react';
 
 const SetupProxyTab = () => {
   return (
     <div className="text-base space-y-4">
-      <h3 className="text-lg font-bold mb-2">הגדרת שרת פרוקסי - מדריך צעד אחר צעד</h3>
+      <h3 className="text-lg font-bold mb-2">הגדרת שרת פרוקסי</h3>
       
-      <div className="space-y-6 my-4">
-        <div className="border rounded-lg p-4 bg-background">
-          <h4 className="font-semibold mb-2 flex items-center">
-            <span className="inline-block rounded-full bg-primary/10 text-primary w-6 h-6 text-center mr-2">1</span>
-            רכישת שירות פרוקסי
-          </h4>
-          <div className="pr-8">
-            <p className="mb-2">בחר ספק פרוקסי אמין. מומלצים:</p>
-            <ul className="list-disc pr-5 space-y-1">
-              <li>BrightData (לשעבר Luminati)</li>
-              <li>SmartProxy</li>
-              <li>Oxylabs</li>
-              <li>IPRoyal</li>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-md flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              Cloudflare Tunnel
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 space-y-2">
+            <p>הפתרון המומלץ - מנהרה מאובטחת וקבועה:</p>
+            <ul className="list-disc list-inside space-y-1 text-sm">
+              <li>חינמי לחלוטין</li>
+              <li>כתובת HTTPS קבועה</li>
+              <li>אבטחה מובנית</li>
+              <li>קל להגדרה</li>
             </ul>
-            <p className="mt-2">לאחר ההרשמה, תקבל פרטי התחברות שיכללו:</p>
-            <ul className="pr-5 space-y-1 mt-1">
-              <li><strong>כתובת שרת הפרוקסי:</strong> בדרך כלל IP או דומיין</li>
-              <li><strong>פורט:</strong> מספר בין 1-65535</li>
-              <li><strong>שם משתמש וסיסמה:</strong> אם נדרשת אימות</li>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-md flex items-center gap-2">
+              <Server className="h-4 w-4" />
+              Nginx Reverse Proxy
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 space-y-2">
+            <p>פתרון מתקדם לשרתים קיימים:</p>
+            <ul className="list-disc list-inside space-y-1 text-sm">
+              <li>שליטה מלאה</li>
+              <li>תמיכה ב-SSL</li>
+              <li>ניהול CORS</li>
+              <li>דורש VPS</li>
             </ul>
-          </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="bg-muted p-4 rounded-md space-y-4">
+        <h4 className="font-semibold">שלבי הגדרה:</h4>
+        
+        <div className="space-y-2">
+          <h5 className="font-medium">1. התקנת הפרוקסי</h5>
+          <Code>
+            npm install express cors axios
+          </Code>
         </div>
         
-        <div className="border rounded-lg p-4 bg-background">
-          <h4 className="font-semibold mb-2 flex items-center">
-            <span className="inline-block rounded-full bg-primary/10 text-primary w-6 h-6 text-center mr-2">2</span>
-            קביעת תצורה בדפדפן
-          </h4>
-          <div className="pr-8">
-            <p className="font-medium">בדפדפן Chrome:</p>
-            <ol className="list-decimal pr-5 space-y-1 mt-1 mb-3">
-              <li>פתח את התפריט (שלוש נקודות אנכיות בפינה הימנית העליונה)</li>
-              <li>לחץ על "הגדרות"</li>
-              <li>גלול למטה ולחץ על "הצג הגדרות מתקדמות"</li>
-              <li>תחת "מערכת", לחץ על "פתח את הגדרות הפרוקסי של המחשב"</li>
-              <li>הזן את כתובת השרת והפורט בשדות המתאימים</li>
-              <li>אם נדרש אימות, תצטרך להזין שם משתמש וסיסמה כשתתבקש</li>
-            </ol>
-            
-            <p className="font-medium">בדפדפן Firefox:</p>
-            <ol className="list-decimal pr-5 space-y-1 mt-1">
-              <li>פתח את התפריט (שלושה פסים בפינה הימנית העליונה)</li>
-              <li>לחץ על "אפשרויות" / "העדפות"</li>
-              <li>גלול למטה ולחץ על "הגדרות רשת"</li>
-              <li>סמן "קבע תצורת פרוקסי ידנית"</li>
-              <li>הזן את כתובת השרת והפורט בשדות המתאימים</li>
-              <li>סמן את האפשרות "השתמש בפרוקסי זה גם עבור HTTPS" אם נדרש</li>
-              <li>לחץ על "אישור"</li>
-            </ol>
-          </div>
+        <div className="space-y-2">
+          <h5 className="font-medium">2. הגדרת שרת Express בסיסי</h5>
+          <Code>
+{`const express = require('express');
+const cors = require('cors');
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// Routes here...
+
+app.listen(3001);`}
+          </Code>
         </div>
         
-        <div className="border rounded-lg p-4 bg-background">
-          <h4 className="font-semibold mb-2 flex items-center">
-            <span className="inline-block rounded-full bg-primary/10 text-primary w-6 h-6 text-center mr-2">3</span>
-            שימוש בפרוקסי באפליקציה
-          </h4>
-          <div className="pr-8">
-            <p className="mb-2">להגדרת פרוקסי באפליקציה זו:</p>
-            <ol className="list-decimal pr-5 space-y-2 mt-1">
-              <li>
-                לחץ על "הגדרות" בתפריט הניווט
-              </li>
-              <li>
-                בחר את הכרטיסיה "חיבורים ותקשורת"
-              </li>
-              <li>
-                מלא את פרטי הפרוקסי:
-                <ul className="list-disc pr-5 space-y-1 mt-1">
-                  <li>כתובת השרת (לדוגמה: proxy.example.com)</li>
-                  <li>מספר הפורט (לדוגמה: 8080)</li>
-                  <li>פרוטוקול (HTTP, HTTPS, SOCKS5)</li>
-                  <li>שם משתמש וסיסמה (אם נדרש)</li>
-                </ul>
-              </li>
-              <li>
-                לחץ על "שמור" להחלת ההגדרות
-              </li>
-            </ol>
-          </div>
+        <div className="space-y-2">
+          <h5 className="font-medium">3. הגדרת נתיבים</h5>
+          <Code>
+{`app.use('/proxy', require('./routes/proxy'));
+app.use('/binance', require('./routes/binance'));
+app.use('/twitter', require('./routes/twitter'));`}
+          </Code>
         </div>
       </div>
       
-      <Alert className="bg-green-500/10 border-green-500 text-green-500">
-        <CheckCircle className="h-4 w-4" />
-        <AlertTitle>טיפ</AlertTitle>
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertTitle>שים לב</AlertTitle>
         <AlertDescription>
-          רוב ספקי הפרוקסי מספקים הוראות מפורטות להגדרה בפלטפורמות שונות. בדוק באתר הספק שלך לקבלת הנחיות ספציפיות.
+          לאחר הגדרת הפרוקסי, יש להגדיר את כתובת הפרוקסי הקבועה בדף ההגדרות של האפליקציה.
+        </AlertDescription>
+      </Alert>
+
+      <Alert variant="warning" className="bg-amber-50 border-amber-200">
+        <Shield className="h-4 w-4" />
+        <AlertTitle>אבטחת מידע</AlertTitle>
+        <AlertDescription>
+          מומלץ להוסיף מפתח API או מנגנון אימות לפרוקסי בסביבת הייצור כדי למנוע שימוש לא מורשה.
         </AlertDescription>
       </Alert>
     </div>
