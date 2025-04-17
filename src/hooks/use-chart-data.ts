@@ -1,12 +1,12 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTradingViewIntegration } from './use-tradingview-integration';
-import { TradingViewChartData, ChartDataPoint } from '../services/tradingView/types';
+import { TradingViewChartData, TradingViewDataPoint } from '../services/tradingView/types';
 
 /**
  * Calculates percentage change between first and last data points
  */
-const calculatePercentChange = (data: ChartDataPoint[]): string | null => {
+const calculatePercentChange = (data: TradingViewDataPoint[]): string | null => {
   if (!data || data.length < 2) return null;
   
   const firstPrice = data[0].price;
@@ -89,4 +89,3 @@ export function useChartData(symbol: string, timeframe: string = '1D') {
     ...chartProcessedData
   };
 }
-
