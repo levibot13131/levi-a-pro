@@ -7,7 +7,9 @@ import { ChartBaseProps } from '../ChartRenderer';
 const CustomLineChart: React.FC<ChartBaseProps> = ({ 
   data, 
   showVolume, 
-  isPositiveChange 
+  isPositiveChange,
+  showPatterns,
+  showSignals
 }) => {
   return (
     <LineChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
@@ -63,4 +65,3 @@ const CustomLineChart: React.FC<ChartBaseProps> = ({
 };
 
 export default CustomLineChart;
-

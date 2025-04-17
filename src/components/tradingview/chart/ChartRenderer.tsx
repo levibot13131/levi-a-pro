@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ResponsiveContainer } from 'recharts';
-import { TradingViewChartData } from '../../../services/tradingView/tradingViewIntegrationService';
+import { TradingViewChartData } from '../../../services/tradingView/types';
 import CustomAreaChart from './types/AreaChart';
 import CustomBarChart from './types/BarChart';
 import CustomLineChart from './types/LineChart';
@@ -19,6 +19,8 @@ export interface ChartBaseProps {
   data: TradingViewChartData['data'];
   showVolume: boolean;
   isPositiveChange: boolean;
+  showPatterns?: boolean;
+  showSignals?: boolean;
 }
 
 const ChartRenderer: React.FC<ChartRendererProps> = ({ 
@@ -30,25 +32,31 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({
   showSignals = false
 }) => {
   return (
-    <div className="h-[300px]">
+    <div className="h-full">
       <ResponsiveContainer width="100%" height="100%">
         {chartType === 'line' ? (
           <CustomAreaChart 
             data={chartData.data}
             showVolume={showVolume}
             isPositiveChange={isPositiveChange}
+            showPatterns={showPatterns}
+            showSignals={showSignals}
           />
         ) : chartType === 'bar' ? (
           <CustomBarChart 
             data={chartData.data}
             showVolume={showVolume}
             isPositiveChange={isPositiveChange}
+            showPatterns={showPatterns}
+            showSignals={showSignals}
           />
         ) : (
           <CustomLineChart 
             data={chartData.data}
             showVolume={showVolume}
             isPositiveChange={isPositiveChange}
+            showPatterns={showPatterns}
+            showSignals={showSignals}
           />
         )}
       </ResponsiveContainer>
@@ -57,4 +65,3 @@ const ChartRenderer: React.FC<ChartRendererProps> = ({
 };
 
 export default ChartRenderer;
-

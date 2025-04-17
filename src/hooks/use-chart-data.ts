@@ -5,6 +5,8 @@ import { TradingViewChartData, TradingViewDataPoint } from '../services/tradingV
 
 /**
  * Calculates percentage change between first and last data points
+ * @param data - Array of price data points
+ * @returns Formatted percentage change string or null if not enough data
  */
 const calculatePercentChange = (data: TradingViewDataPoint[]): string | null => {
   if (!data || data.length < 2) return null;
@@ -20,6 +22,7 @@ const calculatePercentChange = (data: TradingViewDataPoint[]): string | null => 
  * Hook for fetching and managing chart data from TradingView
  * @param symbol - Trading symbol (e.g., 'BTCUSD')
  * @param timeframe - Chart timeframe (e.g., '1D', '4h')
+ * @returns Object containing chart data, loading state, error state, and utility functions
  */
 export function useChartData(symbol: string, timeframe: string = '1D') {
   const [chartData, setChartData] = useState<TradingViewChartData | null>(null);
@@ -30,6 +33,7 @@ export function useChartData(symbol: string, timeframe: string = '1D') {
   
   /**
    * Loads chart data for the specified symbol and timeframe
+   * Handles authentication, loading states, and error conditions
    */
   const loadChartData = useCallback(async () => {
     if (!isConnected) {

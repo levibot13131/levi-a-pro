@@ -7,7 +7,9 @@ import { ChartBaseProps } from '../ChartRenderer';
 const CustomAreaChart: React.FC<ChartBaseProps> = ({ 
   data, 
   showVolume, 
-  isPositiveChange 
+  isPositiveChange,
+  showPatterns,
+  showSignals
 }) => {
   return (
     <AreaChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
@@ -71,4 +73,3 @@ const CustomAreaChart: React.FC<ChartBaseProps> = ({
 };
 
 export default CustomAreaChart;
-

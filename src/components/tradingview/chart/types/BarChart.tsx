@@ -7,7 +7,9 @@ import { ChartBaseProps } from '../ChartRenderer';
 const CustomBarChart: React.FC<ChartBaseProps> = ({ 
   data, 
   showVolume, 
-  isPositiveChange 
+  isPositiveChange,
+  showPatterns,
+  showSignals
 }) => {
   return (
     <BarChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
@@ -61,4 +63,3 @@ const CustomBarChart: React.FC<ChartBaseProps> = ({
 };
 
 export default CustomBarChart;
-
