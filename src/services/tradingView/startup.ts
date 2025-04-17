@@ -1,53 +1,36 @@
 
 import { toast } from 'sonner';
-import { initializeRealTimeUpdates } from './testIntegrations';
+import { initializeRealTimeUpdates } from '../testIntegrations';
+import { initializeTradingView } from './tradingViewAuthService';
 
-// Flag to track initialization status
-let isInitialized = false;
-
-/**
- * Initialize all TradingView related services
- */
 export const initializeTradingViewServices = (): boolean => {
-  if (isInitialized) {
-    console.log('TradingView services already initialized');
-    return true;
-  }
-  
   try {
     console.log('🚀 Initializing TradingView services...');
     
-    // Initialize all necessary services
-    const realtimeStatus = initializeRealTimeUpdates();
+    // Initialize TradingView auth
+    const authInitialized = initializeTradingView();
     
-    if (realtimeStatus) {
+    // Initialize real-time updates
+    console.log('🚀 Initializing real-time updates...');
+    const realTimeInitialized = initializeRealTimeUpdates();
+    
+    if (realTimeInitialized) {
       console.log('✅ Real-time updates initialized successfully');
     } else {
-      console.warn('⚠️ Real-time updates initialization failed');
+      console.log('❌ Failed to initialize real-time updates');
     }
     
-    // More initialization can be added here
+    const success = authInitialized && realTimeInitialized;
     
-    // Mark as initialized
-    isInitialized = true;
+    if (success) {
+      console.log('✅ TradingView services initialized successfully');
+    } else {
+      console.log('❌ Some TradingView services failed to initialize');
+    }
     
-    console.log('✅ TradingView services initialized successfully');
-    return true;
+    return success;
   } catch (error) {
-    console.error('❌ Error initializing TradingView services:', error);
-    toast.error('שגיאה באתחול שירותי TradingView', {
-      description: 'ייתכן שחלק מהפונקציות לא יעבדו כראוי'
-    });
+    console.error('Error initializing TradingView services:', error);
     return false;
   }
 };
-
-/**
- * Check if TradingView services are initialized
- */
-export const isTradingViewServicesInitialized = (): boolean => {
-  return isInitialized;
-};
-
-// Auto-initialize when imported
-initializeTradingViewServices();

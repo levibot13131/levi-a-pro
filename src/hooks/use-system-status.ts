@@ -1,89 +1,105 @@
 
-import { useState, useEffect } from 'react';
-import { useAppSettings } from './use-app-settings';
-import { isRealTimeMode, setRealTimeMode } from '@/services/binance/marketData';
+import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
+import { getRealTimeStatus, startRealTimeUpdates } from '@/services/realtime/realtimeService';
 
 interface DataSource {
-  type: 'binance' | 'tradingview' | 'twitter';
+  type: string;
+  name: string;
   status: 'active' | 'inactive' | 'error';
-  lastUpdated: Date | null;
+  lastUpdate?: Date;
 }
 
 export const useSystemStatus = () => {
-  const { demoMode } = useAppSettings((state: any) => ({
-    demoMode: state.demoMode
-  }));
+  const [isRealTime, setIsRealTime] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'partial'>('disconnected');
-  const [isRealTime, setIsRealTime] = useState<boolean>(isRealTimeMode());
   const [dataSources, setDataSources] = useState<DataSource[]>([
-    { type: 'binance', status: 'inactive', lastUpdated: null },
-    { type: 'tradingview', status: 'inactive', lastUpdated: null },
-    { type: 'twitter', status: 'inactive', lastUpdated: null },
+    { type: 'binance', name: 'Binance API', status: 'inactive' },
+    { type: 'tradingview', name: 'TradingView', status: 'inactive' },
+    { type: 'twitter', name: 'Twitter API', status: 'inactive' }
   ]);
-
-  // Update connection status based on data sources
-  useEffect(() => {
-    const activeSources = dataSources.filter(source => source.status === 'active');
-    
-    if (activeSources.length === 0) {
-      setConnectionStatus('disconnected');
-    } else if (activeSources.length === dataSources.length) {
-      setConnectionStatus('connected');
-    } else {
-      setConnectionStatus('partial');
+  
+  const updateStatus = useCallback(async () => {
+    try {
+      const realTimeStatus = await getRealTimeStatus();
+      
+      // Update data sources based on real-time status
+      const updatedSources = [...dataSources];
+      
+      // Update TradingView status
+      const tvIndex = updatedSources.findIndex(s => s.type === 'tradingview');
+      if (tvIndex !== -1) {
+        updatedSources[tvIndex].status = realTimeStatus.tradingView ? 'active' : 'inactive';
+        updatedSources[tvIndex].lastUpdate = new Date();
+      }
+      
+      // Update Binance status
+      const binanceIndex = updatedSources.findIndex(s => s.type === 'binance');
+      if (binanceIndex !== -1) {
+        updatedSources[binanceIndex].status = realTimeStatus.binance ? 'active' : 'inactive';
+        updatedSources[binanceIndex].lastUpdate = new Date();
+      }
+      
+      // Update Twitter status
+      const twitterIndex = updatedSources.findIndex(s => s.type === 'twitter');
+      if (twitterIndex !== -1) {
+        updatedSources[twitterIndex].status = realTimeStatus.twitter ? 'active' : 'inactive';
+        updatedSources[twitterIndex].lastUpdate = new Date();
+      }
+      
+      setDataSources(updatedSources);
+      
+      // Determine overall connection status
+      const activeCount = updatedSources.filter(s => s.status === 'active').length;
+      if (activeCount === 0) {
+        setConnectionStatus('disconnected');
+        setIsRealTime(false);
+      } else if (activeCount === updatedSources.length) {
+        setConnectionStatus('connected');
+        setIsRealTime(true);
+      } else {
+        setConnectionStatus('partial');
+        setIsRealTime(activeCount > 0);
+      }
+    } catch (error) {
+      console.error('Error updating system status:', error);
     }
   }, [dataSources]);
   
-  // Check the real-time status initially and when demoMode changes
   useEffect(() => {
-    if (demoMode) {
-      setIsRealTime(false);
-    }
-  }, [demoMode]);
-
-  // Function to enable real-time mode
-  const enableRealTimeMode = () => {
-    // Don't allow real-time in demo mode
-    if (demoMode) {
+    // Initial status update
+    updateStatus();
+    
+    // Set up interval to update status
+    const intervalId = setInterval(updateStatus, 60000); // Update every minute
+    
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [updateStatus]);
+  
+  const enableRealTimeMode = useCallback(() => {
+    try {
+      const success = startRealTimeUpdates();
+      
+      if (success) {
+        setIsRealTime(true);
+        updateStatus();
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error enabling real-time mode:', error);
       return false;
     }
-    
-    const realTimeModeEnabled = setRealTimeMode(true);
-    setIsRealTime(realTimeModeEnabled);
-    
-    // Mock updating the data sources (in a real app, this would update based on actual connections)
-    setDataSources(prev => {
-      return prev.map(source => ({
-        ...source,
-        status: source.type === 'binance' ? 'active' : source.status,
-        lastUpdated: source.type === 'binance' ? new Date() : source.lastUpdated
-      }));
-    });
-    
-    return realTimeModeEnabled;
-  };
-
-  // Function to update a data source status
-  const updateDataSource = (type: 'binance' | 'tradingview' | 'twitter', status: 'active' | 'inactive' | 'error') => {
-    setDataSources(prev => {
-      return prev.map(source => {
-        if (source.type === type) {
-          return {
-            ...source,
-            status,
-            lastUpdated: status === 'active' ? new Date() : source.lastUpdated
-          };
-        }
-        return source;
-      });
-    });
-  };
-
+  }, [updateStatus]);
+  
   return {
-    connectionStatus,
     isRealTime,
+    connectionStatus,
     dataSources,
-    enableRealTimeMode,
-    updateDataSource
+    updateStatus,
+    enableRealTimeMode
   };
 };

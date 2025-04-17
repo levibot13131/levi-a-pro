@@ -1,94 +1,77 @@
 
 import { toast } from 'sonner';
 
-// קבוע לשמירת מזהה חיבור בלוקל סטורג'
-const TV_AUTH_KEY = 'tradingview_auth_credentials';
-
-// פרטי חיבור TradingView
 export interface TradingViewCredentials {
   username: string;
-  password?: string; // הוספנו סיסמה
-  apiKey?: string;  // עשינו אופציונלי
-  isConnected: boolean;
-  lastConnected?: number;
+  password?: string; // We won't store this in localStorage for security
+  apiKey?: string;   // Alternative to password
+  lastConnected: number;
 }
 
-/**
- * שמירת פרטי חיבור TradingView
- */
-export const saveTradingViewCredentials = (credentials: Omit<TradingViewCredentials, 'isConnected' | 'lastConnected'>) => {
-  const savedCreds: TradingViewCredentials = {
-    ...credentials,
-    isConnected: true,
-    lastConnected: Date.now()
-  };
-  
-  localStorage.setItem(TV_AUTH_KEY, JSON.stringify(savedCreds));
-  toast.success('החיבור ל-TradingView בוצע בהצלחה', {
-    description: `המשתמש ${credentials.username} חובר בהצלחה`
-  });
-  
-  return savedCreds;
+// Check if TradingView is connected
+export const isTradingViewConnected = (): boolean => {
+  const credentials = getTradingViewCredentials();
+  return !!credentials;
 };
 
-/**
- * קבלת פרטי חיבור TradingView מהלוקל סטורג'
- */
+// Get TradingView credentials from localStorage
 export const getTradingViewCredentials = (): TradingViewCredentials | null => {
-  const credentials = localStorage.getItem(TV_AUTH_KEY);
-  
-  if (!credentials) return null;
-  
   try {
-    return JSON.parse(credentials) as TradingViewCredentials;
+    const storedCredentials = localStorage.getItem('tradingview_auth_credentials');
+    if (!storedCredentials) return null;
+    return JSON.parse(storedCredentials);
   } catch (error) {
     console.error('Error parsing TradingView credentials:', error);
     return null;
   }
 };
 
-/**
- * בדיקת תקפות פרטי חיבור TradingView
- */
+// Validate and save TradingView credentials
 export const validateTradingViewCredentials = async (
-  credentials: Omit<TradingViewCredentials, 'isConnected' | 'lastConnected'>
+  credentials: { username: string; password?: string; apiKey?: string }
 ): Promise<boolean> => {
   try {
-    // בסביבת פיתוח - נאפשר התחברות עם שם משתמש וסיסמה או שם משתמש ו-API Key
+    // In a real application, we would validate these credentials with the TradingView API
+    // For this demo, we'll just simulate a successful validation
     
-    // סימולציה של בדיקת API
-    return new Promise(resolve => {
-      setTimeout(() => {
-        // בדיקה אם קיימים פרטי חיבור תקינים
-        const valid = credentials.username?.trim().length > 3 && 
-                     (credentials.password?.trim().length > 3 || 
-                      credentials.apiKey?.trim().length > 3);
-          
-        if (valid) {
-          saveTradingViewCredentials(credentials);
-        }
-        
-        resolve(valid);
-      }, 1500); // סימולציה של זמן תגובה מהשרת
-    });
+    // Check if we have either password or apiKey
+    if (!credentials.password && !credentials.apiKey) {
+      return false;
+    }
+    
+    const enhancedCredentials: TradingViewCredentials = {
+      username: credentials.username,
+      apiKey: credentials.apiKey,
+      lastConnected: Date.now()
+    };
+    
+    localStorage.setItem('tradingview_auth_credentials', JSON.stringify(enhancedCredentials));
+    toast.success('התחברת בהצלחה ל-TradingView');
+    return true;
   } catch (error) {
     console.error('Error validating TradingView credentials:', error);
     return false;
   }
 };
 
-/**
- * ניתוק חיבור TradingView
- */
-export const disconnectTradingView = () => {
-  localStorage.removeItem(TV_AUTH_KEY);
-  toast.info('החיבור ל-TradingView נותק');
+// Disconnect from TradingView
+export const disconnectTradingView = (): void => {
+  localStorage.removeItem('tradingview_auth_credentials');
+  toast.success('התנתקת בהצלחה מ-TradingView');
 };
 
-/**
- * בדיקה האם המשתמש מחובר ל-TradingView
- */
-export const isTradingViewConnected = (): boolean => {
-  const credentials = getTradingViewCredentials();
-  return credentials?.isConnected === true;
+// Initialize TradingView integration
+export const initializeTradingView = (): boolean => {
+  if (!isTradingViewConnected()) {
+    return false;
+  }
+  
+  try {
+    // Here we would initialize any TradingView specific services
+    // For this demo, we'll just return true
+    return true;
+  } catch (error) {
+    console.error('Error initializing TradingView:', error);
+    return false;
+  }
 };
