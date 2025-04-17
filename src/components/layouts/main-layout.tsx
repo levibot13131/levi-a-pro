@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import AuthNavbar from '@/components/auth/AuthNavbar';
 import { MainNav } from '@/components/main-nav';
@@ -11,6 +11,12 @@ import BannerAlert from '@/components/ui/banner-alert';
 const MainLayout: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const [showBanner, setShowBanner] = useState(true);
+  const navigate = useNavigate();
+
+  // Handle 404 errors by redirecting to NotFound page
+  const handleError = () => {
+    navigate('/not-found');
+  };
 
   return (
     <div className="min-h-screen flex flex-col">

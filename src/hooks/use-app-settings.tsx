@@ -7,6 +7,15 @@ import { toast } from 'sonner';
 // האירוע המותאם אישית לשינוי מצב דמו
 export const DEMO_MODE_CHANGE_EVENT = 'demo-mode-change';
 
+// Get demo mode from environment or default to true
+const getInitialDemoMode = (): boolean => {
+  const envDemoMode = import.meta.env.VITE_DEMO_MODE;
+  if (envDemoMode !== undefined) {
+    return envDemoMode === 'true' || envDemoMode === true;
+  }
+  return true; // Default to demo mode if not specified
+};
+
 export interface AppSettingsState {
   demoMode: boolean;
   darkMode: boolean;
@@ -23,7 +32,7 @@ export interface AppSettingsState {
 export const useAppSettings = create<AppSettingsState>()(
   persist(
     (set, get) => ({
-      demoMode: true,
+      demoMode: getInitialDemoMode(),
       darkMode: true,
       language: 'he',
       autoRefresh: true,

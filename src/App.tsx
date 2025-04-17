@@ -17,14 +17,14 @@ import Login from './pages/Login';
 import TradingDashboard from './pages/TradingDashboard';
 import Unauthorized from './pages/Unauthorized';
 import NotFound from './pages/NotFound';
+import TradingViewIntegration from './pages/TradingViewIntegration';
+import CryptoSentiment from './pages/CryptoSentiment';
+import TwitterIntegration from './pages/TwitterIntegration';
 
 // Create placeholder components for missing pages
 const Alerts = () => <div>Alerts Page</div>;
 const Signals = () => <div>Signals Page</div>;
 const Settings = () => <div>Settings Page</div>;
-const TradingViewIntegration = () => <div>TradingView Integration Page</div>;
-const CryptoSentiment = () => <div>Crypto Sentiment Page</div>;
-const TwitterIntegration = () => <div>Twitter Integration Page</div>;
 
 const App: React.FC = () => {
   const { isAuthenticated } = useAuth();

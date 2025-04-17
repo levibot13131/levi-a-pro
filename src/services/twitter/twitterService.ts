@@ -10,18 +10,43 @@ export interface TwitterCredentials {
   lastConnected: number;
 }
 
+// Check if environment has pre-configured Twitter credentials
+const hasEnvCredentials = () => {
+  return !!(
+    import.meta.env.VITE_TWITTER_API_KEY &&
+    import.meta.env.VITE_TWITTER_API_SECRET &&
+    import.meta.env.VITE_TWITTER_BEARER_TOKEN
+  );
+};
+
+// Initialize credentials from environment variables if available
+const initFromEnv = (): TwitterCredentials | null => {
+  if (!hasEnvCredentials()) return null;
+  
+  return {
+    apiKey: import.meta.env.VITE_TWITTER_API_KEY as string,
+    apiSecret: import.meta.env.VITE_TWITTER_API_SECRET as string,
+    bearerToken: import.meta.env.VITE_TWITTER_BEARER_TOKEN as string,
+    username: import.meta.env.VITE_TWITTER_USERNAME as string || 'env-user',
+    lastConnected: Date.now()
+  };
+};
+
 // Check if Twitter is connected
 export const isTwitterConnected = (): boolean => {
   const credentials = getTwitterCredentials();
   return !!credentials && !!credentials.bearerToken;
 };
 
-// Get Twitter credentials from localStorage
+// Get Twitter credentials from localStorage or environment
 export const getTwitterCredentials = (): TwitterCredentials | null => {
   try {
+    // First check localStorage
     const storedCredentials = localStorage.getItem('twitter_api_keys');
-    if (!storedCredentials) return null;
-    return JSON.parse(storedCredentials);
+    if (storedCredentials) return JSON.parse(storedCredentials);
+    
+    // If not in localStorage, check environment
+    return initFromEnv();
   } catch (error) {
     console.error('Error parsing Twitter credentials:', error);
     return null;

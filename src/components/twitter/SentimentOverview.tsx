@@ -2,9 +2,13 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-const SentimentOverview: React.FC = () => {
+interface SentimentOverviewProps {
+  className?: string;
+}
+
+const SentimentOverview: React.FC<SentimentOverviewProps> = ({ className }) => {
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle className="text-right">סיכום נתונים</CardTitle>
       </CardHeader>

@@ -1,6 +1,6 @@
 
 import { createBrowserRouter } from "react-router-dom";
-import Layout from "../layout/Layout";
+import Layout from "../components/layout/Layout";
 import Dashboard from "../pages/Dashboard";
 import Backtesting from "../pages/Backtesting";
 import TechnicalAnalysis from "../pages/TechnicalAnalysis";
@@ -34,7 +34,7 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Home />,
+        element: <Dashboard />,
       },
       {
         path: "dashboard",
@@ -78,6 +78,10 @@ const router = createBrowserRouter([
       },
       {
         path: "crypto-sentiment",
+        element: <CryptoSentiment />,
+      },
+      {
+        path: "sentiment",
         element: <CryptoSentiment />,
       },
       {
