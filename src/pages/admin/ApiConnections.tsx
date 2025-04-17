@@ -106,6 +106,7 @@ const ApiConnections = () => {
       const credentials: BinanceCredentials = {
         apiKey: binanceApiKey,
         apiSecret: binanceApiSecret,
+        testnet: false,
         isConnected: true,
         lastConnected: Date.now()
       };

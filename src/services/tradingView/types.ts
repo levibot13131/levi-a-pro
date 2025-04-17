@@ -4,7 +4,7 @@ export interface TradingViewChartData {
   symbol: string;
   timeframe: string;
   indicators: string[];
-  lastUpdate: number;
+  lastUpdate: number; // Timestamp when data was last updated
   data: {
     timestamp: number;
     price: number;
@@ -14,6 +14,7 @@ export interface TradingViewChartData {
     low?: number;
     close?: number;
   }[];
+  lastUpdated?: number; // For backward compatibility
 }
 
 // Types for TradingView news item
@@ -28,4 +29,7 @@ export interface TradingViewNewsItem {
   relatedSymbols: string[];
   sentiment?: 'positive' | 'negative' | 'neutral';
   category?: string;
+  // For backward compatibility
+  content?: string;
+  publishedAt?: string;
 }

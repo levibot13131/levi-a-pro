@@ -24,6 +24,10 @@ export const getBinanceCredentials = (): BinanceCredentials | null => {
     const credentials = JSON.parse(storedCredentials);
     // Add isConnected property for backward compatibility
     credentials.isConnected = true;
+    // Ensure testnet property exists
+    if (credentials.testnet === undefined) {
+      credentials.testnet = false;
+    }
     return credentials;
   } catch (error) {
     console.error('Error parsing Binance credentials:', error);
@@ -41,7 +45,8 @@ export const connectToBinance = async (
     const enhancedCredentials: BinanceCredentials = {
       ...credentials,
       lastConnected: Date.now(),
-      isConnected: true
+      isConnected: true,
+      testnet: credentials.testnet ?? false
     };
     
     localStorage.setItem('binance_api_keys', JSON.stringify(enhancedCredentials));

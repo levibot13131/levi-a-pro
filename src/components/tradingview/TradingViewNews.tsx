@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
@@ -38,8 +37,20 @@ const TradingViewNews: React.FC<TradingViewNewsProps> = ({
     try {
       const data = await fetchNews(limit);
       if (data && data.length > 0) {
-        // Fix: Use direct assignment instead of function to avoid type issues
-        setNewsItems(data);
+        const formattedNews: TradingViewNewsItem[] = data.map(item => ({
+          id: item.id,
+          title: item.title,
+          description: item.description || item.content || '',
+          summary: item.summary,
+          source: item.source,
+          url: item.url,
+          publishDate: item.publishDate || new Date(item.publishedAt || '').getTime(),
+          relatedSymbols: item.relatedSymbols,
+          sentiment: item.sentiment,
+          category: item.category
+        }));
+        
+        setNewsItems(formattedNews);
         setError(null);
       } else {
         setNewsItems([]);
@@ -53,7 +64,7 @@ const TradingViewNews: React.FC<TradingViewNewsProps> = ({
     }
   };
   
-  const formatDate = (timestamp: number) => {
+  function formatDate(timestamp: number) {
     const date = new Date(timestamp);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -72,9 +83,9 @@ const TradingViewNews: React.FC<TradingViewNewsProps> = ({
         year: 'numeric'
       });
     }
-  };
+  }
   
-  const getCategoryColor = (category: string) => {
+  function getCategoryColor(category: string) {
     switch (category?.toLowerCase()) {
       case 'crypto':
       case 'קריפטו':
@@ -94,12 +105,10 @@ const TradingViewNews: React.FC<TradingViewNewsProps> = ({
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
-  };
+  }
   
-  // Get unique categories from news
   const categories = ['all', ...new Set(newsItems.filter(item => item.category).map(item => item.category as string))];
   
-  // Filter news by category
   const filteredNews = activeCategory === 'all' 
     ? newsItems 
     : newsItems.filter(item => item.category === activeCategory);

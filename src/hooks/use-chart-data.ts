@@ -21,8 +21,16 @@ export function useChartData(symbol: string, timeframe: string) {
     try {
       const data = await fetchChartData(symbol, timeframe);
       if (data) {
-        // Fix: Use proper setState syntax with function to avoid type issues
-        setChartData(data);
+        // Convert data to expected format if necessary
+        const formattedData: TradingViewChartData = {
+          symbol: data.symbol,
+          timeframe: data.timeframe,
+          data: data.data,
+          indicators: data.indicators || [],
+          lastUpdate: data.lastUpdate || data.lastUpdated || Date.now()
+        };
+        
+        setChartData(formattedData);
         setError(null);
       } else {
         setError('לא ניתן לטעון את נתוני הגרף');

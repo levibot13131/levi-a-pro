@@ -1,22 +1,10 @@
 
 import { toast } from 'sonner';
+import { TradingViewChartData as TradingViewChartDataType, TradingViewNewsItem as TradingViewNewsItemType } from './types';
 
-export interface TradingViewChartData {
-  symbol: string;
-  timeframe: string;
-  data: any[];
-  lastUpdated: number;
-}
+export interface TradingViewChartData extends TradingViewChartDataType {}
 
-export interface TradingViewNewsItem {
-  id: string;
-  title: string;
-  content: string;
-  source: string;
-  url: string;
-  publishedAt: string;
-  relatedSymbols: string[];
-}
+export interface TradingViewNewsItem extends TradingViewNewsItemType {}
 
 // Check if sync is active
 export const isSyncActive = (): boolean => {
@@ -66,11 +54,14 @@ export const getChartData = async (symbol: string, timeframe: string = '1D'): Pr
     // For this demo, we'll return mock data
     await new Promise(resolve => setTimeout(resolve, 1000));
     
+    const data = generateMockChartData(timeframe);
     return {
       symbol,
       timeframe,
-      data: generateMockChartData(timeframe),
-      lastUpdated: Date.now()
+      data,
+      lastUpdate: Date.now(),
+      indicators: ['MA', 'RSI', 'MACD'],
+      lastUpdated: Date.now() // For backward compatibility
     };
   } catch (error) {
     console.error('Error getting chart data from TradingView:', error);
@@ -89,29 +80,41 @@ export const getTradingViewNews = async (limit: number = 10): Promise<TradingVie
       {
         id: '1',
         title: 'ביטקוין שובר שיא חדש',
-        content: 'ביטקוין הגיע לשיא חדש של 73,000 דולר אמש לאחר ביקוש גובר מצד משקיעים מוסדיים.',
+        description: 'ביטקוין הגיע לשיא חדש של 73,000 דולר אמש לאחר ביקוש גובר מצד משקיעים מוסדיים.',
+        content: 'ביטקוין הגיע לשיא חדש של 73,000 דולר אמש לאחר ביקוש גובר מצד משקיעים מוסדיים.', // For backward compatibility
         source: 'CryptoNews',
         url: 'https://example.com/news/1',
-        publishedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-        relatedSymbols: ['BTC', 'BTCUSD']
+        publishDate: Date.now() - 2 * 60 * 60 * 1000,
+        publishedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // For backward compatibility
+        relatedSymbols: ['BTC', 'BTCUSD'],
+        category: 'crypto',
+        sentiment: 'positive'
       },
       {
         id: '2',
         title: 'אתריום מתכונן לעדכון רשת חדש',
-        content: 'מפתחי אתריום הודיעו על עדכון רשת משמעותי שצפוי לשפר את ביצועי הרשת ולהפחית עמלות.',
+        description: 'מפתחי אתריום הודיעו על עדכון רשת משמעותי שצפוי לשפר את ביצועי הרשת ולהפחית עמלות.',
+        content: 'מפתחי אתריום הודיעו על עדכון רשת משמעותי שצפוי לשפר את ביצועי הרשת ולהפחית עמלות.', // For backward compatibility
         source: 'CryptoDaily',
         url: 'https://example.com/news/2',
-        publishedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-        relatedSymbols: ['ETH', 'ETHUSD']
+        publishDate: Date.now() - 12 * 60 * 60 * 1000,
+        publishedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(), // For backward compatibility
+        relatedSymbols: ['ETH', 'ETHUSD'],
+        category: 'crypto',
+        sentiment: 'neutral'
       },
       {
         id: '3',
         title: 'רגולציה חדשה צפויה להשפיע על שוק הקריפטו',
-        content: 'רשויות הפיקוח הפיננסי מתכננות רגולציה חדשה שעשויה להשפיע על המסחר במטבעות דיגיטליים.',
+        description: 'רשויות הפיקוח הפיננסי מתכננות רגולציה חדשה שעשויה להשפיע על המסחר במטבעות דיגיטליים.',
+        content: 'רשויות הפיקוח הפיננסי מתכננות רגולציה חדשה שעשויה להשפיע על המסחר במטבעות דיגיטליים.', // For backward compatibility
         source: 'FinanceNews',
         url: 'https://example.com/news/3',
-        publishedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        relatedSymbols: ['BTC', 'ETH', 'XRP']
+        publishDate: Date.now() - 24 * 60 * 60 * 1000,
+        publishedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(), // For backward compatibility
+        relatedSymbols: ['BTC', 'ETH', 'XRP'],
+        category: 'regulation',
+        sentiment: 'negative'
       }
     ];
     
@@ -155,7 +158,9 @@ const generateMockChartData = (timeframe: string): any[] => {
     const time = now - (count - i) * interval;
     data.push({
       time,
-      open: price,
+      timestamp: time,
+      price,
+      open: price - Math.random() * 20,
       high: price + Math.random() * 50,
       low: price - Math.random() * 50,
       close: price,
