@@ -5,11 +5,11 @@ import { Form } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import TwitterFormFields from '../TwitterFormFields';
-import { twitterFormSchema } from '@/hooks/useTwitterConnect';
+import { twitterFormSchema, TwitterFormData } from '@/hooks/useTwitterConnect';
 import userEvent from '@testing-library/user-event';
 
 const TestFormWrapper = () => {
-  const form = useForm({
+  const form = useForm<TwitterFormData>({
     resolver: zodResolver(twitterFormSchema),
     defaultValues: {
       apiKey: '',

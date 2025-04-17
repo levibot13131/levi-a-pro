@@ -14,7 +14,7 @@ describe('useTwitterConnect', () => {
   });
 
   it('initializes with default values', () => {
-    (getTwitterCredentials as jest.Mock).mockReturnValue(null);
+    (getTwitterCredentials as ReturnType<typeof vi.fn>).mockReturnValue(null);
     const { result } = renderHook(() => useTwitterConnect());
     
     expect(result.current.defaultValues).toEqual({
@@ -32,7 +32,7 @@ describe('useTwitterConnect', () => {
       bearerToken: 'test-token'
     };
     
-    (getTwitterCredentials as jest.Mock).mockReturnValue(mockCredentials);
+    (getTwitterCredentials as ReturnType<typeof vi.fn>).mockReturnValue(mockCredentials);
     const { result } = renderHook(() => useTwitterConnect());
     
     expect(result.current.defaultValues).toEqual(mockCredentials);
