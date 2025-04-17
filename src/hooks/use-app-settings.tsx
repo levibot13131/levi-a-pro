@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -9,10 +8,18 @@ export const DEMO_MODE_CHANGE_EVENT = 'demo-mode-change';
 
 // Get demo mode from environment or default to true
 const getInitialDemoMode = (): boolean => {
+  // Check environment variable first
   const envDemoMode = import.meta.env.VITE_DEMO_MODE;
   if (envDemoMode !== undefined) {
     return envDemoMode === 'true' || envDemoMode === true;
   }
+  
+  // If not in env, check localStorage
+  const storedDemoMode = localStorage.getItem('app_demo_mode');
+  if (storedDemoMode !== null) {
+    return storedDemoMode === 'true';
+  }
+  
   return true; // Default to demo mode if not specified
 };
 
@@ -41,6 +48,7 @@ export const useAppSettings = create<AppSettingsState>()(
       toggleDemoMode: () => {
         set((state) => {
           const newDemoMode = !state.demoMode;
+          localStorage.setItem('app_demo_mode', String(newDemoMode));
           
           // השמעת אירוע שינוי מצב דמו
           const event = new CustomEvent(DEMO_MODE_CHANGE_EVENT, {

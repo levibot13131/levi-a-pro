@@ -1,30 +1,12 @@
 
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { RouterProvider } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { ThemeProvider } from './components/theme-provider';
 import { startRealTimeUpdates } from './services/realtime/realtimeService';
 import { initializeTradingViewServices } from './services/tradingView/startup';
 import { useAuth } from './contexts/AuthContext';
-
-// Layout components
-import Layout from './components/layout/Layout';
-
-// Page components
-import Dashboard from './pages/Dashboard';
-import Assets from './pages/Assets';
-import Login from './pages/Login';
-import TradingDashboard from './pages/TradingDashboard';
-import Unauthorized from './pages/Unauthorized';
-import NotFound from './pages/NotFound';
-import TradingViewIntegration from './pages/TradingViewIntegration';
-import CryptoSentiment from './pages/CryptoSentiment';
-import TwitterIntegration from './pages/TwitterIntegration';
-
-// Create placeholder components for missing pages
-const Alerts = () => <div>Alerts Page</div>;
-const Signals = () => <div>Signals Page</div>;
-const Settings = () => <div>Settings Page</div>;
+import router from './routes/router';
 
 const App: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -43,8 +25,6 @@ const App: React.FC = () => {
           console.log('All authenticated application services initialized successfully');
         } else {
           console.log('User not authenticated, skipping authenticated service initialization');
-          // Initialize only public services
-          // (None currently, but would go here)
         }
       } catch (error) {
         console.error('Error initializing application services:', error);
@@ -52,29 +32,12 @@ const App: React.FC = () => {
     };
     
     initializeServices();
-  }, [isAuthenticated]); // Re-run when authentication changes
+  }, [isAuthenticated]);
   
   return (
     <ThemeProvider defaultTheme="light" storageKey="ui-theme">
       <Toaster position="top-center" expand={true} richColors closeButton />
-      <Router>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="assets" element={<Assets />} />
-            <Route path="alerts" element={<Alerts />} />
-            <Route path="signals" element={<Signals />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="tradingview" element={<TradingViewIntegration />} />
-            <Route path="sentiment" element={<CryptoSentiment />} />
-            <Route path="twitter" element={<TwitterIntegration />} />
-            <Route path="trading" element={<TradingDashboard />} />
-            <Route path="unauthorized" element={<Unauthorized />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-          <Route path="/login" element={<Login />} />
-        </Routes>
-      </Router>
+      <RouterProvider router={router} />
     </ThemeProvider>
   );
 };

@@ -1,24 +1,28 @@
-
 import { createBrowserRouter } from "react-router-dom";
 import Layout from "../components/layout/Layout";
+import RequireAuth from "@/components/auth/RequireAuth";
 import Dashboard from "../pages/Dashboard";
+import Assets from "../pages/Assets";
+import Alerts from "../pages/Alerts";
+import Signals from "../pages/Signals";
+import Settings from "../pages/Settings";
+import Login from "../pages/Login";
+import Register from "../pages/Register";
+import Unauthorized from "../pages/Unauthorized";
+import NotFound from "../pages/NotFound";
+import TradingViewIntegration from "../pages/TradingViewIntegration";
+import CryptoSentiment from "../pages/CryptoSentiment";
+import TwitterIntegration from "../pages/TwitterIntegration";
+import BinanceIntegration from "../pages/BinanceIntegration";
 import Backtesting from "../pages/Backtesting";
 import TechnicalAnalysis from "../pages/TechnicalAnalysis";
 import Portfolio from "../pages/Portfolio";
-import Settings from "../pages/Settings";
 import ProxySettings from "../pages/ProxySettings";
 import TradingSignals from "../pages/TradingSignals";
 import DataConnections from "../pages/DataConnections";
-import Login from "../pages/Login";
-import Register from "../pages/Register";
 import AssetTracker from "../pages/AssetTracker";
-import BinanceIntegration from "../pages/BinanceIntegration";
-import TwitterIntegration from "../pages/TwitterIntegration";
-import TradingViewIntegration from "../pages/TradingViewIntegration";
-import CryptoSentiment from "../pages/CryptoSentiment";
 import FAQ from "../pages/FAQ";
 import DeploymentGuide from "../pages/DeploymentGuide";
-import RequireAuth from "@/components/auth/RequireAuth";
 import ProxyGuide from "../pages/ProxyGuide";
 import Home from "../pages/Home";
 import LinkPage from "../pages/LinkPage";
@@ -34,95 +38,111 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <Dashboard />,
+        element: <RequireAuth><Dashboard /></RequireAuth>,
       },
       {
         path: "dashboard",
-        element: <Dashboard />,
+        element: <RequireAuth><Dashboard /></RequireAuth>,
       },
       {
-        path: "backtesting",
-        element: <Backtesting />,
+        path: "assets",
+        element: <RequireAuth><Assets /></RequireAuth>,
       },
       {
-        path: "technical-analysis",
-        element: <TechnicalAnalysis />,
+        path: "alerts",
+        element: <RequireAuth><Alerts /></RequireAuth>,
       },
       {
-        path: "portfolio",
-        element: <Portfolio />,
-      },
-      {
-        path: "asset-tracker",
-        element: <AssetTracker />,
-      },
-      {
-        path: "trading-signals",
-        element: <TradingSignals />,
-      },
-      {
-        path: "data-connections",
-        element: <DataConnections />,
-      },
-      {
-        path: "binance-integration",
-        element: <BinanceIntegration />,
-      },
-      {
-        path: "twitter-integration",
-        element: <TwitterIntegration />,
-      },
-      {
-        path: "tradingview-integration",
-        element: <TradingViewIntegration />,
-      },
-      {
-        path: "crypto-sentiment",
-        element: <CryptoSentiment />,
-      },
-      {
-        path: "sentiment",
-        element: <CryptoSentiment />,
+        path: "signals",
+        element: <RequireAuth><Signals /></RequireAuth>,
       },
       {
         path: "settings",
-        element: <Settings />,
+        element: <RequireAuth><Settings /></RequireAuth>,
+      },
+      {
+        path: "tradingview",
+        element: <RequireAuth><TradingViewIntegration /></RequireAuth>,
+      },
+      {
+        path: "sentiment",
+        element: <RequireAuth><CryptoSentiment /></RequireAuth>,
+      },
+      {
+        path: "twitter",
+        element: <RequireAuth><TwitterIntegration /></RequireAuth>,
+      },
+      {
+        path: "binance",
+        element: <RequireAuth><BinanceIntegration /></RequireAuth>,
+      },
+      {
+        path: "backtesting",
+        element: <RequireAuth><Backtesting /></RequireAuth>,
+      },
+      {
+        path: "technical-analysis",
+        element: <RequireAuth><TechnicalAnalysis /></RequireAuth>,
+      },
+      {
+        path: "portfolio",
+        element: <RequireAuth><Portfolio /></RequireAuth>,
+      },
+      {
+        path: "asset-tracker",
+        element: <RequireAuth><AssetTracker /></RequireAuth>,
+      },
+      {
+        path: "trading-signals",
+        element: <RequireAuth><TradingSignals /></RequireAuth>,
+      },
+      {
+        path: "data-connections",
+        element: <RequireAuth><DataConnections /></RequireAuth>,
       },
       {
         path: "proxy-settings",
-        element: <ProxySettings />,
+        element: <RequireAuth><ProxySettings /></RequireAuth>,
       },
       {
         path: "deployment-guide",
-        element: <DeploymentGuide />,
+        element: <RequireAuth><DeploymentGuide /></RequireAuth>,
       },
       {
         path: "faq",
-        element: <FAQ />,
+        element: <RequireAuth><FAQ /></RequireAuth>,
       },
       {
         path: "links",
-        element: <LinkPage />,
+        element: <RequireAuth><LinkPage /></RequireAuth>,
       },
       {
         path: "profile",
-        element: <Profile />,
+        element: <RequireAuth><Profile /></RequireAuth>,
       },
       {
         path: "information-sources",
-        element: <InformationSources />,
+        element: <RequireAuth><InformationSources /></RequireAuth>,
       },
       {
         path: "market-news",
-        element: <MarketNews />,
+        element: <RequireAuth><MarketNews /></RequireAuth>,
       },
       {
         path: "market-data",
-        element: <MarketNews />,
+        element: <RequireAuth><MarketNews /></RequireAuth>,
       },
       {
         path: "fundamental-data",
-        element: <FundamentalData />,
+        element: <RequireAuth><FundamentalData /></RequireAuth>,
+      },
+      {
+        path: "unauthorized",
+        element: <Unauthorized />,
+      },
+      {
+        path: "*",
+        element: <NotFound />,
       },
     ],
   },
