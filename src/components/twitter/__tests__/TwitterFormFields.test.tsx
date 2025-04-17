@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import TwitterFormFields from '../TwitterFormFields';
 import { twitterFormSchema, TwitterFormData } from '@/hooks/useTwitterConnect';
 import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom';
 
 const TestFormWrapper = () => {
   const form = useForm<TwitterFormData>({

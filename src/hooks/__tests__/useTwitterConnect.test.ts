@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react-hooks';
 import { useTwitterConnect } from '../useTwitterConnect';
 import { getTwitterCredentials } from '@/services/twitter/twitterService';
+import '@testing-library/jest-dom';
 
 vi.mock('@/services/twitter/twitterService', () => ({
   getTwitterCredentials: vi.fn()

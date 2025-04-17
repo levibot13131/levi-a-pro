@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import TwitterConnectForm from '../TwitterConnectForm';
 import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom';
 
 describe('TwitterConnectForm', () => {
   const mockOnConnect = vi.fn();
