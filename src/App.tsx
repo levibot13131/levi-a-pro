@@ -28,6 +28,12 @@ const App: React.FC = () => {
     testProxyConnection()
       .then(success => {
         console.log('Initial proxy test:', success ? 'success' : 'failed');
+        
+        // Dispatch WebSocket status event
+        window.dispatchEvent(new CustomEvent('websocket-status-change', {
+          detail: { connected: success }
+        }));
+        
         if (success) {
           // Also test direct API connectivity
           return apiClient.testProxyConnection();
@@ -36,6 +42,12 @@ const App: React.FC = () => {
       })
       .then(apiSuccess => {
         console.log('API connectivity test:', apiSuccess ? 'success' : 'failed');
+        
+        if (apiSuccess) {
+          toast.success('חיבור נתונים פעיל', {
+            description: 'כל השירותים החיצוניים מחוברים כראוי'
+          });
+        }
       })
       .catch(err => {
         console.error('Error testing proxy:', err);
@@ -76,6 +88,12 @@ const App: React.FC = () => {
       testProxyConnection()
         .then(success => {
           console.log('Proxy test after config change:', success ? 'success' : 'failed');
+          
+          // Dispatch WebSocket status event
+          window.dispatchEvent(new CustomEvent('websocket-status-change', {
+            detail: { connected: success }
+          }));
+          
           if (success) {
             toast.success('Proxy connection verified', { 
               description: 'All services will now use the new proxy settings'

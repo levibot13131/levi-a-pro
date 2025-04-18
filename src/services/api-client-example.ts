@@ -152,10 +152,16 @@ export const apiClient = {
   // 5. Test connection to any endpoint
   async testConnection(url: string): Promise<boolean> {
     try {
+      // Create AbortController for timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
       const response = await axios.get(url, { 
         timeout: 10000,
         headers: { 'Accept': 'application/json' }
       });
+      
+      clearTimeout(timeoutId);
       return response.status === 200;
     } catch (error) {
       console.error('Connection test failed:', error);
