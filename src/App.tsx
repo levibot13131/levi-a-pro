@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
-import { Toaster } from 'sonner';
+import { Toaster, toast } from 'sonner';
 import { ThemeProvider } from './components/theme-provider';
 import { startRealTimeUpdates } from './services/realtime/realtimeService';
 import { initializeTradingViewServices } from './services/tradingView/startup';

@@ -203,42 +203,75 @@ export const testProxyConnection = async (): Promise<boolean> => {
   try {
     // First try the ping endpoint
     console.log(`Testing proxy connection to ${config.baseUrl}/ping`);
-    const pingResponse = await fetch(`${config.baseUrl}/ping`, { 
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-      mode: 'cors',
-      timeout: 5000
-    });
-
-    if (pingResponse.ok) {
-      console.log('Proxy ping test successful');
-      return true;
+    
+    // Use AbortController to implement timeout
+    const pingController = new AbortController();
+    const pingTimeoutId = setTimeout(() => pingController.abort(), 5000);
+    
+    try {
+      const pingResponse = await fetch(`${config.baseUrl}/ping`, { 
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+        mode: 'cors',
+        signal: pingController.signal
+      });
+      
+      clearTimeout(pingTimeoutId);
+      
+      if (pingResponse.ok) {
+        console.log('Proxy ping test successful');
+        return true;
+      }
+    } catch (pingError) {
+      console.log('Ping request failed:', pingError);
+      // Continue to try other methods
     }
     
     // If ping fails, try a basic root request
     console.log(`Ping failed, trying root URL ${config.baseUrl}`);
-    const rootResponse = await fetch(config.baseUrl, { 
-      method: 'GET',
-      mode: 'cors',
-      timeout: 5000
-    });
     
-    if (rootResponse.ok) {
-      console.log('Proxy root test successful');
-      return true;
+    const rootController = new AbortController();
+    const rootTimeoutId = setTimeout(() => rootController.abort(), 5000);
+    
+    try {
+      const rootResponse = await fetch(config.baseUrl, { 
+        method: 'GET',
+        mode: 'cors',
+        signal: rootController.signal
+      });
+      
+      clearTimeout(rootTimeoutId);
+      
+      if (rootResponse.ok) {
+        console.log('Proxy root test successful');
+        return true;
+      }
+    } catch (rootError) {
+      console.log('Root request failed:', rootError);
+      // Continue to try the OPTIONS request
     }
     
     // If both fail, try an OPTIONS request
     console.log('Root test failed, trying OPTIONS request');
-    const optionsResponse = await fetch(config.baseUrl, { 
-      method: 'OPTIONS',
-      mode: 'cors',
-      timeout: 5000
-    });
     
-    if (optionsResponse.ok) {
-      console.log('Proxy OPTIONS test successful');
-      return true;
+    const optionsController = new AbortController();
+    const optionsTimeoutId = setTimeout(() => optionsController.abort(), 5000);
+    
+    try {
+      const optionsResponse = await fetch(config.baseUrl, { 
+        method: 'OPTIONS',
+        mode: 'cors',
+        signal: optionsController.signal
+      });
+      
+      clearTimeout(optionsTimeoutId);
+      
+      if (optionsResponse.ok) {
+        console.log('Proxy OPTIONS test successful');
+        return true;
+      }
+    } catch (optionsError) {
+      console.log('OPTIONS request failed:', optionsError);
     }
     
     console.log('All proxy tests failed');
