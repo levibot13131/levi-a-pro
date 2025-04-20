@@ -1,4 +1,3 @@
-
 import axios from 'axios';
 import { getProxyUrl, buildProxyPassthroughUrl, isProxyConfigured, getApiBaseUrl } from './proxy/proxyConfig';
 
@@ -157,7 +156,7 @@ export const apiClient = {
       const timeoutId = setTimeout(() => controller.abort(), 10000);
       
       const response = await axios.get(url, { 
-        timeout: 10000,
+        signal: controller.signal,
         headers: { 'Accept': 'application/json' }
       });
       
@@ -177,10 +176,15 @@ export const apiClient = {
       const pingUrl = `${baseUrl}/ping`;
       console.log(`Testing proxy ping: ${pingUrl}`);
       
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      
       const response = await axios.get(pingUrl, { 
-        timeout: 10000,
+        signal: controller.signal,
         headers: { 'Accept': 'application/json' }
       });
+      
+      clearTimeout(timeoutId);
       
       console.log(`Proxy ping response:`, response.status, response.data);
       return response.status === 200;
@@ -192,9 +196,16 @@ export const apiClient = {
         const rootUrl = getApiBaseUrl();
         console.log(`Testing proxy root: ${rootUrl}`);
         
-        const rootResponse = await axios.get(rootUrl, { timeout: 10000 });
-        console.log(`Proxy root response:`, rootResponse.status);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
         
+        const rootResponse = await axios.get(rootUrl, { 
+          signal: controller.signal 
+        });
+        
+        clearTimeout(timeoutId);
+        
+        console.log(`Proxy root response:`, rootResponse.status);
         return rootResponse.status === 200;
       } catch (rootError) {
         console.error('Proxy root test also failed:', rootError);

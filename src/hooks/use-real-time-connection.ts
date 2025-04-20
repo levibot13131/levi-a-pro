@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { testProxyConnection, getProxyConfig } from '@/services/proxy/proxyConfig';
 import { apiClient } from '@/services/api-client-example';
@@ -21,7 +21,7 @@ export function useRealTimeConnection() {
     isChecking: false
   });
   
-  const checkConnections = async () => {
+  const checkConnections = useCallback(async () => {
     setConnectionState(prev => ({ ...prev, isChecking: true }));
     
     try {
@@ -41,7 +41,7 @@ export function useRealTimeConnection() {
       setConnectionState({
         proxyConnected,
         apiConnected,
-        webSocketsConnected: false, // This will be updated by a socket connection event
+        webSocketsConnected: connectionState.webSocketsConnected, // Preserve the current WebSocket state
         lastChecked: Date.now(),
         isChecking: false
       });
@@ -76,7 +76,7 @@ export function useRealTimeConnection() {
       
       return { proxyConnected: false, apiConnected: false };
     }
-  };
+  }, [connectionState.webSocketsConnected]);
   
   // Check connections on mount
   useEffect(() => {
@@ -104,7 +104,7 @@ export function useRealTimeConnection() {
       window.removeEventListener('proxy-config-changed', handleProxyChange);
       window.removeEventListener('websocket-status-change', handleWebSocketStatus);
     };
-  }, []);
+  }, [checkConnections]);
   
   // Setup periodic connection check (every 5 minutes)
   useEffect(() => {
@@ -113,7 +113,7 @@ export function useRealTimeConnection() {
     }, 5 * 60 * 1000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, [checkConnections]);
   
   return {
     ...connectionState,

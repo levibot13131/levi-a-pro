@@ -30,6 +30,20 @@ export const useBinanceMarketData = (symbol: string = 'BTCUSDT') => {
   useEffect(() => {
     const proxyConfig = getProxyConfig();
     setIsLiveData(proxyConfig.isEnabled && !!proxyConfig.baseUrl);
+    
+    // Listen for changes to the proxy configuration
+    const handleProxyChange = () => {
+      const updatedConfig = getProxyConfig();
+      setIsLiveData(updatedConfig.isEnabled && !!updatedConfig.baseUrl);
+      
+      // Reload chart data when proxy config changes
+      loadChartData();
+    };
+    
+    window.addEventListener('proxy-config-changed', handleProxyChange);
+    return () => {
+      window.removeEventListener('proxy-config-changed', handleProxyChange);
+    };
   }, []);
   
   // Load chart data with error handling and retries
@@ -78,6 +92,19 @@ export const useBinanceMarketData = (symbol: string = 'BTCUSDT') => {
       loadChartData(newTimeframe);
     }
   }, [timeframe, loadChartData]);
+  
+  // Listen for refresh requests
+  useEffect(() => {
+    const handleRefreshRequest = () => {
+      console.log('Manual refresh requested for chart data');
+      loadChartData();
+    };
+    
+    window.addEventListener('binance-refresh-request', handleRefreshRequest);
+    return () => {
+      window.removeEventListener('binance-refresh-request', handleRefreshRequest);
+    };
+  }, [loadChartData]);
   
   // Start real-time updates and load initial data
   useEffect(() => {
