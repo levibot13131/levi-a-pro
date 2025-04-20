@@ -78,7 +78,15 @@ const router = createBrowserRouter([
         element: <RequireAuth><TwitterIntegration /></RequireAuth>,
       },
       {
+        path: "twitter-integration",
+        element: <RequireAuth><TwitterIntegration /></RequireAuth>,
+      },
+      {
         path: "binance",
+        element: <RequireAuth><BinanceIntegration /></RequireAuth>,
+      },
+      {
+        path: "binance-integration",
         element: <RequireAuth><BinanceIntegration /></RequireAuth>,
       },
       {
@@ -134,12 +142,16 @@ const router = createBrowserRouter([
         element: <RequireAuth><MarketNews /></RequireAuth>,
       },
       {
-        path: "market-data",
-        element: <RequireAuth><MarketNews /></RequireAuth>,
+        path: "fundamental",
+        element: <RequireAuth><FundamentalData /></RequireAuth>,
       },
       {
         path: "fundamental-data",
         element: <RequireAuth><FundamentalData /></RequireAuth>,
+      },
+      {
+        path: "market-data",
+        element: <RequireAuth><MarketNews /></RequireAuth>,
       },
       {
         path: "admin",

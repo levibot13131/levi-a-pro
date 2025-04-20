@@ -68,6 +68,11 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
         ws.onopen = () => {
           console.log(`WebSocket connected: ${streamName}`);
           toast.success('התחברות לנתוני בינאנס בזמן אמת');
+          
+          // Notify about WebSocket status change
+          window.dispatchEvent(new CustomEvent('websocket-status-change', {
+            detail: { connected: true }
+          }));
         };
         
         ws.onmessage = (event) => {
@@ -95,6 +100,11 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
           if (onError) onError(error);
           toast.error('שגיאה בחיבור לנתוני בינאנס בזמן אמת');
           
+          // Notify about WebSocket status change
+          window.dispatchEvent(new CustomEvent('websocket-status-change', {
+            detail: { connected: false }
+          }));
+          
           // Try to reconnect on error after a delay
           setTimeout(() => {
             if (ws && ws.readyState === WebSocket.CLOSED) {
@@ -109,6 +119,11 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
           console.log(`WebSocket closed: ${streamName}`);
           activeConnections.delete(streamName);
           
+          // Notify about WebSocket status change
+          window.dispatchEvent(new CustomEvent('websocket-status-change', {
+            detail: { connected: false }
+          }));
+          
           // Try to reconnect on close after a delay
           setTimeout(() => {
             console.log(`Attempting to reconnect closed WebSocket: ${streamName}`);
@@ -121,6 +136,11 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
       } catch (wsError) {
         console.error('Error creating WebSocket connection:', wsError);
         if (onError) onError(wsError);
+        
+        // Notify about WebSocket status change
+        window.dispatchEvent(new CustomEvent('websocket-status-change', {
+          detail: { connected: false }
+        }));
         
         // Fall back to simulation if WebSocket fails
         console.log('Falling back to simulated data due to WebSocket error');
@@ -164,6 +184,12 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
   } catch (error) {
     console.error('Error creating WebSocket:', error);
     onError?.(error);
+    
+    // Notify about WebSocket status change
+    window.dispatchEvent(new CustomEvent('websocket-status-change', {
+      detail: { connected: false }
+    }));
+    
     return () => {}; // Return empty cleanup function
   }
 };
@@ -339,5 +365,10 @@ export const reconnectAllWebSockets = (): void => {
   // Notify user
   if (existingConnections.size > 0) {
     toast.success(`${existingConnections.size} WebSocket connections reconnected`);
+    
+    // Dispatch event with WebSocket reconnect status
+    window.dispatchEvent(new CustomEvent('websocket-status-change', {
+      detail: { connected: true }
+    }));
   }
 };
