@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 
 const PROXY_URL_KEY = 'levi_bot_proxy_url';
@@ -201,81 +200,60 @@ export const testProxyConnection = async (): Promise<boolean> => {
   }
 
   try {
-    // First try the ping endpoint
-    console.log(`Testing proxy connection to ${config.baseUrl}/ping`);
+    console.log(`Testing proxy connection to ${config.baseUrl}`);
     
-    // Use AbortController to implement timeout
-    const pingController = new AbortController();
-    const pingTimeoutId = setTimeout(() => pingController.abort(), 5000);
-    
-    try {
-      const pingResponse = await fetch(`${config.baseUrl}/ping`, { 
+    // Use multiple methods to test proxy connection with Promise.any
+    const testMethods = [
+      // Method 1: Try ping endpoint
+      fetch(`${config.baseUrl}/ping`, { 
         method: 'GET',
         headers: { 'Accept': 'application/json' },
         mode: 'cors',
-        signal: pingController.signal
-      });
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      }).then(response => {
+        console.log('Ping test response:', response.status);
+        return response.ok;
+      }),
       
-      clearTimeout(pingTimeoutId);
+      // Method 2: Try a simple HEAD request
+      fetch(config.baseUrl, { 
+        method: 'HEAD',
+        mode: 'cors',
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      }).then(response => {
+        console.log('HEAD test response:', response.status);
+        return response.ok;
+      }),
       
-      if (pingResponse.ok) {
-        console.log('Proxy ping test successful');
-        return true;
-      }
-    } catch (pingError) {
-      console.log('Ping request failed:', pingError);
-      // Continue to try other methods
-    }
-    
-    // If ping fails, try a basic root request
-    console.log(`Ping failed, trying root URL ${config.baseUrl}`);
-    
-    const rootController = new AbortController();
-    const rootTimeoutId = setTimeout(() => rootController.abort(), 5000);
-    
-    try {
-      const rootResponse = await fetch(config.baseUrl, { 
+      // Method 3: Try a simple GET request
+      fetch(config.baseUrl, { 
         method: 'GET',
         mode: 'cors',
-        signal: rootController.signal
-      });
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      }).then(response => {
+        console.log('GET test response:', response.status);
+        return response.ok;
+      }),
       
-      clearTimeout(rootTimeoutId);
-      
-      if (rootResponse.ok) {
-        console.log('Proxy root test successful');
-        return true;
-      }
-    } catch (rootError) {
-      console.log('Root request failed:', rootError);
-      // Continue to try the OPTIONS request
-    }
-    
-    // If both fail, try an OPTIONS request
-    console.log('Root test failed, trying OPTIONS request');
-    
-    const optionsController = new AbortController();
-    const optionsTimeoutId = setTimeout(() => optionsController.abort(), 5000);
-    
-    try {
-      const optionsResponse = await fetch(config.baseUrl, { 
+      // Method 4: Try OPTIONS request
+      fetch(config.baseUrl, { 
         method: 'OPTIONS',
         mode: 'cors',
-        signal: optionsController.signal
-      });
-      
-      clearTimeout(optionsTimeoutId);
-      
-      if (optionsResponse.ok) {
-        console.log('Proxy OPTIONS test successful');
-        return true;
-      }
-    } catch (optionsError) {
-      console.log('OPTIONS request failed:', optionsError);
-    }
+        signal: AbortSignal.timeout(5000) // 5 second timeout
+      }).then(response => {
+        console.log('OPTIONS test response:', response.status);
+        return response.ok;
+      })
+    ];
     
-    console.log('All proxy tests failed');
-    return false;
+    // Wait for the first successful method or all to fail
+    try {
+      const result = await Promise.any(testMethods);
+      return result;
+    } catch (error) {
+      console.log('All proxy test methods failed');
+      return false;
+    }
   } catch (error) {
     console.error('Error testing proxy connection:', error);
     return false;
@@ -296,7 +274,7 @@ export const initializeProxySettings = (): void => {
     });
     console.log('Proxy initialized with default Cloudflare URL:', DEFAULT_PROXY_URL);
   } else {
-    console.log('Using saved proxy configuration:', savedConfig.baseUrl);
+    console.log('Using saved proxy configuration:', savedConfig);
   }
   
   // Test the connection on initialization
@@ -307,9 +285,68 @@ export const initializeProxySettings = (): void => {
         toast.success('Proxy connection verified', {
           description: 'External services are now connected'
         });
+      } else {
+        // Try once more with default URL if custom URL fails
+        if (savedConfig.baseUrl !== DEFAULT_PROXY_URL) {
+          console.log('Custom proxy failed, trying default Cloudflare URL');
+          setProxyConfig({
+            baseUrl: DEFAULT_PROXY_URL,
+            isEnabled: true
+          });
+          
+          // Test the default proxy
+          setTimeout(() => {
+            testProxyConnection()
+              .then(defaultSuccess => {
+                console.log(`Default proxy test: ${defaultSuccess ? 'SUCCESS' : 'FAILED'}`);
+                if (defaultSuccess) {
+                  toast.success('Default proxy connection verified', {
+                    description: 'Using default Cloudflare proxy for external services'
+                  });
+                } else {
+                  toast.error('Error connecting to proxy', {
+                    description: 'All proxy connection attempts failed'
+                  });
+                }
+              });
+          }, 1000);
+        }
       }
     })
     .catch(err => {
       console.error('Error during initial proxy test:', err);
     });
+};
+
+/**
+ * Setup a periodic health check for the proxy
+ */
+export const setupProxyHealthCheck = (intervalMs = 60000): () => void => {
+  console.log(`Setting up proxy health check every ${intervalMs}ms`);
+  
+  const intervalId = setInterval(async () => {
+    const isConnected = await testProxyConnection();
+    
+    // Dispatch status event
+    window.dispatchEvent(new CustomEvent('proxy-status-update', {
+      detail: { isConnected }
+    }));
+    
+    if (!isConnected) {
+      console.warn('Proxy health check failed, connection may be down');
+      // Only show toast if proxy was previously working (avoid spam)
+      if (localStorage.getItem('proxy_was_working') === 'true') {
+        toast.error('Proxy connection lost', {
+          description: 'Check network and proxy settings'
+        });
+      }
+      localStorage.setItem('proxy_was_working', 'false');
+    } else {
+      console.log('Proxy health check passed');
+      localStorage.setItem('proxy_was_working', 'true');
+    }
+  }, intervalMs);
+  
+  // Return cleanup function
+  return () => clearInterval(intervalId);
 };

@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 import { getBinanceCredentials } from './credentials';
 import { BinanceSocketConfig, BinanceStreamMessage } from './types';
@@ -10,6 +9,11 @@ const activeConnections: Map<string, WebSocket> = new Map();
 
 // Callbacks for message handling
 const messageCallbacks: Map<string, Set<(data: BinanceStreamMessage) => void>> = new Map();
+
+// Reconnection attempts tracking
+const reconnectionAttempts: Map<string, number> = new Map();
+const MAX_RECONNECT_ATTEMPTS = 5;
+const RECONNECT_DELAY_MS = 3000;
 
 /**
  * Create a WebSocket connection to Binance
@@ -61,24 +65,70 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
     let ws = activeConnections.get(streamName);
     
     if (!ws || ws.readyState === WebSocket.CLOSED) {
+      // Reset reconnection attempts on new connection
+      reconnectionAttempts.set(streamName, 0);
+      
       try {
         console.log(`Creating new WebSocket connection to: ${wsEndpoint}`);
         ws = new WebSocket(wsEndpoint);
         
+        // Set a timeout to detect if connection is stalled
+        const connectionTimeout = setTimeout(() => {
+          if (ws && ws.readyState === WebSocket.CONNECTING) {
+            console.warn(`WebSocket connection timed out: ${streamName}`);
+            ws.close();
+            
+            // Notify about WebSocket status change
+            window.dispatchEvent(new CustomEvent('websocket-status-change', {
+              detail: { connected: false }
+            }));
+            
+            // Try reconnecting
+            handleReconnection(streamName, config);
+          }
+        }, 10000); // 10 seconds timeout
+        
         ws.onopen = () => {
+          clearTimeout(connectionTimeout);
           console.log(`WebSocket connected: ${streamName}`);
           toast.success('התחברות לנתוני בינאנס בזמן אמת');
+          
+          // Reset reconnection attempts on successful connection
+          reconnectionAttempts.set(streamName, 0);
           
           // Notify about WebSocket status change
           window.dispatchEvent(new CustomEvent('websocket-status-change', {
             detail: { connected: true }
           }));
+          
+          // Setup ping-pong to keep connection alive
+          const pingInterval = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              try {
+                // Send ping frame to keep connection alive
+                ws.send(JSON.stringify({ type: 'ping' }));
+              } catch (err) {
+                console.warn('Error sending ping:', err);
+              }
+            } else {
+              clearInterval(pingInterval);
+            }
+          }, 30000); // Send ping every 30 seconds
+          
+          // Store the interval for cleanup
+          (ws as any).pingInterval = pingInterval;
         };
         
         ws.onmessage = (event) => {
           try {
             const rawData = JSON.parse(event.data);
             console.log(`WebSocket data received for ${streamName}:`, rawData);
+            
+            // Handle pong responses
+            if (rawData.type === 'pong') {
+              console.log('Received pong from server');
+              return;
+            }
             
             const streamMessage = parseWebSocketMessage(rawData, symbol);
             
@@ -96,39 +146,36 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
         };
         
         ws.onerror = (error) => {
+          clearTimeout(connectionTimeout);
           console.error(`WebSocket error: ${streamName}`, error);
           if (onError) onError(error);
-          toast.error('שגיאה בחיבור לנתוני בינאנס בזמן אמת');
           
           // Notify about WebSocket status change
           window.dispatchEvent(new CustomEvent('websocket-status-change', {
             detail: { connected: false }
           }));
           
-          // Try to reconnect on error after a delay
-          setTimeout(() => {
-            if (ws && ws.readyState === WebSocket.CLOSED) {
-              console.log(`Attempting to reconnect WebSocket: ${streamName}`);
-              activeConnections.delete(streamName);
-              createBinanceWebSocket(config);
-            }
-          }, 5000);
+          // Try to reconnect on error
+          handleReconnection(streamName, config);
         };
         
         ws.onclose = () => {
+          clearTimeout(connectionTimeout);
           console.log(`WebSocket closed: ${streamName}`);
           activeConnections.delete(streamName);
+          
+          // Clear ping interval if exists
+          if ((ws as any).pingInterval) {
+            clearInterval((ws as any).pingInterval);
+          }
           
           // Notify about WebSocket status change
           window.dispatchEvent(new CustomEvent('websocket-status-change', {
             detail: { connected: false }
           }));
           
-          // Try to reconnect on close after a delay
-          setTimeout(() => {
-            console.log(`Attempting to reconnect closed WebSocket: ${streamName}`);
-            createBinanceWebSocket(config);
-          }, 5000);
+          // Try to reconnect on close
+          handleReconnection(streamName, config);
         };
         
         // Store the connection
@@ -142,10 +189,8 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
           detail: { connected: false }
         }));
         
-        // Fall back to simulation if WebSocket fails
-        console.log('Falling back to simulated data due to WebSocket error');
-        const intervalId = simulateWebSocketMessages(symbol, onMessage);
-        return () => clearInterval(intervalId);
+        // Try to reconnect
+        handleReconnection(streamName, config);
       }
     } else {
       console.log(`Reusing existing WebSocket connection for ${streamName}`);
@@ -176,6 +221,11 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
       if (!messageCallbacks.has(symbol) || messageCallbacks.get(symbol)?.size === 0) {
         const connection = activeConnections.get(streamName);
         if (connection && connection.readyState === WebSocket.OPEN) {
+          // Clear ping interval if exists
+          if ((connection as any).pingInterval) {
+            clearInterval((connection as any).pingInterval);
+          }
+          
           connection.close();
           activeConnections.delete(streamName);
         }
@@ -193,6 +243,46 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
     return () => {}; // Return empty cleanup function
   }
 };
+
+/**
+ * Handle WebSocket reconnection with exponential backoff
+ */
+function handleReconnection(streamName: string, config: BinanceSocketConfig) {
+  const attempts = reconnectionAttempts.get(streamName) || 0;
+  
+  if (attempts < MAX_RECONNECT_ATTEMPTS) {
+    const backoffDelay = RECONNECT_DELAY_MS * Math.pow(1.5, attempts);
+    reconnectionAttempts.set(streamName, attempts + 1);
+    
+    console.log(`Attempting reconnection ${attempts + 1}/${MAX_RECONNECT_ATTEMPTS} for ${streamName} in ${backoffDelay}ms`);
+    
+    setTimeout(() => {
+      console.log(`Reconnecting WebSocket: ${streamName}`);
+      activeConnections.delete(streamName);
+      createBinanceWebSocket(config);
+    }, backoffDelay);
+  } else {
+    console.error(`Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached for ${streamName}`);
+    toast.error('חיבור לנתוני בינאנס בזמן אמת נכשל', {
+      description: 'מספר ניסיונות החיבור המרבי הושג, נדרשת הפעלה מחדש ידנית'
+    });
+    
+    // Fall back to simulation mode
+    console.log('Falling back to simulated data due to max reconnection attempts reached');
+    const intervalId = simulateWebSocketMessages(config.symbol, config.onMessage);
+    
+    // Store a special connection object so we don't try to reconnect again
+    const fallbackConnection = {
+      readyState: WebSocket.OPEN,
+      close: () => {
+        clearInterval(intervalId);
+        activeConnections.delete(streamName);
+      }
+    } as unknown as WebSocket;
+    
+    activeConnections.set(streamName, fallbackConnection);
+  }
+}
 
 /**
  * Parse WebSocket message into a standardized format
@@ -322,20 +412,6 @@ export const subscribeToMarketData = (
 };
 
 /**
- * Close all active WebSocket connections
- */
-export const closeAllConnections = (): void => {
-  activeConnections.forEach((ws, key) => {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.close();
-    }
-  });
-  
-  activeConnections.clear();
-  messageCallbacks.clear();
-};
-
-/**
  * Reset and reconnect all active WebSocket connections
  * Useful when proxy settings change
  */
@@ -348,6 +424,9 @@ export const reconnectAllWebSockets = (): void => {
   
   // Close all existing connections
   closeAllConnections();
+  
+  // Reset reconnection attempts
+  reconnectionAttempts.clear();
   
   // Re-establish connections with the same callbacks
   existingCallbacks.forEach((callbacks, symbol) => {
@@ -372,3 +451,27 @@ export const reconnectAllWebSockets = (): void => {
     }));
   }
 };
+
+/**
+ * Close all active WebSocket connections
+ */
+export const closeAllConnections = (): void => {
+  activeConnections.forEach((ws, key) => {
+    // Clear ping interval if exists
+    if ((ws as any).pingInterval) {
+      clearInterval((ws as any).pingInterval);
+    }
+    
+    if (ws.readyState === WebSocket.OPEN) {
+      ws.close();
+    }
+  });
+  
+  activeConnections.clear();
+  messageCallbacks.clear();
+};
+
+/**
+ * Export parseWebSocketMessage to be used by other modules
+ */
+export { parseWebSocketMessage };

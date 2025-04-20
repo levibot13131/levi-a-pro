@@ -46,7 +46,7 @@ const BinanceRealTimeStatus: React.FC<BinanceRealTimeStatusProps> = ({ symbol = 
             />
             <StatusItem 
               title="נתוני גרף"
-              value={chartData?.data ? `${chartData.data.length} items` : 'N/A'}
+              value={chartData && chartData.length ? `${chartData.length} items` : 'N/A'}
               loading={chartLoading}
               icon={<Signal className="h-5 w-5" />}
             />

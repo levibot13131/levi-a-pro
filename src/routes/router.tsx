@@ -81,6 +81,7 @@ const router = createBrowserRouter([
         path: "twitter-integration",
         element: <RequireAuth><TwitterIntegration /></RequireAuth>,
       },
+      // Fixed binance integration routes - duplicate paths to support both URL formats
       {
         path: "binance",
         element: <RequireAuth><BinanceIntegration /></RequireAuth>,
@@ -141,6 +142,7 @@ const router = createBrowserRouter([
         path: "market-news",
         element: <RequireAuth><MarketNews /></RequireAuth>,
       },
+      // Fixed fundamental data routes - duplicate paths to support both URL formats
       {
         path: "fundamental",
         element: <RequireAuth><FundamentalData /></RequireAuth>,
@@ -165,6 +167,7 @@ const router = createBrowserRouter([
         path: "trading-dashboard",
         element: <RequireAuth><TradingDashboard /></RequireAuth>,
       },
+      // Catch-all routes
       {
         path: "unauthorized",
         element: <Unauthorized />,
