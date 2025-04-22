@@ -1,5 +1,30 @@
 import { toast } from 'sonner';
 
+// Add a polyfill for Promise.any if not supported
+if (!Promise.any) {
+  Promise.any = function(promises) {
+    return new Promise((resolve, reject) => {
+      let errors: any[] = [];
+      let settled = 0;
+
+      promises.forEach((promise, index) => {
+        Promise.resolve(promise)
+          .then(result => {
+            resolve(result);
+          })
+          .catch(error => {
+            errors[index] = error;
+            settled++;
+
+            if (settled === promises.length) {
+              reject(new AggregateError(errors, 'No Promise in Promise.any was resolved'));
+            }
+          });
+      });
+    });
+  };
+}
+
 const PROXY_URL_KEY = 'levi_bot_proxy_url';
 const DEFAULT_PROXY_URL = 'https://tuition-colony-climb-gently.trycloudflare.com';
 
@@ -202,53 +227,46 @@ export const testProxyConnection = async (): Promise<boolean> => {
   try {
     console.log(`Testing proxy connection to ${config.baseUrl}`);
     
-    // Use multiple methods to test proxy connection with Promise.any
-    const testMethods = [
-      // Method 1: Try ping endpoint
-      fetch(`${config.baseUrl}/ping`, { 
-        method: 'GET',
-        headers: { 'Accept': 'application/json' },
-        mode: 'cors',
-        signal: AbortSignal.timeout(5000) // 5 second timeout
-      }).then(response => {
-        console.log('Ping test response:', response.status);
-        return response.ok;
-      }),
-      
-      // Method 2: Try a simple HEAD request
-      fetch(config.baseUrl, { 
-        method: 'HEAD',
-        mode: 'cors',
-        signal: AbortSignal.timeout(5000) // 5 second timeout
-      }).then(response => {
-        console.log('HEAD test response:', response.status);
-        return response.ok;
-      }),
-      
-      // Method 3: Try a simple GET request
-      fetch(config.baseUrl, { 
-        method: 'GET',
-        mode: 'cors',
-        signal: AbortSignal.timeout(5000) // 5 second timeout
-      }).then(response => {
-        console.log('GET test response:', response.status);
-        return response.ok;
-      }),
-      
-      // Method 4: Try OPTIONS request
-      fetch(config.baseUrl, { 
-        method: 'OPTIONS',
-        mode: 'cors',
-        signal: AbortSignal.timeout(5000) // 5 second timeout
-      }).then(response => {
-        console.log('OPTIONS test response:', response.status);
-        return response.ok;
-      })
-    ];
+    // Method 1: Try ping endpoint
+    const pingTest = fetch(`${config.baseUrl}/ping`, { 
+      method: 'GET',
+      headers: { 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(5000)
+    }).then(response => {
+      console.log('Ping test response:', response.status);
+      return response.ok;
+    });
     
+    // Method 2: Try a simple HEAD request
+    const headTest = fetch(config.baseUrl, { 
+      method: 'HEAD',
+      signal: AbortSignal.timeout(5000)
+    }).then(response => {
+      console.log('HEAD test response:', response.status);
+      return response.ok;
+    });
+    
+    // Method 3: Try a simple GET request
+    const getTest = fetch(config.baseUrl, { 
+      method: 'GET',
+      signal: AbortSignal.timeout(5000)
+    }).then(response => {
+      console.log('GET test response:', response.status);
+      return response.ok;
+    });
+    
+    // Method 4: Try OPTIONS request
+    const optionsTest = fetch(config.baseUrl, { 
+      method: 'OPTIONS',
+      signal: AbortSignal.timeout(5000)
+    }).then(response => {
+      console.log('OPTIONS test response:', response.status);
+      return response.ok;
+    });
+
     // Wait for the first successful method or all to fail
     try {
-      const result = await Promise.any(testMethods);
+      const result = await Promise.any([pingTest, headTest, getTest, optionsTest]);
       return result;
     } catch (error) {
       console.log('All proxy test methods failed');
