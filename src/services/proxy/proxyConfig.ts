@@ -1,36 +1,34 @@
-
 import { toast } from 'sonner';
 
-// Add a custom polyfill for Promise.any if not supported
-if (!Promise.any) {
-  Promise.any = function(promises: Promise<any>[]) {
-    return new Promise((resolve, reject) => {
-      let errors: any[] = [];
-      let settled = 0;
+// Custom implementation for Promise.any functionality
+// This avoids modifying the global Promise object and causing TypeScript errors
+const promiseAny = function<T>(promises: Promise<T>[]): Promise<T> {
+  return new Promise((resolve, reject) => {
+    let errors: any[] = [];
+    let settled = 0;
 
-      if (promises.length === 0) {
-        reject(new Error('No promises were provided'));
-        return;
-      }
+    if (promises.length === 0) {
+      reject(new Error('No promises were provided'));
+      return;
+    }
 
-      promises.forEach((promise, index) => {
-        Promise.resolve(promise)
-          .then(result => {
-            resolve(result);
-          })
-          .catch(error => {
-            errors[index] = error;
-            settled++;
+    promises.forEach((promise, index) => {
+      Promise.resolve(promise)
+        .then(result => {
+          resolve(result);
+        })
+        .catch(error => {
+          errors[index] = error;
+          settled++;
 
-            if (settled === promises.length) {
-              // Using a standard Error instead of AggregateError for compatibility
-              reject(new Error('All promises were rejected: ' + errors.map(e => String(e)).join(', ')));
-            }
-          });
-      });
+          if (settled === promises.length) {
+            // Using a standard Error instead of AggregateError for compatibility
+            reject(new Error('All promises were rejected: ' + errors.map(e => String(e)).join(', ')));
+          }
+        });
     });
-  };
-}
+  });
+};
 
 const PROXY_URL_KEY = 'levi_bot_proxy_url';
 const DEFAULT_PROXY_URL = 'https://tuition-colony-climb-gently.trycloudflare.com';
@@ -271,10 +269,9 @@ export const testProxyConnection = async (): Promise<boolean> => {
       return response.ok;
     });
 
-    // Try each test in sequence if Promise.any isn't available natively
+    // Use our custom promiseAny function to try each test in sequence
     try {
-      // Try to use our polyfill
-      const result = await Promise.any([pingTest, headTest, getTest, optionsTest]);
+      const result = await promiseAny([pingTest, headTest, getTest, optionsTest]);
       return result;
     } catch (error) {
       console.log('All proxy test methods failed');
