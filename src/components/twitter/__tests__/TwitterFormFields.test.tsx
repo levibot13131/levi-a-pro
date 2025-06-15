@@ -60,6 +60,8 @@ describe('TwitterFormFields', () => {
         _updateValid: vi.fn(),
         _removeUnmounted: vi.fn(),
         _updateDisabledField: vi.fn(),
+        _setErrors: vi.fn(),
+        _disableForm: vi.fn(),
         register: vi.fn(),
         unregister: vi.fn(),
         getFieldState: vi.fn(),
