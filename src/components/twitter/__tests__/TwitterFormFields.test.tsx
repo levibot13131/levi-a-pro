@@ -38,6 +38,7 @@ describe('TwitterFormFields', () => {
       _defaultValues: {},
       _formValues: {},
       _formState: {
+        errors: {},
         isDirty: false,
         isLoading: false,
         isSubmitted: false,
