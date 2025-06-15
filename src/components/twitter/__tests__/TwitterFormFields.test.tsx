@@ -2,18 +2,39 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import TwitterFormFields from '../TwitterFormFields';
+import { vi, describe, it } from 'vitest';
+import { useForm } from 'react-hook-form';
+
+// Mock useForm hook
+vi.mock('react-hook-form', () => ({
+  useForm: vi.fn()
+}));
 
 describe('TwitterFormFields', () => {
   it('renders without crashing', () => {
+    const mockForm = {
+      register: vi.fn(),
+      handleSubmit: vi.fn(),
+      formState: { errors: {} },
+      watch: vi.fn(),
+      setValue: vi.fn(),
+      getValues: vi.fn(),
+      reset: vi.fn(),
+      control: {}
+    };
+
+    (useForm as any).mockReturnValue(mockForm);
+
     const mockProps = {
+      form: mockForm,
       consumerKey: '',
       consumerSecret: '',
       accessToken: '',
       accessTokenSecret: '',
-      onConsumerKeyChange: jest.fn(),
-      onConsumerSecretChange: jest.fn(),
-      onAccessTokenChange: jest.fn(),
-      onAccessTokenSecretChange: jest.fn(),
+      onConsumerKeyChange: vi.fn(),
+      onConsumerSecretChange: vi.fn(),
+      onAccessTokenChange: vi.fn(),
+      onAccessTokenSecretChange: vi.fn(),
     };
     
     render(<TwitterFormFields {...mockProps} />);

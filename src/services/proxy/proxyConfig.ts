@@ -32,8 +32,7 @@ const promiseAny = function<T>(promises: Promise<T>[]): Promise<T> {
 const PROXY_URL_KEY = 'levi_bot_proxy_url';
 
 /**
- * LeviPro Cloud Configuration - No Proxy Required
- * Direct API connections for cloud deployment
+ * LeviPro Cloud Configuration - Direct API connections
  */
 export interface ProxyConfig {
   baseUrl: string;
@@ -61,7 +60,7 @@ export const getProxyConfig = (): ProxyConfig => {
 };
 
 /**
- * Set the configuration - Cloud optimized
+ * Set the configuration
  */
 export const setProxyConfig = (config: ProxyConfig): void => {
   try {
@@ -87,29 +86,51 @@ export const setProxyConfig = (config: ProxyConfig): void => {
 };
 
 /**
- * Get the base URL for API requests - Cloud optimized
+ * Get the base URL for API requests - Always direct for cloud
  */
 export const getApiBaseUrl = (): string => {
-  const config = getProxyConfig();
-  
-  // For LeviPro cloud deployment, prefer direct connections
-  if (config.isEnabled && config.baseUrl && config.baseUrl.trim().length > 0) {
-    let url = config.baseUrl.trim();
-    if (url.endsWith('/')) {
-      url = url.slice(0, -1);
-    }
-    
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://' + url;
-    }
-    
-    console.log('🌐 Using configured server URL:', url);
-    return url;
-  }
-  
-  // Direct cloud API connections
+  // For LeviPro cloud deployment, always use direct connections
   console.log('☁️ Using direct cloud API connections');
   return '';
+};
+
+/**
+ * Legacy proxy URL function - returns direct URLs for cloud
+ */
+export const getProxyUrl = (endpoint: string): string => {
+  // For cloud deployment, return the endpoint as-is
+  return endpoint;
+};
+
+/**
+ * Build passthrough URL - for cloud deployment
+ */
+export const buildProxyPassthroughUrl = (targetUrl: string): string => {
+  // For cloud deployment, return the target URL directly
+  return targetUrl;
+};
+
+/**
+ * Check if proxy is configured - always false for cloud
+ */
+export const isProxyConfigured = (): boolean => {
+  return false; // Always false for direct cloud connections
+};
+
+/**
+ * Listen to proxy changes - cloud compatible
+ */
+export const listenToProxyChanges = (callback: (config: ProxyConfig) => void): (() => void) => {
+  const handleConfigChange = (event: Event) => {
+    const customEvent = event as CustomEvent<ProxyConfig>;
+    callback(customEvent.detail);
+  };
+
+  window.addEventListener('proxy-config-changed', handleConfigChange);
+  
+  return () => {
+    window.removeEventListener('proxy-config-changed', handleConfigChange);
+  };
 };
 
 /**
@@ -128,63 +149,22 @@ export const clearProxyConfig = (): void => {
  * Test connection - Cloud optimized
  */
 export const testProxyConnection = async (): Promise<boolean> => {
-  const config = getProxyConfig();
-  
-  if (!config.isEnabled) {
-    // For direct cloud connections, test a simple external API
-    try {
-      console.log('🧪 Testing direct cloud API connection...');
-      const response = await fetch('https://api.binance.com/api/v3/ping', {
-        signal: AbortSignal.timeout(5000)
-      });
-      
-      const success = response.ok;
-      if (success) {
-        console.log('✅ Direct cloud API connection successful');
-      } else {
-        console.log('❌ Direct cloud API connection failed');
-      }
-      return success;
-    } catch (error) {
-      console.log('❌ Direct cloud API connection error:', error);
-      return false;
-    }
-  }
-
-  if (!config.baseUrl) {
-    return false;
-  }
-
+  // For direct cloud connections, test a simple external API
   try {
-    console.log(`🧪 Testing external server connection to ${config.baseUrl}`);
+    console.log('🧪 Testing direct cloud API connection...');
+    const response = await fetch('https://api.binance.com/api/v3/ping', {
+      signal: AbortSignal.timeout(5000)
+    });
     
-    const tests = [
-      fetch(`${config.baseUrl}/ping`, { 
-        method: 'GET',
-        signal: AbortSignal.timeout(5000)
-      }).then(r => r.ok),
-      
-      fetch(config.baseUrl, { 
-        method: 'HEAD',
-        signal: AbortSignal.timeout(5000)
-      }).then(r => r.ok),
-      
-      fetch(config.baseUrl, { 
-        method: 'GET',
-        signal: AbortSignal.timeout(5000)
-      }).then(r => r.ok)
-    ];
-
-    try {
-      const result = await promiseAny(tests);
-      console.log('✅ External server connection successful');
-      return result;
-    } catch (error) {
-      console.log('❌ All external server connection tests failed');
-      return false;
+    const success = response.ok;
+    if (success) {
+      console.log('✅ Direct cloud API connection successful');
+    } else {
+      console.log('❌ Direct cloud API connection failed');
     }
+    return success;
   } catch (error) {
-    console.error('❌ Error testing external server connection:', error);
+    console.log('❌ Direct cloud API connection error:', error);
     return false;
   }
 };
@@ -193,18 +173,13 @@ export const testProxyConnection = async (): Promise<boolean> => {
  * Initialize for cloud deployment
  */
 export const initializeProxySettings = (): void => {
-  const config = getProxyConfig();
-  
-  console.log('☁️ Initializing LeviPro cloud configuration:', {
-    cloudMode: !config.isEnabled,
-    hasExternalServer: config.isEnabled && !!config.baseUrl
-  });
+  console.log('☁️ Initializing LeviPro cloud configuration');
   
   testProxyConnection()
     .then(success => {
       if (success) {
         toast.success('✅ חיבור API פעיל', {
-          description: config.isEnabled ? 'שרת חיצוני' : 'חיבורים ישירים בענן'
+          description: 'חיבורים ישירים בענן'
         });
       } else {
         console.warn('⚠️ API connection issues detected');
@@ -225,7 +200,7 @@ export const setupProxyHealthCheck = (intervalMs = 60000): () => void => {
     const isConnected = await testProxyConnection();
     
     window.dispatchEvent(new CustomEvent('proxy-status-update', {
-      detail: { isConnected, cloudMode: !getProxyConfig().isEnabled }
+      detail: { isConnected, cloudMode: true }
     }));
     
     if (!isConnected) {
