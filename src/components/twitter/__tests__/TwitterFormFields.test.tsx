@@ -62,7 +62,7 @@ describe('TwitterFormFields', () => {
       },
       _formStateSubject: { next: vi.fn() },
       _proxyFormState: {
-        errors: {},
+        errors: false,
         isDirty: false,
         isLoading: false,
         isSubmitted: false,
@@ -71,7 +71,7 @@ describe('TwitterFormFields', () => {
         touchedFields: false,
         dirtyFields: false,
         submitCount: 0,
-        defaultValues: {},
+        defaultValues: false,
         isValid: true,
         isValidating: false,
         disabled: false,
