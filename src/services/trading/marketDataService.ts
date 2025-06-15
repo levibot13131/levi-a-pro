@@ -25,6 +25,23 @@ export class MarketDataService {
     }
   }
 
+  public async getMultipleMarketData(symbols: string[]): Promise<Map<string, MarketData>> {
+    const results = new Map<string, MarketData>();
+    
+    for (const symbol of symbols) {
+      try {
+        const data = await this.getMarketData(symbol);
+        if (data) {
+          results.set(symbol, data);
+        }
+      } catch (error) {
+        console.error(`Error fetching data for ${symbol}:`, error);
+      }
+    }
+    
+    return results;
+  }
+
   private getCachedData(symbol: string): MarketData | null {
     const lastUpdate = this.lastUpdate.get(symbol);
     if (!lastUpdate || Date.now() - lastUpdate > this.CACHE_DURATION) {
@@ -134,33 +151,44 @@ export class MarketDataService {
   private getMockTechnicalData(symbol: string) {
     return {
       rsi: Math.random() * 100,
-      macd: (Math.random() - 0.5) * 10,
-      volumeProfile: Array.from({ length: 20 }, () => Math.random() * 1000),
+      macd: {
+        signal: Math.random() * 10 - 5,
+        histogram: Math.random() * 10 - 5,
+        macd: Math.random() * 10 - 5
+      },
+      volumeProfile: Math.random() * 1000000,
       vwap: Math.random() * 50000,
       fibonacci: {
-        support: Math.random() * 40000,
-        resistance: Math.random() * 50000
+        level618: Math.random() * 45000,
+        level786: Math.random() * 47000,
+        level382: Math.random() * 42000
       },
-      candlestickPattern: ['doji', 'hammer', 'shooting_star'][Math.floor(Math.random() * 3)]
+      candlestickPattern: 'doji'
     };
   }
 
   private getMockSentimentData(symbol: string) {
+    const sources = ['twitter', 'news', 'whale', 'general'] as const;
+    const keywords = ['bullish', 'bearish', 'pump', 'dump', 'moon', 'crash'];
+    
     return {
-      bullish: Math.random() * 100,
-      bearish: Math.random() * 100,
-      neutral: Math.random() * 100
+      score: Math.random() * 100 - 50, // -50 to +50
+      source: sources[Math.floor(Math.random() * sources.length)],
+      keywords: keywords.slice(0, Math.floor(Math.random() * 3) + 1)
     };
   }
 
-  private determineWyckoffPhase(technicalData: any) {
-    return ['accumulation', 'markup', 'distribution', 'markdown'][Math.floor(Math.random() * 4)];
+  private determineWyckoffPhase(technicalData: any): 'accumulation' | 'markup' | 'distribution' | 'markdown' {
+    const phases: ('accumulation' | 'markup' | 'distribution' | 'markdown')[] = 
+      ['accumulation', 'markup', 'distribution', 'markdown'];
+    return phases[Math.floor(Math.random() * phases.length)];
   }
 
   private analyzeSMCSignals(priceData: any, technicalData: any) {
     return {
-      signal: ['buy', 'sell', 'hold'][Math.floor(Math.random() * 3)],
-      strength: Math.random() * 100
+      orderBlock: Math.random() * 1000,
+      liquidityGrab: Math.random() > 0.5,
+      fairValueGap: Math.random() * 500
     };
   }
 }

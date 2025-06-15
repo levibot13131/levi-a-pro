@@ -13,7 +13,13 @@ interface AlertService {
   alertCount: number;
 }
 
-const RealTimeAlertsService: React.FC = () => {
+interface RealTimeAlertsServiceProps {
+  assetIds: string[];
+  settings: any;
+  children?: React.ReactNode;
+}
+
+const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({ assetIds, settings, children }) => {
   const [services, setServices] = useState<AlertService[]>([
     { name: 'Telegram Alerts', status: 'inactive', lastUpdate: null, alertCount: 0 },
     { name: 'Email Notifications', status: 'inactive', lastUpdate: null, alertCount: 0 },
@@ -59,6 +65,21 @@ const RealTimeAlertsService: React.FC = () => {
       return () => clearInterval(interval);
     }
   }, [isRunning]);
+
+  // If children function is provided, call it with service data
+  if (typeof children === 'function') {
+    return children({
+      signals: [],
+      isActive: isRunning,
+      toggleRealTimeAlerts: toggleService,
+      handleClearSignals: () => {},
+      enableAutomaticAlerts: () => {},
+      areAutoAlertsEnabled: true,
+      isBinanceConnected: true,
+      binanceMarketData: {},
+      proxyStatus: null
+    });
+  }
 
   return (
     <Card>
