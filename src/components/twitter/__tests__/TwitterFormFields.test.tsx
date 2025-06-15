@@ -69,7 +69,7 @@ describe('TwitterFormFields', () => {
         isSubmitSuccessful: false,
         isSubmitting: false,
         touchedFields: {},
-        dirtyFields: {},
+        dirtyFields: false,
         submitCount: 0,
         defaultValues: {},
         isValid: true,
