@@ -16,7 +16,17 @@ interface AlertService {
 interface RealTimeAlertsServiceProps {
   assetIds: string[];
   settings: any;
-  children?: React.ReactNode;
+  children?: ((props: {
+    signals: any[];
+    isActive: boolean;
+    toggleRealTimeAlerts: () => void;
+    handleClearSignals: () => void;
+    enableAutomaticAlerts: () => void;
+    areAutoAlertsEnabled: boolean;
+    isBinanceConnected: boolean;
+    binanceMarketData: any;
+    proxyStatus: null;
+  }) => React.ReactNode) | React.ReactNode;
 }
 
 const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({ assetIds, settings, children }) => {
@@ -68,17 +78,21 @@ const RealTimeAlertsService: React.FC<RealTimeAlertsServiceProps> = ({ assetIds,
 
   // If children function is provided, call it with service data
   if (typeof children === 'function') {
-    return children({
-      signals: [],
-      isActive: isRunning,
-      toggleRealTimeAlerts: toggleService,
-      handleClearSignals: () => {},
-      enableAutomaticAlerts: () => {},
-      areAutoAlertsEnabled: true,
-      isBinanceConnected: true,
-      binanceMarketData: {},
-      proxyStatus: null
-    });
+    return (
+      <>
+        {children({
+          signals: [],
+          isActive: isRunning,
+          toggleRealTimeAlerts: toggleService,
+          handleClearSignals: () => {},
+          enableAutomaticAlerts: () => {},
+          areAutoAlertsEnabled: true,
+          isBinanceConnected: true,
+          binanceMarketData: {},
+          proxyStatus: null
+        })}
+      </>
+    );
   }
 
   return (
