@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { 
   Tooltip, 
   TooltipContent, 
-  TooltipProvider, 
   TooltipTrigger 
 } from '@/components/ui/tooltip';
 import { useRealtimeStatus } from '@/hooks/use-realtime-status';
@@ -104,33 +103,31 @@ const ConnectionStatusWidget: React.FC<ConnectionStatusWidgetProps> = ({
   })();
   
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-background/80 border">
-            {connectionStatus.icon}
-            {showLabel && (
-              <span className="text-xs font-medium">{connectionStatus.label}</span>
-            )}
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <div className="text-sm">
-            <p className="font-medium mb-1">{connectionStatus.label}</p>
-            <p className="text-xs text-muted-foreground">
-              {connectionStatus.tooltip}
-            </p>
-            {status && (
-              <div className="grid grid-cols-3 gap-1 mt-2 pt-2 border-t border-muted">
-                <ServiceStatus name="TradingView" active={status.tradingView} />
-                <ServiceStatus name="Binance" active={status.binance} />
-                <ServiceStatus name="Twitter" active={status.twitter} />
-              </div>
-            )}
-          </div>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-background/80 border">
+          {connectionStatus.icon}
+          {showLabel && (
+            <span className="text-xs font-medium">{connectionStatus.label}</span>
+          )}
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>
+        <div className="text-sm">
+          <p className="font-medium mb-1">{connectionStatus.label}</p>
+          <p className="text-xs text-muted-foreground">
+            {connectionStatus.tooltip}
+          </p>
+          {status && (
+            <div className="grid grid-cols-3 gap-1 mt-2 pt-2 border-t border-muted">
+              <ServiceStatus name="TradingView" active={status.tradingView} />
+              <ServiceStatus name="Binance" active={status.binance} />
+              <ServiceStatus name="Twitter" active={status.twitter} />
+            </div>
+          )}
+        </div>
+      </TooltipContent>
+    </Tooltip>
   );
 };
 
