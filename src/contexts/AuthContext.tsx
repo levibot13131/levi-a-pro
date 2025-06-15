@@ -1,17 +1,7 @@
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-
-export interface User {
-  id: string;
-  email?: string;
-  displayName?: string;
-  photoURL?: string;
-  isAdmin?: boolean;
-  role?: 'admin' | 'analyst' | 'trader' | 'viewer';
-  lastLogin?: number;
-  createdAt?: number;
-  // Add other properties as needed
-}
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { loginUser, logoutUser, getCurrentUser } from '@/services/auth/userService';
+import { User } from '@/types/user';
 
 export interface AuthContextType {
   user: User | null;
@@ -20,7 +10,7 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   register: (email: string, password: string, displayName: string) => Promise<boolean>;
   logout: () => Promise<void>;
-  refreshUser: () => void;  // Added missing method
+  refreshUser: () => void;
 }
 
 const defaultAuthContext: AuthContextType = {
@@ -30,7 +20,7 @@ const defaultAuthContext: AuthContextType = {
   login: async () => false,
   register: async () => false,
   logout: async () => {},
-  refreshUser: () => {}  // Added implementation
+  refreshUser: () => {}
 };
 
 const AuthContext = createContext<AuthContextType>(defaultAuthContext);
@@ -41,57 +31,54 @@ export interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // This would normally connect to your authentication service
+  // Initialize user from localStorage on app start
+  useEffect(() => {
+    const currentUser = getCurrentUser();
+    setUser(currentUser);
+    setIsLoading(false);
+  }, []);
+  
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Mock implementation
-    if (email && password) {
-      setUser({
-        id: '1',
-        email,
-        displayName: 'Test User',
-        photoURL: '',
-        isAdmin: email === 'admin@example.com',
-        role: email === 'admin@example.com' ? 'admin' : 'viewer',
-        lastLogin: Date.now(),
-        createdAt: Date.now() - 30 * 24 * 60 * 60 * 1000 // 30 days ago
-      });
-      return true;
+    try {
+      const loggedInUser = loginUser(email, password);
+      if (loggedInUser) {
+        setUser(loggedInUser);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
     }
-    return false;
   };
   
   const register = async (email: string, password: string, displayName: string): Promise<boolean> => {
-    // Mock implementation
-    if (email && password && displayName) {
-      setUser({
-        id: '2',
-        email,
-        displayName,
-        photoURL: '',
-        isAdmin: false,
-        role: 'viewer',
-        lastLogin: Date.now(),
-        createdAt: Date.now()
-      });
-      return true;
-    }
+    // For now, redirect to login as registration is handled by admin
     return false;
   };
   
   const logout = async (): Promise<void> => {
+    logoutUser();
     setUser(null);
   };
   
   const refreshUser = () => {
-    // In a real app, this would fetch the latest user data
-    if (user) {
-      setUser({ ...user });
-    }
+    const currentUser = getCurrentUser();
+    setUser(currentUser);
   };
   
   const isAuthenticated = !!user;
   const isAdmin = isAuthenticated && (user?.isAdmin === true || user?.role === 'admin');
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ 
