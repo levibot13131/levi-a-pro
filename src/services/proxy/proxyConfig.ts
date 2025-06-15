@@ -1,7 +1,6 @@
 import { toast } from 'sonner';
 
 // Custom implementation for Promise.any functionality
-// This avoids modifying the global Promise object and causing TypeScript errors
 const promiseAny = function<T>(promises: Promise<T>[]): Promise<T> {
   return new Promise((resolve, reject) => {
     let errors: any[] = [];
@@ -22,7 +21,6 @@ const promiseAny = function<T>(promises: Promise<T>[]): Promise<T> {
           settled++;
 
           if (settled === promises.length) {
-            // Using a standard Error instead of AggregateError for compatibility
             reject(new Error('All promises were rejected: ' + errors.map(e => String(e)).join(', ')));
           }
         });
@@ -31,7 +29,7 @@ const promiseAny = function<T>(promises: Promise<T>[]): Promise<T> {
 };
 
 const PROXY_URL_KEY = 'levi_bot_proxy_url';
-const DEFAULT_PROXY_URL = 'https://tuition-colony-climb-gently.trycloudflare.com';
+const DEFAULT_EXTERNAL_SERVER = 'https://api.binance.com'; // Direct API connection
 
 /**
  * Default proxy configuration
@@ -54,10 +52,10 @@ export const getProxyConfig = (): ProxyConfig => {
     console.error('Error parsing proxy config:', error);
   }
   
-  // Always use the Cloudflare URL as fallback
+  // Use direct API connection by default
   return {
-    baseUrl: DEFAULT_PROXY_URL,
-    isEnabled: true
+    baseUrl: DEFAULT_EXTERNAL_SERVER,
+    isEnabled: false // Disabled by default for direct connection
   };
 };
 
@@ -66,15 +64,12 @@ export const getProxyConfig = (): ProxyConfig => {
  */
 export const setProxyConfig = (config: ProxyConfig): void => {
   try {
-    // Clean the URL
     let finalUrl = config.baseUrl.trim();
 
-    // Ensure protocol
     if (finalUrl && !finalUrl.startsWith('http')) {
       finalUrl = `https://${finalUrl}`;
     }
 
-    // Remove trailing slash
     if (finalUrl && finalUrl.endsWith('/')) {
       finalUrl = finalUrl.slice(0, -1);
     }
@@ -87,22 +82,21 @@ export const setProxyConfig = (config: ProxyConfig): void => {
     localStorage.setItem(PROXY_URL_KEY, JSON.stringify(cleanConfig));
     
     if (config.isEnabled) {
-      console.log('Proxy enabled with URL:', cleanConfig.baseUrl);
-      toast.success('הפרוקסי הופעל', {
+      console.log('External server enabled with URL:', cleanConfig.baseUrl);
+      toast.success('שרת חיצוני הופעל', {
         description: `כתובת: ${cleanConfig.baseUrl}`
       });
     } else {
-      console.log('Proxy disabled');
-      toast.info('הפרוקסי הושבת');
+      console.log('Using direct API connections');
+      toast.info('מתחבר ישירות ל-API');
     }
     
-    // Dispatch configuration change event
     window.dispatchEvent(new CustomEvent('proxy-config-changed', {
       detail: cleanConfig
     }));
   } catch (error) {
     console.error('Error saving proxy config:', error);
-    toast.error('שגיאה בשמירת הגדרות פרוקסי');
+    toast.error('שגיאה בשמירת הגדרות שרת');
   }
 };
 
@@ -112,26 +106,23 @@ export const setProxyConfig = (config: ProxyConfig): void => {
 export const getApiBaseUrl = (): string => {
   const config = getProxyConfig();
   
-  // הבדיקה מחמירה יותר שהפרוקסי מוגדר
   if (config.isEnabled && config.baseUrl && config.baseUrl.trim().length > 0) {
-    // וידוא שהכתובת נקייה
     let url = config.baseUrl.trim();
     if (url.endsWith('/')) {
       url = url.slice(0, -1);
     }
     
-    // וידוא שיש פרוטוקול
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
       url = 'https://' + url;
     }
     
-    console.log('Using proxy URL:', url);
+    console.log('Using external server URL:', url);
     return url;
   }
   
-  // אם אין פרוקסי, נחזיר את ברירת המחדל
-  console.log('No custom proxy configured, using default:', DEFAULT_PROXY_URL);
-  return DEFAULT_PROXY_URL;
+  // Return direct API base for external connections
+  console.log('Using direct API connection');
+  return '';
 };
 
 /**
@@ -139,11 +130,10 @@ export const getApiBaseUrl = (): string => {
  */
 export const clearProxyConfig = (): void => {
   localStorage.removeItem(PROXY_URL_KEY);
-  toast.info('הגדרות פרוקסי נמחקו');
+  toast.info('הגדרות שרת נמחקו');
   
-  // שליחת אירוע ניקוי קונפיגורציה
   window.dispatchEvent(new CustomEvent('proxy-config-changed', {
-    detail: { baseUrl: DEFAULT_PROXY_URL, isEnabled: true }
+    detail: { baseUrl: DEFAULT_EXTERNAL_SERVER, isEnabled: false }
   }));
 };
 
@@ -192,10 +182,10 @@ export const getProxyUrl = (endpoint: string): string => {
   const baseUrl = getApiBaseUrl();
   
   if (!baseUrl) {
-    return endpoint; // Return original endpoint if no proxy is configured
+    // Return the endpoint for direct API calls
+    return endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
   }
   
-  // Ensure endpoint starts with a slash if not empty
   if (endpoint && !endpoint.startsWith('/')) {
     endpoint = '/' + endpoint;
   }
@@ -225,60 +215,56 @@ export const buildProxyPassthroughUrl = (targetUrl: string): string => {
  */
 export const testProxyConnection = async (): Promise<boolean> => {
   const config = getProxyConfig();
-  if (!config.isEnabled || !config.baseUrl) {
+  
+  if (!config.isEnabled) {
+    // For direct connections, test a simple API call
+    try {
+      const response = await fetch('https://api.binance.com/api/v3/ping', {
+        signal: AbortSignal.timeout(5000)
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  if (!config.baseUrl) {
     return false;
   }
 
   try {
-    console.log(`Testing proxy connection to ${config.baseUrl}`);
+    console.log(`Testing external server connection to ${config.baseUrl}`);
     
-    // Method 1: Try ping endpoint
     const pingTest = fetch(`${config.baseUrl}/ping`, { 
       method: 'GET',
       headers: { 'Accept': 'application/json' },
       signal: AbortSignal.timeout(5000)
-    }).then(response => {
-      console.log('Ping test response:', response.status);
-      return response.ok;
-    });
+    }).then(response => response.ok);
     
-    // Method 2: Try a simple HEAD request
     const headTest = fetch(config.baseUrl, { 
       method: 'HEAD',
       signal: AbortSignal.timeout(5000)
-    }).then(response => {
-      console.log('HEAD test response:', response.status);
-      return response.ok;
-    });
+    }).then(response => response.ok);
     
-    // Method 3: Try a simple GET request
     const getTest = fetch(config.baseUrl, { 
       method: 'GET',
       signal: AbortSignal.timeout(5000)
-    }).then(response => {
-      console.log('GET test response:', response.status);
-      return response.ok;
-    });
+    }).then(response => response.ok);
     
-    // Method 4: Try OPTIONS request
     const optionsTest = fetch(config.baseUrl, { 
       method: 'OPTIONS',
       signal: AbortSignal.timeout(5000)
-    }).then(response => {
-      console.log('OPTIONS test response:', response.status);
-      return response.ok;
-    });
+    }).then(response => response.ok);
 
-    // Use our custom promiseAny function to try each test in sequence
     try {
       const result = await promiseAny([pingTest, headTest, getTest, optionsTest]);
       return result;
     } catch (error) {
-      console.log('All proxy test methods failed');
+      console.log('All external server test methods failed');
       return false;
     }
   } catch (error) {
-    console.error('Error testing proxy connection:', error);
+    console.error('Error testing external server connection:', error);
     return false;
   }
 };
@@ -289,55 +275,23 @@ export const testProxyConnection = async (): Promise<boolean> => {
 export const initializeProxySettings = (): void => {
   const savedConfig = getProxyConfig();
   
-  // Always set the Cloudflare URL as default if nothing is saved
-  if (!savedConfig.baseUrl) {
-    setProxyConfig({
-      baseUrl: DEFAULT_PROXY_URL,
-      isEnabled: true
-    });
-    console.log('Proxy initialized with default Cloudflare URL:', DEFAULT_PROXY_URL);
-  } else {
-    console.log('Using saved proxy configuration:', savedConfig);
-  }
+  console.log('Initializing with configuration:', savedConfig);
   
-  // Test the connection on initialization
   testProxyConnection()
     .then(success => {
-      console.log(`Initial proxy test: ${success ? 'SUCCESS' : 'FAILED'}`);
+      console.log(`Initial connection test: ${success ? 'SUCCESS' : 'FAILED'}`);
       if (success) {
-        toast.success('Proxy connection verified', {
-          description: 'External services are now connected'
+        toast.success('חיבור לשרת אומת', {
+          description: 'שירותים חיצוניים מחוברים'
         });
       } else {
-        // Try once more with default URL if custom URL fails
-        if (savedConfig.baseUrl !== DEFAULT_PROXY_URL) {
-          console.log('Custom proxy failed, trying default Cloudflare URL');
-          setProxyConfig({
-            baseUrl: DEFAULT_PROXY_URL,
-            isEnabled: true
-          });
-          
-          // Test the default proxy
-          setTimeout(() => {
-            testProxyConnection()
-              .then(defaultSuccess => {
-                console.log(`Default proxy test: ${defaultSuccess ? 'SUCCESS' : 'FAILED'}`);
-                if (defaultSuccess) {
-                  toast.success('Default proxy connection verified', {
-                    description: 'Using default Cloudflare proxy for external services'
-                  });
-                } else {
-                  toast.error('Error connecting to proxy', {
-                    description: 'All proxy connection attempts failed'
-                  });
-                }
-              });
-          }, 1000);
-        }
+        toast.warning('בעיה בחיבור לשרת', {
+          description: 'בדוק הגדרות חיבור'
+        });
       }
     })
     .catch(err => {
-      console.error('Error during initial proxy test:', err);
+      console.error('Error during initial connection test:', err);
     });
 };
 
@@ -345,31 +299,28 @@ export const initializeProxySettings = (): void => {
  * Setup a periodic health check for the proxy
  */
 export const setupProxyHealthCheck = (intervalMs = 60000): () => void => {
-  console.log(`Setting up proxy health check every ${intervalMs}ms`);
+  console.log(`Setting up connection health check every ${intervalMs}ms`);
   
   const intervalId = setInterval(async () => {
     const isConnected = await testProxyConnection();
     
-    // Dispatch status event
     window.dispatchEvent(new CustomEvent('proxy-status-update', {
       detail: { isConnected }
     }));
     
     if (!isConnected) {
-      console.warn('Proxy health check failed, connection may be down');
-      // Only show toast if proxy was previously working (avoid spam)
+      console.warn('Connection health check failed');
       if (localStorage.getItem('proxy_was_working') === 'true') {
-        toast.error('Proxy connection lost', {
-          description: 'Check network and proxy settings'
+        toast.error('חיבור לשרת אבד', {
+          description: 'בדוק רשת והגדרות חיבור'
         });
       }
       localStorage.setItem('proxy_was_working', 'false');
     } else {
-      console.log('Proxy health check passed');
+      console.log('Connection health check passed');
       localStorage.setItem('proxy_was_working', 'true');
     }
   }, intervalMs);
   
-  // Return cleanup function
   return () => clearInterval(intervalId);
 };

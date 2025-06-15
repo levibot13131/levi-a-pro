@@ -9,7 +9,312 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      market_data_cache: {
+        Row: {
+          candlestick_pattern: string | null
+          created_at: string
+          fibonacci_data: Json | null
+          id: string
+          macd_data: Json | null
+          price: number
+          rsi: number | null
+          sentiment_data: Json | null
+          smc_signals: Json | null
+          symbol: string
+          volume: number
+          volume_profile: number | null
+          vwap: number | null
+          wyckoff_phase: string | null
+        }
+        Insert: {
+          candlestick_pattern?: string | null
+          created_at?: string
+          fibonacci_data?: Json | null
+          id?: string
+          macd_data?: Json | null
+          price: number
+          rsi?: number | null
+          sentiment_data?: Json | null
+          smc_signals?: Json | null
+          symbol: string
+          volume: number
+          volume_profile?: number | null
+          vwap?: number | null
+          wyckoff_phase?: string | null
+        }
+        Update: {
+          candlestick_pattern?: string | null
+          created_at?: string
+          fibonacci_data?: Json | null
+          id?: string
+          macd_data?: Json | null
+          price?: number
+          rsi?: number | null
+          sentiment_data?: Json | null
+          smc_signals?: Json | null
+          symbol?: string
+          volume?: number
+          volume_profile?: number | null
+          vwap?: number | null
+          wyckoff_phase?: string | null
+        }
+        Relationships: []
+      }
+      system_health_log: {
+        Row: {
+          binance_status: boolean
+          coingecko_status: boolean
+          created_at: string
+          fundamental_data_status: boolean
+          id: string
+          overall_health_score: number
+          telegram_status: boolean
+          tradingview_status: boolean
+          twitter_status: boolean
+          user_id: string
+        }
+        Insert: {
+          binance_status?: boolean
+          coingecko_status?: boolean
+          created_at?: string
+          fundamental_data_status?: boolean
+          id?: string
+          overall_health_score?: number
+          telegram_status?: boolean
+          tradingview_status?: boolean
+          twitter_status?: boolean
+          user_id: string
+        }
+        Update: {
+          binance_status?: boolean
+          coingecko_status?: boolean
+          created_at?: string
+          fundamental_data_status?: boolean
+          id?: string
+          overall_health_score?: number
+          telegram_status?: boolean
+          tradingview_status?: boolean
+          twitter_status?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trading_engine_status: {
+        Row: {
+          created_at: string
+          id: string
+          is_running: boolean
+          last_analysis_at: string | null
+          profitable_signals: number
+          started_at: string | null
+          stopped_at: string | null
+          success_rate: number
+          total_signals_generated: number
+          updated_at: string
+          user_id: string
+          watch_list: string[] | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_running?: boolean
+          last_analysis_at?: string | null
+          profitable_signals?: number
+          started_at?: string | null
+          stopped_at?: string | null
+          success_rate?: number
+          total_signals_generated?: number
+          updated_at?: string
+          user_id: string
+          watch_list?: string[] | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_running?: boolean
+          last_analysis_at?: string | null
+          profitable_signals?: number
+          started_at?: string | null
+          stopped_at?: string | null
+          success_rate?: number
+          total_signals_generated?: number
+          updated_at?: string
+          user_id?: string
+          watch_list?: string[] | null
+        }
+        Relationships: []
+      }
+      trading_signals: {
+        Row: {
+          action: string
+          confidence: number
+          created_at: string
+          executed_at: string | null
+          executed_price: number | null
+          exit_price: number | null
+          exit_reason: string | null
+          id: string
+          metadata: Json | null
+          price: number
+          profit: number | null
+          profit_percent: number | null
+          reasoning: string
+          risk_reward_ratio: number
+          signal_id: string
+          status: string
+          stop_loss: number
+          strategy: string
+          symbol: string
+          target_price: number
+          telegram_sent: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          confidence: number
+          created_at?: string
+          executed_at?: string | null
+          executed_price?: number | null
+          exit_price?: number | null
+          exit_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          price: number
+          profit?: number | null
+          profit_percent?: number | null
+          reasoning: string
+          risk_reward_ratio: number
+          signal_id: string
+          status?: string
+          stop_loss: number
+          strategy: string
+          symbol: string
+          target_price: number
+          telegram_sent?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          confidence?: number
+          created_at?: string
+          executed_at?: string | null
+          executed_price?: number | null
+          exit_price?: number | null
+          exit_reason?: string | null
+          id?: string
+          metadata?: Json | null
+          price?: number
+          profit?: number | null
+          profit_percent?: number | null
+          reasoning?: string
+          risk_reward_ratio?: number
+          signal_id?: string
+          status?: string
+          stop_loss?: number
+          strategy?: string
+          symbol?: string
+          target_price?: number
+          telegram_sent?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trading_strategies: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          parameters: Json
+          profitable_signals: number
+          success_rate: number
+          total_signals: number
+          type: string
+          updated_at: string
+          user_id: string
+          weight: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          parameters?: Json
+          profitable_signals?: number
+          success_rate?: number
+          total_signals?: number
+          type: string
+          updated_at?: string
+          user_id: string
+          weight?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          parameters?: Json
+          profitable_signals?: number
+          success_rate?: number
+          total_signals?: number
+          type?: string
+          updated_at?: string
+          user_id?: string
+          weight?: number
+        }
+        Relationships: []
+      }
+      user_trading_settings: {
+        Row: {
+          auto_trading_enabled: boolean
+          binance_api_key: string | null
+          binance_secret_key: string | null
+          created_at: string
+          id: string
+          max_risk_per_trade: number
+          notification_settings: Json
+          strategies_enabled: string[] | null
+          telegram_bot_token: string | null
+          telegram_chat_id: string | null
+          tradingview_username: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auto_trading_enabled?: boolean
+          binance_api_key?: string | null
+          binance_secret_key?: string | null
+          created_at?: string
+          id?: string
+          max_risk_per_trade?: number
+          notification_settings?: Json
+          strategies_enabled?: string[] | null
+          telegram_bot_token?: string | null
+          telegram_chat_id?: string | null
+          tradingview_username?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auto_trading_enabled?: boolean
+          binance_api_key?: string | null
+          binance_secret_key?: string | null
+          created_at?: string
+          id?: string
+          max_risk_per_trade?: number
+          notification_settings?: Json
+          strategies_enabled?: string[] | null
+          telegram_bot_token?: string | null
+          telegram_chat_id?: string | null
+          tradingview_username?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

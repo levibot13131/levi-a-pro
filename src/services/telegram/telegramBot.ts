@@ -92,7 +92,7 @@ ${confidenceStars} <b>ביטחון:</b> ${(signal.confidence * 100).toFixed(0)}%
     return strategyNames[strategyId] || strategyId;
   }
 
-  private async sendMessage(message: string): Promise<boolean> {
+  public async sendMessage(message: string): Promise<boolean> {
     if (!this.config?.botToken) return false;
 
     try {
