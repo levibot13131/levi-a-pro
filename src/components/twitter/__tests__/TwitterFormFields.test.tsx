@@ -15,7 +15,20 @@ describe('TwitterFormFields', () => {
     const mockForm = {
       register: vi.fn(),
       handleSubmit: vi.fn(),
-      formState: { errors: {} },
+      formState: {
+        errors: {},
+        isDirty: false,
+        isLoading: false,
+        isSubmitted: false,
+        isSubmitSuccessful: false,
+        isSubmitting: false,
+        touchedFields: {},
+        dirtyFields: {},
+        submitCount: 0,
+        defaultValues: undefined,
+        isValid: true,
+        isValidating: false
+      },
       watch: vi.fn(),
       setValue: vi.fn(),
       getValues: vi.fn(),
