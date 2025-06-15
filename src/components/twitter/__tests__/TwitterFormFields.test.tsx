@@ -15,7 +15,8 @@ describe('TwitterFormFields', () => {
     const mockSubject = {
       observers: [],
       subscribe: vi.fn(() => ({ unsubscribe: vi.fn() })),
-      unsubscribe: vi.fn()
+      unsubscribe: vi.fn(),
+      next: vi.fn() // Added the missing next method
     };
 
     const mockControl = {
