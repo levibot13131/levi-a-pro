@@ -75,7 +75,7 @@ describe('TwitterFormFields', () => {
         isValid: true,
         isValidating: false,
         disabled: false,
-        validatingFields: {}
+        validatingFields: false
       },
       _updateFormState: vi.fn(),
       _updateFieldArray: vi.fn(),
