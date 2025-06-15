@@ -14,6 +14,9 @@ const DEFAULT_PROXY: ProxyConfig = {
 
 let currentProxyConfig: ProxyConfig = { ...DEFAULT_PROXY };
 
+// Event listeners for proxy config changes
+const configListeners: Set<(config: ProxyConfig) => void> = new Set();
+
 /**
  * Get current proxy configuration
  */
@@ -35,7 +38,63 @@ export const setProxyConfig = (config: Partial<ProxyConfig>): void => {
     detail: currentProxyConfig
   }));
   
+  // Notify registered listeners
+  configListeners.forEach(listener => listener(currentProxyConfig));
+  
   console.log('Proxy configuration updated:', currentProxyConfig);
+};
+
+/**
+ * Clear proxy configuration
+ */
+export const clearProxyConfig = (): void => {
+  currentProxyConfig = { ...DEFAULT_PROXY };
+  currentProxyConfig.isEnabled = false;
+  currentProxyConfig.baseUrl = '';
+  
+  // Dispatch event for listeners
+  window.dispatchEvent(new CustomEvent('proxy-config-changed', {
+    detail: currentProxyConfig
+  }));
+  
+  // Notify registered listeners
+  configListeners.forEach(listener => listener(currentProxyConfig));
+  
+  console.log('Proxy configuration cleared');
+};
+
+/**
+ * Initialize proxy settings from environment or defaults
+ */
+export const initializeProxySettings = (): void => {
+  // Try to detect if we're in a development environment
+  const isDevelopment = typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' || 
+    window.location.hostname.includes('127.0.0.1') ||
+    window.location.hostname.includes('lovableproject.com')
+  );
+  
+  if (isDevelopment) {
+    // In development, we might have different proxy needs
+    setProxyConfig({
+      isEnabled: true,
+      baseUrl: 'https://api.binance.com'
+    });
+  }
+  
+  console.log('Proxy settings initialized for environment:', isDevelopment ? 'development' : 'production');
+};
+
+/**
+ * Listen to proxy configuration changes
+ */
+export const listenToProxyChanges = (callback: (config: ProxyConfig) => void): (() => void) => {
+  configListeners.add(callback);
+  
+  // Return unsubscribe function
+  return () => {
+    configListeners.delete(callback);
+  };
 };
 
 /**
@@ -79,6 +138,20 @@ export const getProxyUrl = (endpoint: string): string => {
 };
 
 /**
+ * Build proxy pass-through URL for external APIs
+ */
+export const buildProxyPassthroughUrl = (targetUrl: string): string => {
+  if (!isProxyConfigured()) {
+    return targetUrl; // Return original URL if no proxy
+  }
+  
+  const baseUrl = getApiBaseUrl();
+  const encodedUrl = encodeURIComponent(targetUrl);
+  
+  return `${baseUrl}/proxy?url=${encodedUrl}`;
+};
+
+/**
  * Test proxy connection
  */
 export const testProxyConnection = async (): Promise<boolean> => {
@@ -105,16 +178,5 @@ export const testProxyConnection = async (): Promise<boolean> => {
 
 // Initialize with environment-based configuration if available
 if (typeof window !== 'undefined') {
-  // Try to detect if we're in a development environment
-  const isDevelopment = window.location.hostname === 'localhost' || 
-                       window.location.hostname.includes('127.0.0.1') ||
-                       window.location.hostname.includes('lovableproject.com');
-  
-  if (isDevelopment) {
-    // In development, we might have different proxy needs
-    setProxyConfig({
-      isEnabled: true,
-      baseUrl: 'https://api.binance.com'
-    });
-  }
+  initializeProxySettings();
 }

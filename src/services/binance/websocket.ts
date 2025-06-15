@@ -1,4 +1,3 @@
-
 import { toast } from 'sonner';
 import { getBinanceCredentials } from './credentials';
 import { BinanceSocketConfig, BinanceStreamMessage } from './types';
@@ -28,7 +27,7 @@ const simulateWebSocketMessages = (symbol: string, onMessage: (data: BinanceStre
   
   console.log(`Starting simulated data for ${symbol} with base price ${basePrice}`);
   
-  const intervalId = setInterval(() => {
+  const intervalId = window.setInterval(() => {
     const variation = (Math.random() - 0.5) * 0.02; // ±1%
     const price = basePrice * (1 + variation);
     const change24h = variation * 100;
@@ -109,10 +108,12 @@ const handleReconnection = (streamName: string, config: BinanceSocketConfig) => 
   
   console.log(`Attempting reconnection ${attempts + 1}/${MAX_RECONNECT_ATTEMPTS} for ${streamName} in ${delay}ms`);
   
-  setTimeout(() => {
+  const timeoutId = window.setTimeout(() => {
     console.log(`Reconnecting WebSocket: ${streamName}`);
     createBinanceWebSocket(config);
   }, delay);
+  
+  return timeoutId;
 };
 
 /**
@@ -175,7 +176,7 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
         console.log(`Creating new WebSocket connection to: ${wsEndpoint}`);
         ws = new WebSocket(wsEndpoint);
         
-        const connectionTimeout = setTimeout(() => {
+        const connectionTimeout = window.setTimeout(() => {
           if (ws && ws.readyState === WebSocket.CONNECTING) {
             console.warn(`WebSocket connection timed out: ${streamName}`);
             ws.close();
