@@ -12,6 +12,8 @@ export interface User {
   id: string;
   email: string;
   username: string;
+  displayName?: string;
+  photoURL?: string;
   role: UserRole;
   isAdmin: boolean;
   createdAt: number;
@@ -19,6 +21,21 @@ export interface User {
   isActive: boolean;
   permissions: Permission[];
 }
+
+export const AvailableResources = [
+  'dashboard',
+  'backtesting',
+  'technicalAnalysis',
+  'riskManagement',
+  'marketData',
+  'tradingSignals',
+  'tradingView',
+  'assetTracker',
+  'socialMonitoring',
+  'settings',
+  'users',
+  'systemLogs'
+] as const;
 
 export const DefaultPermissions: Permission[] = [
   { resource: 'dashboard', canView: true, canEdit: false, canDelete: false },
@@ -34,6 +51,7 @@ export const adminUser: User = {
   id: 'admin-001',
   email: 'almogahronov1997@gmail.com',
   username: 'מנהל המערכת',
+  displayName: 'מנהל המערכת',
   role: 'admin',
   isAdmin: true,
   createdAt: Date.now() - 365 * 24 * 60 * 60 * 1000,
