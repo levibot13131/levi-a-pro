@@ -16,7 +16,7 @@ describe('TwitterFormFields', () => {
       observers: [],
       subscribe: vi.fn(() => ({ unsubscribe: vi.fn() })),
       unsubscribe: vi.fn(),
-      next: vi.fn() // Added the missing next method
+      next: vi.fn()
     };
 
     const mockControl = {
@@ -37,7 +37,21 @@ describe('TwitterFormFields', () => {
       _state: { mount: false, action: false, watch: false },
       _defaultValues: {},
       _formValues: {},
-      _formState: {},
+      _formState: {
+        isDirty: false,
+        isLoading: false,
+        isSubmitted: false,
+        isSubmitSuccessful: false,
+        isSubmitting: false,
+        touchedFields: {},
+        dirtyFields: {},
+        submitCount: 0,
+        defaultValues: {},
+        isValid: true,
+        isValidating: false,
+        disabled: false,
+        validatingFields: {}
+      },
       _fields: {},
       _fieldsWithValidation: new Set(),
       _options: { 
@@ -73,7 +87,22 @@ describe('TwitterFormFields', () => {
       getValues: vi.fn(),
       getFieldValue: vi.fn(),
       trigger: vi.fn(),
-      formState: {},
+      formState: {
+        errors: {},
+        isDirty: false,
+        isLoading: false,
+        isSubmitted: false,
+        isSubmitSuccessful: false,
+        isSubmitting: false,
+        touchedFields: {},
+        dirtyFields: {},
+        submitCount: 0,
+        defaultValues: {},
+        isValid: true,
+        isValidating: false,
+        validatingFields: {},
+        disabled: false
+      },
       watch: vi.fn()
     };
 
@@ -91,7 +120,7 @@ describe('TwitterFormFields', () => {
         dirtyFields: {},
         submitCount: 0,
         defaultValues: {},
-        isValid: false,
+        isValid: true,
         isValidating: false,
         validatingFields: {},
         disabled: false
