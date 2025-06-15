@@ -61,7 +61,22 @@ describe('TwitterFormFields', () => {
         shouldFocusError: true 
       },
       _formStateSubject: { next: vi.fn() },
-      _proxyFormState: {},
+      _proxyFormState: {
+        errors: {},
+        isDirty: false,
+        isLoading: false,
+        isSubmitted: false,
+        isSubmitSuccessful: false,
+        isSubmitting: false,
+        touchedFields: {},
+        dirtyFields: {},
+        submitCount: 0,
+        defaultValues: {},
+        isValid: true,
+        isValidating: false,
+        disabled: false,
+        validatingFields: {}
+      },
       _updateFormState: vi.fn(),
       _updateFieldArray: vi.fn(),
       _getWatch: vi.fn(),
