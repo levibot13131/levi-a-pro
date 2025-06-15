@@ -20,21 +20,19 @@ describe('TwitterFormFields', () => {
       setValue: vi.fn(),
       getValues: vi.fn(),
       reset: vi.fn(),
-      control: {}
+      control: {},
+      getFieldState: vi.fn(),
+      setError: vi.fn(),
+      clearErrors: vi.fn(),
+      trigger: vi.fn(),
+      unregister: vi.fn(),
+      setFocus: vi.fn()
     };
 
     (useForm as any).mockReturnValue(mockForm);
 
     const mockProps = {
-      form: mockForm,
-      consumerKey: '',
-      consumerSecret: '',
-      accessToken: '',
-      accessTokenSecret: '',
-      onConsumerKeyChange: vi.fn(),
-      onConsumerSecretChange: vi.fn(),
-      onAccessTokenChange: vi.fn(),
-      onAccessTokenSecretChange: vi.fn(),
+      form: mockForm
     };
     
     render(<TwitterFormFields {...mockProps} />);
