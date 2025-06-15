@@ -1,152 +1,163 @@
 
 import { toast } from 'sonner';
 
-// Twitter credentials interface
 export interface TwitterCredentials {
   apiKey: string;
   apiSecret: string;
   bearerToken: string;
-  username?: string;
-  lastConnected: number;
+  lastConnected?: number;
 }
 
-// Check if environment has pre-configured Twitter credentials
-const hasEnvCredentials = () => {
-  return !!(
-    import.meta.env.VITE_TWITTER_API_KEY &&
-    import.meta.env.VITE_TWITTER_API_SECRET &&
-    import.meta.env.VITE_TWITTER_BEARER_TOKEN
-  );
-};
+export interface TwitterSentimentData {
+  timestamp: number;
+  sentiment: number; // -1 to 1
+  volume: number;
+  positive: number;
+  negative: number;
+  neutral: number;
+}
 
-// Initialize credentials from environment variables if available
-const initFromEnv = (): TwitterCredentials | null => {
-  if (!hasEnvCredentials()) return null;
-  
-  return {
-    apiKey: import.meta.env.VITE_TWITTER_API_KEY as string,
-    apiSecret: import.meta.env.VITE_TWITTER_API_SECRET as string,
-    bearerToken: import.meta.env.VITE_TWITTER_BEARER_TOKEN as string,
-    username: import.meta.env.VITE_TWITTER_USERNAME as string || 'env-user',
-    lastConnected: Date.now()
-  };
-};
+const TWITTER_CREDENTIALS_KEY = 'twitter_credentials';
 
-// Check if Twitter is connected
+/**
+ * Check if Twitter is connected
+ */
 export const isTwitterConnected = (): boolean => {
   const credentials = getTwitterCredentials();
-  return !!credentials && !!credentials.bearerToken;
+  return !!credentials && !!credentials.apiKey && !!credentials.bearerToken;
 };
 
-// Get Twitter credentials from localStorage or environment
+/**
+ * Get Twitter credentials from localStorage
+ */
 export const getTwitterCredentials = (): TwitterCredentials | null => {
   try {
-    // First check localStorage
-    const storedCredentials = localStorage.getItem('twitter_api_keys');
-    if (storedCredentials) return JSON.parse(storedCredentials);
+    const stored = localStorage.getItem(TWITTER_CREDENTIALS_KEY);
+    if (!stored) return null;
     
-    // If not in localStorage, check environment
-    return initFromEnv();
+    return JSON.parse(stored) as TwitterCredentials;
   } catch (error) {
     console.error('Error parsing Twitter credentials:', error);
     return null;
   }
 };
 
-// Connect to Twitter with API keys
-export const connectToTwitter = async (credentials: Omit<TwitterCredentials, 'lastConnected'>): Promise<boolean> => {
+/**
+ * Save Twitter credentials
+ */
+export const saveTwitterCredentials = (credentials: TwitterCredentials): void => {
   try {
-    // In a real application, we would validate these credentials with the Twitter API
-    // For this demo, we'll just simulate a successful connection
-    const enhancedCredentials: TwitterCredentials = {
+    const credentialsWithTimestamp = {
       ...credentials,
-      username: credentials.username || 'user' + Math.floor(Math.random() * 1000),
       lastConnected: Date.now()
     };
     
-    localStorage.setItem('twitter_api_keys', JSON.stringify(enhancedCredentials));
-    toast.success('התחברת בהצלחה לטוויטר');
+    localStorage.setItem(TWITTER_CREDENTIALS_KEY, JSON.stringify(credentialsWithTimestamp));
+    console.log('Twitter credentials saved successfully');
+    toast.success('Twitter credentials saved successfully');
+  } catch (error) {
+    console.error('Error saving Twitter credentials:', error);
+    toast.error('Failed to save Twitter credentials');
+  }
+};
+
+/**
+ * Disconnect from Twitter
+ */
+export const disconnectFromTwitter = (): void => {
+  localStorage.removeItem(TWITTER_CREDENTIALS_KEY);
+  console.log('Twitter credentials removed');
+  toast.success('Disconnected from Twitter');
+};
+
+/**
+ * Validate Twitter credentials
+ */
+export const validateTwitterCredentials = async (credentials: TwitterCredentials): Promise<boolean> => {
+  try {
+    console.log('Validating Twitter credentials...');
+    
+    // In a real implementation, this would make an API call to Twitter
+    // to verify the credentials are valid
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    console.log('Twitter credentials validated successfully');
+    toast.success('Twitter connection validated successfully');
+    
     return true;
   } catch (error) {
-    console.error('Error connecting to Twitter:', error);
-    toast.error('שגיאה בהתחברות לטוויטר');
+    console.error('Error validating Twitter credentials:', error);
+    toast.error('Failed to validate Twitter credentials');
     return false;
   }
 };
 
-// Disconnect from Twitter
-export const disconnectFromTwitter = (): void => {
-  localStorage.removeItem('twitter_api_keys');
-  toast.success('התנתקת בהצלחה מטוויטר');
-};
-
-// Mock Twitter sentiment data
+/**
+ * Fetch Twitter sentiment data for a cryptocurrency
+ */
 export const fetchTwitterSentiment = async (
-  symbol: string,
+  crypto: string, 
   days: number = 7
-): Promise<any[]> => {
-  // This would be an API call in a real application
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const data = generateMockSentimentData(symbol, days);
-      resolve(data);
-    }, 1500);
-  });
-};
-
-// Generate mock sentiment data
-const generateMockSentimentData = (symbol: string, days: number): any[] => {
-  const data = [];
-  const now = Date.now();
-  const dayMs = 24 * 60 * 60 * 1000;
-  
-  for (let i = days; i >= 0; i--) {
-    const date = new Date(now - i * dayMs);
+): Promise<TwitterSentimentData[]> => {
+  try {
+    console.log(`Fetching Twitter sentiment for ${crypto} over ${days} days`);
     
-    // Generate random sentiment values with some coherence
-    const positive = 30 + Math.random() * 40;
-    const negative = 10 + Math.random() * 30;
-    const neutral = 100 - positive - negative;
+    // Generate mock sentiment data
+    const data: TwitterSentimentData[] = [];
+    const now = Date.now();
+    const dayMs = 24 * 60 * 60 * 1000;
     
-    // Generate random volume with a trend based on symbol
-    let volume;
-    if (symbol === 'bitcoin') {
-      volume = 5000 + Math.random() * 10000;
-    } else if (symbol === 'ethereum') {
-      volume = 3000 + Math.random() * 8000;
-    } else {
-      volume = 1000 + Math.random() * 5000;
+    for (let i = days - 1; i >= 0; i--) {
+      const timestamp = now - (i * dayMs);
+      const baseSentiment = Math.sin(i * 0.5) * 0.3; // Oscillating base sentiment
+      const randomVariation = (Math.random() - 0.5) * 0.4;
+      const sentiment = Math.max(-1, Math.min(1, baseSentiment + randomVariation));
+      
+      // Calculate positive/negative/neutral percentages
+      const sentimentNormalized = (sentiment + 1) / 2; // 0 to 1
+      const positive = Math.round(sentimentNormalized * 60 + 20); // 20-80%
+      const negative = Math.round((1 - sentimentNormalized) * 40 + 10); // 10-50%
+      const neutral = 100 - positive - negative;
+      
+      data.push({
+        timestamp,
+        sentiment,
+        volume: Math.floor(Math.random() * 10000 + 5000),
+        positive,
+        negative,
+        neutral
+      });
     }
     
-    // Random sentiment score between -1 and 1
-    const sentimentScore = (positive - negative) / 100;
-    
-    data.push({
-      date: date.toISOString().split('T')[0],
-      positive,
-      negative,
-      neutral,
-      volume,
-      sentimentScore
-    });
+    console.log(`Generated ${data.length} sentiment data points for ${crypto}`);
+    return data;
+  } catch (error) {
+    console.error('Error fetching Twitter sentiment:', error);
+    toast.error('Failed to fetch Twitter sentiment data');
+    return [];
   }
-  
-  return data;
 };
 
-// Test Twitter API connection
+/**
+ * Test Twitter connection
+ */
 export const testTwitterConnection = async (): Promise<boolean> => {
-  const credentials = getTwitterCredentials();
-  if (!credentials) return false;
-  
   try {
-    // In a real application, this would make a test API call to Twitter
-    // For this demo, we'll just simulate a successful connection
-    toast.success('בדיקת התחברות לטוויטר הצליחה');
+    const credentials = getTwitterCredentials();
+    if (!credentials) {
+      toast.error('No Twitter credentials found');
+      return false;
+    }
+    
+    // In a real implementation, this would make a test API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    console.log('Twitter connection test successful');
+    toast.success('Twitter connection test successful');
     return true;
   } catch (error) {
-    console.error('Error testing Twitter connection:', error);
-    toast.error('בדיקת התחברות לטוויטר נכשלה');
+    console.error('Twitter connection test failed:', error);
+    toast.error('Twitter connection test failed');
     return false;
   }
 };

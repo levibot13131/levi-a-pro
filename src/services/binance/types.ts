@@ -1,5 +1,24 @@
 
-// Define types used across Binance service modules
+// Types for Binance WebSocket and market data
+
+export interface BinanceSocketConfig {
+  symbol: string;
+  interval?: string;
+  onMessage: (data: BinanceStreamMessage) => void;
+  onError?: (error: any) => void;
+}
+
+export interface BinanceStreamMessage {
+  symbol: string;
+  type: 'ticker' | 'kline' | 'trade';
+  data: {
+    price: number;
+    change: number;
+    high24h: number;
+    low24h: number;
+    volume24h: number;
+  };
+}
 
 export interface PriceData {
   symbol: string;
@@ -21,37 +40,40 @@ export interface MarketDataEntry {
   lastUpdated: number;
 }
 
-export interface WebSocketMessage {
-  e: string; // Event type
-  E: number; // Event time
-  s: string; // Symbol
-  p: string; // Price change
-  P: string; // Price change percent
-  w: string; // Weighted average price
-  c: string; // Last price
-  Q: string; // Last quantity
-  o: string; // Open price
-  h: string; // High price
-  l: string; // Low price
-  v: string; // Total traded base asset volume
-  q: string; // Total traded quote asset volume
-  O: number; // Statistics open time
-  C: number; // Statistics close time
-  F: number; // First trade ID
-  L: number; // Last trade ID
-  n: number; // Total number of trades
-}
-
-export interface BinanceSocketConfig {
-  symbol: string;
-  interval?: string;
-  onMessage?: (data: any) => void;
-  onError?: (error: any) => void;
-}
-
-export interface BinanceStreamMessage {
-  data: any;
-  type: 'ticker' | 'kline' | 'depth' | 'trade' | 'unknown';
-  symbol: string;
+export interface KlineData {
   time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  closeTime: number;
+  quoteAssetVolume: number;
+  trades: number;
+  takerBuyBaseAssetVolume: number;
+  takerBuyQuoteAssetVolume: number;
+}
+
+export interface TickerData {
+  symbol: string;
+  priceChange: string;
+  priceChangePercent: string;
+  weightedAvgPrice: string;
+  prevClosePrice: string;
+  lastPrice: string;
+  lastQty: string;
+  bidPrice: string;
+  bidQty: string;
+  askPrice: string;
+  askQty: string;
+  openPrice: string;
+  highPrice: string;
+  lowPrice: string;
+  volume: string;
+  quoteVolume: string;
+  openTime: number;
+  closeTime: number;
+  firstId: number;
+  lastId: number;
+  count: number;
 }
