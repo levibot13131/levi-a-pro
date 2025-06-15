@@ -36,6 +36,7 @@ import UserManagement from "../pages/UserManagement";
 import TradingDashboard from "../pages/TradingDashboard";
 import Missing from "../pages/Missing";
 import SystemHealth from "../pages/SystemHealth";
+import IntegrationStatus from "../pages/IntegrationStatus";
 
 const router = createBrowserRouter([
   {
@@ -69,6 +70,10 @@ const router = createBrowserRouter([
       {
         path: "tradingview",
         element: <RequireAuth><TradingViewIntegration /></RequireAuth>,
+      },
+      {
+        path: "integration-status",
+        element: <RequireAuth><IntegrationStatus /></RequireAuth>,
       },
       {
         path: "system-health",

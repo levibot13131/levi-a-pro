@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Target, BarChart4 } from 'lucide-react';
@@ -15,6 +15,7 @@ import { useSignalAnalysis } from '@/components/trading-signals/useSignalAnalysi
 import { TradeSignal } from '@/types/asset';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const TradingSignals = () => {
   const {
@@ -36,7 +37,7 @@ const TradingSignals = () => {
     toggleRealTimeAnalysis
   } = useTradingSignals();
   
-  // Add live signals from database with real-time subscription
+  // Enhanced real-time signals from database with proper subscription
   const { data: liveSignals = [], refetch } = useQuery({
     queryKey: ['live-trading-signals'],
     queryFn: async () => {
@@ -44,7 +45,7 @@ const TradingSignals = () => {
         .from('trading_signals')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
       
       if (error) {
         console.error('Error fetching live signals:', error);
@@ -53,13 +54,16 @@ const TradingSignals = () => {
       
       return data || [];
     },
-    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchInterval: 10000, // Refresh every 10 seconds for real-time feel
+    refetchIntervalInBackground: true,
   });
 
-  // Set up real-time subscription for new signals
-  React.useEffect(() => {
+  // Set up real-time subscription for new signals with better error handling
+  useEffect(() => {
+    console.log('Setting up real-time subscription for trading signals...');
+    
     const channel = supabase
-      .channel('trading-signals-live')
+      .channel('trading-signals-realtime')
       .on(
         'postgres_changes',
         {
@@ -67,15 +71,51 @@ const TradingSignals = () => {
           schema: 'public',
           table: 'trading_signals'
         },
-        () => {
-          refetch(); // Refresh when new signal is inserted
+        (payload) => {
+          console.log('🔥 New signal received via real-time:', payload);
+          refetch(); // Refresh the signals immediately
+          toast.success('איתות חדש התקבל!', {
+            description: `${payload.new.action?.toUpperCase()} ${payload.new.symbol}`,
+            duration: 5000,
+          });
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'trading_signals'
+        },
+        (payload) => {
+          console.log('📝 Signal updated via real-time:', payload);
+          refetch(); // Refresh on updates too
+        }
+      )
+      .subscribe((status) => {
+        console.log('Real-time subscription status:', status);
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Successfully subscribed to real-time signals');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Real-time subscription error');
+          toast.error('שגיאה בחיבור זמן אמת');
+        }
+      });
 
     return () => {
+      console.log('Cleaning up real-time subscription');
       supabase.removeChannel(channel);
     };
+  }, [refetch]);
+
+  // Auto-refresh signals every 30 seconds (matching engine tick)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log('🔄 Auto-refreshing signals (30s tick)');
+      refetch();
+    }, 30000);
+
+    return () => clearInterval(interval);
   }, [refetch]);
 
   // Convert live signals to TradeSignal format
@@ -92,8 +132,10 @@ const TradingSignals = () => {
     createdAt: new Date(signal.created_at).getTime(),
   }));
 
-  // Combine all signals (live + mock + real-time)
-  const combinedSignals = [...convertedLiveSignals, ...allSignals];
+  // Combine all signals (live + mock + real-time) and sort by timestamp
+  const combinedSignals = [...convertedLiveSignals, ...allSignals]
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 50); // Limit to latest 50 signals for performance
   
   // Signal analysis calculation
   const signalAnalysis = useSignalAnalysis(combinedSignals, selectedAssetId);
@@ -109,6 +151,16 @@ const TradingSignals = () => {
         showSettings={showSettings}
         setShowSettings={setShowSettings}
       />
+      
+      {/* Real-time status indicator */}
+      <div className="mb-4 flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+          <span className="text-sm text-muted-foreground">
+            עדכונים בזמן אמת פעילים • {combinedSignals.length} איתותים
+          </span>
+        </div>
+      </div>
       
       {/* Setup guide or success message based on configuration */}
       <SetupGuide 
