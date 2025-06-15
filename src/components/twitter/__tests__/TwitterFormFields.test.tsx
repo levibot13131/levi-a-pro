@@ -25,9 +25,11 @@ describe('TwitterFormFields', () => {
         touchedFields: {},
         dirtyFields: {},
         submitCount: 0,
-        defaultValues: undefined,
-        isValid: true,
-        isValidating: false
+        defaultValues: {},
+        isValid: false,
+        isValidating: false,
+        validatingFields: {},
+        disabled: false
       },
       watch: vi.fn(),
       setValue: vi.fn(),
