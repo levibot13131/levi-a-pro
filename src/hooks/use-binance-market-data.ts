@@ -4,7 +4,6 @@ import { useBinanceData } from './use-binance-data';
 import { MarketDataEntry } from '@/services/binance/types';
 import { getKlines } from '@/services/binance/api';
 import { toast } from 'sonner';
-import { getProxyConfig } from '@/services/proxy/proxyConfig';
 
 export interface ChartDataPoint {
   time: number;
@@ -21,29 +20,14 @@ export const useBinanceMarketData = (symbol: string = 'BTCUSDT') => {
   const [chartLoading, setChartLoading] = useState(false);
   const [chartError, setChartError] = useState<string | null>(null);
   const [timeframe, setTimeframe] = useState<string>('1h');
-  const [isLiveData, setIsLiveData] = useState<boolean>(false);
+  const [isLiveData, setIsLiveData] = useState<boolean>(true);
   
   // Get current market data for the symbol
   const currentData: MarketDataEntry | undefined = marketData[symbol];
   
-  // Check if we're using the proxy and are getting live data
+  // Check if we're in live data mode
   useEffect(() => {
-    const proxyConfig = getProxyConfig();
-    setIsLiveData(proxyConfig.isEnabled && !!proxyConfig.baseUrl);
-    
-    // Listen for changes to the proxy configuration
-    const handleProxyChange = () => {
-      const updatedConfig = getProxyConfig();
-      setIsLiveData(updatedConfig.isEnabled && !!updatedConfig.baseUrl);
-      
-      // Reload chart data when proxy config changes
-      loadChartData();
-    };
-    
-    window.addEventListener('proxy-config-changed', handleProxyChange);
-    return () => {
-      window.removeEventListener('proxy-config-changed', handleProxyChange);
-    };
+    setIsLiveData(true); // Always use live data in cloud mode
   }, []);
   
   // Load chart data with error handling and retries
@@ -78,7 +62,7 @@ export const useBinanceMarketData = (symbol: string = 'BTCUSDT') => {
         setTimeout(() => loadChartData(interval, retryCount + 1), 2000);
       } else {
         toast.error('שגיאה בטעינת נתוני גרף', {
-          description: 'בדוק את הגדרות הפרוקסי וחיבור לאינטרנט'
+          description: 'בדוק את חיבור האינטרנט ונסה שוב'
         });
       }
     } finally {

@@ -8,6 +8,34 @@ const COINGECKO_PRO_API_BASE = 'https://pro-api.coingecko.com/api/v3';
 
 let apiKey: string | null = null;
 
+export interface CoinPriceData {
+  id: string;
+  symbol: string;
+  name: string;
+  current_price: number;
+  market_cap: number;
+  market_cap_rank: number;
+  fully_diluted_valuation: number;
+  total_volume: number;
+  high_24h: number;
+  low_24h: number;
+  price_change_24h: number;
+  price_change_percentage_24h: number;
+  market_cap_change_24h: number;
+  market_cap_change_percentage_24h: number;
+  circulating_supply: number;
+  total_supply: number;
+  max_supply: number;
+  ath: number;
+  ath_change_percentage: number;
+  ath_date: string;
+  atl: number;
+  atl_change_percentage: number;
+  atl_date: string;
+  roi: any;
+  last_updated: string;
+}
+
 /**
  * Set CoinGecko API key
  */
@@ -68,6 +96,19 @@ const fetchFromCoinGecko = async (endpoint: string, params: Record<string, strin
 };
 
 /**
+ * Test CoinGecko connection
+ */
+export const testConnection = async (): Promise<boolean> => {
+  try {
+    const response = await fetch(`${COINGECKO_API_BASE}/ping`);
+    return response.ok;
+  } catch (error) {
+    console.error('CoinGecko connection test failed:', error);
+    return false;
+  }
+};
+
+/**
  * Validate CoinGecko API key
  */
 export const validateCoinGeckoApiKey = async (key: string): Promise<boolean> => {
@@ -92,7 +133,7 @@ export const validateCoinGeckoApiKey = async (key: string): Promise<boolean> => 
  * Get simple prices for multiple coins
  */
 export const getSimplePrices = async (
-  coinIds: string[], 
+  coinIds: string[] = ['bitcoin', 'ethereum'], 
   currencies: string[] = ['usd']
 ): Promise<any> => {
   try {
@@ -130,7 +171,7 @@ export const getTrendingCoins = async (): Promise<any[]> => {
  * Get market data for coins
  */
 export const getMarketData = async (
-  coinIds: string[], 
+  coinIds: string[] = ['bitcoin', 'ethereum'], 
   currency: string = 'usd',
   limit: number = 50
 ): Promise<any[]> => {
@@ -150,5 +191,46 @@ export const getMarketData = async (
     console.error('Error getting market data:', error);
     toast.error('שגיאה בקבלת נתוני שוק');
     return [];
+  }
+};
+
+/**
+ * Get coins markets data
+ */
+export const getCoinsMarkets = async (
+  vsCurrency: string = 'usd',
+  perPage: number = 20,
+  page: number = 1
+): Promise<CoinPriceData[]> => {
+  try {
+    const params = {
+      vs_currency: vsCurrency,
+      order: 'market_cap_desc',
+      per_page: perPage.toString(),
+      page: page.toString(),
+      sparkline: 'false',
+      price_change_percentage: '24h'
+    };
+    
+    const data = await fetchFromCoinGecko('/coins/markets', params);
+    return data || [];
+  } catch (error) {
+    console.error('Error getting coins markets:', error);
+    toast.error('שגיאה בקבלת נתוני שווקים');
+    return [];
+  }
+};
+
+/**
+ * Get global market data
+ */
+export const getGlobalData = async (): Promise<any> => {
+  try {
+    const data = await fetchFromCoinGecko('/global');
+    return data?.data || {};
+  } catch (error) {
+    console.error('Error getting global data:', error);
+    toast.error('שגיאה בקבלת נתונים גלובליים');
+    return {};
   }
 };

@@ -8,7 +8,6 @@ import { formatDistanceToNow } from 'date-fns';
 
 export function RealTimeStatus() {
   const { 
-    proxyConnected, 
     apiConnected, 
     webSocketsConnected, 
     lastChecked, 
@@ -33,12 +32,7 @@ export function RealTimeStatus() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-3 gap-4">
-          <StatusItem 
-            title="פרוקסי"
-            icon={<Globe className="h-5 w-5" />}
-            status={proxyConnected}
-          />
+        <div className="grid grid-cols-2 gap-4">
           <StatusItem 
             title="חיבור API"
             icon={<Signal className="h-5 w-5" />}

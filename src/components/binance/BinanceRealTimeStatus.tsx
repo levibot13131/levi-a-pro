@@ -5,7 +5,6 @@ import { Badge } from '@/components/ui/badge';
 import { Activity } from 'lucide-react';
 import { useSystemStatus } from '@/hooks/use-system-status';
 import { toast } from 'sonner';
-import { getProxyConfig, isProxyConfigured } from '@/services/proxy/proxyConfig';
 import { useBinanceConnection } from '@/hooks/use-binance-connection';
 import { 
   isRealTimeMode as checkIsRealTimeMode, 
@@ -41,15 +40,6 @@ const BinanceRealTimeStatus: React.FC = () => {
   }, [isRealTime, isBinanceActive]);
   
   const handleEnableRealTime = () => {
-    // וידוא שיש מפתחות פרוקסי תקינים
-    const isProxyReady = isProxyConfigured();
-    
-    if (!isProxyReady && !isDevelopment) {
-      toast.warning('מומלץ להגדיר פרוקסי לחוויה מלאה', {
-        description: 'ללא פרוקסי מוגדר, חלק מהפונקציות עשויות לא לעבוד'
-      });
-    }
-    
     if (enableRealTimeMode()) {
       setLastUpdateTime(new Date());
       toast.success('מצב זמן אמת מופעל', {
@@ -87,8 +77,6 @@ const BinanceRealTimeStatus: React.FC = () => {
     }
   };
   
-  const proxyConfig = getProxyConfig();
-  const showProxyWarning = isBinanceActive && !proxyConfig.isEnabled;
   const isDevelopment = process.env.NODE_ENV === 'development' || 
                         !window.location.hostname.includes('lovable.app');
   
@@ -114,11 +102,6 @@ const BinanceRealTimeStatus: React.FC = () => {
             handleToggleRealData={handleToggleRealData}
             handleManualRefresh={handleManualRefresh}
             handleEnableRealTime={handleEnableRealTime}
-            isDevelopment={isDevelopment}
-          />
-          
-          <ProxyWarningCard 
-            showWarning={showProxyWarning}
             isDevelopment={isDevelopment}
           />
           

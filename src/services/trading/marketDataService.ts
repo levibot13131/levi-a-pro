@@ -1,6 +1,5 @@
 
 import { MarketData } from '@/types/trading';
-import { getProxyUrl } from '@/services/proxy/proxyConfig';
 
 export class MarketDataService {
   private cache: Map<string, MarketData> = new Map();
@@ -72,7 +71,7 @@ export class MarketDataService {
 
   private async fetchPriceData(symbol: string) {
     try {
-      const url = getProxyUrl(`/binance/api/v3/ticker/24hr?symbol=${symbol}`);
+      const url = `https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`;
       const response = await fetch(url);
       
       if (!response.ok) {
@@ -134,64 +133,35 @@ export class MarketDataService {
 
   private getMockTechnicalData(symbol: string) {
     return {
-      rsi: 30 + Math.random() * 40, // 30-70 range
-      macd: {
-        macd: Math.random() * 100 - 50,
-        signal: Math.random() * 100 - 50,
-        histogram: Math.random() * 20 - 10
-      },
-      volumeProfile: 1 + Math.random(),
-      vwap: this.getMockPriceData(symbol).price * (0.998 + Math.random() * 0.004),
+      rsi: Math.random() * 100,
+      macd: (Math.random() - 0.5) * 10,
+      volumeProfile: Array.from({ length: 20 }, () => Math.random() * 1000),
+      vwap: Math.random() * 50000,
       fibonacci: {
-        level618: this.getMockPriceData(symbol).price * 0.995,
-        level786: this.getMockPriceData(symbol).price * 0.99,
-        level382: this.getMockPriceData(symbol).price * 1.005
+        support: Math.random() * 40000,
+        resistance: Math.random() * 50000
       },
-      candlestickPattern: Math.random() > 0.8 ? ['doji', 'engulfing', 'pinbar', 'hammer'][Math.floor(Math.random() * 4)] : undefined
+      candlestickPattern: ['doji', 'hammer', 'shooting_star'][Math.floor(Math.random() * 3)]
     };
   }
 
   private getMockSentimentData(symbol: string) {
     return {
-      score: Math.random() * 2 - 1, // -1 to 1
-      source: ['twitter', 'news', 'whale', 'general'][Math.floor(Math.random() * 4)] as any,
-      keywords: ['bullish', 'breakout', 'support', 'resistance', 'volume'].slice(0, Math.floor(Math.random() * 3) + 1)
+      bullish: Math.random() * 100,
+      bearish: Math.random() * 100,
+      neutral: Math.random() * 100
     };
   }
 
-  private determineWyckoffPhase(technicalData: any): 'accumulation' | 'distribution' | 'markup' | 'markdown' {
-    // Simplified Wyckoff phase determination
-    if (technicalData.rsi < 40 && technicalData.volumeProfile > 1.2) {
-      return 'accumulation';
-    } else if (technicalData.rsi > 60 && technicalData.volumeProfile > 1.2) {
-      return 'distribution';
-    } else if (technicalData.rsi > 50) {
-      return 'markup';
-    } else {
-      return 'markdown';
-    }
+  private determineWyckoffPhase(technicalData: any) {
+    return ['accumulation', 'markup', 'distribution', 'markdown'][Math.floor(Math.random() * 4)];
   }
 
   private analyzeSMCSignals(priceData: any, technicalData: any) {
     return {
-      orderBlock: Math.random() > 0.7 ? priceData.price * 0.995 : undefined,
-      liquidityGrab: Math.random() > 0.8,
-      fairValueGap: Math.random() > 0.75 ? priceData.price * 0.002 : undefined
+      signal: ['buy', 'sell', 'hold'][Math.floor(Math.random() * 3)],
+      strength: Math.random() * 100
     };
-  }
-
-  public async getMultipleMarketData(symbols: string[]): Promise<Map<string, MarketData>> {
-    const results = new Map<string, MarketData>();
-    
-    const promises = symbols.map(async (symbol) => {
-      const data = await this.getMarketData(symbol);
-      if (data) {
-        results.set(symbol, data);
-      }
-    });
-
-    await Promise.all(promises);
-    return results;
   }
 }
 
