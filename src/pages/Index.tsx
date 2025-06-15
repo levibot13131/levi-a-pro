@@ -1,43 +1,111 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { 
+  BarChart3, 
+  LineChart, 
+  Activity, 
+  TrendingUp,
+  MessageSquare 
+} from 'lucide-react';
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-12 px-4">
-        <div className="flex flex-col items-center justify-center text-center">
-          <h1 className="text-4xl font-bold mb-6">ברוכים הבאים למערכת הניתוח והמסחר האוטומטית</h1>
-          <p className="text-xl text-muted-foreground mb-8">
-            מערכת חכמה לניתוח טכני, ניהול סיכונים ובדיקות היסטוריות
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-4xl">
-            <Link to="/backtesting" className="group rounded-lg border p-6 hover:border-primary transition-colors">
-              <h3 className="font-semibold text-xl mb-3 group-hover:text-primary">
-                בדיקה היסטורית
-              </h3>
-              <p className="text-muted-foreground">
-                בדוק את האסטרטגיה שלך על נתונים היסטוריים
-              </p>
+    <div className="container mx-auto p-6">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-2">Levi-A-Pro Trading System</h1>
+        <p className="text-muted-foreground text-lg">
+          Advanced trading analysis and real-time market monitoring platform
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5" />
+              Dashboard
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              View comprehensive trading dashboard with real-time market data
+            </p>
+            <Link to="/dashboard">
+              <Button className="w-full">Open Dashboard</Button>
             </Link>
-            <Link to="/technical-analysis" className="group rounded-lg border p-6 hover:border-primary transition-colors">
-              <h3 className="font-semibold text-xl mb-3 group-hover:text-primary">
-                ניתוח טכני
-              </h3>
-              <p className="text-muted-foreground">
-                ניתוח מתקדם עם אינדיקטורים וזיהוי תבניות
-              </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Trading Signals
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Real-time trading signals and market analysis
+            </p>
+            <Link to="/trading-signals">
+              <Button className="w-full">View Signals</Button>
             </Link>
-            <Link to="/risk-management" className="group rounded-lg border p-6 hover:border-primary transition-colors">
-              <h3 className="font-semibold text-xl mb-3 group-hover:text-primary">
-                ניהול סיכונים
-              </h3>
-              <p className="text-muted-foreground">
-                כלים לניהול סיכונים ומעקב אחר ביצועים
-              </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              TradingView Integration
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Connect with TradingView for advanced charting and analysis
+            </p>
+            <Link to="/tradingview">
+              <Button className="w-full">Open TradingView</Button>
             </Link>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Activity className="h-5 w-5" />
+              System Health
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Monitor system performance and connection status
+            </p>
+            <Link to="/system-health">
+              <Button className="w-full">Check Health</Button>
+            </Link>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <LineChart className="h-5 w-5" />
+              Technical Analysis
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground mb-4">
+              Advanced technical analysis tools and indicators
+            </p>
+            <Link to="/technical-analysis">
+              <Button className="w-full">Analyze Markets</Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
