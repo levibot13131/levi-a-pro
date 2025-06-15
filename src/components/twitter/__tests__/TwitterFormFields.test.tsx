@@ -5,7 +5,7 @@ import TwitterFormFields from '../TwitterFormFields';
 import { vi, describe, it } from 'vitest';
 import { useForm } from 'react-hook-form';
 
-// Mock useForm hook
+// Mock useForm hook with complete typing
 vi.mock('react-hook-form', () => ({
   useForm: vi.fn()
 }));
@@ -62,8 +62,7 @@ describe('TwitterFormFields', () => {
       },
       _formStateSubject: { next: vi.fn() },
       _proxyFormState: {
-        errors: false,
-        isDirty: false,
+        isDirty: true,
         isLoading: false,
         isSubmitted: false,
         isSubmitSuccessful: false,
@@ -75,7 +74,8 @@ describe('TwitterFormFields', () => {
         isValid: true,
         isValidating: false,
         disabled: false,
-        validatingFields: false
+        validatingFields: false,
+        errors: false // Fixed: must be boolean or "all", not object
       },
       _updateFormState: vi.fn(),
       _updateFieldArray: vi.fn(),

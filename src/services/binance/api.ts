@@ -1,13 +1,12 @@
 
 import { toast } from 'sonner';
 import { getBinanceCredentials } from './credentials';
-import { getProxyConfig } from '@/services/proxy/proxyConfig';
 import { CurrencyData } from './marketData';
 
 const BINANCE_API_BASE = 'https://api.binance.com';
 
 /**
- * Make an authenticated request to the Binance API
+ * Make a direct request to the Binance API - CLOUD NATIVE VERSION
  */
 export const fetchFromBinance = async (
   endpoint: string,
@@ -15,14 +14,8 @@ export const fetchFromBinance = async (
   requiresAuth: boolean = false
 ): Promise<any> => {
   try {
-    // Check if we need to use a proxy
-    const proxyConfig = getProxyConfig();
-    const useProxy = !!proxyConfig?.isEnabled;
-    
-    // Base URL with or without proxy
-    const baseUrl = useProxy 
-      ? `${proxyConfig?.baseUrl}/binance`
-      : BINANCE_API_BASE;
+    // Direct API call to Binance - NO PROXY
+    const baseUrl = BINANCE_API_BASE;
     
     // Build URL with query parameters
     const queryParams = new URLSearchParams();
@@ -43,12 +36,7 @@ export const fetchFromBinance = async (
         throw new Error('No Binance credentials available');
       }
       
-      // Add authentication headers if not using proxy
-      if (!useProxy) {
-        headers['X-MBX-APIKEY'] = credentials.apiKey;
-        // Note: For authenticated requests, signature would be needed
-        // This is a simplified version
-      }
+      headers['X-MBX-APIKEY'] = credentials.apiKey;
     }
     
     // Make the request

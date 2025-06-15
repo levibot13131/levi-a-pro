@@ -1,7 +1,7 @@
+
 import { toast } from 'sonner';
 import { getBinanceCredentials } from './credentials';
 import { BinanceSocketConfig, BinanceStreamMessage } from './types';
-import { getProxyConfig, isProxyConfigured, getApiBaseUrl } from '@/services/proxy/proxyConfig';
 import { isRealTimeMode } from './marketData';
 
 // Store active websocket connections
@@ -12,8 +12,8 @@ const messageCallbacks: Map<string, Set<(data: BinanceStreamMessage) => void>> =
 
 // Reconnection attempts tracking
 const reconnectionAttempts: Map<string, number> = new Map();
-const MAX_RECONNECT_ATTEMPTS = 3; // Reduced from 5
-const RECONNECT_DELAY_MS = 5000; // Increased from 3000
+const MAX_RECONNECT_ATTEMPTS = 3;
+const RECONNECT_DELAY_MS = 5000;
 
 /**
  * Simulate WebSocket messages for demo mode
@@ -55,7 +55,6 @@ const simulateWebSocketMessages = (symbol: string, onMessage: (data: BinanceStre
  */
 const parseWebSocketMessage = (data: any, symbol: string): BinanceStreamMessage => {
   if (data.stream && data.data) {
-    // Standard Binance stream format
     if (data.stream.includes('@ticker')) {
       return {
         symbol,
@@ -71,7 +70,6 @@ const parseWebSocketMessage = (data: any, symbol: string): BinanceStreamMessage 
     }
   }
   
-  // Fallback for other formats
   return {
     symbol,
     type: 'ticker',
@@ -95,7 +93,6 @@ const handleReconnection = (streamName: string, config: BinanceSocketConfig) => 
     console.error(`Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached for ${streamName}`);
     console.log('Falling back to simulated data due to max reconnection attempts reached');
     
-    // Fall back to simulated data
     const { symbol, onMessage } = config;
     if (onMessage) {
       simulateWebSocketMessages(symbol, onMessage);
@@ -104,7 +101,7 @@ const handleReconnection = (streamName: string, config: BinanceSocketConfig) => 
   }
   
   reconnectionAttempts.set(streamName, attempts + 1);
-  const delay = RECONNECT_DELAY_MS * Math.pow(1.5, attempts); // Exponential backoff
+  const delay = RECONNECT_DELAY_MS * Math.pow(1.5, attempts);
   
   console.log(`Attempting reconnection ${attempts + 1}/${MAX_RECONNECT_ATTEMPTS} for ${streamName} in ${delay}ms`);
   
@@ -117,12 +114,12 @@ const handleReconnection = (streamName: string, config: BinanceSocketConfig) => 
 };
 
 /**
- * Create a WebSocket connection to Binance
+ * Create a WebSocket connection to Binance - CLOUD NATIVE VERSION
  */
 export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void) => {
   const { symbol, interval = '1m', onMessage, onError } = config;
   
-  // Check if we're in development/demo mode
+  // Check if we're in demo mode
   const demoMode = !isRealTimeMode();
   if (demoMode) {
     console.log('WebSocket in demo mode - will simulate data');
@@ -131,67 +128,42 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
   }
   
   try {
-    // Check credentials but don't fail if missing
     const credentials = getBinanceCredentials();
     if (!credentials?.isConnected) {
-      console.warn('No valid Binance credentials, will attempt to connect anyway');
+      console.warn('No valid Binance credentials, using simulated data');
+      const intervalId = simulateWebSocketMessages(symbol, onMessage);
+      return () => clearInterval(intervalId);
     }
     
     const streamName = interval ? `${symbol.toLowerCase()}@kline_${interval}` : `${symbol.toLowerCase()}@ticker`;
     
-    // Try to get proxy configuration
-    let wsEndpoint = '';
-    try {
-      const proxyConfig = getProxyConfig();
-      let proxyBase = proxyConfig.baseUrl || '';
-      
-      // If no proxy or proxy fails, fall back to demo mode
-      if (!proxyBase) {
-        console.log('No proxy configured, falling back to simulated data');
-        const intervalId = simulateWebSocketMessages(symbol, onMessage);
-        return () => clearInterval(intervalId);
-      }
-      
-      // Ensure protocol is correct for WebSockets
-      proxyBase = proxyBase.replace('https://', 'wss://').replace('http://', 'ws://');
-      if (!proxyBase.startsWith('wss://') && !proxyBase.startsWith('ws://')) {
-        proxyBase = 'wss://' + proxyBase;
-      }
-      
-      if (proxyBase.endsWith('/')) {
-        proxyBase = proxyBase.slice(0, -1);
-      }
-      
-      wsEndpoint = `${proxyBase}/binance/ws/${streamName}`;
-    } catch (proxyError) {
-      console.warn('Proxy configuration error, falling back to simulated data:', proxyError);
-      const intervalId = simulateWebSocketMessages(symbol, onMessage);
-      return () => clearInterval(intervalId);
-    }
+    // Direct Binance WebSocket connection - NO PROXY
+    const wsEndpoint = `wss://stream.binance.com:9443/ws/${streamName}`;
     
     let ws = activeConnections.get(streamName);
     
     if (!ws || ws.readyState === WebSocket.CLOSED) {
       try {
-        console.log(`Creating new WebSocket connection to: ${wsEndpoint}`);
+        console.log(`Creating direct WebSocket connection to Binance: ${wsEndpoint}`);
         ws = new WebSocket(wsEndpoint);
         
         const connectionTimeout = window.setTimeout(() => {
           if (ws && ws.readyState === WebSocket.CONNECTING) {
             console.warn(`WebSocket connection timed out: ${streamName}`);
             ws.close();
-            handleReconnection(streamName, config);
+            // Fall back to simulated data on timeout
+            const intervalId = simulateWebSocketMessages(symbol, onMessage);
+            return () => clearInterval(intervalId);
           }
         }, 10000);
         
         ws.onopen = () => {
           clearTimeout(connectionTimeout);
-          console.log(`WebSocket connected: ${streamName}`);
+          console.log(`WebSocket connected to Binance: ${streamName}`);
           
           // Reset reconnection attempts on successful connection
           reconnectionAttempts.set(streamName, 0);
           
-          // Notify about WebSocket status change
           window.dispatchEvent(new CustomEvent('websocket-status-change', {
             detail: { connected: true }
           }));
@@ -223,13 +195,17 @@ export const createBinanceWebSocket = (config: BinanceSocketConfig): (() => void
           if (onError) {
             onError(error);
           }
-          handleReconnection(streamName, config);
+          // Fall back to simulated data on error
+          const intervalId = simulateWebSocketMessages(symbol, onMessage);
+          return () => clearInterval(intervalId);
         };
         
         ws.onclose = () => {
           console.log(`WebSocket closed: ${streamName}`);
           activeConnections.delete(streamName);
-          handleReconnection(streamName, config);
+          // Fall back to simulated data on close
+          const intervalId = simulateWebSocketMessages(symbol, onMessage);
+          return () => clearInterval(intervalId);
         };
         
         activeConnections.set(streamName, ws);
