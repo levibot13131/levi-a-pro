@@ -27,12 +27,12 @@ describe('TwitterFormFields', () => {
       },
       _removeUnmounted: vi.fn(),
       _names: { 
-        mount: new Set(), 
-        unMount: new Set(), 
-        array: new Set(), 
+        mount: new Set<string>(['apiKey', 'apiSecret', 'bearerToken']), 
+        unMount: new Set<string>(), 
+        array: new Set<string>(), 
         focus: '', 
         watchAll: false, 
-        watch: new Set() 
+        watch: new Set<string>() 
       },
       _state: { mount: false, action: false, watch: false },
       _defaultValues: {},
