@@ -1,38 +1,22 @@
 
 import React from 'react';
 import { Container } from '../components/ui/container';
-import MarketOverview from './market/MarketOverview';
-
-// Since other dashboard components are not in the allowed files, 
-// I'll replace them with placeholders to make the dashboard functional
-const AssetSummary = () => <div>Asset Summary</div>;
-const TradingViewWidgets = () => <div>TradingView Widgets</div>;
-const NewsWidget = () => <div>News Widget</div>;
-const RealTimeStatus = () => <div>Real-Time Status</div>;
+import RealTimeTradingDashboard from '../components/dashboard/RealTimeTradingDashboard';
 
 const Dashboard: React.FC = () => {
   return (
     <Container className="py-6">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="lg:col-span-2">
-          <MarketOverview />
+      <div className="space-y-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-right mb-2">
+            לוח הבקרה הראשי - LeviPro
+          </h1>
+          <p className="text-muted-foreground text-right">
+            מערכת מסחר אוטומטית מתקדמת עם ניתוח בזמן אמת
+          </p>
         </div>
-        <div>
-          <RealTimeStatus />
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="lg:col-span-1">
-          <AssetSummary />
-        </div>
-        <div className="lg:col-span-2">
-          <TradingViewWidgets />
-        </div>
-      </div>
-      
-      <div>
-        <NewsWidget />
+        
+        <RealTimeTradingDashboard />
       </div>
     </Container>
   );
