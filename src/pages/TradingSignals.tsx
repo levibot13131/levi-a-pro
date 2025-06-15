@@ -13,6 +13,8 @@ import SetupGuide from '@/components/trading-signals/SetupGuide';
 import { useTradingSignals } from '@/components/trading-signals/useTradingSignals';
 import { useSignalAnalysis } from '@/components/trading-signals/useSignalAnalysis';
 import { TradeSignal } from '@/types/asset';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const TradingSignals = () => {
   const {
@@ -34,8 +36,67 @@ const TradingSignals = () => {
     toggleRealTimeAnalysis
   } = useTradingSignals();
   
+  // Add live signals from database with real-time subscription
+  const { data: liveSignals = [], refetch } = useQuery({
+    queryKey: ['live-trading-signals'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('trading_signals')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      if (error) {
+        console.error('Error fetching live signals:', error);
+        return [];
+      }
+      
+      return data || [];
+    },
+    refetchInterval: 5000, // Refresh every 5 seconds
+  });
+
+  // Set up real-time subscription for new signals
+  React.useEffect(() => {
+    const channel = supabase
+      .channel('trading-signals-live')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'trading_signals'
+        },
+        () => {
+          refetch(); // Refresh when new signal is inserted
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
+
+  // Convert live signals to TradeSignal format
+  const convertedLiveSignals: TradeSignal[] = liveSignals.map(signal => ({
+    id: signal.id,
+    assetId: signal.symbol,
+    type: signal.action as 'buy' | 'sell',
+    message: signal.reasoning,
+    timestamp: new Date(signal.created_at).getTime(),
+    price: signal.price,
+    strength: signal.confidence > 0.8 ? 'strong' : signal.confidence > 0.6 ? 'medium' : 'weak',
+    strategy: signal.strategy,
+    timeframe: '1h' as const,
+    createdAt: new Date(signal.created_at).getTime(),
+  }));
+
+  // Combine all signals (live + mock + real-time)
+  const combinedSignals = [...convertedLiveSignals, ...allSignals];
+  
   // Signal analysis calculation
-  const signalAnalysis = useSignalAnalysis(allSignals, selectedAssetId);
+  const signalAnalysis = useSignalAnalysis(combinedSignals, selectedAssetId);
   
   // Check if there are active alert destinations
   const hasActiveDestinations = getAlertDestinations().some(dest => dest.active);
@@ -75,7 +136,7 @@ const TradingSignals = () => {
         <TabsList className="grid w-full md:w-[400px] grid-cols-2">
           <TabsTrigger value="signals">
             <Target className="h-4 w-4 mr-2" />
-            איתותי מסחר
+            איתותי מסחר ({combinedSignals.length})
           </TabsTrigger>
           <TabsTrigger value="analyses">
             <BarChart4 className="h-4 w-4 mr-2" />
@@ -88,7 +149,7 @@ const TradingSignals = () => {
             selectedAssetId={selectedAssetId}
             setSelectedAssetId={setSelectedAssetId}
             assets={assets}
-            allSignals={allSignals as TradeSignal[]}
+            allSignals={combinedSignals}
             signalsLoading={signalsLoading}
             realTimeSignals={realTimeSignals as TradeSignal[]}
             formatDate={formatDate}
