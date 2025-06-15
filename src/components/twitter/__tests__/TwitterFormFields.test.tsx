@@ -26,7 +26,8 @@ describe('TwitterFormFields', () => {
       clearErrors: vi.fn(),
       trigger: vi.fn(),
       unregister: vi.fn(),
-      setFocus: vi.fn()
+      setFocus: vi.fn(),
+      resetField: vi.fn()
     };
 
     (useForm as any).mockReturnValue(mockForm);
