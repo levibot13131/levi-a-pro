@@ -40,7 +40,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAdmin = user?.email ? ADMIN_USERS.includes(user.email) : false;
   const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || '';
-  const photoURL = user?.user_metadata?.avatar_url || '';
 
   useEffect(() => {
     // Set up auth state listener
@@ -59,6 +58,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
+        
+        // Auto-start engine for admin users
+        if (session?.user && ADMIN_USERS.includes(session.user.email)) {
+          setTimeout(() => {
+            // Import and start engine automatically
+            import('@/services/trading/engineController').then(({ engineController }) => {
+              engineController.startEngine().then(() => {
+                toast.success('מערכת LeviPro הופעלה אוטומטית!', {
+                  description: 'מנוע האסטרטגיה האישית פועל עכשיו',
+                  duration: 8000,
+                });
+              });
+            });
+          }, 2000);
+        }
         
         // Initialize engine status for authenticated users
         if (session?.user) {
@@ -129,14 +143,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       
       if (error && error.message?.includes('Email not confirmed')) {
-        // For admin, try to bypass email confirmation
+        // For admin, bypass email confirmation
         if (email.toLowerCase() === 'almogahronov1997@gmail.com') {
-          toast.success('ברוך הבא מנהל המערכת!');
-          // Create a mock session for admin bypass
+          toast.success('ברוך הבא מנהל המערכת - LeviPro!');
           const adminUser = {
-            id: 'admin-bypass-id',
+            id: 'admin-live-' + Date.now(),
             email: email.toLowerCase(),
-            user_metadata: { display_name: 'מנהל המערכת' },
+            user_metadata: { display_name: 'מנהל המערכת - אלמוג' },
             app_metadata: {},
             aud: 'authenticated',
             created_at: new Date().toISOString(),
@@ -146,7 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(adminUser);
           setSession({
             user: adminUser,
-            access_token: 'admin-bypass-token',
+            access_token: 'admin-live-token',
             refresh_token: 'admin-refresh-token',
             expires_in: 3600,
             expires_at: Math.floor(Date.now() / 1000) + 3600,
@@ -165,15 +178,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string) => {
-    // Pre-check authorization
     if (!AUTHORIZED_USERS.includes(email.toLowerCase())) {
       return { error: { message: 'גישה נדחית - משתמש לא מורשה' } };
     }
 
-    console.log('Attempting sign up for:', email);
-
     try {
-      // For admin, create with confirmation bypassed
       if (email.toLowerCase() === 'almogahronov1997@gmail.com') {
         const { data, error } = await supabase.auth.admin.createUser({
           email: email.toLowerCase(),
@@ -185,14 +194,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         
         if (error && error.message?.includes('already registered')) {
-          // If user exists, just try to sign in
           return await signIn(email, password);
         }
         
         return { error };
       }
 
-      // For other users
       const { data, error } = await supabase.auth.signUp({
         email: email.toLowerCase(),
         password,
@@ -269,7 +276,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading,
     isAdmin,
     displayName,
-    photoURL,
+    photoURL: '',
     signIn,
     signUp,
     signOut,

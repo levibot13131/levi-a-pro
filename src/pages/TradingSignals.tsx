@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Target, BarChart4, Brain, Zap, Activity } from 'lucide-react';
 import { getAlertDestinations } from '@/services/tradingView/alerts/destinations';
 import SignalAnalysisSummary from '@/components/trading-signals/SignalAnalysisSummary';
@@ -44,7 +43,7 @@ const TradingSignals = () => {
     toggleRealTimeAnalysis
   } = useTradingSignals();
   
-  // Enhanced real-time signals from database with proper subscription
+  // LIVE signals from database with real-time subscription
   const { data: liveSignals = [], refetch } = useQuery({
     queryKey: ['live-trading-signals'],
     queryFn: async () => {
@@ -65,12 +64,12 @@ const TradingSignals = () => {
     refetchIntervalInBackground: true,
   });
 
-  // Set up real-time subscription for new signals with better error handling
+  // Real-time subscription for LIVE signals
   useEffect(() => {
-    console.log('Setting up real-time subscription for trading signals...');
+    console.log('🔥 Setting up LIVE real-time subscription for trading signals...');
     
     const channel = supabase
-      .channel('trading-signals-realtime')
+      .channel('live-trading-signals-realtime')
       .on(
         'postgres_changes',
         {
@@ -79,11 +78,11 @@ const TradingSignals = () => {
           table: 'trading_signals'
         },
         (payload) => {
-          console.log('🔥 New signal received via real-time:', payload);
-          refetch(); // Refresh the signals immediately
-          toast.success('איתות חדש התקבל!', {
+          console.log('🚀 NEW LIVE SIGNAL received:', payload);
+          refetch(); // Refresh immediately
+          toast.success('איתות LIVE חדש התקבל!', {
             description: `${payload.new.action?.toUpperCase()} ${payload.new.symbol} - ${payload.new.strategy}`,
-            duration: 8000,
+            duration: 10000,
           });
         }
       )
@@ -95,68 +94,67 @@ const TradingSignals = () => {
           table: 'trading_signals'
         },
         (payload) => {
-          console.log('📝 Signal updated via real-time:', payload);
-          refetch(); // Refresh on updates too
+          console.log('📝 LIVE Signal updated:', payload);
+          refetch();
         }
       )
       .subscribe((status) => {
-        console.log('Real-time subscription status:', status);
+        console.log('LIVE Real-time subscription status:', status);
         if (status === 'SUBSCRIBED') {
-          console.log('✅ Successfully subscribed to real-time signals');
+          console.log('✅ Successfully subscribed to LIVE signals');
         } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Real-time subscription error');
+          console.error('❌ LIVE Real-time subscription error');
           toast.error('שגיאה בחיבור זמן אמת');
         }
       });
 
     return () => {
-      console.log('Cleaning up real-time subscription');
+      console.log('Cleaning up LIVE real-time subscription');
       supabase.removeChannel(channel);
     };
   }, [refetch]);
 
-  // Auto-refresh signals every 30 seconds (matching engine tick)
+  // Auto-refresh LIVE signals every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log('🔄 Auto-refreshing signals (30s tick)');
+      console.log('🔄 Auto-refreshing LIVE signals (30s tick)');
       refetch();
     }, 30000);
 
     return () => clearInterval(interval);
   }, [refetch]);
 
-  // Convert live signals to TradeSignal format
-  const convertedLiveSignals: TradeSignal[] = liveSignals.map(signal => ({
-    id: signal.id,
-    assetId: signal.symbol,
-    type: signal.action as 'buy' | 'sell',
-    message: signal.reasoning,
-    timestamp: new Date(signal.created_at).getTime(),
-    price: signal.price,
-    strength: signal.confidence > 0.8 ? 'strong' : signal.confidence > 0.6 ? 'medium' : 'weak',
-    strategy: signal.strategy,
-    timeframe: '1h' as const,
-    createdAt: new Date(signal.created_at).getTime(),
-  }));
+  // Convert live signals to TradeSignal format - LIVE DATA ONLY
+  const convertedLiveSignals: TradeSignal[] = liveSignals
+    .filter(signal => signal.metadata?.live_data === true) // Only LIVE signals
+    .map(signal => ({
+      id: signal.id,
+      assetId: signal.symbol,
+      type: signal.action as 'buy' | 'sell',
+      message: signal.reasoning,
+      timestamp: new Date(signal.created_at).getTime(),
+      price: signal.price,
+      strength: signal.confidence > 0.8 ? 'strong' : signal.confidence > 0.6 ? 'medium' : 'weak',
+      strategy: signal.strategy,
+      timeframe: '1h' as const,
+      createdAt: new Date(signal.created_at).getTime(),
+    }));
 
-  // Combine all signals and sort by timestamp
-  const combinedSignals = [...convertedLiveSignals, ...allSignals]
+  // ONLY show LIVE signals (no mock data)
+  const combinedSignals = convertedLiveSignals
     .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, 50); // Limit to latest 50 signals for performance
+    .slice(0, 50);
   
-  // Signal analysis calculation
   const signalAnalysis = useSignalAnalysis(combinedSignals, selectedAssetId);
-  
-  // Check if there are active alert destinations
   const hasActiveDestinations = getAlertDestinations().some(dest => dest.active);
 
-  // Auto-start engine if admin and not running
+  // Auto-notify admin if engine not running
   useEffect(() => {
     if (isAdmin && !engineStatus.isRunning) {
-      toast.info('המנוע אינו פועל', {
-        description: 'לחץ על כפתור ההפעלה בכדי להתחיל לקבל איתותים',
+      toast.info('מנוע האיתותים LIVE אינו פועל', {
+        description: 'לחץ על כפתור ההפעלה להתחיל לקבל איתותים אמיתיים',
         action: {
-          label: 'הפעל מנוע',
+          label: 'הפעל מנוע LIVE',
           onClick: async () => {
             await startEngine();
           },
@@ -171,16 +169,16 @@ const TradingSignals = () => {
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
           <Brain className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">איתותי מסחר בזמן אמת</h1>
+          <h1 className="text-3xl font-bold">איתותי מסחר LIVE - LeviPro</h1>
           {isAdmin && (
             <Badge variant="secondary" className="gap-1">
               <Zap className="h-3 w-3" />
-              מנהל מערכת
+              מנהל מערכת - אלמוג
             </Badge>
           )}
         </div>
         <p className="text-muted-foreground">
-          מערכת איתותים מתקדמת עם האסטרטגיה האישית של אלמוג
+          מערכת איתותים LIVE עם האסטרטגיה האישית של אלמוג - נתונים אמיתיים בלבד
         </p>
       </div>
 
@@ -191,44 +189,41 @@ const TradingSignals = () => {
         setShowSettings={setShowSettings}
       />
       
-      {/* Enhanced Real-time status indicator */}
+      {/* LIVE status indicator */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1">
             <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
             <span className="text-sm text-muted-foreground">
-              עדכונים בזמן אמת פעילים • {combinedSignals.length} איתותים
+              🔥 עדכונים LIVE פעילים • {combinedSignals.length} איתותים אמיתיים
             </span>
           </div>
           <Badge variant={engineStatus.isRunning ? "default" : "outline"} className="gap-1">
             <Activity className="h-3 w-3" />
-            מנוע: {engineStatus.isRunning ? 'פועל' : 'כבוי'}
+            מנוע LIVE: {engineStatus.isRunning ? 'פועל' : 'כבוי'}
           </Badge>
         </div>
         
         {liveSignals.filter(s => s.strategy === 'almog-personal-method').length > 0 && (
           <Badge className="bg-green-100 text-green-800 gap-1">
             <Brain className="h-3 w-3" />
-            אסטרטגיה אישית פעילה
+            אסטרטגיה אישית LIVE פעילה
           </Badge>
         )}
       </div>
       
-      {/* Setup guide or success message based on configuration */}
       <SetupGuide 
         hasActiveDestinations={hasActiveDestinations}
         showSettings={showSettings}
         setShowSettings={setShowSettings}
       />
       
-      {/* Alert destinations manager */}
       {showSettings && (
         <div className="mb-6">
           <AlertDestinationsManager />
         </div>
       )}
       
-      {/* Signal analysis summary */}
       {signalAnalysis && (
         <SignalAnalysisSummary 
           signalAnalysis={signalAnalysis} 
@@ -240,11 +235,11 @@ const TradingSignals = () => {
         <TabsList className="grid w-full md:w-[400px] grid-cols-2">
           <TabsTrigger value="signals">
             <Target className="h-4 w-4 mr-2" />
-            איתותי מסחר ({combinedSignals.length})
+            איתותי LIVE ({combinedSignals.length})
           </TabsTrigger>
           <TabsTrigger value="analyses">
             <BarChart4 className="h-4 w-4 mr-2" />
-            ניתוחי שוק
+            ניתוחי שוק LIVE
           </TabsTrigger>
         </TabsList>
         

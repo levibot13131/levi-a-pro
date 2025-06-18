@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { liveMarketDataService } from './liveMarketDataService';
 
 interface EngineStatus {
   isRunning: boolean;
@@ -30,9 +31,8 @@ export class TradingEngineController {
     }
 
     try {
-      console.log('🚀 Starting LeviPro Trading Engine...');
+      console.log('🚀 Starting LeviPro Live Trading Engine...');
       
-      // Update engine status in database
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast.error('משתמש לא מחובר');
@@ -49,9 +49,9 @@ export class TradingEngineController {
 
       this.isRunning = true;
       
-      // Set up automatic signal generation every 30 seconds
+      // Generate signals every 30 seconds with LIVE data
       this.engineInterval = setInterval(async () => {
-        await this.generateSignals();
+        await this.generateLiveSignals();
       }, 30000);
 
       // Health check every 60 seconds
@@ -59,11 +59,15 @@ export class TradingEngineController {
         await this.performHealthCheck();
       }, 60000);
 
-      toast.success('🚀 מנוע המסחר הופעל בהצלחה');
+      toast.success('🚀 מנוע המסחר LIVE הופעל בהצלחה!', {
+        description: 'האסטרטגיה האישית של אלמוג פועלת עם נתונים אמיתיים',
+        duration: 10000,
+      });
+      
       this.notifyListeners();
       
-      // Initial signal generation
-      await this.generateSignals();
+      // Initial signal generation with live data
+      await this.generateLiveSignals();
       
       return true;
     } catch (error) {
@@ -74,12 +78,9 @@ export class TradingEngineController {
   }
 
   async stopEngine(): Promise<void> {
-    if (!this.isRunning) {
-      toast.info('המנוע כבר מופסק');
-      return;
-    }
+    if (!this.isRunning) return;
 
-    console.log('⏹️ Stopping LeviPro Trading Engine...');
+    console.log('⏹️ Stopping LeviPro Live Trading Engine...');
     
     this.isRunning = false;
     
@@ -93,7 +94,6 @@ export class TradingEngineController {
       this.healthCheckInterval = undefined;
     }
 
-    // Update engine status in database
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -113,81 +113,116 @@ export class TradingEngineController {
     this.notifyListeners();
   }
 
-  private async generateSignals(): Promise<void> {
+  private async generateLiveSignals(): Promise<void> {
     if (!this.isRunning) return;
 
     try {
-      console.log('📊 Generating new signals with Almog\'s personal strategy...');
+      console.log('📊 Generating LIVE signals with Almog\'s personal strategy...');
       
       const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT'];
       const signalsGenerated = [];
 
+      // Fetch live market data for all symbols
+      const liveDataMap = await liveMarketDataService.getMultipleAssets(symbols);
+
       for (const symbol of symbols) {
-        // Almog's personal strategy with priority weighting
-        const signal = await this.generatePersonalStrategySignal(symbol);
+        const liveData = liveDataMap.get(symbol);
+        if (!liveData) {
+          console.warn(`No live data for ${symbol}, skipping...`);
+          continue;
+        }
+
+        // PRIORITY: Almog's personal strategy with LIVE data
+        const signal = await this.generateAlmogPersonalStrategySignal(symbol, liveData);
         if (signal) {
           signalsGenerated.push(signal);
         }
       }
 
       if (signalsGenerated.length > 0) {
-        console.log(`✨ Generated ${signalsGenerated.length} signals using personal strategy`);
-        toast.success(`נוצרו ${signalsGenerated.length} איתותים חדשים`, {
-          description: 'השיטה האישית של אלמוג פעילה'
+        console.log(`✨ Generated ${signalsGenerated.length} LIVE signals using Almog's personal strategy`);
+        toast.success(`נוצרו ${signalsGenerated.length} איתותים LIVE חדשים`, {
+          description: 'השיטה האישית של אלמוג פועלת עם נתונים אמיתיים!',
+          duration: 8000,
         });
+
+        // Send to Telegram if configured
+        await this.sendTelegramSignals(signalsGenerated);
       }
 
       this.notifyListeners();
     } catch (error) {
-      console.error('Error generating signals:', error);
+      console.error('Error generating live signals:', error);
     }
   }
 
-  private async generatePersonalStrategySignal(symbol: string) {
+  private async generateAlmogPersonalStrategySignal(symbol: string, liveData: any) {
     try {
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      // Simulate market data fetching (in production, use real APIs)
-      const mockPrice = 50000 + Math.random() * 10000;
-      const mockVolume = 1000000 + Math.random() * 2000000;
-      const change24h = (Math.random() - 0.5) * 10; // -5% to +5%
+      const { price, volume24h, change24h, high24h, low24h } = liveData;
 
-      // Almog's personal strategy logic
-      const emotionalPressure = this.calculateEmotionalPressure(mockPrice, mockVolume);
-      const momentumScore = this.analyzeMomentum(change24h);
-      const volumeProfile = mockVolume > 1500000 ? 'high' : 'medium';
+      // ALMOG'S PERSONAL STRATEGY LOGIC (LIVE DATA)
+      const emotionalPressure = this.calculateEmotionalPressureLive(price, volume24h, high24h, low24h);
+      const momentumScore = this.analyzeMomentumLive(change24h, price, high24h, low24h);
+      const volumeProfile = volume24h > 1500000 ? 'high' : volume24h > 800000 ? 'medium' : 'low';
+      const volatilityScore = this.calculateVolatilityScore(high24h, low24h, price);
       
-      // Decision logic: prioritize personal strategy
+      // STRATEGY DECISION LOGIC - PRIORITIZED
       let signalType: 'buy' | 'sell' | null = null;
       let confidence = 0;
+      let strategiesAgreement = 0;
       
-      // Strong buy conditions (Almog's criteria)
-      if (emotionalPressure > 70 && momentumScore > 60 && change24h > 2) {
-        signalType = 'buy';
-        confidence = Math.min(0.95, 0.7 + (emotionalPressure / 100) * 0.25);
-      }
-      // Strong sell conditions
-      else if (emotionalPressure > 80 && change24h < -3) {
-        signalType = 'sell';
-        confidence = Math.min(0.90, 0.65 + (emotionalPressure / 100) * 0.25);
+      // Strategy 1: Emotional Pressure Analysis
+      if (emotionalPressure > 75) strategiesAgreement++;
+      
+      // Strategy 2: Momentum Breakout
+      if (momentumScore > 70 && Math.abs(change24h) > 3) strategiesAgreement++;
+      
+      // Strategy 3: Volume Confirmation
+      if (volumeProfile === 'high' && Math.abs(change24h) > 2) strategiesAgreement++;
+      
+      // Strategy 4: Volatility Squeeze
+      if (volatilityScore > 65) strategiesAgreement++;
+
+      // ALMOG'S RULE: Minimum 2 strategies must agree
+      if (strategiesAgreement >= 2) {
+        // Strong buy conditions
+        if (emotionalPressure > 80 && momentumScore > 75 && change24h > 4) {
+          signalType = 'buy';
+          confidence = Math.min(0.95, 0.75 + (strategiesAgreement * 0.05));
+        }
+        // Strong sell conditions
+        else if (emotionalPressure > 85 && change24h < -4 && volumeProfile === 'high') {
+          signalType = 'sell';
+          confidence = Math.min(0.90, 0.70 + (strategiesAgreement * 0.05));
+        }
       }
 
-      if (signalType && confidence > 0.6) {
+      // Only generate signal if confidence > 65% (Almog's threshold)
+      if (signalType && confidence > 0.65) {
         const signal = {
-          signal_id: `almog-${symbol}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          signal_id: `almog-live-${symbol}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           symbol,
           action: signalType,
-          price: mockPrice,
-          target_price: signalType === 'buy' ? mockPrice * 1.03 : mockPrice * 0.97,
-          stop_loss: signalType === 'buy' ? mockPrice * 0.98 : mockPrice * 1.02,
+          price,
+          target_price: signalType === 'buy' ? price * 1.035 : price * 0.965,
+          stop_loss: signalType === 'buy' ? price * 0.98 : price * 1.02,
           confidence,
-          reasoning: `השיטה האישית של אלמוג: לחץ רגשי ${emotionalPressure.toFixed(0)}%, מומנטום ${momentumScore.toFixed(0)}%, שינוי 24ש ${change24h.toFixed(2)}%`,
+          reasoning: `🧠 האסטרטגיה האישית של אלמוג (LIVE): לחץ רגשי ${emotionalPressure.toFixed(0)}%, מומנטום ${momentumScore.toFixed(0)}%, שינוי 24ש ${change24h.toFixed(2)}%, ${strategiesAgreement} אסטרטגיות מסכימות`,
           strategy: 'almog-personal-method',
-          risk_reward_ratio: 1.5,
+          risk_reward_ratio: 1.75,
           status: 'active',
-          user_id: user.id
+          user_id: user.id,
+          metadata: {
+            live_data: true,
+            volume_profile: volumeProfile,
+            strategies_agreement: strategiesAgreement,
+            emotional_pressure: emotionalPressure,
+            momentum_score: momentumScore,
+            volatility_score: volatilityScore
+          }
         };
 
         // Store in database
@@ -196,32 +231,94 @@ export class TradingEngineController {
           .insert([signal]);
 
         if (error) {
-          console.error('Error storing signal:', error);
+          console.error('Error storing live signal:', error);
         } else {
-          console.log(`💾 Stored personal strategy signal: ${signal.action} ${signal.symbol}`);
+          console.log(`💾 Stored LIVE personal strategy signal: ${signal.action} ${signal.symbol} @ ${signal.price}`);
           return signal;
         }
       }
       
       return null;
     } catch (error) {
-      console.error('Error generating personal strategy signal:', error);
+      console.error('Error generating Almog personal strategy signal:', error);
       return null;
     }
   }
 
-  private calculateEmotionalPressure(price: number, volume: number): number {
-    // Almog's emotional pressure calculation
-    const volumeWeight = Math.min(100, (volume / 1000000) * 40);
-    const priceVolatility = Math.random() * 30; // Simplified volatility
-    return Math.min(100, volumeWeight + priceVolatility + Math.random() * 20);
+  private calculateEmotionalPressureLive(price: number, volume24h: number, high24h: number, low24h: number): number {
+    // Almog's emotional pressure calculation with LIVE data
+    const volumeWeight = Math.min(40, (volume24h / 1000000) * 20);
+    const priceRange = ((high24h - low24h) / price) * 100;
+    const pricePosition = ((price - low24h) / (high24h - low24h)) * 100;
+    
+    const emotionalPressure = volumeWeight + (priceRange * 2) + 
+      (pricePosition > 80 ? 25 : pricePosition < 20 ? 25 : 10);
+    
+    return Math.min(100, emotionalPressure);
   }
 
-  private analyzeMomentum(change24h: number): number {
-    // Momentum analysis based on 24h change
-    const baseMomentum = Math.abs(change24h) * 10;
-    const trendStrength = change24h > 0 ? baseMomentum * 1.2 : baseMomentum * 0.8;
-    return Math.min(100, trendStrength + Math.random() * 20);
+  private analyzeMomentumLive(change24h: number, price: number, high24h: number, low24h: number): number {
+    // Momentum analysis with live data
+    const changeWeight = Math.abs(change24h) * 8;
+    const pricePosition = ((price - low24h) / (high24h - low24h)) * 100;
+    const momentum = changeWeight + (change24h > 0 ? pricePosition * 0.3 : (100 - pricePosition) * 0.3);
+    
+    return Math.min(100, momentum);
+  }
+
+  private calculateVolatilityScore(high24h: number, low24h: number, price: number): number {
+    const volatility = ((high24h - low24h) / price) * 100;
+    return Math.min(100, volatility * 15);
+  }
+
+  private async sendTelegramSignals(signals: any[]): Promise<void> {
+    try {
+      // Get user settings for Telegram
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: settings } = await supabase
+        .from('user_trading_settings')
+        .select('telegram_bot_token, telegram_chat_id, notification_settings')
+        .eq('user_id', user.id)
+        .single();
+
+      if (!settings?.telegram_bot_token || !settings?.telegram_chat_id) {
+        console.log('Telegram not configured, skipping notifications');
+        return;
+      }
+
+      for (const signal of signals) {
+        const message = `
+🚀 *איתות LIVE מ-LeviPro*
+
+📊 *${signal.symbol}*
+${signal.action === 'buy' ? '🟢 קנייה' : '🔴 מכירה'} @ ${signal.price}
+
+🎯 *יעד*: ${signal.target_price}
+🛡️ *סטופ לוס*: ${signal.stop_loss}
+📈 *ביטחון*: ${(signal.confidence * 100).toFixed(0)}%
+
+🧠 *נימוק*: ${signal.reasoning}
+
+⚡ *נתונים LIVE* | ${new Date().toLocaleString('he-IL')}
+        `;
+
+        await fetch(`https://api.telegram.org/bot${settings.telegram_bot_token}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: settings.telegram_chat_id,
+            text: message,
+            parse_mode: 'Markdown'
+          })
+        });
+      }
+
+      console.log(`📱 Sent ${signals.length} LIVE signals to Telegram`);
+    } catch (error) {
+      console.error('Error sending Telegram signals:', error);
+    }
   }
 
   private async performHealthCheck(): Promise<void> {
@@ -229,7 +326,7 @@ export class TradingEngineController {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Check external APIs
+      // Check live data sources
       const binanceOk = await this.checkBinanceHealth();
       const coinGeckoOk = await this.checkCoinGeckoHealth();
 
@@ -255,7 +352,7 @@ export class TradingEngineController {
       if (error) {
         console.error('Health check storage error:', error);
       } else {
-        console.log(`💚 Health check completed: ${healthScore}% system health`);
+        console.log(`💚 LIVE Health check: ${healthScore}% system health`);
       }
     } catch (error) {
       console.error('Health check failed:', error);
@@ -285,7 +382,7 @@ export class TradingEngineController {
       isRunning: this.isRunning,
       lastSignalTime: null,
       totalSignals: 0,
-      activeStrategies: ['almog-personal-method', 'emotional-pressure', 'momentum-analysis']
+      activeStrategies: ['almog-personal-method-LIVE', 'emotional-pressure-LIVE', 'momentum-analysis-LIVE']
     };
   }
 
