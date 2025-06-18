@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -89,7 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('Attempting sign in for:', email);
     
     try {
-      // For the authorized admin user, allow direct login without email confirmation
+      // For admin user, allow immediate sign-in without email confirmation
       if (email.toLowerCase() === 'almogahronov1997@gmail.com') {
         // Try to sign in first
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -98,11 +99,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
         
         if (error) {
-          // If user doesn't exist or email not confirmed, create account without confirmation
-          if (error.message === 'Invalid login credentials' || error.message === 'Email not confirmed') {
-            console.log('Creating admin account with auto-confirmation...');
+          // If user doesn't exist, create it with immediate confirmation
+          if (error.message === 'Invalid login credentials') {
+            console.log('Creating admin account...');
             
-            // Create user account
+            // Create user and immediately confirm
             const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
               email: email.toLowerCase(),
               password,
@@ -118,25 +119,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               return { error: signUpError };
             }
             
-            // If signup successful, try to sign in again
             if (signUpData.user) {
               toast.success('חשבון נוצר בהצלחה! מתחבר...');
               
-              // Wait a moment and try to sign in
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              
+              // Try to sign in immediately
               const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
                 email: email.toLowerCase(),
                 password,
               });
               
-              if (loginError && loginError.message === 'Email not confirmed') {
-                // Manually confirm the user by creating a session
-                toast.success('מתחבר למערכת...');
-                return { error: null };
+              if (loginError) {
+                return { error: { message: 'נוצר חשבון אך ההתחברות נכשלה. נסה שוב.' } };
               }
               
-              return { error: loginError };
+              return { error: null };
             }
           }
           return { error };
@@ -150,70 +146,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: email.toLowerCase(),
         password,
       });
-      
-      if (error) {
-        console.error('Sign in error:', error);
-        
-        // Handle email not confirmed error for authorized users
-        if (error.message === 'Email not confirmed' && AUTHORIZED_USERS.includes(email.toLowerCase())) {
-          console.log('Email not confirmed for authorized user, attempting auto-signup...');
-          
-          // Try to create the account
-          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: email.toLowerCase(),
-            password,
-            options: {
-              emailRedirectTo: `${window.location.origin}/auth/confirm`,
-              data: {
-                display_name: email.split('@')[0]
-              }
-            }
-          });
-          
-          if (signUpError) {
-            console.error('Auto sign up error:', signUpError);
-            
-            if (signUpError.message?.includes('already registered')) {
-              return { error: { message: 'המשתמש כבר קיים אך טרם אושר. אנא פנה למנהל המערכת.' } };
-            }
-            
-            return { error: { message: 'שגיאה ביצירת החשבון - אנא פנה למנהל המערכת' } };
-          }
-          
-          if (signUpData.user && !signUpData.user.email_confirmed_at) {
-            toast.success('חשבון נוצר בהצלחה! אימייל אימות נשלח.');
-            return { error: { message: 'חשבון נוצר - אימייל אימות נשלח! אנא בדוק את תיבת הדואר שלך ולחץ על הקישור.' } };
-          }
-          
-          return { error: null };
-        }
-        
-        // If user doesn't exist but is authorized, create them
-        if (error.message === 'Invalid login credentials' && AUTHORIZED_USERS.includes(email.toLowerCase())) {
-          console.log('User not found, creating account for authorized user...');
-          
-          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: email.toLowerCase(),
-            password,
-            options: {
-              emailRedirectTo: `${window.location.origin}/auth/confirm`,
-              data: {
-                display_name: email.split('@')[0]
-              }
-            }
-          });
-          
-          if (signUpError) {
-            console.error('Auto sign up error:', signUpError);
-            return { error: signUpError };
-          }
-          
-          if (signUpData.user) {
-            toast.success('חשבון נוצר בהצלחה! אימייל אימות נשלח.');
-            return { error: { message: 'חשבון נוצר - אימייל אימות נשלח! אנא בדוק את תיבת הדואר שלך ולחץ על הקישור.' } };
-          }
-        }
-      }
       
       return { error };
     } catch (err) {

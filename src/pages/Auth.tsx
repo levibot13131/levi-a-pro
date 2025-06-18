@@ -91,7 +91,7 @@ const Auth = () => {
               <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
               <div className="text-sm text-green-800">
                 <p className="font-medium">גישה מהירה זמינה</p>
-                <p>עכשיו תוכל להיכנס ישירות למערכת ללא צורך באישור אימייל</p>
+                <p>לחץ על "מלא נתוני מנהל" וכנס ישירות למערכת</p>
               </div>
             </div>
           </CardContent>
