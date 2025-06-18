@@ -43,6 +43,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || '';
   const photoURL = user?.user_metadata?.avatar_url || '';
 
+  // Get the correct redirect URL for email confirmations
+  const getEmailRedirectUrl = () => {
+    return `${window.location.origin}/auth/confirm`;
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -108,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: email.toLowerCase(),
             password,
             options: {
-              emailRedirectTo: `${window.location.origin}/auth/confirm`,
+              emailRedirectTo: getEmailRedirectUrl(),
               data: {
                 display_name: email.split('@')[0]
               }
@@ -138,7 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: email.toLowerCase(),
             password,
             options: {
-              emailRedirectTo: `${window.location.origin}/auth/confirm`,
+              emailRedirectTo: getEmailRedirectUrl(),
               data: {
                 display_name: email.split('@')[0]
               }
@@ -177,7 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: email.toLowerCase(),
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/confirm`,
+          emailRedirectTo: getEmailRedirectUrl(),
           data: {
             display_name: email.split('@')[0]
           }

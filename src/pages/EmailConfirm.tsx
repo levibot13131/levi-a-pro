@@ -21,60 +21,93 @@ const EmailConfirm = () => {
         const access_token = searchParams.get('access_token');
         const refresh_token = searchParams.get('refresh_token');
         const type = searchParams.get('type');
+        const token_hash = searchParams.get('token_hash');
+        const error_code = searchParams.get('error_code');
+        const error_description = searchParams.get('error_description');
 
         console.log('Email confirmation attempt:', { 
           hasAccessToken: !!access_token, 
           hasRefreshToken: !!refresh_token, 
-          type 
+          type,
+          hasTokenHash: !!token_hash,
+          errorCode: error_code,
+          errorDescription: error_description
         });
 
-        if (!access_token || !refresh_token) {
-          console.error('Missing tokens in confirmation URL');
+        // Check for URL errors first
+        if (error_code || error_description) {
+          console.error('URL contains error:', { error_code, error_description });
           setStatus('error');
-          setMessage('קישור אימות לא תקין - אסימונים חסרים. אנא בקש אימייל חדש.');
+          setMessage('קישור האימות פג או לא תקין. אנא בקש אימייל חדש.');
           return;
         }
 
-        console.log('Setting session with tokens...');
-        
-        // Set the session using the tokens
-        const { data, error } = await supabase.auth.setSession({
-          access_token,
-          refresh_token,
-        });
+        // Handle different confirmation types
+        if (type === 'signup' || type === 'email_change' || type === 'recovery') {
+          if (access_token && refresh_token) {
+            console.log('Setting session with tokens...');
+            
+            // Set the session using the tokens
+            const { data, error } = await supabase.auth.setSession({
+              access_token,
+              refresh_token,
+            });
 
-        if (error) {
-          console.error('Session error:', error);
-          setStatus('error');
-          setMessage('שגיאה באימות האימייל: ' + error.message);
-          return;
-        }
+            if (error) {
+              console.error('Session error:', error);
+              setStatus('error');
+              setMessage('שגיאה באימות האימייל: ' + error.message);
+              return;
+            }
 
-        if (data.user && data.session) {
-          console.log('User confirmed successfully:', data.user.email);
-          
-          // Check if user is authorized (additional security check)
-          const authorizedUsers = ['almogahronov1997@gmail.com', 'avraham.oron@gmail.com'];
-          if (!authorizedUsers.includes(data.user.email || '')) {
-            console.error('Unauthorized user confirmed:', data.user.email);
-            await supabase.auth.signOut();
+            if (data.user && data.session) {
+              console.log('User confirmed successfully:', data.user.email);
+              
+              // Check if user is authorized (additional security check)
+              const authorizedUsers = ['almogahronov1997@gmail.com', 'avraham.oron@gmail.com'];
+              if (!authorizedUsers.includes(data.user.email || '')) {
+                console.error('Unauthorized user confirmed:', data.user.email);
+                await supabase.auth.signOut();
+                setStatus('error');
+                setMessage('שגיאה: משתמש לא מורשה');
+                return;
+              }
+              
+              setStatus('success');
+              setMessage('האימייל אומת בהצלחה! מעביר לדשבורד...');
+              toast.success('האימייל אומת בהצלחה - ברוך הבא ל-LeviPro!');
+              
+              // Redirect to dashboard after a short delay
+              setTimeout(() => {
+                navigate('/', { replace: true });
+              }, 2000);
+            } else {
+              console.error('No user or session after confirmation');
+              setStatus('error');
+              setMessage('שגיאה באימות המשתמש - לא התקבלו נתוני משתמש');
+            }
+          } else {
+            console.error('Missing tokens in confirmation URL');
             setStatus('error');
-            setMessage('שגיאה: משתמש לא מורשה');
-            return;
+            setMessage('קישור אימות לא תקין - אסימונים חסרים. אנא בקש אימייל חדש.');
           }
-          
-          setStatus('success');
-          setMessage('האימייל אומת בהצלחה! מעביר לדשבורד...');
-          toast.success('האימייל אומת בהצלחה - ברוך הבא ל-LeviPro!');
-          
-          // Redirect to dashboard after a short delay
-          setTimeout(() => {
-            navigate('/', { replace: true });
-          }, 2000);
         } else {
-          console.error('No user or session after confirmation');
-          setStatus('error');
-          setMessage('שגיאה באימות המשתמש - לא התקבלו נתוני משתמש');
+          // Fallback for other types or missing type
+          console.log('Attempting to verify OTP or handle other confirmation type...');
+          
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (data.session) {
+            console.log('User already has valid session');
+            setStatus('success');
+            setMessage('כבר מחובר למערכת! מעביר לדשבורד...');
+            setTimeout(() => {
+              navigate('/', { replace: true });
+            }, 1000);
+          } else {
+            setStatus('error');
+            setMessage('קישור האימות לא תקין או פג תוקף. אנא נסה להתחבר שוב.');
+          }
         }
       } catch (err) {
         console.error('Email confirmation exception:', err);
@@ -178,6 +211,9 @@ const EmailConfirm = () => {
                 <p>Access Token: {searchParams.get('access_token') ? 'Present' : 'Missing'}</p>
                 <p>Refresh Token: {searchParams.get('refresh_token') ? 'Present' : 'Missing'}</p>
                 <p>Type: {searchParams.get('type') || 'Not specified'}</p>
+                <p>Token Hash: {searchParams.get('token_hash') ? 'Present' : 'Missing'}</p>
+                <p>Error Code: {searchParams.get('error_code') || 'None'}</p>
+                <p>Error Description: {searchParams.get('error_description') || 'None'}</p>
                 <p>Status: {status}</p>
                 <p>Current URL: {window.location.href}</p>
               </div>
