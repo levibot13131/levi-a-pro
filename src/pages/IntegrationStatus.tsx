@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -109,7 +108,7 @@ const IntegrationStatus = () => {
           
           return {
             ...service,
-            status: response.ok ? 'connected' : 'disconnected',
+            status: (response.ok ? 'connected' : 'disconnected') as 'connected' | 'disconnected' | 'warning',
             responseTime: responseTime,
             lastChecked: new Date()
           };

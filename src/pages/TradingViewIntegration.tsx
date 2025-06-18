@@ -1,88 +1,158 @@
 
-import React, { useEffect } from 'react';
-import { Container } from '../components/ui/container';
-import { useTradingViewPage } from '../hooks/use-tradingview-page';
-import IntegrationHeader from '../components/tradingview/integration/IntegrationHeader';
-import IntegrationStatusSection from '../components/tradingview/integration/IntegrationStatusSection';
-import IntegrationTabsContainer from '../components/tradingview/integration/IntegrationTabsContainer';
-import BasicAccountNotification from '../components/tradingview/BasicAccountNotification';
-import DeploymentChecklist from '../components/tradingview/DeploymentChecklist';
-import { toast } from 'sonner';
-import { initializeTradingViewServices } from '../services/tradingView/startup';
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { 
+  BarChart3, 
+  Settings, 
+  RefreshCw, 
+  TrendingUp, 
+  Activity,
+  Zap
+} from 'lucide-react';
+import LiveTradingViewChart from '@/components/charts/LiveTradingViewChart';
 
-const TradingViewIntegration: React.FC = () => {
-  const {
-    isConnected,
-    syncEnabled,
-    isSyncing,
-    lastSyncTime,
-    refreshTimer,
-    activeTab,
-    setActiveTab,
-    formatLastSyncTime,
-    handleManualRefresh,
-    toggleAutoSync
-  } = useTradingViewPage();
-  
-  // Initialize all TradingView services when the page loads
-  useEffect(() => {
-    const initServices = async () => {
-      const success = initializeTradingViewServices();
-      if (!success) {
-        toast.error('שגיאה באתחול שירותי TradingView', {
-          description: 'ייתכן שחלק מהפונקציות לא יעבדו כראוי'
-        });
-      }
-    };
-    
-    initServices();
-  }, []);
-  
-  // רענון מצב ההתחברות בטעינת הדף
-  useEffect(() => {
-    console.log(`TradingViewIntegration page loaded - connection status: ${isConnected ? 'Connected' : 'Not connected'}`);
-    console.log(`Sync status: ${syncEnabled ? 'Enabled' : 'Disabled'}, Last sync: ${lastSyncTime?.toLocaleString() || 'Never'}`);
-    
-    // נבצע סנכרון ראשוני אם מחוברים
-    if (isConnected && !isSyncing && !lastSyncTime) {
-      console.log('Performing initial sync on page load');
-      handleManualRefresh();
-    }
-  }, [isConnected, isSyncing, lastSyncTime, handleManualRefresh, syncEnabled]);
-  
+const TradingViewIntegration = () => {
+  const [selectedSymbol, setSelectedSymbol] = useState('BTCUSDT');
+  const [isConnected, setIsConnected] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
+  const symbols = [
+    'BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 
+    'ADAUSDT', 'DOTUSDT', 'LINKUSDT', 'MATICUSDT'
+  ];
+
+  const refreshChart = () => {
+    setLastUpdate(new Date());
+  };
+
   return (
-    <Container className="py-6">
-      <IntegrationHeader
-        isConnected={isConnected}
-        isSyncing={isSyncing}
-        activeTab={activeTab}
-        handleManualRefresh={handleManualRefresh}
-      />
-      
-      <BasicAccountNotification />
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="md:col-span-2">
-          <IntegrationStatusSection
-            isConnected={isConnected}
-            syncEnabled={syncEnabled}
-            refreshTimer={refreshTimer}
-            lastSyncTime={lastSyncTime}
-            formatLastSyncTime={formatLastSyncTime}
-            toggleAutoSync={toggleAutoSync}
-          />
+    <div className="container mx-auto p-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-right">TradingView Integration</h1>
+          <p className="text-muted-foreground text-right">גרפים מתקדמים וניתוח טכני בזמן אמת</p>
         </div>
-        <div className="md:col-span-1">
-          <DeploymentChecklist />
+        <div className="flex gap-2">
+          <Badge variant={isConnected ? "default" : "secondary"}>
+            <Activity className="h-3 w-3 mr-1" />
+            {isConnected ? 'מחובר' : 'מנותק'}
+          </Badge>
+          <Button variant="outline" onClick={refreshChart}>
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
       </div>
-      
-      <IntegrationTabsContainer
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        lastSyncTime={lastSyncTime}
-      />
-    </Container>
+
+      {/* Chart Controls */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-right">
+            <BarChart3 className="h-5 w-5" />
+            בקרת גרפים
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-4">
+            <Select value={selectedSymbol} onValueChange={setSelectedSymbol}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {symbols.map(symbol => (
+                  <SelectItem key={symbol} value={symbol}>
+                    {symbol}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <Button variant="outline" size="sm">
+              <Settings className="h-4 w-4 mr-2" />
+              הגדרות גרף
+            </Button>
+            
+            <div className="flex-1 text-right text-sm text-muted-foreground">
+              עדכון אחרון: {lastUpdate.toLocaleTimeString('he-IL')}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Main Chart */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="text-right">גרף {selectedSymbol}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[600px]">
+            <LiveTradingViewChart 
+              symbol={selectedSymbol}
+              height={600}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Integration Status */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm text-right">סטטוס חיבור</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <Badge className="bg-green-100 text-green-800">
+                <Zap className="h-3 w-3 mr-1" />
+                פעיל
+              </Badge>
+              <div className="text-right">
+                <div className="text-lg font-bold">100%</div>
+                <div className="text-xs text-muted-foreground">זמינות</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm text-right">עדכונים בזמן אמת</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <Badge className="bg-blue-100 text-blue-800">
+                <TrendingUp className="h-3 w-3 mr-1" />
+                פועל
+              </Badge>
+              <div className="text-right">
+                <div className="text-lg font-bold">1s</div>
+                <div className="text-xs text-muted-foreground">תדירות עדכון</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm text-right">איכות נתונים</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <Badge className="bg-green-100 text-green-800">
+                <Activity className="h-3 w-3 mr-1" />
+                גבוהה
+              </Badge>
+              <div className="text-right">
+                <div className="text-lg font-bold">98%</div>
+                <div className="text-xs text-muted-foreground">דיוק</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 };
 

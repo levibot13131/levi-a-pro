@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -126,6 +125,7 @@ export class TradingEngineController {
   private async storeSignal(signalData: any): Promise<void> {
     try {
       const signal = {
+        signal_id: `${signalData.symbol}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         symbol: signalData.symbol,
         action: signalData.signal_type.toLowerCase(),
         price: signalData.price,
