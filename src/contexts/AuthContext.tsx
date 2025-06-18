@@ -23,13 +23,13 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Authorized users list - PRODUCTION SECURITY
+// PRODUCTION SECURITY - ONLY THESE EMAILS ARE AUTHORIZED
 const AUTHORIZED_USERS = [
   'almogahronov1997@gmail.com',
   'avraham.oron@gmail.com'
 ];
 
-// Admin users list
+// ADMIN USERS - ONLY ALMOG HAS ADMIN ACCESS
 const ADMIN_USERS = [
   'almogahronov1997@gmail.com'
 ];
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user?.email && !AUTHORIZED_USERS.includes(session.user.email)) {
           console.log('Unauthorized user attempted access:', session.user.email);
           supabase.auth.signOut();
-          toast.error('Access denied - unauthorized user');
+          toast.error('גישה נדחית - משתמש לא מורשה');
           return;
         }
         
@@ -69,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user?.email && !AUTHORIZED_USERS.includes(session.user.email)) {
         console.log('Unauthorized existing session:', session.user.email);
         supabase.auth.signOut();
-        toast.error('Access denied - unauthorized user');
+        toast.error('גישה נדחית - משתמש לא מורשה');
         return;
       }
       
@@ -84,12 +84,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     // Pre-check authorization
     if (!AUTHORIZED_USERS.includes(email.toLowerCase())) {
-      return { error: { message: 'Access denied - unauthorized user' } };
+      return { error: { message: 'גישה נדחית - משתמש לא מורשה' } };
     }
 
     console.log('Attempting sign in for:', email);
     
     try {
+      // First try to sign in with existing credentials
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.toLowerCase(),
         password,
@@ -98,24 +99,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         console.error('Sign in error:', error);
         
-        // If user doesn't exist but is authorized, try to create them
+        // If user doesn't exist but is authorized, create them with the provided password
         if (error.message === 'Invalid login credentials' && AUTHORIZED_USERS.includes(email.toLowerCase())) {
-          toast.info('User not found, creating account...');
-          return await signUp(email, password);
+          console.log('User not found, creating account for authorized user...');
+          
+          // Create user account with the exact password provided
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: email.toLowerCase(),
+            password,
+            options: {
+              emailRedirectTo: `${window.location.origin}/`,
+              data: {
+                display_name: email.split('@')[0]
+              }
+            }
+          });
+          
+          if (signUpError) {
+            console.error('Auto sign up error:', signUpError);
+            
+            // If user already exists but password is wrong, inform user
+            if (signUpError.message?.includes('already registered')) {
+              return { error: { message: 'המשתמש כבר קיים - אנא בדוק את הסיסמה' } };
+            }
+            
+            return { error: signUpError };
+          }
+          
+          // If account created successfully, try to sign in again
+          if (signUpData.user) {
+            toast.success('חשבון נוצר בהצלחה! מנסה להתחבר...');
+            
+            // Wait a moment then try to sign in
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const { error: secondSignInError } = await supabase.auth.signInWithPassword({
+              email: email.toLowerCase(),
+              password,
+            });
+            
+            return { error: secondSignInError };
+          }
         }
       }
       
       return { error };
     } catch (err) {
       console.error('Sign in exception:', err);
-      return { error: { message: 'Network error - please try again' } };
+      return { error: { message: 'שגיאת רשת - אנא נסה שוב' } };
     }
   };
 
   const signUp = async (email: string, password: string) => {
     // Pre-check authorization
     if (!AUTHORIZED_USERS.includes(email.toLowerCase())) {
-      return { error: { message: 'Access denied - unauthorized user' } };
+      return { error: { message: 'גישה נדחית - משתמש לא מורשה' } };
     }
 
     console.log('Attempting sign up for:', email);
@@ -137,27 +175,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // If user already exists, try to sign in instead
         if (error.message?.includes('already registered')) {
-          toast.info('User exists, trying to sign in...');
+          toast.info('המשתמש כבר קיים, מנסה להתחבר...');
           return await signIn(email, password);
         }
       } else if (data.user && !data.user.email_confirmed_at) {
-        toast.success('Account created! Please check your email to confirm.');
+        toast.success('חשבון נוצר בהצלחה! אנא בדוק את המייל לאישור.');
       }
       
       return { error };
     } catch (err) {
       console.error('Sign up exception:', err);
-      return { error: { message: 'Network error - please try again' } };
+      return { error: { message: 'שגיאת רשת - אנא נסה שוב' } };
     }
   };
 
   const signOut = async () => {
     try {
       await supabase.auth.signOut();
-      toast.success('Signed out successfully');
+      toast.success('יצאת בהצלחה מהמערכת');
     } catch (error) {
       console.error('Sign out error:', error);
-      toast.error('Error signing out');
+      toast.error('שגיאה ביציאה מהמערכת');
     }
   };
 
@@ -168,7 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast.error(error.message);
       return false;
     }
-    toast.success('Welcome back!');
+    toast.success('ברוך הבא ל-LeviPro!');
     return true;
   };
 
@@ -182,7 +220,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast.error(error.message);
       return false;
     }
-    toast.success('Account created successfully');
+    toast.success('חשבון נוצר בהצלחה');
     return true;
   };
 

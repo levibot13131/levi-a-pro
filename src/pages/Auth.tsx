@@ -38,7 +38,7 @@ const Auth = () => {
     setError('');
 
     if (!email || !password) {
-      setError('Please enter both email and password');
+      setError('נא להזין אימייל וסיסמה');
       setIsLoading(false);
       return;
     }
@@ -52,11 +52,11 @@ const Auth = () => {
         setError(error.message);
         toast.error(error.message);
       } else {
-        const message = isSignUp ? 'Account created successfully!' : 'Welcome back!';
+        const message = isSignUp ? 'חשבון נוצר בהצלחה!' : 'ברוך הבא ל-LeviPro!';
         toast.success(message);
       }
     } catch (err) {
-      const errorMessage = 'An unexpected error occurred';
+      const errorMessage = 'אירעה שגיאה בלתי צפויה';
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -67,7 +67,7 @@ const Auth = () => {
   // Auto-fill admin credentials for testing
   const fillAdminCredentials = () => {
     setEmail('almogahronov1997@gmail.com');
-    setPassword('LeviPro2024!');
+    setPassword('1907900');
   };
 
   return (
@@ -81,7 +81,7 @@ const Auth = () => {
             </div>
           </div>
           <h1 className="text-3xl font-bold">LeviPro</h1>
-          <p className="text-muted-foreground">Secure Trading Intelligence Platform</p>
+          <p className="text-muted-foreground">פלטפורמת מודיעין מסחר מאובטחת</p>
         </div>
 
         {/* Auth Form */}
@@ -89,13 +89,13 @@ const Auth = () => {
           <CardHeader>
             <CardTitle className="text-center">
               <Lock className="h-5 w-5 inline mr-2" />
-              {isSignUp ? 'Create Account' : 'Sign In'}
+              {isSignUp ? 'יצירת חשבון' : 'כניסה למערכת'}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">אימייל</Label>
                 <Input
                   id="email"
                   type="email"
@@ -107,7 +107,7 @@ const Auth = () => {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">סיסמה</Label>
                 <Input
                   id="password"
                   type="password"
@@ -115,7 +115,7 @@ const Auth = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  minLength={8}
+                  minLength={6}
                 />
               </div>
 
@@ -126,7 +126,7 @@ const Auth = () => {
               )}
 
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Processing...' : (isSignUp ? 'Create Account' : 'Sign In')}
+                {isLoading ? 'מעבד...' : (isSignUp ? 'יצירת חשבון' : 'כניסה למערכת')}
               </Button>
             </form>
 
@@ -137,8 +137,8 @@ const Auth = () => {
                 className="text-sm"
               >
                 {isSignUp 
-                  ? 'Already have an account? Sign in' 
-                  : 'Need an account? Sign up'
+                  ? 'יש לך כבר חשבון? התחבר' 
+                  : 'צריך חשבון? הירשם'
                 }
               </Button>
             </div>
@@ -151,7 +151,7 @@ const Auth = () => {
                 onClick={fillAdminCredentials}
                 className="text-xs"
               >
-                Fill Admin Credentials
+                מלא נתוני מנהל
               </Button>
             </div>
           </CardContent>
@@ -163,10 +163,10 @@ const Auth = () => {
             <div className="flex items-start space-x-2">
               <Info className="h-5 w-5 text-amber-600 mt-0.5" />
               <div className="text-sm text-amber-800">
-                <p className="font-medium">Private System</p>
-                <p>Access is restricted to authorized users only.</p>
+                <p className="font-medium">מערכת פרטית</p>
+                <p>הגישה מוגבלת למשתמשים מורשים בלבד.</p>
                 <p className="mt-2 text-xs">
-                  Authorized emails: almogahronov1997@gmail.com, avraham.oron@gmail.com
+                  אימיילים מורשים: almogahronov1997@gmail.com, avraham.oron@gmail.com
                 </p>
               </div>
             </div>
