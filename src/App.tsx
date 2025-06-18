@@ -11,6 +11,7 @@ import SystemHealth from "./pages/SystemHealth";
 import IntegrationStatus from "./pages/IntegrationStatus";
 import TradingViewIntegration from "./pages/TradingViewIntegration";
 import Auth from "./pages/Auth";
+import EmailConfirm from "./pages/EmailConfirm";
 import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
 import RequireAuth from "./components/auth/RequireAuth";

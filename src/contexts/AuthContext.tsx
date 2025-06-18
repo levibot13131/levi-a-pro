@@ -176,7 +176,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: email.toLowerCase(),
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
           data: {
             display_name: email.split('@')[0]
           }
