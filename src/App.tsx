@@ -11,6 +11,8 @@ import SystemHealth from "./pages/SystemHealth";
 import IntegrationStatus from "./pages/IntegrationStatus";
 import TradingViewIntegration from "./pages/TradingViewIntegration";
 import Auth from "./pages/Auth";
+import Admin from "./pages/Admin";
+import Profile from "./pages/Profile";
 import RequireAuth from "./components/auth/RequireAuth";
 import Navbar from "./components/layout/Navbar";
 
@@ -35,12 +37,54 @@ const App = () => (
               <Route path="/auth" element={<Auth />} />
               
               {/* Protected routes */}
-              <Route path="/" element={<RequireAuth><Navbar /><Index /></RequireAuth>} />
-              <Route path="/dashboard" element={<RequireAuth><Navbar /><Dashboard /></RequireAuth>} />
-              <Route path="/trading-signals" element={<RequireAuth><Navbar /><TradingSignals /></RequireAuth>} />
-              <Route path="/system-health" element={<RequireAuth><Navbar /><SystemHealth /></RequireAuth>} />
-              <Route path="/integration-status" element={<RequireAuth><Navbar /><IntegrationStatus /></RequireAuth>} />
-              <Route path="/tradingview" element={<RequireAuth><Navbar /><TradingViewIntegration /></RequireAuth>} />
+              <Route path="/" element={
+                <RequireAuth>
+                  <Navbar />
+                  <Index />
+                </RequireAuth>
+              } />
+              <Route path="/dashboard" element={
+                <RequireAuth>
+                  <Navbar />
+                  <Dashboard />
+                </RequireAuth>
+              } />
+              <Route path="/trading-signals" element={
+                <RequireAuth>
+                  <Navbar />
+                  <TradingSignals />
+                </RequireAuth>
+              } />
+              <Route path="/system-health" element={
+                <RequireAuth>
+                  <Navbar />
+                  <SystemHealth />
+                </RequireAuth>
+              } />
+              <Route path="/integration-status" element={
+                <RequireAuth>
+                  <Navbar />
+                  <IntegrationStatus />
+                </RequireAuth>
+              } />
+              <Route path="/tradingview" element={
+                <RequireAuth>
+                  <Navbar />
+                  <TradingViewIntegration />
+                </RequireAuth>
+              } />
+              <Route path="/admin" element={
+                <RequireAuth>
+                  <Navbar />
+                  <Admin />
+                </RequireAuth>
+              } />
+              <Route path="/profile" element={
+                <RequireAuth>
+                  <Navbar />
+                  <Profile />
+                </RequireAuth>
+              } />
               
               {/* Catch all - redirect to home */}
               <Route path="*" element={<Navigate to="/" replace />} />

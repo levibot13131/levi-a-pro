@@ -2,15 +2,21 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  register: (email: string, password: string, displayName: string) => Promise<boolean>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,10 +27,17 @@ const AUTHORIZED_USERS = [
   'avraham.oron@gmail.com'
 ];
 
+// Admin users list
+const ADMIN_USERS = [
+  'almogahronov1997@gmail.com'
+];
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const isAdmin = user?.email ? ADMIN_USERS.includes(user.email) : false;
 
   useEffect(() => {
     // Set up auth state listener
@@ -36,6 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user?.email && !AUTHORIZED_USERS.includes(session.user.email)) {
           console.log('Unauthorized user attempted access:', session.user.email);
           supabase.auth.signOut();
+          toast.error('Access denied - unauthorized user');
           return;
         }
         
@@ -51,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user?.email && !AUTHORIZED_USERS.includes(session.user.email)) {
         console.log('Unauthorized existing session:', session.user.email);
         supabase.auth.signOut();
+        toast.error('Access denied - unauthorized user');
         return;
       }
       
@@ -99,14 +114,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  // Alias methods for backward compatibility
+  const login = async (email: string, password: string): Promise<boolean> => {
+    const { error } = await signIn(email, password);
+    if (error) {
+      toast.error(error.message);
+      return false;
+    }
+    return true;
+  };
+
+  const logout = async (): Promise<void> => {
+    await signOut();
+    toast.success('Logged out successfully');
+  };
+
+  const register = async (email: string, password: string, displayName: string): Promise<boolean> => {
+    const { error } = await signUp(email, password);
+    if (error) {
+      toast.error(error.message);
+      return false;
+    }
+    toast.success('Account created successfully');
+    return true;
+  };
+
+  const refreshUser = async (): Promise<void> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    setSession(session);
+    setUser(session?.user ?? null);
+  };
+
   const value = {
     user,
     session,
     isAuthenticated: !!user,
     isLoading,
+    isAdmin,
     signIn,
     signUp,
     signOut,
+    login,
+    logout,
+    register,
+    refreshUser,
   };
 
   return (

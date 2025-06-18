@@ -8,7 +8,7 @@ export interface Permission {
   canDelete: boolean;
 }
 
-export interface User {
+export interface ExtendedUser {
   id: string;
   email: string;
   username: string;
@@ -47,7 +47,7 @@ export const DefaultPermissions: Permission[] = [
   { resource: 'admin', canView: false, canEdit: false, canDelete: false },
 ];
 
-export const adminUser: User = {
+export const adminUser: ExtendedUser = {
   id: 'admin-001',
   email: 'almogahronov1997@gmail.com',
   username: 'מנהל המערכת',

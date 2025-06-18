@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 
 const Profile = () => {
   const { user } = useAuth();
-  const [name, setName] = React.useState(user?.displayName || '');
+  const [name, setName] = React.useState(user?.user_metadata?.display_name || user?.email?.split('@')[0] || '');
   const [email, setEmail] = React.useState(user?.email || '');
   
   const handleSave = () => {
@@ -70,6 +70,7 @@ const Profile = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   type="email"
                   className="text-right"
+                  disabled
                 />
               </div>
               
@@ -100,9 +101,9 @@ const Profile = () => {
             <CardContent className="pt-6">
               <div className="flex flex-col items-center">
                 <Avatar className="w-24 h-24 mb-4">
-                  <AvatarImage src={user?.photoURL || ''} />
+                  <AvatarImage src={user?.user_metadata?.avatar_url || ''} />
                   <AvatarFallback className="text-xl">
-                    {name.charAt(0)}
+                    {name.charAt(0) || user?.email?.charAt(0) || 'U'}
                   </AvatarFallback>
                 </Avatar>
                 <h3 className="text-xl font-medium">{name || 'משתמש'}</h3>
