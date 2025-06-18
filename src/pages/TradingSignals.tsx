@@ -20,6 +20,14 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+// Type guard for checking if metadata contains live_data
+const hasLiveData = (metadata: any): boolean => {
+  return typeof metadata === 'object' && 
+         metadata !== null && 
+         'live_data' in metadata && 
+         metadata.live_data === true;
+};
+
 const TradingSignals = () => {
   const { isAdmin } = useAuth();
   const { status: engineStatus, startEngine } = useEngineStatus();
@@ -124,9 +132,9 @@ const TradingSignals = () => {
     return () => clearInterval(interval);
   }, [refetch]);
 
-  // Convert live signals to TradeSignal format - LIVE DATA ONLY
+  // Convert live signals to TradeSignal format - LIVE DATA ONLY with proper type checking
   const convertedLiveSignals: TradeSignal[] = liveSignals
-    .filter(signal => signal.metadata?.live_data === true) // Only LIVE signals
+    .filter(signal => hasLiveData(signal.metadata)) // Use type guard
     .map(signal => ({
       id: signal.id,
       assetId: signal.symbol,
