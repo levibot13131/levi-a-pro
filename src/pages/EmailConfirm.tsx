@@ -22,14 +22,21 @@ const EmailConfirm = () => {
         const refresh_token = searchParams.get('refresh_token');
         const type = searchParams.get('type');
 
-        console.log('Email confirmation tokens:', { access_token, refresh_token, type });
+        console.log('Email confirmation attempt:', { 
+          hasAccessToken: !!access_token, 
+          hasRefreshToken: !!refresh_token, 
+          type 
+        });
 
         if (!access_token || !refresh_token) {
+          console.error('Missing tokens in confirmation URL');
           setStatus('error');
-          setMessage('קישור אימות לא תקין - אסימונים חסרים');
+          setMessage('קישור אימות לא תקין - אסימונים חסרים. אנא בקש אימייל חדש.');
           return;
         }
 
+        console.log('Setting session with tokens...');
+        
         // Set the session using the tokens
         const { data, error } = await supabase.auth.setSession({
           access_token,
@@ -43,8 +50,19 @@ const EmailConfirm = () => {
           return;
         }
 
-        if (data.user) {
+        if (data.user && data.session) {
           console.log('User confirmed successfully:', data.user.email);
+          
+          // Check if user is authorized (additional security check)
+          const authorizedUsers = ['almogahronov1997@gmail.com', 'avraham.oron@gmail.com'];
+          if (!authorizedUsers.includes(data.user.email || '')) {
+            console.error('Unauthorized user confirmed:', data.user.email);
+            await supabase.auth.signOut();
+            setStatus('error');
+            setMessage('שגיאה: משתמש לא מורשה');
+            return;
+          }
+          
           setStatus('success');
           setMessage('האימייל אומת בהצלחה! מעביר לדשבורד...');
           toast.success('האימייל אומת בהצלחה - ברוך הבא ל-LeviPro!');
@@ -54,11 +72,12 @@ const EmailConfirm = () => {
             navigate('/', { replace: true });
           }, 2000);
         } else {
+          console.error('No user or session after confirmation');
           setStatus('error');
-          setMessage('שגיאה באימות המשתמש');
+          setMessage('שגיאה באימות המשתמש - לא התקבלו נתוני משתמש');
         }
       } catch (err) {
-        console.error('Email confirmation error:', err);
+        console.error('Email confirmation exception:', err);
         setStatus('error');
         setMessage('שגיאה בלתי צפויה באימות האימייל');
       }
@@ -69,6 +88,11 @@ const EmailConfirm = () => {
 
   const handleReturnToLogin = () => {
     navigate('/auth', { replace: true });
+  };
+
+  const handleRequestNewEmail = () => {
+    navigate('/auth', { replace: true });
+    toast.info('אנא נסה להתחבר שוב כדי לקבל אימייל אימות חדש');
   };
 
   return (
@@ -114,7 +138,7 @@ const EmailConfirm = () => {
                   </AlertDescription>
                 </Alert>
                 <p className="text-sm text-muted-foreground">
-                  תועבר אוטומטית לדשבורד תוך שניות...
+                  תועבר אוטומטיטית לדשבורד תוך שניות...
                 </p>
               </div>
             )}
@@ -126,9 +150,15 @@ const EmailConfirm = () => {
                   <AlertDescription>{message}</AlertDescription>
                 </Alert>
                 
-                <Button onClick={handleReturnToLogin} className="w-full">
-                  חזור לדף הכניסה
-                </Button>
+                <div className="flex flex-col gap-2">
+                  <Button onClick={handleReturnToLogin} className="w-full">
+                    חזור לדף הכניסה
+                  </Button>
+                  
+                  <Button onClick={handleRequestNewEmail} variant="outline" className="w-full">
+                    בקש אימייל אימות חדש
+                  </Button>
+                </div>
                 
                 <div className="text-sm text-muted-foreground">
                   <p>אם הבעיה נמשכת, אנא פנה למנהל המערכת</p>
@@ -149,6 +179,7 @@ const EmailConfirm = () => {
                 <p>Refresh Token: {searchParams.get('refresh_token') ? 'Present' : 'Missing'}</p>
                 <p>Type: {searchParams.get('type') || 'Not specified'}</p>
                 <p>Status: {status}</p>
+                <p>Current URL: {window.location.href}</p>
               </div>
             </CardContent>
           </Card>

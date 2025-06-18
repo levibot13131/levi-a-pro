@@ -36,6 +36,8 @@ const App = () => (
             <Routes>
               {/* Public routes */}
               <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/confirm" element={<EmailConfirm />} />
+              <Route path="/confirm" element={<EmailConfirm />} />
               
               {/* Protected routes */}
               <Route path="/" element={

@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: email.toLowerCase(),
             password,
             options: {
-              emailRedirectTo: `${window.location.origin}/`,
+              emailRedirectTo: `${window.location.origin}/auth/confirm`,
               data: {
                 display_name: email.split('@')[0]
               }
@@ -122,8 +122,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // If signup was successful, the user is now created but needs confirmation
           // For authorized users, we'll inform them that the account was created
           if (signUpData.user && !signUpData.user.email_confirmed_at) {
-            toast.success('חשבון נוצר בהצלחה! אנא בדוק את המייל לאישור או פנה למנהל המערכת.');
-            return { error: { message: 'חשבון נוצר - נדרש אישור אימייל' } };
+            toast.success('חשבון נוצר בהצלחה! אנא בדוק את המייל לאישור.');
+            return { error: { message: 'חשבון נוצר - נדרש אישור אימייל. אנא בדוק את תיבת הדואר שלך.' } };
           }
           
           return { error: null };
@@ -137,7 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: email.toLowerCase(),
             password,
             options: {
-              emailRedirectTo: `${window.location.origin}/`,
+              emailRedirectTo: `${window.location.origin}/auth/confirm`,
               data: {
                 display_name: email.split('@')[0]
               }
@@ -150,8 +150,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           
           if (signUpData.user) {
-            toast.success('חשבון נוצר בהצלחה!');
-            return { error: null };
+            toast.success('חשבון נוצר בהצלחה! אנא בדוק את המייל לאישור.');
+            return { error: { message: 'חשבון נוצר - נדרש אישור אימייל. אנא בדוק את תיבת הדואר שלך.' } };
           }
         }
       }
