@@ -1,113 +1,67 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Container } from '@/components/ui/container';
+import RealTimeTradingDashboard from '@/components/dashboard/RealTimeTradingDashboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { 
-  BarChart3, 
-  LineChart, 
-  Activity, 
-  TrendingUp,
-  MessageSquare 
-} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Activity, Shield, Zap } from 'lucide-react';
 
-const Index = () => {
+const Index: React.FC = () => {
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Levi-A-Pro Trading System</h1>
-        <p className="text-muted-foreground text-lg">
-          Advanced trading analysis and real-time market monitoring platform
-        </p>
+    <Container className="py-6">
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            LeviPro Trading Intelligence
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            מערכת מסחר אוטומטית מתקדמת עם ניתוח בזמן אמת ואיתותים חכמים
+          </p>
+          
+          {/* Status indicators */}
+          <div className="flex justify-center gap-4 mt-6">
+            <Badge className="bg-green-100 text-green-800 px-4 py-2">
+              <Activity className="h-4 w-4 mr-2" />
+              מערכת פעילה
+            </Badge>
+            <Badge className="bg-blue-100 text-blue-800 px-4 py-2">
+              <Shield className="h-4 w-4 mr-2" />
+              מאובטח וחסוי
+            </Badge>
+            <Badge className="bg-purple-100 text-purple-800 px-4 py-2">
+              <Zap className="h-4 w-4 mr-2" />
+              זמן אמת
+            </Badge>
+          </div>
+        </div>
+
+        {/* Welcome message */}
+        <Card className="border-2 border-primary/20">
+          <CardHeader>
+            <CardTitle className="text-right">ברוך הבא למערכת LeviPro</CardTitle>
+          </CardHeader>
+          <CardContent className="text-right space-y-4">
+            <p className="text-lg">
+              המערכת פועלת בקצב של 30 שניות ומייצרת איתותים מבוססי AI עם אסטרטגיות מתקדמות
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+              <div className="p-4 bg-green-50 rounded-lg">
+                <h3 className="font-semibold text-green-800">🎯 איתותי מסחר חכמים</h3>
+                <p className="text-sm text-green-600">ניתוח RSI, מומנטום ונפח בזמן אמת</p>
+              </div>
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <h3 className="font-semibold text-blue-800">📊 ניטור מערכת</h3>
+                <p className="text-sm text-blue-600">בקרת בריאות ואינטגרציה מתמשכת</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        {/* Main Dashboard */}
+        <RealTimeTradingDashboard />
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Dashboard
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              View comprehensive trading dashboard with real-time market data
-            </p>
-            <Link to="/dashboard">
-              <Button className="w-full">Open Dashboard</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Trading Signals
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Real-time trading signals and market analysis
-            </p>
-            <Link to="/trading-signals">
-              <Button className="w-full">View Signals</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              TradingView Integration
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Connect with TradingView for advanced charting and analysis
-            </p>
-            <Link to="/tradingview">
-              <Button className="w-full">Open TradingView</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              System Health
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Monitor system performance and connection status
-            </p>
-            <Link to="/system-health">
-              <Button className="w-full">Check Health</Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <LineChart className="h-5 w-5" />
-              Technical Analysis
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              Advanced technical analysis tools and indicators
-            </p>
-            <Link to="/technical-analysis">
-              <Button className="w-full">Analyze Markets</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    </Container>
   );
 };
 
