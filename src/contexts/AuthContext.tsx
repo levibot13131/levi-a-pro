@@ -1,15 +1,17 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface AuthContextType {
-  user: User | null;
+  user: SupabaseUser | null;
   session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   isAdmin: boolean;
+  displayName?: string;
+  photoURL?: string;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
@@ -33,11 +35,13 @@ const ADMIN_USERS = [
 ];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const isAdmin = user?.email ? ADMIN_USERS.includes(user.email) : false;
+  const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || '';
+  const photoURL = user?.user_metadata?.avatar_url || '';
 
   useEffect(() => {
     // Set up auth state listener
@@ -151,6 +155,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAuthenticated: !!user,
     isLoading,
     isAdmin,
+    displayName,
+    photoURL,
     signIn,
     signUp,
     signOut,

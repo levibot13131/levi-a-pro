@@ -8,7 +8,8 @@ export interface Permission {
   canDelete: boolean;
 }
 
-export interface ExtendedUser {
+// Main User interface - this was missing the export!
+export interface User {
   id: string;
   email: string;
   username: string;
@@ -21,6 +22,9 @@ export interface ExtendedUser {
   isActive: boolean;
   permissions: Permission[];
 }
+
+// Extended user interface for backward compatibility
+export interface ExtendedUser extends User {}
 
 export const AvailableResources = [
   'dashboard',
@@ -47,7 +51,7 @@ export const DefaultPermissions: Permission[] = [
   { resource: 'admin', canView: false, canEdit: false, canDelete: false },
 ];
 
-export const adminUser: ExtendedUser = {
+export const adminUser: User = {
   id: 'admin-001',
   email: 'almogahronov1997@gmail.com',
   username: 'מנהל המערכת',
