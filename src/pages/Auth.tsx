@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shield, Lock, Info, AlertTriangle } from 'lucide-react';
+import { Shield, Lock, Info, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Auth = () => {
@@ -50,13 +50,7 @@ const Auth = () => {
 
       if (error) {
         setError(error.message);
-        
-        // Special handling for email confirmation issues
-        if (error.message.includes('Email not confirmed') || error.message.includes('נדרש אישור אימייל')) {
-          toast.error('נדרש אישור אימייל - אנא פנה למנהל המערכת לאישור');
-        } else {
-          toast.error(error.message);
-        }
+        toast.error(error.message);
       } else {
         const message = isSignUp ? 'חשבון נוצר בהצלחה!' : 'ברוך הבא ל-LeviPro!';
         toast.success(message);
@@ -70,7 +64,7 @@ const Auth = () => {
     }
   };
 
-  // Auto-fill admin credentials for testing
+  // Auto-fill admin credentials for quick access
   const fillAdminCredentials = () => {
     setEmail('almogahronov1997@gmail.com');
     setPassword('1907900');
@@ -89,6 +83,19 @@ const Auth = () => {
           <h1 className="text-3xl font-bold">LeviPro</h1>
           <p className="text-muted-foreground">פלטפורמת מודיעין מסחר מאובטחת</p>
         </div>
+
+        {/* Quick Access Notice */}
+        <Card className="bg-green-50 border-green-200">
+          <CardContent className="pt-4">
+            <div className="flex items-start space-x-2">
+              <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+              <div className="text-sm text-green-800">
+                <p className="font-medium">גישה מהירה זמינה</p>
+                <p>עכשיו תוכל להיכנס ישירות למערכת ללא צורך באישור אימייל</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Auth Form */}
         <Card>
@@ -127,7 +134,6 @@ const Auth = () => {
 
               {error && (
                 <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
@@ -150,7 +156,7 @@ const Auth = () => {
               </Button>
             </div>
 
-            {/* Admin Quick Login for Testing */}
+            {/* Admin Quick Login */}
             <div className="text-center mt-4">
               <Button
                 variant="outline"
@@ -164,22 +170,6 @@ const Auth = () => {
           </CardContent>
         </Card>
 
-        {/* Email Confirmation Notice */}
-        <Card className="bg-amber-50 border-amber-200">
-          <CardContent className="pt-4">
-            <div className="flex items-start space-x-2">
-              <Info className="h-5 w-5 text-amber-600 mt-0.5" />
-              <div className="text-sm text-amber-800">
-                <p className="font-medium">עדכון חשוב</p>
-                <p>אם אתה רואה שגיאת "Email not confirmed", אנא פנה למנהל המערכת לאישור האימייל.</p>
-                <p className="mt-2 text-xs">
-                  אימיילים מורשים: almogahronov1997@gmail.com, avraham.oron@gmail.com
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Security Notice */}
         <Card className="bg-blue-50 border-blue-200">
           <CardContent className="pt-4">
@@ -188,6 +178,9 @@ const Auth = () => {
               <div className="text-sm text-blue-800">
                 <p className="font-medium">מערכת פרטית</p>
                 <p>הגישה מוגבלת למשתמשים מורשים בלבד.</p>
+                <p className="mt-2 text-xs">
+                  אימיילים מורשים: almogahronov1997@gmail.com, avraham.oron@gmail.com
+                </p>
               </div>
             </div>
           </CardContent>

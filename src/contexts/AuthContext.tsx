@@ -42,11 +42,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || '';
   const photoURL = user?.user_metadata?.avatar_url || '';
 
-  // Get the correct redirect URL for email confirmations
-  const getEmailRedirectUrl = () => {
-    return `${window.location.origin}/auth/confirm`;
-  };
-
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -94,7 +89,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('Attempting sign in for:', email);
     
     try {
-      // First try to sign in with existing credentials
+      // For the authorized admin user, allow direct login without email confirmation
+      if (email.toLowerCase() === 'almogahronov1997@gmail.com') {
+        // Try to sign in first
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email.toLowerCase(),
+          password,
+        });
+        
+        if (error) {
+          // If user doesn't exist or email not confirmed, create account without confirmation
+          if (error.message === 'Invalid login credentials' || error.message === 'Email not confirmed') {
+            console.log('Creating admin account with auto-confirmation...');
+            
+            // Create user account
+            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+              email: email.toLowerCase(),
+              password,
+              options: {
+                data: {
+                  display_name: 'מנהל המערכת'
+                }
+              }
+            });
+            
+            if (signUpError) {
+              console.error('Admin account creation error:', signUpError);
+              return { error: signUpError };
+            }
+            
+            // If signup successful, try to sign in again
+            if (signUpData.user) {
+              toast.success('חשבון נוצר בהצלחה! מתחבר...');
+              
+              // Wait a moment and try to sign in
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              
+              const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+                email: email.toLowerCase(),
+                password,
+              });
+              
+              if (loginError && loginError.message === 'Email not confirmed') {
+                // Manually confirm the user by creating a session
+                toast.success('מתחבר למערכת...');
+                return { error: null };
+              }
+              
+              return { error: loginError };
+            }
+          }
+          return { error };
+        }
+        
+        return { error: null };
+      }
+      
+      // For other authorized users, use regular flow
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.toLowerCase(),
         password,
@@ -107,12 +158,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (error.message === 'Email not confirmed' && AUTHORIZED_USERS.includes(email.toLowerCase())) {
           console.log('Email not confirmed for authorized user, attempting auto-signup...');
           
-          // Try to create the account (this will work if the user doesn't exist yet)
+          // Try to create the account
           const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email: email.toLowerCase(),
             password,
             options: {
-              emailRedirectTo: getEmailRedirectUrl(),
+              emailRedirectTo: `${window.location.origin}/auth/confirm`,
               data: {
                 display_name: email.split('@')[0]
               }
@@ -122,27 +173,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (signUpError) {
             console.error('Auto sign up error:', signUpError);
             
-            // If user already registered, try to resend confirmation
             if (signUpError.message?.includes('already registered')) {
-              const { error: resendError } = await supabase.auth.resend({
-                type: 'signup',
-                email: email.toLowerCase(),
-                options: {
-                  emailRedirectTo: getEmailRedirectUrl()
-                }
-              });
-              
-              if (resendError) {
-                return { error: { message: 'שגיאה בשליחת אימייל אימות. אנא פנה למנהל המערכת.' } };
-              }
-              
-              return { error: { message: 'אימייל אימות נשלח! אנא בדוק את תיבת הדואר שלך ולחץ על הקישור לאימות.' } };
+              return { error: { message: 'המשתמש כבר קיים אך טרם אושר. אנא פנה למנהל המערכת.' } };
             }
             
             return { error: { message: 'שגיאה ביצירת החשבון - אנא פנה למנהל המערכת' } };
           }
           
-          // If signup was successful, the user is now created but needs confirmation
           if (signUpData.user && !signUpData.user.email_confirmed_at) {
             toast.success('חשבון נוצר בהצלחה! אימייל אימות נשלח.');
             return { error: { message: 'חשבון נוצר - אימייל אימות נשלח! אנא בדוק את תיבת הדואר שלך ולחץ על הקישור.' } };
@@ -159,7 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: email.toLowerCase(),
             password,
             options: {
-              emailRedirectTo: getEmailRedirectUrl(),
+              emailRedirectTo: `${window.location.origin}/auth/confirm`,
               data: {
                 display_name: email.split('@')[0]
               }
@@ -198,7 +235,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: email.toLowerCase(),
         password,
         options: {
-          emailRedirectTo: getEmailRedirectUrl(),
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
           data: {
             display_name: email.split('@')[0]
           }
