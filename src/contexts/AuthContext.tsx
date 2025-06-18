@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -122,14 +121,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           if (signUpError) {
             console.error('Auto sign up error:', signUpError);
+            
+            // If user already registered, try to resend confirmation
+            if (signUpError.message?.includes('already registered')) {
+              const { error: resendError } = await supabase.auth.resend({
+                type: 'signup',
+                email: email.toLowerCase(),
+                options: {
+                  emailRedirectTo: getEmailRedirectUrl()
+                }
+              });
+              
+              if (resendError) {
+                return { error: { message: 'שגיאה בשליחת אימייל אימות. אנא פנה למנהל המערכת.' } };
+              }
+              
+              return { error: { message: 'אימייל אימות נשלח! אנא בדוק את תיבת הדואר שלך ולחץ על הקישור לאימות.' } };
+            }
+            
             return { error: { message: 'שגיאה ביצירת החשבון - אנא פנה למנהל המערכת' } };
           }
           
           // If signup was successful, the user is now created but needs confirmation
-          // For authorized users, we'll inform them that the account was created
           if (signUpData.user && !signUpData.user.email_confirmed_at) {
-            toast.success('חשבון נוצר בהצלחה! אנא בדוק את המייל לאישור.');
-            return { error: { message: 'חשבון נוצר - נדרש אישור אימייל. אנא בדוק את תיבת הדואר שלך.' } };
+            toast.success('חשבון נוצר בהצלחה! אימייל אימות נשלח.');
+            return { error: { message: 'חשבון נוצר - אימייל אימות נשלח! אנא בדוק את תיבת הדואר שלך ולחץ על הקישור.' } };
           }
           
           return { error: null };
@@ -156,8 +172,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           
           if (signUpData.user) {
-            toast.success('חשבון נוצר בהצלחה! אנא בדוק את המייל לאישור.');
-            return { error: { message: 'חשבון נוצר - נדרש אישור אימייל. אנא בדוק את תיבת הדואר שלך.' } };
+            toast.success('חשבון נוצר בהצלחה! אימייל אימות נשלח.');
+            return { error: { message: 'חשבון נוצר - אימייל אימות נשלח! אנא בדוק את תיבת הדואר שלך ולחץ על הקישור.' } };
           }
         }
       }
@@ -198,7 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return await signIn(email, password);
         }
       } else if (data.user && !data.user.email_confirmed_at) {
-        toast.success('חשבון נוצר בהצלחה! אנא בדוק את המייל לאישור.');
+        toast.success('חשבון נוצר בהצלחה! אימייל אימות נשלח.');
       }
       
       return { error };
