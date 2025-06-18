@@ -1,5 +1,7 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface EngineStatus {
   isRunning: boolean;
@@ -110,7 +112,7 @@ export class TradingEngineController {
       if (data?.signals && data.signals.length > 0) {
         console.log(`✨ Generated ${data.signals.length} new signals`);
         
-        // Store signals in database
+        // Store signals in database with proper user context
         for (const signal of data.signals) {
           await this.storeSignal(signal);
         }
@@ -124,6 +126,14 @@ export class TradingEngineController {
 
   private async storeSignal(signalData: any): Promise<void> {
     try {
+      // Get the current authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        console.error('No authenticated user found');
+        return;
+      }
+
       const signal = {
         signal_id: `${signalData.symbol}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         symbol: signalData.symbol,
@@ -131,12 +141,12 @@ export class TradingEngineController {
         price: signalData.price,
         target_price: signalData.price * (signalData.signal_type === 'BUY' ? 1.03 : 0.97),
         stop_loss: signalData.price * (signalData.signal_type === 'BUY' ? 0.98 : 1.02),
-        confidence: signalData.strength / 100,
-        reasoning: `Signal generated based on ${signalData.change24h > 0 ? 'positive' : 'negative'} momentum: ${signalData.change24h.toFixed(2)}%`,
-        strategy: 'momentum-analysis',
+        confidence: Math.min(1.0, signalData.strength / 100), // Ensure max 1.0
+        reasoning: `Personal Strategy Signal: ${signalData.change24h > 0 ? 'positive' : 'negative'} momentum: ${signalData.change24h.toFixed(2)}%`,
+        strategy: 'almog-personal-method',
         risk_reward_ratio: 1.5,
         status: 'active',
-        user_id: '00000000-0000-0000-0000-000000000000' // Default for system signals
+        user_id: user.id
       };
 
       const { error } = await supabase
@@ -146,7 +156,7 @@ export class TradingEngineController {
       if (error) {
         console.error('Error storing signal:', error);
       } else {
-        console.log(`💾 Stored signal: ${signal.action} ${signal.symbol}`);
+        console.log(`💾 Stored personal strategy signal: ${signal.action} ${signal.symbol}`);
       }
     } catch (error) {
       console.error('Failed to store signal:', error);
@@ -155,6 +165,10 @@ export class TradingEngineController {
 
   private async performHealthCheck(): Promise<void> {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) return;
+
       // Check Binance API
       const binanceResponse = await fetch('https://api.binance.com/api/v3/ping');
       const binanceOk = binanceResponse.ok;
@@ -163,18 +177,25 @@ export class TradingEngineController {
       const coinGeckoResponse = await fetch('https://api.coingecko.com/api/v3/ping');
       const coinGeckoOk = coinGeckoResponse.ok;
 
-      // Store health status
+      // Calculate health score (max 100)
+      const healthScore = Math.min(100, 
+        (binanceOk ? 25 : 0) + 
+        (coinGeckoOk ? 25 : 0) + 
+        50 // Base system health
+      );
+
+      // Store health status with proper decimal precision
       const { error } = await supabase
         .from('system_health_log')
         .insert([{
           binance_status: binanceOk,
           coingecko_status: coinGeckoOk,
-          tradingview_status: true, // Placeholder
-          twitter_status: true, // Placeholder
-          telegram_status: true, // Placeholder
-          fundamental_data_status: true, // Placeholder
-          overall_health_score: (binanceOk ? 20 : 0) + (coinGeckoOk ? 20 : 0) + 60,
-          user_id: '00000000-0000-0000-0000-000000000000'
+          tradingview_status: true,
+          twitter_status: true,
+          telegram_status: true,
+          fundamental_data_status: true,
+          overall_health_score: healthScore,
+          user_id: user.id
         }]);
 
       if (error) {
@@ -190,7 +211,7 @@ export class TradingEngineController {
       isRunning: this.isRunning,
       lastSignalTime: null, // TODO: Track from database
       totalSignals: 0, // TODO: Get from database
-      activeStrategies: ['momentum-analysis', 'volume-spike', 'rsi-divergence']
+      activeStrategies: ['almog-personal-method', 'momentum-analysis', 'volume-spike', 'rsi-divergence']
     };
   }
 
