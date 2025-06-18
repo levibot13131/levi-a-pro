@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -60,6 +59,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
+        
+        // Initialize engine status for authenticated users
+        if (session?.user) {
+          initializeUserEngineStatus(session.user.id);
+        }
       }
     );
 
@@ -76,10 +80,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
+      
+      if (session?.user) {
+        initializeUserEngineStatus(session.user.id);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const initializeUserEngineStatus = async (userId: string) => {
+    try {
+      const { data: existingStatus } = await supabase
+        .from('trading_engine_status')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (!existingStatus) {
+        await supabase
+          .from('trading_engine_status')
+          .insert([{
+            user_id: userId,
+            is_running: false,
+            total_signals_generated: 0,
+            profitable_signals: 0,
+            success_rate: 0
+          }]);
+        console.log('Initialized engine status for user');
+      }
+    } catch (error) {
+      console.error('Error initializing engine status:', error);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     // Pre-check authorization
@@ -89,106 +122,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     console.log('Attempting sign in for:', email);
     
-    // Special handling for admin user - bypass all email confirmation
-    if (email.toLowerCase() === 'almogahronov1997@gmail.com') {
-      try {
-        // First, try direct sign in
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: email.toLowerCase(),
-          password,
-        });
-        
-        // If sign in succeeds, we're done
-        if (!signInError && signInData.user) {
-          console.log('Admin signed in successfully');
-          return { error: null };
-        }
-        
-        // If sign in fails due to email not confirmed, create user without email confirmation
-        if (signInError?.message?.includes('Email not confirmed') || signInError?.message?.includes('Invalid login credentials')) {
-          console.log('Creating admin user account...');
-          
-          // Create user with sign up (this will create the user)
-          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-            email: email.toLowerCase(),
-            password,
-            options: {
-              data: { display_name: 'מנהל המערכת' }
-            }
-          });
-          
-          if (signUpError && !signUpError.message?.includes('already registered')) {
-            console.error('Sign up error:', signUpError);
-            return { error: signUpError };
-          }
-          
-          // Now try to sign in again
-          const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
-            email: email.toLowerCase(),
-            password,
-          });
-          
-          // If still getting email not confirmed, we'll create a temporary session
-          if (retryError?.message?.includes('Email not confirmed')) {
-            console.log('Bypassing email confirmation for admin...');
-            
-            // Create a mock session for the admin user
-            const adminUser = {
-              id: 'admin-temp-id',
-              email: email.toLowerCase(),
-              user_metadata: { display_name: 'מנהל המערכת' },
-              app_metadata: {},
-              aud: 'authenticated',
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            } as SupabaseUser;
-            
-            // Manually set the user state
-            setUser(adminUser);
-            
-            // Create a basic session object
-            const mockSession = {
-              user: adminUser,
-              access_token: 'mock-admin-token',
-              refresh_token: 'mock-refresh-token',
-              expires_in: 3600,
-              expires_at: Math.floor(Date.now() / 1000) + 3600,
-              token_type: 'bearer',
-            } as Session;
-            
-            setSession(mockSession);
-            
-            toast.success('ברוך הבא מנהל המערכת!');
-            return { error: null };
-          }
-          
-          if (retryError) {
-            console.error('Retry sign in error:', retryError);
-            return { error: retryError };
-          }
-          
-          return { error: null };
-        }
-        
-        // For any other error, return it
-        if (signInError) {
-          console.error('Sign in error:', signInError);
-          return { error: signInError };
-        }
-        
-        return { error: null };
-      } catch (err) {
-        console.error('Admin sign in exception:', err);
-        return { error: { message: 'שגיאת רשת - אנא נסה שוב' } };
-      }
-    }
-    
-    // For other authorized users, use regular flow
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.toLowerCase(),
         password,
       });
+      
+      if (error && error.message?.includes('Email not confirmed')) {
+        // For admin, try to bypass email confirmation
+        if (email.toLowerCase() === 'almogahronov1997@gmail.com') {
+          toast.success('ברוך הבא מנהל המערכת!');
+          // Create a mock session for admin bypass
+          const adminUser = {
+            id: 'admin-bypass-id',
+            email: email.toLowerCase(),
+            user_metadata: { display_name: 'מנהל המערכת' },
+            app_metadata: {},
+            aud: 'authenticated',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          } as SupabaseUser;
+          
+          setUser(adminUser);
+          setSession({
+            user: adminUser,
+            access_token: 'admin-bypass-token',
+            refresh_token: 'admin-refresh-token',
+            expires_in: 3600,
+            expires_at: Math.floor(Date.now() / 1000) + 3600,
+            token_type: 'bearer',
+          } as Session);
+          
+          return { error: null };
+        }
+      }
       
       return { error };
     } catch (err) {
