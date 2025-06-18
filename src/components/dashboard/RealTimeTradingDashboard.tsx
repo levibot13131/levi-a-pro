@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useEngineStatus } from '@/hooks/useEngineStatus';
 import { 
   Play, 
   Pause, 
@@ -35,11 +36,11 @@ interface TradingSignal {
 
 const RealTimeTradingDashboard = () => {
   const [selectedSymbol, setSelectedSymbol] = useState('BTCUSDT');
-  const [isEngineRunning, setIsEngineRunning] = useState(false);
   const [signals, setSignals] = useState<TradingSignal[]>([]);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'disconnected'>('connecting');
 
+  const { status: engineStatus, startEngine, stopEngine } = useEngineStatus();
   const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT', 'DOTUSDT'];
 
   // Enhanced signals fetching with better real-time updates
@@ -52,7 +53,6 @@ const RealTimeTradingDashboard = () => {
         .order('created_at', { ascending: false })
         .limit(50);
       
-      // Filter by symbol if not showing all
       if (selectedSymbol !== 'ALL') {
         query.eq('symbol', selectedSymbol);
       }
@@ -66,7 +66,7 @@ const RealTimeTradingDashboard = () => {
       
       return data || [];
     },
-    refetchInterval: 5000, // Refresh every 5 seconds
+    refetchInterval: 5000,
     refetchIntervalInBackground: true,
   });
 
@@ -95,7 +95,6 @@ const RealTimeTradingDashboard = () => {
           console.log('📢 New signal received in dashboard:', payload);
           const newSignal = payload.new as TradingSignal;
           
-          // Only add if it matches current filter or showing all
           if (selectedSymbol === 'ALL' || newSignal.symbol === selectedSymbol) {
             setSignals(prev => [newSignal, ...prev.slice(0, 49)]);
             setLastUpdate(new Date());
@@ -116,7 +115,7 @@ const RealTimeTradingDashboard = () => {
         },
         (payload) => {
           console.log('📝 Signal updated in dashboard:', payload);
-          refetch(); // Refresh on updates
+          refetch();
           setLastUpdate(new Date());
         }
       )
@@ -137,35 +136,12 @@ const RealTimeTradingDashboard = () => {
     };
   }, [selectedSymbol, refetch]);
 
-  const startTradingEngine = async () => {
-    try {
-      setIsEngineRunning(true);
-      
-      // Call the trading engine function
-      const { data, error } = await supabase.functions.invoke('trading-signals-engine', {
-        body: { action: 'start', symbols: symbols }
-      });
-      
-      if (error) {
-        throw error;
-      }
-      
-      toast.success('🚀 מנוע המסחר הופעל בהצלחה', {
-        description: 'המערכת תתחיל לייצר איתותים בזמן אמת'
-      });
-      refetch();
-    } catch (error) {
-      console.error('Error starting trading engine:', error);
-      toast.error('שגיאה בהפעלת המנוע', {
-        description: 'נסה שוב או בדוק את החיבור לשרת'
-      });
-      setIsEngineRunning(false);
+  const handleEngineToggle = async () => {
+    if (engineStatus.isRunning) {
+      await stopEngine();
+    } else {
+      await startEngine();
     }
-  };
-
-  const stopTradingEngine = () => {
-    setIsEngineRunning(false);
-    toast.info('⏹️ מנוע המסחר הופסק');
   };
 
   const formatPrice = (price: number) => {
@@ -211,9 +187,9 @@ const RealTimeTradingDashboard = () => {
             </SelectContent>
           </Select>
           
-          <Badge variant={isEngineRunning ? "default" : "secondary"}>
+          <Badge variant={engineStatus.isRunning ? "default" : "secondary"}>
             <Activity className="h-3 w-3 mr-1" />
-            {isEngineRunning ? 'פועל' : 'כבוי'}
+            {engineStatus.isRunning ? 'פועל' : 'כבוי'}
           </Badge>
 
           {getConnectionStatusBadge()}
@@ -221,12 +197,12 @@ const RealTimeTradingDashboard = () => {
 
         <div className="flex gap-2">
           <Button
-            variant={isEngineRunning ? "destructive" : "default"}
-            onClick={isEngineRunning ? stopTradingEngine : startTradingEngine}
+            variant={engineStatus.isRunning ? "destructive" : "default"}
+            onClick={handleEngineToggle}
             className="gap-2"
           >
-            {isEngineRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-            {isEngineRunning ? 'הפסק מנוע' : 'הפעל מנוע'}
+            {engineStatus.isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            {engineStatus.isRunning ? 'הפסק מנוע' : 'הפעל מנוע'}
           </Button>
           
           <Button variant="outline" onClick={() => refetch()} disabled={isLoading}>

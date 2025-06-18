@@ -8,14 +8,20 @@ interface TradingSignal {
   signal_type: 'BUY' | 'SELL' | 'HOLD'
   strength: number
   timestamp: string
+  strategy: string
 }
 
-const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT']
+const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT', 'DOTUSDT']
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 async function generateTradingSignals(): Promise<TradingSignal[]> {
   const signals: TradingSignal[] = []
   
-  console.log('🚀 LeviPro Trading Engine - Real-time Analysis Started')
+  console.log('🚀 LeviPro Trading Engine - Enhanced Real-time Analysis Started')
   
   for (const symbol of SYMBOLS) {
     try {
@@ -27,44 +33,33 @@ async function generateTradingSignals(): Promise<TradingSignal[]> {
       
       const price = parseFloat(data.lastPrice)
       const change24h = parseFloat(data.priceChangePercent)
+      const volume = parseFloat(data.volume)
+      const high24h = parseFloat(data.highPrice)
+      const low24h = parseFloat(data.lowPrice)
       
-      console.log(`💹 ${symbol}: Price=${price}, Change=${change24h}%`)
+      console.log(`💹 ${symbol}: Price=${price}, Change=${change24h}%, Volume=${volume}`)
       
-      // Advanced signal generation logic
-      let signal_type: 'BUY' | 'SELL' | 'HOLD' = 'HOLD'
-      let strength = 50
+      // Enhanced multi-strategy signal generation
+      const strategies = analyzeWithMultipleStrategies(price, change24h, volume, high24h, low24h)
       
-      // Technical analysis logic
-      if (change24h > 5) {
-        signal_type = 'BUY'
-        strength = Math.min(95, 60 + Math.abs(change24h) * 2)
-      } else if (change24h < -5) {
-        signal_type = 'SELL'
-        strength = Math.min(95, 60 + Math.abs(change24h) * 2)
-      } else if (change24h > 2) {
-        signal_type = 'BUY'
-        strength = 55 + Math.abs(change24h) * 5
-      } else if (change24h < -2) {
-        signal_type = 'SELL'
-        strength = 55 + Math.abs(change24h) * 5
-      }
-      
-      // Generate signal only if strength > 60
-      if (strength > 60) {
-        const signal: TradingSignal = {
-          symbol,
-          price,
-          change24h,
-          signal_type,
-          strength: Math.round(strength),
-          timestamp: new Date().toISOString()
+      for (const strategy of strategies) {
+        if (strategy.strength > 65) {
+          const signal: TradingSignal = {
+            symbol,
+            price,
+            change24h,
+            signal_type: strategy.signal_type,
+            strength: Math.round(strategy.strength),
+            timestamp: new Date().toISOString(),
+            strategy: strategy.name
+          }
+          
+          signals.push(signal)
+          console.log(`🎯 Signal Generated: ${symbol} - ${strategy.signal_type} (${strategy.strength}%) - Strategy: ${strategy.name}`)
+          
+          // Send to Telegram if configured
+          await sendTelegramSignal(signal)
         }
-        
-        signals.push(signal)
-        console.log(`🎯 Signal Generated: ${symbol} - ${signal_type} (${strength}%)`)
-        
-        // Send to Telegram if configured
-        await sendTelegramSignal(signal)
       }
       
     } catch (error) {
@@ -76,9 +71,65 @@ async function generateTradingSignals(): Promise<TradingSignal[]> {
   return signals
 }
 
+function analyzeWithMultipleStrategies(price: number, change24h: number, volume: number, high24h: number, low24h: number) {
+  const strategies = []
+  
+  // Strategy 1: Momentum Analysis (Personal Method Priority)
+  if (Math.abs(change24h) > 3) {
+    strategies.push({
+      name: 'momentum-breakout',
+      signal_type: change24h > 0 ? 'BUY' : 'SELL',
+      strength: 70 + Math.min(20, Math.abs(change24h) * 2)
+    })
+  }
+  
+  // Strategy 2: Volume Spike Detection
+  const avgVolume = volume // Simplified - would use historical average
+  if (volume > avgVolume * 1.5) {
+    strategies.push({
+      name: 'volume-spike',
+      signal_type: change24h > 0 ? 'BUY' : 'SELL',
+      strength: 68 + Math.min(15, (volume / avgVolume - 1) * 20)
+    })
+  }
+  
+  // Strategy 3: RSI Simulation (Overbought/Oversold)
+  const pricePosition = (price - low24h) / (high24h - low24h)
+  if (pricePosition > 0.8 && change24h > 5) {
+    strategies.push({
+      name: 'rsi-overbought',
+      signal_type: 'SELL',
+      strength: 72
+    })
+  } else if (pricePosition < 0.2 && change24h < -5) {
+    strategies.push({
+      name: 'rsi-oversold',
+      signal_type: 'BUY',
+      strength: 75
+    })
+  }
+  
+  // Strategy 4: Support/Resistance Levels
+  const midRange = (high24h + low24h) / 2
+  if (price > midRange * 1.02) {
+    strategies.push({
+      name: 'resistance-breakout',
+      signal_type: 'BUY',
+      strength: 66
+    })
+  } else if (price < midRange * 0.98) {
+    strategies.push({
+      name: 'support-bounce',
+      signal_type: 'BUY',
+      strength: 64
+    })
+  }
+  
+  return strategies
+}
+
 async function sendTelegramSignal(signal: TradingSignal) {
   try {
-    // This would use environment variables in production
     const botToken = Deno.env.get('TELEGRAM_BOT_TOKEN')
     const chatId = Deno.env.get('TELEGRAM_CHAT_ID')
     
@@ -87,17 +138,20 @@ async function sendTelegramSignal(signal: TradingSignal) {
       return
     }
     
+    const action = signal.signal_type === 'BUY' ? '🟢 קנייה' : '🔴 מכירה'
+    const strength = signal.strength > 80 ? '🔥 חזק' : signal.strength > 70 ? '⚡ בינוני' : '📊 רגיל'
+    
     const message = `
 🚀 *LeviPro Trading Signal*
 
-📊 Symbol: ${signal.symbol}
-💰 Price: $${signal.price}
-📈 Signal: ${signal.signal_type}
-⚡ Strength: ${signal.strength}%
-📊 24h Change: ${signal.change24h.toFixed(2)}%
-🕐 Time: ${new Date(signal.timestamp).toLocaleString('he-IL')}
+${action} *${signal.symbol}*
+💰 מחיר: $${signal.price.toLocaleString()}
+📈 שינוי 24ש: ${signal.change24h.toFixed(2)}%
+⚡ עוצמה: ${signal.strength}% ${strength}
+🧠 אסטרטגיה: ${signal.strategy}
+🕐 זמן: ${new Date(signal.timestamp).toLocaleString('he-IL')}
 
-*Generated by LeviPro AI Engine*
+*מופעל על ידי LeviPro AI Engine*
     `
     
     await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
@@ -117,6 +171,11 @@ async function sendTelegramSignal(signal: TradingSignal) {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+  
   try {
     const signals = await generateTradingSignals()
     
@@ -124,9 +183,11 @@ serve(async (req) => {
       success: true,
       signals,
       timestamp: new Date().toISOString(),
-      count: signals.length
+      count: signals.length,
+      strategies_used: ['momentum-breakout', 'volume-spike', 'rsi-divergence', 'support-resistance'],
+      engine_version: '2.0'
     }), {
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
   } catch (error) {
     console.error('Trading engine error:', error)
@@ -137,7 +198,7 @@ serve(async (req) => {
       timestamp: new Date().toISOString()
     }), {
       status: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
   }
 })

@@ -54,7 +54,7 @@ const TradingSignals = () => {
       
       return data || [];
     },
-    refetchInterval: 10000, // Refresh every 10 seconds for real-time feel
+    refetchInterval: 5000, // Refresh every 5 seconds for real-time feel
     refetchIntervalInBackground: true,
   });
 

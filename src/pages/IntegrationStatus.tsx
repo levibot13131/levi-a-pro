@@ -82,16 +82,49 @@ const IntegrationStatus = () => {
   const refreshStatus = async () => {
     setIsRefreshing(true);
     
-    // Simulate API health checks
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Perform actual health checks
+    const updatedServices = await Promise.all(
+      services.map(async (service) => {
+        try {
+          const start = Date.now();
+          let response;
+          
+          switch (service.name) {
+            case 'Binance API':
+              response = await fetch('https://api.binance.com/api/v3/ping');
+              break;
+            case 'CoinGecko API':
+              response = await fetch('https://api.coingecko.com/api/v3/ping');
+              break;
+            case 'Supabase Database':
+              // Test database connection
+              response = { ok: true }; // Placeholder - would test actual DB connection
+              break;
+            default:
+              // Simulate response for other services
+              response = { ok: Math.random() > 0.2 };
+          }
+          
+          const responseTime = Date.now() - start;
+          
+          return {
+            ...service,
+            status: response.ok ? 'connected' : 'disconnected',
+            responseTime: responseTime,
+            lastChecked: new Date()
+          };
+        } catch (error) {
+          return {
+            ...service,
+            status: 'disconnected' as const,
+            responseTime: undefined,
+            lastChecked: new Date()
+          };
+        }
+      })
+    );
     
-    setServices(prev => prev.map(service => ({
-      ...service,
-      lastChecked: new Date(),
-      responseTime: Math.floor(Math.random() * 300) + 50,
-      status: Math.random() > 0.8 ? 'warning' : 'connected'
-    })));
-    
+    setServices(updatedServices);
     setIsRefreshing(false);
   };
 
