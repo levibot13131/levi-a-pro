@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import RealTimeTradingDashboard from '../components/dashboard/RealTimeTradingDashboard';
+import SystemOverview from '../components/system/SystemOverview';
 import { useEngineStatus } from '@/hooks/useEngineStatus';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -16,13 +17,15 @@ import {
   Zap, 
   Target,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  BarChart3,
+  FileText
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Dashboard: React.FC = () => {
   const { status: engineStatus, startEngine, stopEngine } = useEngineStatus();
-  const { user, isAdmin, displayName } = useAuth();
+  const { user, isAdmin, displayName, isAuthenticated } = useAuth();
   const [systemHealth, setSystemHealth] = useState({
     signalEngine: true,
     personalStrategy: true,
@@ -32,14 +35,13 @@ const Dashboard: React.FC = () => {
   });
 
   useEffect(() => {
-    // Welcome message for admin with LIVE confirmation
-    if (isAdmin && user) {
+    if (isAdmin && user && isAuthenticated) {
       toast.success(`🚀 ברוך הבא ${displayName} - LeviPro LIVE!`, {
         description: 'מערכת מסחר אמיתית מוכנה לפעולה מלאה',
         duration: 8000,
       });
     }
-  }, [isAdmin, user, displayName]);
+  }, [isAdmin, user, displayName, isAuthenticated]);
 
   const handleEngineToggle = async () => {
     if (engineStatus.isRunning) {
@@ -67,7 +69,7 @@ const Dashboard: React.FC = () => {
   return (
     <Container className="py-6">
       <div className="space-y-6">
-        {/* Header with Admin Controls - LIVE MODE */}
+        {/* Enhanced Header with Admin Controls - LIVE MODE */}
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-2">
             <Brain className="h-8 w-8 text-primary" />
@@ -212,12 +214,13 @@ const Dashboard: React.FC = () => {
           </Card>
         )}
 
-        {/* Main Dashboard Tabs - LIVE MODE */}
+        {/* Enhanced Dashboard Tabs - LIVE MODE */}
         <Tabs defaultValue="trading" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="trading">🚀 מסחר LIVE</TabsTrigger>
             <TabsTrigger value="risk">🛡️ ניהול סיכונים</TabsTrigger>
             <TabsTrigger value="analytics">📊 ביצועים LIVE</TabsTrigger>
+            <TabsTrigger value="overview">📋 סקירה מלאה</TabsTrigger>
           </TabsList>
           
           <TabsContent value="trading">
@@ -268,6 +271,10 @@ const Dashboard: React.FC = () => {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+          
+          <TabsContent value="overview">
+            <SystemOverview />
           </TabsContent>
         </Tabs>
       </div>
