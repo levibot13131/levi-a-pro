@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shield, Lock } from 'lucide-react';
+import { Shield, Lock, Info } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Auth = () => {
@@ -37,6 +37,12 @@ const Auth = () => {
     setIsLoading(true);
     setError('');
 
+    if (!email || !password) {
+      setError('Please enter both email and password');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const { error } = isSignUp 
         ? await signUp(email, password)
@@ -46,14 +52,22 @@ const Auth = () => {
         setError(error.message);
         toast.error(error.message);
       } else {
-        toast.success(isSignUp ? 'Account created successfully' : 'Welcome back!');
+        const message = isSignUp ? 'Account created successfully!' : 'Welcome back!';
+        toast.success(message);
       }
     } catch (err) {
-      setError('An unexpected error occurred');
-      toast.error('An unexpected error occurred');
+      const errorMessage = 'An unexpected error occurred';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Auto-fill admin credentials for testing
+  const fillAdminCredentials = () => {
+    setEmail('almogahronov1997@gmail.com');
+    setPassword('LeviPro2024!');
   };
 
   return (
@@ -101,6 +115,7 @@ const Auth = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
+                  minLength={8}
                 />
               </div>
 
@@ -127,6 +142,18 @@ const Auth = () => {
                 }
               </Button>
             </div>
+
+            {/* Admin Quick Login for Testing */}
+            <div className="text-center mt-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fillAdminCredentials}
+                className="text-xs"
+              >
+                Fill Admin Credentials
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -134,10 +161,13 @@ const Auth = () => {
         <Card className="bg-amber-50 border-amber-200">
           <CardContent className="pt-4">
             <div className="flex items-start space-x-2">
-              <Shield className="h-5 w-5 text-amber-600 mt-0.5" />
+              <Info className="h-5 w-5 text-amber-600 mt-0.5" />
               <div className="text-sm text-amber-800">
                 <p className="font-medium">Private System</p>
                 <p>Access is restricted to authorized users only.</p>
+                <p className="mt-2 text-xs">
+                  Authorized emails: almogahronov1997@gmail.com, avraham.oron@gmail.com
+                </p>
               </div>
             </div>
           </CardContent>

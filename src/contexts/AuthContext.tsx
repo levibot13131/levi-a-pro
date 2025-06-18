@@ -87,12 +87,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: { message: 'Access denied - unauthorized user' } };
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    console.log('Attempting sign in for:', email);
     
-    return { error };
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase(),
+        password,
+      });
+      
+      if (error) {
+        console.error('Sign in error:', error);
+        
+        // If user doesn't exist but is authorized, try to create them
+        if (error.message === 'Invalid login credentials' && AUTHORIZED_USERS.includes(email.toLowerCase())) {
+          toast.info('User not found, creating account...');
+          return await signUp(email, password);
+        }
+      }
+      
+      return { error };
+    } catch (err) {
+      console.error('Sign in exception:', err);
+      return { error: { message: 'Network error - please try again' } };
+    }
   };
 
   const signUp = async (email: string, password: string) => {
@@ -101,21 +118,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: { message: 'Access denied - unauthorized user' } };
     }
 
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl
+    console.log('Attempting sign up for:', email);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.toLowerCase(),
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            display_name: email.split('@')[0]
+          }
+        }
+      });
+      
+      if (error) {
+        console.error('Sign up error:', error);
+        
+        // If user already exists, try to sign in instead
+        if (error.message?.includes('already registered')) {
+          toast.info('User exists, trying to sign in...');
+          return await signIn(email, password);
+        }
+      } else if (data.user && !data.user.email_confirmed_at) {
+        toast.success('Account created! Please check your email to confirm.');
       }
-    });
-    
-    return { error };
+      
+      return { error };
+    } catch (err) {
+      console.error('Sign up exception:', err);
+      return { error: { message: 'Network error - please try again' } };
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+      toast.success('Signed out successfully');
+    } catch (error) {
+      console.error('Sign out error:', error);
+      toast.error('Error signing out');
+    }
   };
 
   // Alias methods for backward compatibility
@@ -125,12 +168,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast.error(error.message);
       return false;
     }
+    toast.success('Welcome back!');
     return true;
   };
 
   const logout = async (): Promise<void> => {
     await signOut();
-    toast.success('Logged out successfully');
   };
 
   const register = async (email: string, password: string, displayName: string): Promise<boolean> => {
@@ -144,9 +187,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const refreshUser = async (): Promise<void> => {
-    const { data: { session } } = await supabase.auth.getSession();
-    setSession(session);
-    setUser(session?.user ?? null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      setUser(session?.user ?? null);
+    } catch (error) {
+      console.error('Refresh user error:', error);
+    }
   };
 
   const value = {
