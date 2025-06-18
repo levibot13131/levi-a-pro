@@ -178,7 +178,7 @@ const SystemOverview: React.FC<SystemOverviewProps> = ({ className }) => {
   };
 
   // Calculate completion statistics
-  const allFeatures =. [...implementedFeatures, ...pendingFeatures];
+  const allFeatures = [...implementedFeatures, ...pendingFeatures];
   const totalItems = allFeatures.reduce((sum, category) => sum + category.items.length, 0);
   const completedItems = allFeatures.reduce((sum, category) => 
     sum + category.items.filter(item => item.status === 'completed').length, 0
