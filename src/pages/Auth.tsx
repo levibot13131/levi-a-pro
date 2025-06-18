@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
-import { Shield, Lock, Info } from 'lucide-react';
+import { Shield, Lock, Info, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Auth = () => {
@@ -50,7 +50,13 @@ const Auth = () => {
 
       if (error) {
         setError(error.message);
-        toast.error(error.message);
+        
+        // Special handling for email confirmation issues
+        if (error.message.includes('Email not confirmed') || error.message.includes('נדרש אישור אימייל')) {
+          toast.error('נדרש אישור אימייל - אנא פנה למנהל המערכת לאישור');
+        } else {
+          toast.error(error.message);
+        }
       } else {
         const message = isSignUp ? 'חשבון נוצר בהצלחה!' : 'ברוך הבא ל-LeviPro!';
         toast.success(message);
@@ -121,6 +127,7 @@ const Auth = () => {
 
               {error && (
                 <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
@@ -157,17 +164,30 @@ const Auth = () => {
           </CardContent>
         </Card>
 
-        {/* Security Notice */}
+        {/* Email Confirmation Notice */}
         <Card className="bg-amber-50 border-amber-200">
           <CardContent className="pt-4">
             <div className="flex items-start space-x-2">
               <Info className="h-5 w-5 text-amber-600 mt-0.5" />
               <div className="text-sm text-amber-800">
-                <p className="font-medium">מערכת פרטית</p>
-                <p>הגישה מוגבלת למשתמשים מורשים בלבד.</p>
+                <p className="font-medium">עדכון חשוב</p>
+                <p>אם אתה רואה שגיאת "Email not confirmed", אנא פנה למנהל המערכת לאישור האימייל.</p>
                 <p className="mt-2 text-xs">
                   אימיילים מורשים: almogahronov1997@gmail.com, avraham.oron@gmail.com
                 </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Security Notice */}
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="pt-4">
+            <div className="flex items-start space-x-2">
+              <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div className="text-sm text-blue-800">
+                <p className="font-medium">מערכת פרטית</p>
+                <p>הגישה מוגבלת למשתמשים מורשים בלבד.</p>
               </div>
             </div>
           </CardContent>

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -99,11 +98,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         console.error('Sign in error:', error);
         
-        // If user doesn't exist but is authorized, create them with the provided password
-        if (error.message === 'Invalid login credentials' && AUTHORIZED_USERS.includes(email.toLowerCase())) {
-          console.log('User not found, creating account for authorized user...');
+        // Handle email not confirmed error for authorized users
+        if (error.message === 'Email not confirmed' && AUTHORIZED_USERS.includes(email.toLowerCase())) {
+          console.log('Email not confirmed for authorized user, attempting auto-signup...');
           
-          // Create user account with the exact password provided
+          // Try to create the account (this will work if the user doesn't exist yet)
           const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email: email.toLowerCase(),
             password,
@@ -117,28 +116,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           
           if (signUpError) {
             console.error('Auto sign up error:', signUpError);
-            
-            // If user already exists but password is wrong, inform user
-            if (signUpError.message?.includes('already registered')) {
-              return { error: { message: 'המשתמש כבר קיים - אנא בדוק את הסיסמה' } };
+            return { error: { message: 'שגיאה ביצירת החשבון - אנא פנה למנהל המערכת' } };
+          }
+          
+          // If signup was successful, the user is now created but needs confirmation
+          // For authorized users, we'll inform them that the account was created
+          if (signUpData.user && !signUpData.user.email_confirmed_at) {
+            toast.success('חשבון נוצר בהצלחה! אנא בדוק את המייל לאישור או פנה למנהל המערכת.');
+            return { error: { message: 'חשבון נוצר - נדרש אישור אימייל' } };
+          }
+          
+          return { error: null };
+        }
+        
+        // If user doesn't exist but is authorized, create them
+        if (error.message === 'Invalid login credentials' && AUTHORIZED_USERS.includes(email.toLowerCase())) {
+          console.log('User not found, creating account for authorized user...');
+          
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+            email: email.toLowerCase(),
+            password,
+            options: {
+              emailRedirectTo: `${window.location.origin}/`,
+              data: {
+                display_name: email.split('@')[0]
+              }
             }
-            
+          });
+          
+          if (signUpError) {
+            console.error('Auto sign up error:', signUpError);
             return { error: signUpError };
           }
           
-          // If account created successfully, try to sign in again
           if (signUpData.user) {
-            toast.success('חשבון נוצר בהצלחה! מנסה להתחבר...');
-            
-            // Wait a moment then try to sign in
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            const { error: secondSignInError } = await supabase.auth.signInWithPassword({
-              email: email.toLowerCase(),
-              password,
-            });
-            
-            return { error: secondSignInError };
+            toast.success('חשבון נוצר בהצלחה!');
+            return { error: null };
           }
         }
       }
@@ -199,7 +212,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Alias methods for backward compatibility
   const login = async (email: string, password: string): Promise<boolean> => {
     const { error } = await signIn(email, password);
     if (error) {
