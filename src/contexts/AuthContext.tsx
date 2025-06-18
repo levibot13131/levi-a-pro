@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -90,51 +89,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('Attempting sign in for:', email);
     
     try {
-      // For admin user, allow immediate sign-in without email confirmation
+      // For admin user, bypass email confirmation entirely
       if (email.toLowerCase() === 'almogahronov1997@gmail.com') {
-        // Try to sign in first
+        // Try to sign in directly
         const { data, error } = await supabase.auth.signInWithPassword({
           email: email.toLowerCase(),
           password,
         });
         
-        if (error) {
-          // If user doesn't exist, create it with immediate confirmation
-          if (error.message === 'Invalid login credentials') {
-            console.log('Creating admin account...');
-            
-            // Create user and immediately confirm
-            const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        if (error && error.message === 'Email not confirmed') {
+          // Force create and confirm admin account
+          console.log('Creating admin account with immediate confirmation...');
+          
+          // First create the user via admin API (bypassing email confirmation)
+          const { data: adminData, error: adminError } = await supabase.auth.admin.createUser({
+            email: email.toLowerCase(),
+            password,
+            email_confirm: true, // This bypasses email confirmation
+            user_metadata: {
+              display_name: 'מנהל המערכת'
+            }
+          });
+          
+          if (adminError) {
+            console.error('Admin creation error:', adminError);
+            // If admin creation fails, try the regular signup and then sign in
+            await supabase.auth.signUp({
               email: email.toLowerCase(),
               password,
               options: {
-                data: {
-                  display_name: 'מנהל המערכת'
-                }
+                data: { display_name: 'מנהל המערכת' }
               }
             });
-            
-            if (signUpError) {
-              console.error('Admin account creation error:', signUpError);
-              return { error: signUpError };
-            }
-            
-            if (signUpData.user) {
-              toast.success('חשבון נוצר בהצלחה! מתחבר...');
-              
-              // Try to sign in immediately
-              const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-                email: email.toLowerCase(),
-                password,
-              });
-              
-              if (loginError) {
-                return { error: { message: 'נוצר חשבון אך ההתחברות נכשלה. נסה שוב.' } };
-              }
-              
-              return { error: null };
-            }
           }
+          
+          // Now try to sign in again
+          const { data: retryData, error: retryError } = await supabase.auth.signInWithPassword({
+            email: email.toLowerCase(),
+            password,
+          });
+          
+          if (retryError) {
+            console.error('Retry sign in error:', retryError);
+            return { error: retryError };
+          }
+          
+          return { error: null };
+        }
+        
+        if (error) {
           return { error };
         }
         
@@ -163,6 +166,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('Attempting sign up for:', email);
 
     try {
+      // For admin, create with confirmation bypassed
+      if (email.toLowerCase() === 'almogahronov1997@gmail.com') {
+        const { data, error } = await supabase.auth.admin.createUser({
+          email: email.toLowerCase(),
+          password,
+          email_confirm: true,
+          user_metadata: {
+            display_name: 'מנהל המערכת'
+          }
+        });
+        
+        if (error && error.message?.includes('already registered')) {
+          // If user exists, just try to sign in
+          return await signIn(email, password);
+        }
+        
+        return { error };
+      }
+
+      // For other users
       const { data, error } = await supabase.auth.signUp({
         email: email.toLowerCase(),
         password,
@@ -174,16 +197,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       });
       
-      if (error) {
-        console.error('Sign up error:', error);
-        
-        // If user already exists, try to sign in instead
-        if (error.message?.includes('already registered')) {
-          toast.info('המשתמש כבר קיים, מנסה להתחבר...');
-          return await signIn(email, password);
-        }
-      } else if (data.user && !data.user.email_confirmed_at) {
-        toast.success('חשבון נוצר בהצלחה! אימייל אימות נשלח.');
+      if (error && error.message?.includes('already registered')) {
+        toast.info('המשתמש כבר קיים, מנסה להתחבר...');
+        return await signIn(email, password);
       }
       
       return { error };
