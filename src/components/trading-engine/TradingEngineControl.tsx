@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Activity, Settings, TrendingUp, PlayCircle, Square, TestTube, Bug, Zap,
 import { enhancedSignalEngine } from '@/services/trading/enhancedSignalEngine';
 import { telegramBot } from '@/services/telegram/telegramBot';
 import TelegramSetup from '@/components/telegram/TelegramSetup';
+import IntelligenceDashboard from '@/components/intelligence/IntelligenceDashboard';
 import SignalQualityMonitor from './SignalQualityMonitor';
 import SystemHealthMonitor from './SystemHealthMonitor';
 import SignalRejectionMonitor from './SignalRejectionMonitor';
