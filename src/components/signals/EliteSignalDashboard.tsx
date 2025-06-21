@@ -23,14 +23,14 @@ const EliteSignalDashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleStartEngine = () => {
-    enhancedSignalEngine.startEliteEngine();
+  const handleStartEngine = async () => {
+    await enhancedSignalEngine.startEliteEngine();
     setEngineStatus(enhancedSignalEngine.getEngineStatus());
     toast.success('🔥 Elite Signal Engine activated');
   };
 
-  const handleStopEngine = () => {
-    enhancedSignalEngine.stopEngine();
+  const handleStopEngine = async () => {
+    await enhancedSignalEngine.stopEngine();
     setEngineStatus(enhancedSignalEngine.getEngineStatus());
     toast.info('Signal Engine stopped');
   };

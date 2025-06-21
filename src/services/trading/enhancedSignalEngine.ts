@@ -52,7 +52,8 @@ export class EnhancedSignalEngine {
         sentimentAnalysis: true,
         fearGreedIntegration: true,
         fundamentalRiskScoring: true
-      }
+      },
+      lastAnalysis: this.isRunning ? new Date().toLocaleTimeString('he-IL') : undefined
     };
   }
 
@@ -62,15 +63,13 @@ export class EnhancedSignalEngine {
   }
 
   private generateBaseSignal(marketData: any): TradingSignal | null {
-    // Placeholder - replace with actual signal generation logic
     const newSignals = strategyEngine.analyzeMarket(marketData);
     if (newSignals.length === 0) return null;
-    return newSignals[0]; // Just take the first one for simplicity
+    return newSignals[0];
   }
 
   public async sendTestSignal(): Promise<boolean> {
     try {
-      // Mock signal data
       const mockSignal: TradingSignal = {
         id: `test-${Date.now()}`,
         symbol: 'BTCUSDT',
@@ -87,10 +86,8 @@ export class EnhancedSignalEngine {
         telegramSent: false
       };
 
-      // Apply intelligence scoring
       const intelligenceSignal = await IntelligenceEnhancedScoring.scoreSignalWithIntelligence(mockSignal);
       
-      // ✅ NEW: Apply risk management filtering
       const riskCheck = riskManagementEngine.shouldAllowSignal(intelligenceSignal.signal);
       
       if (!riskCheck.allowed) {
@@ -98,14 +95,12 @@ export class EnhancedSignalEngine {
         return false;
       }
 
-      // Enhanced signal with risk data
       const enhancedSignal = {
         ...intelligenceSignal.signal,
         riskData: riskCheck.riskInfo,
         riskSummary: riskManagementEngine.generateRiskSummaryForSignal(intelligenceSignal.signal)
       };
 
-      // Send enhanced signal
       const sent = await this.sendEnhancedSignal(enhancedSignal, intelligenceSignal);
       return sent;
     } catch (error) {
@@ -125,34 +120,26 @@ export class EnhancedSignalEngine {
   }
 
   private storeSignalRecord(signal: any, scoredSignal: any) {
-    // Placeholder - store signal in database or local tracking
     console.log('📝 Storing signal record:', { signal, scoredSignal });
   }
 
   private updateStats(quality: string) {
-    // Placeholder - update signal statistics
     console.log(`📊 Updating stats for quality: ${quality}`);
   }
 
   public async analyzeAndSendSignal(marketData: any): Promise<boolean> {
     try {
-      // Generate base signal
       const baseSignal = this.generateBaseSignal(marketData);
       if (!baseSignal) return false;
 
-      // Apply intelligence scoring
       const intelligenceSignal = await IntelligenceEnhancedScoring.scoreSignalWithIntelligence(baseSignal);
       
-      // ✅ NEW: Apply risk management filtering
       const riskCheck = riskManagementEngine.shouldAllowSignal(intelligenceSignal.signal);
       
       if (!riskCheck.allowed) {
         console.log(`🚫 Signal blocked by risk management: ${riskCheck.reason}`);
-        
-        // Log rejection for analytics
         this.logRejectedSignal(intelligenceSignal.signal, 'RISK_EXCEEDED', riskCheck.reason);
         
-        // Optionally send risk warning to Telegram
         if (this.debugMode) {
           const riskWarning = `⚠️ RISK ALERT: Signal for ${intelligenceSignal.signal.symbol} blocked\n${riskCheck.reason}`;
           await telegramBot.sendMessage(riskWarning);
@@ -161,24 +148,18 @@ export class EnhancedSignalEngine {
         return false;
       }
 
-      // Enhanced signal with risk data
       const enhancedSignal = {
         ...intelligenceSignal.signal,
         riskData: riskCheck.riskInfo,
         riskSummary: riskManagementEngine.generateRiskSummaryForSignal(intelligenceSignal.signal)
       };
 
-      // Check if should send based on quality and risk
       if (intelligenceSignal.shouldSend && riskCheck.allowed) {
         const sent = await this.sendEnhancedSignal(enhancedSignal, intelligenceSignal);
         
         if (sent) {
-          // Update risk tracking
           this.updateRiskTracking(enhancedSignal);
-          
-          // Update statistics
           this.updateStats(intelligenceSignal.qualityRating);
-          
           console.log(`✅ Risk-verified signal sent: ${enhancedSignal.symbol} (${intelligenceSignal.qualityRating})`);
           return true;
         }
@@ -193,17 +174,11 @@ export class EnhancedSignalEngine {
 
   private async sendEnhancedSignal(signal: any, scoredSignal: any): Promise<boolean> {
     try {
-      // Enhanced Telegram message with risk data
       const telegramMessage = this.formatEnhancedTelegramMessage(signal, scoredSignal);
-      
-      // Send to Telegram
       const sent = await telegramBot.sendMessage(telegramMessage);
       
       if (sent) {
-        // Store in database or local tracking
         this.storeSignalRecord(signal, scoredSignal);
-        
-        // Emit for UI updates
         window.dispatchEvent(new CustomEvent('enhanced-signal-sent', {
           detail: { signal, scoredSignal, riskData: signal.riskData }
         }));
@@ -248,8 +223,6 @@ ${signal.riskSummary}
   }
 
   private updateRiskTracking(signal: any) {
-    // This would be called when position is opened
-    // For now, just log the risk exposure
     console.log(`📊 Risk tracking updated for ${signal.symbol}:`, {
       positionSize: signal.riskData?.recommendedPositionSize,
       riskAmount: signal.riskData?.riskAmount,
@@ -258,7 +231,6 @@ ${signal.riskSummary}
   }
 
   private logRejectedSignal(signal: any, reason: string, details?: string) {
-    // Store rejected signals for analysis
     const rejection = {
       timestamp: Date.now(),
       symbol: signal.symbol,
@@ -269,10 +241,7 @@ ${signal.riskSummary}
       strategy: signal.strategy
     };
     
-    // Add to rejection log (could be stored in database)
     console.log('📝 Signal rejected:', rejection);
-    
-    // Update rejection statistics
     this.rejectionStats.total++;
     this.rejectionStats.byReason[reason] = (this.rejectionStats.byReason[reason] || 0) + 1;
   }
@@ -282,25 +251,12 @@ ${signal.riskSummary}
   }
 
   public async startEliteEngine() {
-    if (this.isRunning) {
-      console.log('Engine is already running');
-      return;
-    }
-
-    console.log('▶️ Starting LeviPro Signal Engine with Enhanced Quality Scoring...');
-    this.isRunning = true;
+    return this.start();
   }
 
   public async stopEngine() {
-    if (!this.isRunning) {
-      console.log('Engine is not running');
-      return;
-    }
-
-    console.log('⏹️ Stopping LeviPro Signal Engine');
-    this.isRunning = false;
+    return this.stop();
   }
 }
 
-// Export singleton instance
 export const enhancedSignalEngine = new EnhancedSignalEngine();

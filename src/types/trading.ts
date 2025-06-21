@@ -14,6 +14,8 @@ export interface TradingSignal {
   status: 'active' | 'completed' | 'cancelled';
   telegramSent: boolean;
   intelligenceScore?: number;
+  profitPercent?: number;
+  metadata?: Record<string, any>;
   riskData?: {
     recommendedPositionSize: number;
     maxPositionValue: number;
@@ -32,4 +34,64 @@ export interface SignalAnalysis {
     fearGreed?: any;
     fundamentalRisk?: string;
   };
+}
+
+export interface TradingStrategy {
+  id: string;
+  name: string;
+  type: 'personal' | 'technical' | 'fundamental';
+  isActive: boolean;
+  weight: number;
+  parameters: Record<string, any>;
+  successRate: number;
+  totalSignals: number;
+  profitableSignals: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface PersonalTradingStrategy extends TradingStrategy {
+  type: 'personal';
+  parameters: {
+    rsiThreshold: number;
+    profitTargetPercent: number;
+    stopLossPercent: number;
+    maxRiskPercent: number;
+    riskRewardRatio: number;
+    volumeIncreaseRequired: boolean;
+    resistanceBreakRequired: boolean;
+  };
+}
+
+export interface MarketData {
+  symbol: string;
+  price: number;
+  volume: number;
+  priceChange?: number;
+  timestamp: number;
+  wyckoffPhase?: string;
+  candlestickPattern?: string;
+  rsi?: number;
+  macdData?: any;
+  volumeProfile?: number;
+  vwap?: number;
+  fibonacciData?: any;
+  smcSignals?: any;
+  sentimentData?: any;
+}
+
+export interface SystemHealth {
+  binance: boolean;
+  tradingView: boolean;
+  twitter: boolean;
+  coinGecko: boolean;
+  telegram: boolean;
+  fundamentalData: boolean;
+  lastCheck: number;
+}
+
+export interface PricePoint {
+  price: number;
+  timestamp: number;
+  volume?: number;
 }
