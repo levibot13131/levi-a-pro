@@ -138,7 +138,7 @@ const EliteSignalDashboard: React.FC = () => {
 
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">>80%</div>
+            <div className="text-2xl font-bold text-purple-600">&gt;80%</div>
             <div className="text-sm text-muted-foreground">Confidence מינימום</div>
             <div className="text-xs text-muted-foreground">פילטר אליט</div>
           </CardContent>
