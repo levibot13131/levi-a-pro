@@ -27,7 +27,7 @@ const TradingEngineControl = () => {
     action: 'buy' as 'buy' | 'sell',
     reasoning: ''
   });
-  const [isTestingSend, setIsTestingSend] = useState(false);
+  const [isSendingTest, setIsSendingTest] = useState(false);
   
   const { user } = useAuth();
 
@@ -119,7 +119,7 @@ const TradingEngineControl = () => {
       return;
     }
 
-    setIsTestingSend(true);
+    setIsSendingTest(true);
     try {
       console.log('🧪 Sending demo signal to Telegram...');
       const success = await telegramBot.sendSignalDemo();
@@ -133,7 +133,7 @@ const TradingEngineControl = () => {
       console.error('Error sending demo signal:', error);
       toast.error('❌ שגיאה בשליחת איתות בדיקה');
     } finally {
-      setIsTestingSend(false);
+      setIsSendingTest(false);
     }
   };
 
@@ -175,6 +175,9 @@ const TradingEngineControl = () => {
     );
   }
 
+  // Get connection status safely
+  const connectionStatus = telegramBot.getConnectionStatus();
+
   return (
     <div className="space-y-6">
       {/* User Authorization Status */}
@@ -190,7 +193,7 @@ const TradingEngineControl = () => {
             <div className="text-right">
               <p className="text-sm font-medium text-green-800">סטטוס טלגרם</p>
               <Badge variant="outline" className="text-green-600">
-                מחובר: {telegramBot.getConnectionStatus().chatId}
+                {connectionStatus.connected ? 'מחובר' : 'מנותק'}
               </Badge>
             </div>
           </div>
@@ -240,10 +243,10 @@ const TradingEngineControl = () => {
               variant="outline" 
               size="sm"
               className="flex items-center gap-1"
-              disabled={isTestingSend}
+              disabled={isSendingTest}
             >
               <TestTube className="h-4 w-4" />
-              {isTestingSend ? 'שולח איתות...' : 'שלח איתות לבדיקה'}
+              {isSendingTest ? 'שולח איתות...' : 'שלח איתות לבדיקה'}
             </Button>
           </div>
         </CardContent>
