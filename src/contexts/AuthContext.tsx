@@ -2,14 +2,20 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
+import { toast } from 'sonner';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
+  isAuthenticated: boolean;
+  isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  register: (email: string, password: string, displayName?: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,6 +32,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Computed properties
+  const isAuthenticated = !!user && !!session;
+  const isAdmin = user?.email === 'almogahronov1997@gmail.com' || user?.user_metadata?.role === 'admin';
 
   useEffect(() => {
     console.log('🔐 Initializing authentication...');
@@ -119,13 +129,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   };
 
+  // Alternative methods for compatibility
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const { error } = await signIn(email, password);
+      if (error) {
+        toast.error('שגיאת התחברות', {
+          description: error.message,
+        });
+        return false;
+      }
+      toast.success('התחברת בהצלחה!');
+      return true;
+    } catch (error) {
+      toast.error('שגיאה בהתחברות');
+      return false;
+    }
+  };
+
+  const logout = async (): Promise<void> => {
+    try {
+      await signOut();
+      toast.success('התנתקת בהצלחה');
+    } catch (error) {
+      toast.error('שגיאה בהתנתקות');
+    }
+  };
+
+  const register = async (email: string, password: string, displayName?: string): Promise<boolean> => {
+    try {
+      const { error } = await signUp(email, password);
+      if (error) {
+        toast.error('שגיאת רישום', {
+          description: error.message,
+        });
+        return false;
+      }
+      toast.success('נרשמת בהצלחה! בדוק את האימייל שלך לאישור');
+      return true;
+    } catch (error) {
+      toast.error('שגיאה ברישום');
+      return false;
+    }
+  };
+
   const value = {
     user,
     session,
     isLoading,
+    isAuthenticated,
+    isAdmin,
     signIn,
     signUp,
     signOut,
+    login,
+    logout,
+    register,
   };
 
   return (

@@ -1,50 +1,36 @@
 
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { 
-  Home, 
-  TrendingUp, 
-  BarChart3, 
-  BookOpen, 
-  Brain,
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  BarChart3,
+  TrendingUp,
+  Newspaper,
   Activity,
   Settings,
-  Users,
-  LogOut
+  Shield,
+  BookOpen,
+  LineChart,
+  Brain,
+  Target
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
 
 const Navigation = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { signOut, user } = useAuth();
+  const { isAdmin } = useAuth();
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate('/auth');
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
-
-  const navigationItems = [
+  const navigation = [
     {
-      name: 'לוח בקרה',
+      name: 'לוח בקרה ראשי',
       href: '/',
-      icon: Home,
+      icon: BarChart3,
     },
     {
       name: 'ניתוח טכני',
       href: '/technical-analysis',
       icon: TrendingUp,
-    },
-    {
-      name: 'גרפים וניתוח',
-      href: '/charts-analysis',
-      icon: BarChart3,
     },
     {
       name: 'נתונים פונדמנטליים',
@@ -54,55 +40,56 @@ const Navigation = () => {
     {
       name: 'סנטימנט השוק',
       href: '/market-sentiment',
-      icon: Brain,
+      icon: Newspaper,
+    },
+    {
+      name: 'ניתוח גרפים',
+      href: '/charts-analysis',
+      icon: LineChart,
     },
     {
       name: 'מנוע המסחר',
       href: '/trading-engine',
       icon: Activity,
     },
-    {
-      name: 'ניהול מערכת',
-      href: '/admin',
-      icon: Users,
-    },
   ];
 
+  // Add admin routes if user is admin
+  if (isAdmin) {
+    navigation.push({
+      name: 'ניהול מערכת',
+      href: '/admin',
+      icon: Shield,
+    });
+  }
+
+  const isActive = (href: string) => {
+    if (href === '/') {
+      return location.pathname === '/' || location.pathname === '/dashboard';
+    }
+    return location.pathname === href;
+  };
+
   return (
-    <nav className="space-y-2 p-4">
-      {navigationItems.map((item) => {
+    <nav className="flex-1 px-2 py-4 space-y-1">
+      {navigation.map((item) => {
         const Icon = item.icon;
         return (
           <Link
             key={item.name}
             to={item.href}
             className={cn(
-              'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all hover:bg-accent hover:text-accent-foreground text-right w-full',
-              location.pathname === item.href
-                ? 'bg-accent text-accent-foreground'
-                : 'text-muted-foreground'
+              "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors",
+              isActive(item.href)
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             )}
           >
-            <Icon className="h-4 w-4" />
-            <span className="flex-1">{item.name}</span>
+            <Icon className="ml-3 h-5 w-5 flex-shrink-0" />
+            {item.name}
           </Link>
         );
       })}
-      
-      <div className="pt-4 border-t">
-        <div className="text-xs text-muted-foreground mb-2 text-right">
-          {user?.email}
-        </div>
-        <Button
-          variant="ghost"
-          onClick={handleSignOut}
-          className="w-full justify-start text-right gap-3"
-          size="sm"
-        >
-          <LogOut className="h-4 w-4" />
-          התנתק
-        </Button>
-      </div>
     </nav>
   );
 };
