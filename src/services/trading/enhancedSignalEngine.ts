@@ -280,4 +280,27 @@ ${signal.riskSummary}
   public getRejectionStats() {
     return { ...this.rejectionStats };
   }
+
+  public async startEliteEngine() {
+    if (this.isRunning) {
+      console.log('Engine is already running');
+      return;
+    }
+
+    console.log('▶️ Starting LeviPro Signal Engine with Enhanced Quality Scoring...');
+    this.isRunning = true;
+  }
+
+  public async stopEngine() {
+    if (!this.isRunning) {
+      console.log('Engine is not running');
+      return;
+    }
+
+    console.log('⏹️ Stopping LeviPro Signal Engine');
+    this.isRunning = false;
+  }
 }
+
+// Export singleton instance
+export const enhancedSignalEngine = new EnhancedSignalEngine();

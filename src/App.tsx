@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -13,12 +12,24 @@ import TradingEngineControl from './components/trading-engine/TradingEngineContr
 import AdminDashboard from './components/admin/AdminDashboard';
 import Auth from './pages/Auth';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import { QueryClient } from 'react-query';
+import RequireAuth from './components/auth/RequireAuth';
+import Analytics from './pages/Analytics';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="App min-h-screen bg-background">
+    <QueryClient>
+      <BrowserRouter>
+        <AuthProvider>
+          <Toaster 
+            position="top-right" 
+            richColors 
+            expand 
+            closeButton
+            toastOptions={{
+              duration: 5000,
+            }}
+          />
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={
@@ -35,19 +46,11 @@ function App() {
               <Route path="trading-engine" element={<TradingEngineControl />} />
               <Route path="admin" element={<AdminDashboard />} />
             </Route>
+            <Route path="/analytics" element={<RequireAuth><Analytics /></RequireAuth>} />
           </Routes>
-          <Toaster 
-            position="top-right" 
-            richColors 
-            expand 
-            closeButton
-            toastOptions={{
-              duration: 5000,
-            }}
-          />
-        </div>
-      </Router>
-    </AuthProvider>
+        </AuthProvider>
+      </BrowserRouter>
+    </QueryClient>
   );
 }
 
