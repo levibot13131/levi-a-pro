@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Settings, TrendingUp, PlayCircle, Square, TestTube } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Activity, Settings, TrendingUp, PlayCircle, Square, TestTube, Bug, Zap } from 'lucide-react';
 import { enhancedSignalEngine } from '@/services/trading/enhancedSignalEngine';
 import { telegramBot } from '@/services/telegram/telegramBot';
 import SignalQualityMonitor from './SignalQualityMonitor';
@@ -12,6 +13,8 @@ import { toast } from 'sonner';
 const TradingEngineControl: React.FC = () => {
   const [engineStatus, setEngineStatus] = useState(enhancedSignalEngine.getEngineStatus());
   const [isTestingTelegram, setIsTestingTelegram] = useState(false);
+  const [isTestingSignal, setIsTestingSignal] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -42,20 +45,20 @@ const TradingEngineControl: React.FC = () => {
       const testMessage = `🧪 <b>LeviPro Quality Signal Test</b>
 
 📊 BTCUSDT
-🟢 BUY @ $43,250
-🎯 Target: $44,500 
-🛑 Stop: $42,800
-⚡ Confidence: 95%
-📈 R/R: 1:1.7
-🏆 Quality Score: 187/160
+🟢 BUY @ $103,500
+🎯 Target: $107,000 
+🛑 Stop: $101,500
+⚡ Confidence: 92%
+📈 R/R: 1:2.75
+🏆 Quality Score: 218/160
 
 #LeviPro #QualityFilter #Test`;
 
       const success = await telegramBot.sendMessage(testMessage);
       if (success) {
-        toast.success('✅ Test signal with quality score sent successfully!');
+        toast.success('✅ Test message sent successfully!');
       } else {
-        toast.error('❌ Failed to send test signal');
+        toast.error('❌ Failed to send test message');
       }
     } catch (error) {
       console.error('❌ Error testing Telegram:', error);
@@ -63,6 +66,30 @@ const TradingEngineControl: React.FC = () => {
     } finally {
       setIsTestingTelegram(false);
     }
+  };
+
+  const handleTestSignal = async () => {
+    setIsTestingSignal(true);
+    try {
+      console.log('🧪 Generating test signal through scoring engine...');
+      const success = await enhancedSignalEngine.sendTestSignal();
+      if (success) {
+        toast.success('✅ Test signal processed and sent!');
+      } else {
+        toast.error('❌ Failed to process test signal');
+      }
+    } catch (error) {
+      console.error('❌ Error sending test signal:', error);
+      toast.error('❌ Error generating test signal');
+    } finally {
+      setIsTestingSignal(false);
+    }
+  };
+
+  const handleDebugModeToggle = (enabled: boolean) => {
+    setDebugMode(enabled);
+    enhancedSignalEngine.setDebugMode(enabled);
+    toast.info(`🔧 Debug mode ${enabled ? 'enabled' : 'disabled'}`);
   };
 
   return (
@@ -99,6 +126,11 @@ const TradingEngineControl: React.FC = () => {
                   ניקוד: {engineStatus.scoringStats.threshold}+ נדרש
                 </Badge>
               )}
+              {engineStatus.debugMode && (
+                <Badge className="bg-orange-100 text-orange-800">
+                  🔧 Debug
+                </Badge>
+              )}
             </div>
             
             <div className="flex gap-2">
@@ -120,8 +152,35 @@ const TradingEngineControl: React.FC = () => {
                 disabled={isTestingTelegram}
               >
                 <TestTube className="h-4 w-4 mr-2" />
-                {isTestingTelegram ? 'שולח...' : 'איתות בדיקה'}
+                {isTestingTelegram ? 'שולח...' : 'בדיקת טלגרם'}
               </Button>
+
+              <Button 
+                onClick={handleTestSignal} 
+                variant="outline"
+                disabled={isTestingSignal}
+                className="bg-blue-50 hover:bg-blue-100"
+              >
+                <Zap className="h-4 w-4 mr-2" />
+                {isTestingSignal ? 'יוצר...' : 'איתות בדיקה'}
+              </Button>
+            </div>
+          </div>
+
+          {/* Debug Mode Toggle */}
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={debugMode}
+                onCheckedChange={handleDebugModeToggle}
+              />
+              <Bug className="h-4 w-4" />
+            </div>
+            <div className="text-right">
+              <p className="text-sm font-medium">מצב פיתוח</p>
+              <p className="text-xs text-muted-foreground">
+                הצגת פרטי ניקוד ודחייה בקונסול
+              </p>
             </div>
           </div>
 
@@ -152,12 +211,16 @@ const TradingEngineControl: React.FC = () => {
                 <span>סף איכות מינימלי</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-semibold">2:1+</span>
+                <span className="font-semibold">1.8:1+</span>
                 <span>יחס R/R מינימום</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-semibold">80%+</span>
+                <span className="font-semibold">75%+</span>
                 <span>Confidence מינימום</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-semibold">15 שניות</span>
+                <span>תדירות ניתוח</span>
               </div>
             </div>
           </CardContent>
@@ -173,12 +236,16 @@ const TradingEngineControl: React.FC = () => {
           <CardContent>
             <div className="space-y-2 text-right">
               <div className="flex justify-between">
-                <span className="font-bold text-blue-600">{engineStatus.eliteStats?.dailySignalCount || 0}</span>
-                <span>איתותים היום</span>
+                <span className="font-bold text-blue-600">{engineStatus.scoringStats?.totalAnalyzed || 0}</span>
+                <span>נותחו היום</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-bold text-green-600">{engineStatus.scoringStats?.totalPassed || 0}</span>
                 <span>עברו ניקוד איכות</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-bold text-purple-600">{engineStatus.scoringStats?.totalSent || 0}</span>
+                <span>נשלחו לטלגרם</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-bold">{engineStatus.scoringStats?.rejectionRate || 0}%</span>
@@ -208,6 +275,10 @@ const TradingEngineControl: React.FC = () => {
               <div className="flex justify-between">
                 <Badge className="bg-blue-100 text-blue-800">🔄 רצה</Badge>
                 <span>מנוע ניתוח</span>
+              </div>
+              <div className="flex justify-between">
+                <Badge className="bg-green-100 text-green-800">✅ חי</Badge>
+                <span>נתוני מחירים</span>
               </div>
             </div>
           </CardContent>
