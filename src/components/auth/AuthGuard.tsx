@@ -1,33 +1,18 @@
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AuthGuardProps {
   children: React.ReactNode;
 }
 
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
-  const { data: session, isLoading, error } = useQuery({
-    queryKey: ['auth-session'],
-    queryFn: async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Auth session error:', error);
-          return null;
-        }
-        return session;
-      } catch (err) {
-        console.error('Auth guard error:', err);
-        return null;
-      }
-    },
-    retry: 1,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-  });
+  const { isAuthenticated, isLoading } = useAuth();
 
+  console.log('🛡️ AuthGuard check:', { isAuthenticated, isLoading });
+
+  // Show loading while auth is being determined
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
@@ -39,23 +24,14 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     );
   }
 
-  if (error) {
-    console.error('AuthGuard error:', error);
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-        <div className="text-center text-white">
-          <p className="text-xl mb-4">⚠️ Authentication Error</p>
-          <p className="text-sm opacity-75">Please refresh the page</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If no session, redirect to auth page (not login)
-  if (!session) {
+  // If not authenticated, redirect to auth page
+  if (!isAuthenticated) {
+    console.log('❌ Not authenticated, redirecting to /auth');
     return <Navigate to="/auth" replace />;
   }
 
+  // If authenticated, render protected content
+  console.log('✅ Authenticated, rendering protected content');
   return <>{children}</>;
 };
 

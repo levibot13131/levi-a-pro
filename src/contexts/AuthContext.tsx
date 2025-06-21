@@ -38,6 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   const isAdmin = user?.email ? ADMIN_USERS.includes(user.email) : false;
   const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || '';
@@ -57,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (mounted) {
+          // Check authorization
           if (initialSession?.user?.email && !AUTHORIZED_USERS.includes(initialSession.user.email)) {
             console.log('Unauthorized user, signing out:', initialSession.user.email);
             await supabase.auth.signOut();
@@ -67,11 +69,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(initialSession?.user ?? null);
             console.log('Auth initialized:', initialSession?.user?.email || 'No user');
           }
+          
+          setAuthInitialized(true);
           setIsLoading(false);
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
         if (mounted) {
+          setAuthInitialized(true);
           setIsLoading(false);
         }
       }
@@ -79,7 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, newSession) => {
+      async (event, newSession) => {
         console.log('Auth state change:', event, newSession?.user?.email);
         
         if (!mounted) return;
@@ -87,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Check authorization for new sessions
         if (newSession?.user?.email && !AUTHORIZED_USERS.includes(newSession.user.email)) {
           console.log('Unauthorized user attempted access:', newSession.user.email);
-          supabase.auth.signOut();
+          await supabase.auth.signOut();
           toast.error('גישה נדחית - משתמש לא מורשה');
           return;
         }
@@ -95,8 +100,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(newSession);
         setUser(newSession?.user ?? null);
         
-        // Only set loading to false after auth state is handled
-        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        if (!authInitialized) {
+          setAuthInitialized(true);
           setIsLoading(false);
         }
       }
@@ -108,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [authInitialized]);
 
   const signIn = async (email: string, password: string) => {
     // Pre-check authorization
@@ -124,10 +129,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         password,
       });
       
+      // Handle admin bypass for email confirmation
       if (error && error.message?.includes('Email not confirmed')) {
-        // For admin, bypass email confirmation
         if (email.toLowerCase() === 'almogahronov1997@gmail.com') {
+          console.log('Admin bypass - creating live session');
           toast.success('ברוך הבא מנהל המערכת - LeviPro!');
+          
           const adminUser = {
             id: 'admin-live-' + Date.now(),
             email: email.toLowerCase(),
@@ -138,15 +145,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             updated_at: new Date().toISOString(),
           } as SupabaseUser;
           
-          setUser(adminUser);
-          setSession({
+          const adminSession = {
             user: adminUser,
             access_token: 'admin-live-token',
             refresh_token: 'admin-refresh-token',
             expires_in: 3600,
             expires_at: Math.floor(Date.now() / 1000) + 3600,
             token_type: 'bearer',
-          } as Session);
+          } as Session;
+          
+          setUser(adminUser);
+          setSession(adminSession);
           
           return { error: null };
         }

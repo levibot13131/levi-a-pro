@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,8 +18,23 @@ const Auth = () => {
   const [error, setError] = useState('');
 
   const auth = useAuth();
+  const navigate = useNavigate();
 
-  // Simple loading state while auth initializes
+  console.log('🔐 Auth page mounted', { 
+    isAuthenticated: auth.isAuthenticated, 
+    isLoading: auth.isLoading,
+    user: auth.user?.email 
+  });
+
+  // Handle successful authentication
+  useEffect(() => {
+    if (auth.isAuthenticated && !auth.isLoading) {
+      console.log('✅ User authenticated, redirecting to dashboard');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [auth.isAuthenticated, auth.isLoading, navigate]);
+
+  // Show loading while auth initializes
   if (auth.isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
@@ -31,10 +46,9 @@ const Auth = () => {
     );
   }
 
-  // Redirect if already authenticated - but only after loading is complete
+  // If already authenticated, don't render auth form
   if (auth.isAuthenticated) {
-    console.log('User authenticated, redirecting to dashboard');
-    return <Navigate to="/dashboard" replace />;
+    return null; // Will be handled by useEffect navigation
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,7 +73,7 @@ const Auth = () => {
       } else {
         const message = isSignUp ? 'חשבון נוצר בהצלחה!' : 'ברוך הבא ל-LeviPro!';
         toast.success(message);
-        // Don't manually redirect - let the auth state change handle it
+        // Navigation will be handled by useEffect
       }
     } catch (err) {
       const errorMessage = 'אירעה שגיאה בלתי צפויה';

@@ -2,7 +2,7 @@
 import { TradingSignal } from '@/types/trading';
 import { toast } from 'sonner';
 
-// Your specific bot credentials
+// Your specific bot credentials - LIVE PRODUCTION VALUES
 const TELEGRAM_BOT_TOKEN = '7607389220:AAHSUnDPTR_9iQEmMjZkSy5i0kepBotAUbA';
 const TELEGRAM_CHAT_ID = '809305569';
 const TELEGRAM_API_URL = 'https://api.telegram.org/bot';
@@ -20,67 +20,80 @@ export class TelegramBot {
       botToken: TELEGRAM_BOT_TOKEN,
       chatId: TELEGRAM_CHAT_ID
     };
+    
+    console.log('📱 Telegram Bot initialized for LIVE signals');
+    console.log('🎯 Chat ID:', TELEGRAM_CHAT_ID);
   }
 
   public async sendSignal(signal: TradingSignal): Promise<boolean> {
     try {
-      const message = this.formatAdvancedSignalMessage(signal);
+      console.log('📱 Sending LIVE signal to Telegram:', signal.symbol, signal.action);
+      
+      const message = this.formatLiveSignalMessage(signal);
       const response = await this.sendMessage(message);
       
       if (response) {
-        toast.success('🎯 איתות נשלח לטלגרם בהצלחה');
+        console.log('✅ LIVE signal sent to Telegram successfully');
+        toast.success('🎯 איתות LIVE נשלח לטלגרם בהצלחה');
         return true;
       } else {
+        console.error('❌ Failed to send LIVE signal to Telegram');
         toast.error('❌ שגיאה בשליחת איתות לטלגרם');
         return false;
       }
     } catch (error) {
-      console.error('Error sending signal to Telegram:', error);
+      console.error('❌ Error sending LIVE signal to Telegram:', error);
       toast.error('❌ שגיאה בשליחת איתות לטלגרם');
       return false;
     }
   }
 
-  private formatAdvancedSignalMessage(signal: TradingSignal): string {
+  private formatLiveSignalMessage(signal: TradingSignal): string {
     const actionEmoji = signal.action === 'buy' ? '🟢 קנייה' : '🔴 מכירה';
     const confidenceStars = '⭐'.repeat(Math.ceil(signal.confidence * 5));
     const signalId = `${Date.now().toString().slice(-6)}${Math.random().toString(36).substr(2, 3).toUpperCase()}`;
     
-    // Enhanced message format according to your requirements
-    return `
-🔥 <b>LeviPro - משולש הקסם</b> 🔥
+    // Special formatting for Almog's personal method
+    const isPersonalMethod = signal.strategy === 'almog-personal-method';
+    const strategyName = isPersonalMethod ? '🧠 אסטרטגיה אישית - משולש הקסם' : this.getStrategyName(signal.strategy);
+    
+    const message = `
+🔥 <b>LeviPro - איתות LIVE ${isPersonalMethod ? '🧠 אישי' : ''}</b> 🔥
 
 ${actionEmoji} <b>${signal.symbol}</b>
 
-🧠 <b>שיטות מופעלות:</b> ${this.getStrategyName(signal.strategy)} + Momentum + RSI
-💡 <b>סיבת כניסה:</b> ${signal.reasoning}
+${isPersonalMethod ? '🧠 <b>אסטרטגיה אישית מופעלת!</b>' : ''}
+🎯 <b>אסטרטגיה:</b> ${strategyName}
+💡 <b>נימוק:</b> ${signal.reasoning}
 
-📊 <b>נתוני עסקה:</b>
+📊 <b>פרטי עסקה:</b>
 💰 מחיר כניסה: $${signal.price.toFixed(2)}
 🎯 יעד רווח: $${signal.targetPrice.toFixed(2)}
 🛑 סטופ לוס: $${signal.stopLoss.toFixed(2)}
 ⚖️ יחס R/R: 1:${signal.riskRewardRatio.toFixed(1)}
 
-${confidenceStars} <b>ביטחון איתות:</b> ${(signal.confidence * 100).toFixed(0)}%
-🕐 <b>שעת איתות:</b> ${new Date().toLocaleTimeString('he-IL')}
-🆔 <b>מזהה איתות:</b> ${signalId}
+${confidenceStars} <b>ביטחון:</b> ${(signal.confidence * 100).toFixed(0)}%
+🕐 <b>זמן:</b> ${new Date().toLocaleTimeString('he-IL')}
+🆔 <b>מזהה:</b> ${signalId}
 
-🤖 <b>מערכת אוטומטית - LeviPro</b>
-#TradingSignal #${signal.symbol} #LeviPro
+${isPersonalMethod ? '🔥 <b>עדיפות גבוהה - אסטרטגיה אישית!</b>' : ''}
+🤖 <b>LeviPro LIVE Engine</b>
+#TradingSignal #${signal.symbol} #LeviPro ${isPersonalMethod ? '#PersonalMethod' : ''}
 `;
+
+    return message;
   }
 
   private getStrategyName(strategyId: string): string {
     const strategyNames: Record<string, string> = {
-      'personal-strategy': 'משולש הקסם האישי',
-      'wyckoff-strategy': 'Wyckoff Method',
-      'smc-strategy': 'Smart Money Concepts',
-      'fibonacci-strategy': 'Fibonacci Retracement',
-      'momentum-strategy': 'Momentum & Breakouts',
-      'candlestick-strategy': 'Candlestick Patterns',
-      'volume-strategy': 'Volume Profile + VWAP',
+      'almog-personal-method': '🧠 אסטרטגיה אישית - משולש הקסם',
       'rsi-macd-strategy': 'RSI + MACD',
-      'pattern-strategy': 'Chart Patterns'
+      'vwap-strategy': 'VWAP + Volume Profile',
+      'smc-strategy': 'Smart Money Concepts',
+      'wyckoff-strategy': 'Wyckoff Method',
+      'elliott-wave-strategy': 'Elliott Wave Theory',
+      'fibonacci-strategy': 'Fibonacci Retracement',
+      'candlestick-strategy': 'Candlestick Patterns'
     };
     
     return strategyNames[strategyId] || strategyId;
@@ -88,9 +101,8 @@ ${confidenceStars} <b>ביטחון איתות:</b> ${(signal.confidence * 100).t
 
   public async sendMessage(message: string): Promise<boolean> {
     try {
-      console.log('🚀 Sending message to Telegram via cloud API...');
+      console.log('📱 Sending message to Telegram LIVE API...');
       
-      // Direct API call without proxy - works in cloud deployment
       const response = await fetch(`${TELEGRAM_API_URL}${this.config.botToken}/sendMessage`, {
         method: 'POST',
         headers: {
@@ -107,36 +119,55 @@ ${confidenceStars} <b>ביטחון איתות:</b> ${(signal.confidence * 100).t
       const result = await response.json();
       
       if (result.ok) {
-        console.log('✅ Message sent successfully to Telegram');
+        console.log('✅ LIVE message sent successfully to Telegram');
         return true;
       } else {
         console.error('❌ Telegram API error:', result);
         return false;
       }
     } catch (error) {
-      console.error('❌ Error sending Telegram message:', error);
+      console.error('❌ Error sending LIVE Telegram message:', error);
       return false;
     }
   }
 
+  public async sendStartupMessage(): Promise<boolean> {
+    const message = `
+🚀 <b>LeviPro מערכת LIVE הופעלה!</b>
+
+✅ מנוע איתותים: פועל בזמן אמת
+🧠 אסטרטגיה אישית: 80% עדיפות קבועה
+📊 8 אסטרטגיות מתקדמות: פעילות
+🛡️ ניהול סיכונים: 2% מקסימום
+📡 נתונים LIVE: Binance + CoinGecko
+
+🎯 המערכת מוכנה לשליחת איתותים אמיתיים!
+
+🕐 זמן: ${new Date().toLocaleString('he-IL')}
+#LeviPro #LIVE #SystemReady
+`;
+
+    return await this.sendMessage(message);
+  }
+
   public async sendTestMessage(): Promise<boolean> {
     const testMessage = `
-🧪 <b>בדיקת חיבור LeviPro</b>
+🧪 <b>בדיקת חיבור LeviPro LIVE</b>
 
-✅ הבוט מחובר ופועל תקין בענן
-🤖 מערכת אוטומטית פעילה
+✅ הבוט מחובר ופועל תקין
+🤖 מערכת LIVE פעילה
+🧠 אסטרטגיה אישית: מוכנה
 🕐 זמן: ${new Date().toLocaleString('he-IL')}
-🆔 מזהה בדיקה: TEST${Date.now().toString().slice(-4)}
 
-🎯 מערכת המסחר האוטומטי מוכנה לפעולה!
+🎯 מערכת המסחר LIVE מוכנה לפעולה!
 
-#LeviPro #Test #CloudReady
+#LeviPro #Test #LIVE
 `;
 
     try {
       const success = await this.sendMessage(testMessage);
       if (success) {
-        toast.success('✅ הודעת בדיקה נשלחה בהצלחה לטלגרם');
+        toast.success('✅ הודעת בדיקה LIVE נשלחה בהצלחה לטלגרם');
       } else {
         toast.error('❌ שגיאה בשליחת הודעת בדיקה');
       }
@@ -146,32 +177,6 @@ ${confidenceStars} <b>ביטחון איתות:</b> ${(signal.confidence * 100).t
       toast.error('❌ שגיאה בשליחת הודעת בדיקה');
       return false;
     }
-  }
-
-  public async sendSignalDemo(): Promise<boolean> {
-    const demoSignal: TradingSignal = {
-      id: `demo-${Date.now()}`,
-      symbol: 'BTCUSDT',
-      strategy: 'personal-strategy',
-      action: 'buy',
-      price: 63240,
-      targetPrice: 65100,
-      stopLoss: 62450,
-      confidence: 0.87,
-      riskRewardRatio: 2.3,
-      reasoning: 'פריצה מעל אזור התנגדות + RSI מעל 55 + נר engulfing + נפח גבוה',
-      timestamp: Date.now(),
-      status: 'active',
-      telegramSent: false,
-      metadata: {
-        strategies: ['Wyckoff', 'Momentum', 'RSI'],
-        volume_spike: true,
-        resistance_break: true,
-        demo: true
-      }
-    };
-
-    return await this.sendSignal(demoSignal);
   }
 
   public getConnectionStatus(): { connected: boolean; chatId: string } {
