@@ -1,4 +1,3 @@
-
 import { TradingSignal, MarketData, SystemHealth } from '@/types/trading';
 import { strategyEngine } from './strategyEngine';
 import { marketDataService } from './marketDataService';
@@ -252,6 +251,50 @@ export class TradingEngine {
     window.addEventListener('create-manual-signal', ((event: CustomEvent) => {
       this.processSignal(event.detail);
     }) as EventListener);
+  }
+
+  public addToWatchList(symbol: string): void {
+    if (!this.watchList.includes(symbol)) {
+      this.watchList.push(symbol);
+      console.log(`📈 Added ${symbol} to watchlist`);
+    }
+  }
+
+  public removeFromWatchList(symbol: string): void {
+    const index = this.watchList.indexOf(symbol);
+    if (index > -1) {
+      this.watchList.splice(index, 1);
+      console.log(`📉 Removed ${symbol} from watchlist`);
+    }
+  }
+
+  public async executeManualSignal(symbol: string, action: 'buy' | 'sell', reasoning: string): Promise<void> {
+    try {
+      const marketData = await marketDataService.getMarketData(symbol);
+      
+      const signal: TradingSignal = {
+        id: `manual-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        symbol,
+        strategy: 'manual-signal',
+        action,
+        price: marketData.price,
+        targetPrice: action === 'buy' ? marketData.price * 1.025 : marketData.price * 0.975,
+        stopLoss: action === 'buy' ? marketData.price * 0.98 : marketData.price * 1.02,
+        confidence: 0.85,
+        riskRewardRatio: 1.25,
+        reasoning,
+        timestamp: Date.now(),
+        status: 'active',
+        telegramSent: false,
+        metadata: { manual: true }
+      };
+
+      await this.processSignal(signal);
+      console.log('✅ Manual signal executed:', signal);
+    } catch (error) {
+      console.error('❌ Failed to execute manual signal:', error);
+      throw error;
+    }
   }
 
   // Public getters

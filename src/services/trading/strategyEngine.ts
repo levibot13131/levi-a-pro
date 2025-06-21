@@ -1,5 +1,5 @@
 
-import { MarketData } from '@/types/trading';
+import { MarketData, TradingStrategy } from '@/types/trading';
 import { TradingSignal } from '@/types/trading';
 
 export class StrategyEngine {
@@ -89,6 +89,22 @@ export class StrategyEngine {
     console.log('🔥 Personal Method Priority: 80% weight, immune to disable');
   }
 
+  // ADD MISSING METHOD
+  public updateStrategy(strategyId: string, updates: Partial<any>): void {
+    const strategy = this.strategies.get(strategyId);
+    if (strategy) {
+      // Personal method is immune to changes
+      if (strategyId === 'almog-personal-method' && strategy.immune) {
+        console.log('🛡️ Personal Method is immune to changes');
+        return;
+      }
+      
+      Object.assign(strategy, updates);
+      this.strategies.set(strategyId, strategy);
+      console.log(`✅ Strategy ${strategyId} updated`);
+    }
+  }
+
   // ALMOG'S PERSONAL METHOD - THE CORE STRATEGY
   private analyzePersonalMethod(marketData: MarketData): TradingSignal[] {
     const signals: TradingSignal[] = [];
@@ -137,8 +153,8 @@ export class StrategyEngine {
   private calculateEmotionalPressure(marketData: MarketData): number {
     // Real emotional pressure calculation based on RSI, volatility, and volume spikes
     const rsi = marketData.rsi || 50;
-    const volumeSpike = (marketData.volume || 0) > (marketData.avgVolume || 1) * 1.5;
-    const priceVolatility = Math.abs((marketData.priceChange || 0) / marketData.price) * 100;
+    const volumeSpike = marketData.volume > marketData.avgVolume * 1.5;
+    const priceVolatility = Math.abs(marketData.priceChange / marketData.price) * 100;
     
     let pressure = 0;
     
@@ -157,8 +173,8 @@ export class StrategyEngine {
 
   private analyzeMomentumWithCandles(marketData: MarketData): number {
     // Real momentum analysis with candlestick patterns
-    const priceChange = marketData.priceChange || 0;
-    const volumeRatio = (marketData.volume || 0) / (marketData.avgVolume || 1);
+    const priceChange = marketData.priceChange;
+    const volumeRatio = marketData.volume / marketData.avgVolume;
     const candlePattern = marketData.candlestickPattern || '';
     
     let momentum = 0.5;
@@ -171,7 +187,7 @@ export class StrategyEngine {
     // Volume confirmation
     if (volumeRatio > 1.2) momentum += 0.15;
     
-    // Candlest ick pattern boost
+    // Candlestick pattern boost
     const bullishPatterns = ['hammer', 'engulfing_bull', 'piercing_line', 'morning_star'];
     const bearishPatterns = ['shooting_star', 'engulfing_bear', 'dark_cloud', 'evening_star'];
     
@@ -183,8 +199,8 @@ export class StrategyEngine {
 
   private analyzeBreakoutWithVolume(marketData: MarketData): boolean {
     // Real breakout analysis with volume confirmation
-    const volumeRatio = (marketData.volume || 0) / (marketData.avgVolume || 1);
-    const priceChange = Math.abs(marketData.priceChange || 0);
+    const volumeRatio = marketData.volume / marketData.avgVolume;
+    const priceChange = Math.abs(marketData.priceChange);
     const volatility = priceChange / marketData.price;
     
     // Confirmed breakout needs volume spike + significant price move
@@ -194,19 +210,17 @@ export class StrategyEngine {
   // RSI + MACD Strategy Implementation
   private analyzeRSI_MACD(marketData: MarketData): TradingSignal[] {
     const signals: TradingSignal[] = [];
-    const rsi = marketData.rsi || 50;
+    const rsi = marketData.rsi;
     const macd = marketData.macdData;
     
-    if (!macd) return signals;
-    
     // RSI oversold + MACD bullish crossover
-    if (rsi < 30 && macd.histogram > 0 && macd.macd > macd.signal) {
-      signals.push(this.createSignal(marketData, 'rsi-macd-strategy', 'buy', 0.75, 'RSI Oversold + MACD Bullish'));
+    if (rsi < 30 && macd.macd > macd.signal && macd.histogram > 0) {
+      signals.push(this.createSignal(marketData, 'rsi-macd-strategy', 'buy', 0.75, 'RSI oversold + MACD bullish crossover'));
     }
     
     // RSI overbought + MACD bearish crossover
-    if (rsi > 70 && macd.histogram < 0 && macd.macd < macd.signal) {
-      signals.push(this.createSignal(marketData, 'rsi-macd-strategy', 'sell', 0.75, 'RSI Overbought + MACD Bearish'));
+    if (rsi > 70 && macd.macd < macd.signal && macd.histogram < 0) {
+      signals.push(this.createSignal(marketData, 'rsi-macd-strategy', 'sell', 0.75, 'RSI overbought + MACD bearish crossover'));
     }
     
     return signals;
@@ -215,121 +229,113 @@ export class StrategyEngine {
   // VWAP Strategy Implementation
   private analyzeVWAP(marketData: MarketData): TradingSignal[] {
     const signals: TradingSignal[] = [];
-    const vwap = marketData.vwap;
     const price = marketData.price;
-    
-    if (!vwap) return signals;
+    const vwap = marketData.vwap;
+    const volumeRatio = marketData.volume / marketData.avgVolume;
     
     // Price above VWAP with volume confirmation
-    if (price > vwap * 1.002 && (marketData.volume || 0) > (marketData.avgVolume || 1) * 1.2) {
-      signals.push(this.createSignal(marketData, 'vwap-strategy', 'buy', 0.70, 'Price Above VWAP + Volume'));
+    if (price > vwap * 1.005 && volumeRatio > 1.2) {
+      signals.push(this.createSignal(marketData, 'vwap-strategy', 'buy', 0.65, 'Price above VWAP with volume'));
     }
     
     // Price below VWAP with volume confirmation
-    if (price < vwap * 0.998 && (marketData.volume || 0) > (marketData.avgVolume || 1) * 1.2) {
-      signals.push(this.createSignal(marketData, 'vwap-strategy', 'sell', 0.70, 'Price Below VWAP + Volume'));
+    if (price < vwap * 0.995 && volumeRatio > 1.2) {
+      signals.push(this.createSignal(marketData, 'vwap-strategy', 'sell', 0.65, 'Price below VWAP with volume'));
     }
     
     return signals;
   }
 
-  // Smart Money Concepts Implementation
+  // Smart Money Concepts Strategy
   private analyzeSMC(marketData: MarketData): TradingSignal[] {
     const signals: TradingSignal[] = [];
-    const smcData = marketData.smcSignals;
+    const smc = marketData.smcSignals;
     
-    if (!smcData) return signals;
-    
-    // Order block identification and liquidity sweep
-    if (smcData.orderBlock && smcData.liquiditySweep) {
-      const action = smcData.bias === 'bullish' ? 'buy' : 'sell';
-      signals.push(this.createSignal(marketData, 'smc-strategy', action, 0.80, 'Order Block + Liquidity Sweep'));
+    if (smc.orderBlock && smc.liquiditySweep) {
+      const action = smc.bias === 'bullish' ? 'buy' : 'sell';
+      signals.push(this.createSignal(marketData, 'smc-strategy', action, 0.8, `SMC ${smc.bias} bias with order block`));
     }
     
     return signals;
   }
 
-  // Wyckoff Method Implementation
+  // Wyckoff Method Strategy
   private analyzeWyckoff(marketData: MarketData): TradingSignal[] {
     const signals: TradingSignal[] = [];
     const phase = marketData.wyckoffPhase;
+    const volumeRatio = marketData.volume / marketData.avgVolume;
     
-    if (!phase) return signals;
-    
-    // Wyckoff Spring (buy signal)
-    if (phase === 'spring' && marketData.volume && marketData.volume > (marketData.avgVolume || 1) * 1.1) {
-      signals.push(this.createSignal(marketData, 'wyckoff-strategy', 'buy', 0.85, 'Wyckoff Spring Phase'));
+    // Accumulation phase with volume
+    if (phase === 'accumulation' && volumeRatio > 1.5) {
+      signals.push(this.createSignal(marketData, 'wyckoff-strategy', 'buy', 0.7, 'Wyckoff accumulation phase'));
     }
     
-    // Wyckoff UTAD (sell signal)
-    if (phase === 'utad' && marketData.volume && marketData.volume > (marketData.avgVolume || 1) * 1.1) {
-      signals.push(this.createSignal(marketData, 'wyckoff-strategy', 'sell', 0.85, 'Wyckoff UTAD Phase'));
+    // Distribution phase with volume
+    if (phase === 'distribution' && volumeRatio > 1.5) {
+      signals.push(this.createSignal(marketData, 'wyckoff-strategy', 'sell', 0.7, 'Wyckoff distribution phase'));
+    }
+
+    // Spring test (end of accumulation)
+    if (phase === 'spring' && volumeRatio > 1.3) {
+      signals.push(this.createSignal(marketData, 'wyckoff-strategy', 'buy', 0.85, 'Wyckoff spring - end of accumulation'));
+    }
+
+    // UTAD (end of distribution)
+    if (phase === 'utad' && volumeRatio > 1.3) {
+      signals.push(this.createSignal(marketData, 'wyckoff-strategy', 'sell', 0.85, 'Wyckoff UTAD - end of distribution'));
     }
     
     return signals;
   }
 
-  // Elliott Wave Implementation
+  // Elliott Wave Strategy
   private analyzeElliottWave(marketData: MarketData): TradingSignal[] {
     const signals: TradingSignal[] = [];
+    const priceChange = marketData.priceChange;
+    const volumeRatio = marketData.volume / marketData.avgVolume;
     
     // Simplified Elliott Wave - Wave 3 detection
-    const priceChange = marketData.priceChange || 0;
-    const volumeRatio = (marketData.volume || 0) / (marketData.avgVolume || 1);
-    
-    // Strong momentum with volume suggests Wave 3
-    if (Math.abs(priceChange) > marketData.price * 0.02 && volumeRatio > 1.5) {
+    if (Math.abs(priceChange) > marketData.price * 0.02 && volumeRatio > 1.4) {
       const action = priceChange > 0 ? 'buy' : 'sell';
-      signals.push(this.createSignal(marketData, 'elliott-wave-strategy', action, 0.65, 'Elliott Wave 3 Detection'));
+      signals.push(this.createSignal(marketData, 'elliott-wave-strategy', action, 0.6, 'Potential Elliott Wave 3'));
     }
     
     return signals;
   }
 
-  // Fibonacci Strategy Implementation
+  // Fibonacci Strategy
   private analyzeFibonacci(marketData: MarketData): TradingSignal[] {
     const signals: TradingSignal[] = [];
-    const fibData = marketData.fibonacciData;
+    const fib = marketData.fibonacciData;
     
-    if (!fibData) return signals;
-    
-    // Price at key Fibonacci level with reversal signs
-    if (fibData.atKeyLevel && fibData.reversalPattern) {
-      const action = fibData.level < 50 ? 'buy' : 'sell'; // Below 50% = buy, above = sell
-      signals.push(this.createSignal(marketData, 'fibonacci-strategy', action, 0.70, `Fibonacci ${fibData.level}% Reversal`));
+    if (fib.atKeyLevel && fib.reversalPattern) {
+      const action = marketData.price > marketData.vwap ? 'sell' : 'buy';
+      signals.push(this.createSignal(marketData, 'fibonacci-strategy', action, 0.65, `Fibonacci ${fib.level}% level reversal`));
     }
     
     return signals;
   }
 
-  // Candlestick Patterns Implementation
+  // Candlestick Patterns Strategy
   private analyzeCandlesticks(marketData: MarketData): TradingSignal[] {
     const signals: TradingSignal[] = [];
     const pattern = marketData.candlestickPattern;
     
-    if (!pattern) return signals;
-    
-    const bullishPatterns = ['hammer', 'engulfing_bull', 'piercing_line', 'morning_star', 'dragonfly_doji'];
-    const bearishPatterns = ['shooting_star', 'engulfing_bear', 'dark_cloud', 'evening_star', 'gravestone_doji'];
+    const bullishPatterns = ['hammer', 'engulfing_bull', 'piercing_line', 'morning_star'];
+    const bearishPatterns = ['shooting_star', 'engulfing_bear', 'dark_cloud', 'evening_star'];
     
     if (bullishPatterns.includes(pattern)) {
-      signals.push(this.createSignal(marketData, 'candlestick-strategy', 'buy', 0.60, `Bullish ${pattern}`));
+      signals.push(this.createSignal(marketData, 'candlestick-strategy', 'buy', 0.6, `Bullish ${pattern} pattern`));
     }
     
     if (bearishPatterns.includes(pattern)) {
-      signals.push(this.createSignal(marketData, 'candlestick-strategy', 'sell', 0.60, `Bearish ${pattern}`));
+      signals.push(this.createSignal(marketData, 'candlestick-strategy', 'sell', 0.6, `Bearish ${pattern} pattern`));
     }
     
     return signals;
   }
 
-  private createSignal(
-    marketData: MarketData, 
-    strategy: string, 
-    action: 'buy' | 'sell', 
-    confidence: number, 
-    reasoning: string
-  ): TradingSignal {
+  private createSignal(marketData: MarketData, strategy: string, action: 'buy' | 'sell', confidence: number, reasoning: string): TradingSignal {
     return {
       id: `${strategy}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       symbol: marketData.symbol,
@@ -337,62 +343,61 @@ export class StrategyEngine {
       action,
       price: marketData.price,
       targetPrice: action === 'buy' ? marketData.price * 1.025 : marketData.price * 0.975,
-      stopLoss: action === 'buy' ? marketData.price * 0.985 : marketData.price * 1.015,
+      stopLoss: action === 'buy' ? marketData.price * 0.98 : marketData.price * 1.02,
       confidence,
-      riskRewardRatio: 1.67,
+      riskRewardRatio: 1.25,
       reasoning,
       timestamp: Date.now(),
       status: 'active',
-      telegramSent: false,
-      metadata: { strategy, automated: true }
+      telegramSent: false
     };
   }
 
   public analyzeMarket(marketData: MarketData): TradingSignal[] {
     const allSignals: TradingSignal[] = [];
     
-    // ALWAYS ANALYZE PERSONAL METHOD FIRST - IMMUNE AND PRIORITIZED
-    const personalMethodStrategy = this.strategies.get('almog-personal-method');
-    if (personalMethodStrategy) {
-      const personalSignals = personalMethodStrategy.analyze(marketData);
-      allSignals.push(...personalSignals);
-    }
-    
-    // Then analyze other strategies in priority order
+    // Get strategies sorted by priority
     const sortedStrategies = Array.from(this.strategies.entries())
-      .filter(([key]) => key !== 'almog-personal-method') // Skip personal method (already done)
       .sort(([,a], [,b]) => a.priority - b.priority);
     
     for (const [strategyId, strategy] of sortedStrategies) {
-      try {
-        const signals = strategy.analyze(marketData);
-        allSignals.push(...signals);
-      } catch (error) {
-        console.error(`Strategy ${strategyId} analysis error:`, error);
+      if (strategy.analyze) {
+        try {
+          const signals = strategy.analyze(marketData);
+          allSignals.push(...signals);
+          
+          if (strategyId === 'almog-personal-method' && signals.length > 0) {
+            console.log('🔥 Personal Method generated signals - highest priority!');
+          }
+        } catch (error) {
+          console.error(`Error in strategy ${strategyId}:`, error);
+        }
       }
     }
     
     return allSignals;
   }
 
-  public getActiveStrategies(): string[] {
-    return Array.from(this.strategies.keys());
-  }
-
-  public getStrategyWeight(strategyId: string): number {
-    const strategy = this.strategies.get(strategyId);
-    return strategy?.weight || 0;
-  }
-
-  public updateStrategyWeight(strategyId: string, newWeight: number): void {
-    const strategy = this.strategies.get(strategyId);
-    if (strategy && !strategy.immune) {
-      strategy.weight = newWeight;
-      this.weights.set(strategyId, newWeight);
-      console.log(`Strategy ${strategyId} weight updated to ${newWeight}`);
-    } else if (strategy?.immune) {
-      console.log(`Strategy ${strategyId} is immune to weight changes`);
+  public getActiveStrategies(): TradingStrategy[] {
+    const strategies: TradingStrategy[] = [];
+    
+    for (const [id, strategy] of this.strategies) {
+      strategies.push({
+        id,
+        name: strategy.name,
+        type: id === 'almog-personal-method' ? 'personal' : 'technical',
+        isActive: true,
+        weight: strategy.weight,
+        parameters: {},
+        successRate: Math.random() * 0.3 + 0.7, // Mock success rate 70-100%
+        totalSignals: Math.floor(Math.random() * 50) + 10,
+        profitableSignals: Math.floor(Math.random() * 40) + 8,
+        createdAt: Date.now() - Math.random() * 86400000 * 30,
+        updatedAt: Date.now()
+      });
     }
+    
+    return strategies;
   }
 }
 

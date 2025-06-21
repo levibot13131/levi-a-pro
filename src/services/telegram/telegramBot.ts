@@ -48,6 +48,27 @@ export class TelegramBot {
     }
   }
 
+  // ADD MISSING METHOD
+  public async sendSignalDemo(): Promise<boolean> {
+    const demoSignal: TradingSignal = {
+      id: 'demo-test-12345',
+      symbol: 'BTCUSDT',
+      strategy: 'almog-personal-method',
+      action: 'buy',
+      price: 43500,
+      targetPrice: 44500,
+      stopLoss: 42500,
+      confidence: 0.85,
+      riskRewardRatio: 2.0,
+      reasoning: 'Demo signal - Emotional pressure 85% + Momentum confirmation + Volume breakout',
+      timestamp: Date.now(),
+      status: 'active',
+      telegramSent: false
+    };
+
+    return await this.sendSignal(demoSignal);
+  }
+
   private formatLiveSignalMessage(signal: TradingSignal): string {
     const actionEmoji = signal.action === 'buy' ? '🟢 קנייה' : '🔴 מכירה';
     const confidenceStars = '⭐'.repeat(Math.ceil(signal.confidence * 5));

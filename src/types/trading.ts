@@ -24,7 +24,6 @@ export interface TradingSignal {
   status: 'active' | 'completed' | 'cancelled';
   telegramSent: boolean;
   metadata?: Record<string, any>;
-  // Added missing fields for profit tracking
   profit?: number;
   profitPercent?: number;
   executedPrice?: number;
@@ -37,11 +36,18 @@ export interface MarketData {
   symbol: string;
   price: number;
   volume: number;
+  avgVolume: number; // Added missing property
+  priceChange: number; // Added missing property
   rsi: number;
   macd: {
     signal: number;
     histogram: number;
     macd: number;
+  };
+  macdData: { // Added missing property
+    macd: number;
+    signal: number;
+    histogram: number;
   };
   volumeProfile: number;
   vwap: number;
@@ -50,12 +56,22 @@ export interface MarketData {
     level786: number;
     level382: number;
   };
+  fibonacciData: { // Added missing property
+    atKeyLevel: boolean;
+    reversalPattern: boolean;
+    level: number;
+  };
   candlestickPattern: string;
-  wyckoffPhase: 'accumulation' | 'markup' | 'distribution' | 'markdown';
+  wyckoffPhase: 'accumulation' | 'markup' | 'distribution' | 'markdown' | 'spring' | 'utad'; // Extended enum
   smcSignal: {
     orderBlock: number;
     liquidityGrab: boolean;
     fairValueGap: number;
+  };
+  smcSignals: { // Added missing property
+    orderBlock: boolean;
+    liquiditySweep: boolean;
+    bias: 'bullish' | 'bearish';
   };
   sentiment: {
     score: number;

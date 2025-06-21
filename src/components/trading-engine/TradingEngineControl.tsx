@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { Play, Pause, Plus, X, Send, TestTube } from 'lucide-react';
 import { tradingEngine } from '@/services/trading/tradingEngine';
 import { telegramBot } from '@/services/telegram/telegramBot';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 // Authorized users list
 const AUTHORIZED_USERS = [

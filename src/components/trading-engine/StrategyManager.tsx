@@ -42,7 +42,7 @@ const StrategyManager = () => {
       updatedAt: Date.now()
     };
 
-    strategyEngine.updateStrategy(updatedStrategy);
+    strategyEngine.updateStrategy(updatedStrategy.id, updatedStrategy);
     setPersonalStrategy(updatedStrategy);
     toast.success('האסטרטגיה האישית עודכנה');
   };
@@ -57,7 +57,7 @@ const StrategyManager = () => {
       updatedAt: Date.now()
     };
 
-    strategyEngine.updateStrategy(updatedStrategy);
+    strategyEngine.updateStrategy(strategyId, { isActive });
     loadStrategies();
     
     toast.success(`אסטרטגיה ${strategy.name} ${isActive ? 'הופעלה' : 'הושבתה'}`);
@@ -91,9 +91,9 @@ const StrategyManager = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>סף RSI ({personalStrategy.parameters.rsiThreshold})</Label>
+                  <Label>סף RSI ({personalStrategy.parameters?.rsiThreshold || 50})</Label>
                   <Slider
-                    value={[personalStrategy.parameters.rsiThreshold]}
+                    value={[personalStrategy.parameters?.rsiThreshold || 50]}
                     onValueChange={([value]) => updatePersonalStrategy({ rsiThreshold: value })}
                     max={100}
                     min={0}
@@ -103,9 +103,9 @@ const StrategyManager = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>יעד רווח ({personalStrategy.parameters.profitTargetPercent}%)</Label>
+                  <Label>יעד רווח ({personalStrategy.parameters?.profitTargetPercent || 2.5}%)</Label>
                   <Slider
-                    value={[personalStrategy.parameters.profitTargetPercent]}
+                    value={[personalStrategy.parameters?.profitTargetPercent || 2.5]}
                     onValueChange={([value]) => updatePersonalStrategy({ profitTargetPercent: value })}
                     max={10}
                     min={0.5}
@@ -115,9 +115,9 @@ const StrategyManager = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>סטופ לוס ({personalStrategy.parameters.stopLossPercent}%)</Label>
+                  <Label>סטופ לוס ({personalStrategy.parameters?.stopLossPercent || 2}%)</Label>
                   <Slider
-                    value={[personalStrategy.parameters.stopLossPercent]}
+                    value={[personalStrategy.parameters?.stopLossPercent || 2]}
                     onValueChange={([value]) => updatePersonalStrategy({ stopLossPercent: value })}
                     max={5}
                     min={0.5}
@@ -129,9 +129,9 @@ const StrategyManager = () => {
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>סיכון מקסימלי לעסקה ({personalStrategy.parameters.maxRiskPercent}%)</Label>
+                  <Label>סיכון מקסימלי לעסקה ({personalStrategy.parameters?.maxRiskPercent || 2}%)</Label>
                   <Slider
-                    value={[personalStrategy.parameters.maxRiskPercent]}
+                    value={[personalStrategy.parameters?.maxRiskPercent || 2]}
                     onValueChange={([value]) => updatePersonalStrategy({ maxRiskPercent: value })}
                     max={5}
                     min={0.5}
@@ -141,9 +141,9 @@ const StrategyManager = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>יחס סיכון/תשואה (1:{personalStrategy.parameters.riskRewardRatio})</Label>
+                  <Label>יחס סיכון/תשואה (1:{personalStrategy.parameters?.riskRewardRatio || 1.5})</Label>
                   <Slider
-                    value={[personalStrategy.parameters.riskRewardRatio]}
+                    value={[personalStrategy.parameters?.riskRewardRatio || 1.5]}
                     onValueChange={([value]) => updatePersonalStrategy({ riskRewardRatio: value })}
                     max={5}
                     min={1}
@@ -155,7 +155,7 @@ const StrategyManager = () => {
                 <div className="flex items-center justify-between">
                   <Label>דרישת עלייה בנפח</Label>
                   <Switch
-                    checked={personalStrategy.parameters.volumeIncreaseRequired}
+                    checked={personalStrategy.parameters?.volumeIncreaseRequired || false}
                     onCheckedChange={(checked) => updatePersonalStrategy({ volumeIncreaseRequired: checked })}
                   />
                 </div>
@@ -163,7 +163,7 @@ const StrategyManager = () => {
                 <div className="flex items-center justify-between">
                   <Label>דרישת שבירת התנגדות</Label>
                   <Switch
-                    checked={personalStrategy.parameters.resistanceBreakRequired}
+                    checked={personalStrategy.parameters?.resistanceBreakRequired || false}
                     onCheckedChange={(checked) => updatePersonalStrategy({ resistanceBreakRequired: checked })}
                   />
                 </div>
@@ -227,6 +227,7 @@ const StrategyManager = () => {
                   <Switch
                     checked={strategy.isActive}
                     onCheckedChange={(checked) => toggleStrategy(strategy.id, checked)}
+                    disabled={strategy.id === 'almog-personal-method'} // Personal method can't be disabled
                   />
                 </div>
               </div>
