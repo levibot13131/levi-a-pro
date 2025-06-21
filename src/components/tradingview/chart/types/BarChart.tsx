@@ -28,18 +28,7 @@ const CustomBarChart: React.FC<ChartBaseProps> = ({
         width={80}
         stroke="#888888"
         orientation="right"
-        yAxisId="price"
       />
-      {showVolume && (
-        <YAxis 
-          dataKey="volume" 
-          orientation="left"
-          tick={{ fontSize: 12 }}
-          width={80}
-          stroke="#888888"
-          yAxisId="volume"
-        />
-      )}
       <Tooltip 
         formatter={(value: number, name: string) => {
           if (name === 'price') return [formatPrice(value), 'מחיר'];
@@ -53,10 +42,9 @@ const CustomBarChart: React.FC<ChartBaseProps> = ({
         dataKey="price" 
         fill={isPositiveChange ? "#10b981" : "#ef4444"} 
         radius={[4, 4, 0, 0]}
-        yAxisId="price"
       />
       {showVolume && (
-        <Bar dataKey="volume" fill="#8884d8" opacity={0.5} yAxisId="volume" />
+        <Bar dataKey="volume" fill="#8884d8" opacity={0.5} />
       )}
     </BarChart>
   );
