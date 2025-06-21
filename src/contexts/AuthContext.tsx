@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,70 +38,99 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const isAdmin = user?.email ? ADMIN_USERS.includes(user.email) : false;
   const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || '';
 
   useEffect(() => {
+    let mounted = true;
+
+    // Initialize auth state
+    const initializeAuth = async () => {
+      try {
+        // Get initial session
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting initial session:', error);
+        }
+
+        if (mounted) {
+          // Check authorization
+          if (initialSession?.user?.email && !AUTHORIZED_USERS.includes(initialSession.user.email)) {
+            console.log('Unauthorized existing session:', initialSession.user.email);
+            await supabase.auth.signOut();
+            toast.error('גישה נדחית - משתמש לא מורשה');
+            setSession(null);
+            setUser(null);
+          } else {
+            setSession(initialSession);
+            setUser(initialSession?.user ?? null);
+            
+            if (initialSession?.user) {
+              initializeUserEngineStatus(initialSession.user.id);
+            }
+          }
+          
+          setIsLoading(false);
+          setIsInitialized(true);
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        if (mounted) {
+          setIsLoading(false);
+          setIsInitialized(true);
+        }
+      }
+    };
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth event:', event, session?.user?.email);
+      async (event, newSession) => {
+        console.log('Auth event:', event, newSession?.user?.email);
         
-        // Check if user is authorized
-        if (session?.user?.email && !AUTHORIZED_USERS.includes(session.user.email)) {
-          console.log('Unauthorized user attempted access:', session.user.email);
-          supabase.auth.signOut();
+        if (!mounted) return;
+
+        // Check authorization for new sessions
+        if (newSession?.user?.email && !AUTHORIZED_USERS.includes(newSession.user.email)) {
+          console.log('Unauthorized user attempted access:', newSession.user.email);
+          await supabase.auth.signOut();
           toast.error('גישה נדחית - משתמש לא מורשה');
           return;
         }
         
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsLoading(false);
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
         
-        // Auto-start engine for admin users
-        if (session?.user && ADMIN_USERS.includes(session.user.email)) {
+        // Auto-start engine for admin users (with delay to prevent loops)
+        if (newSession?.user && ADMIN_USERS.includes(newSession.user.email) && event === 'SIGNED_IN') {
           setTimeout(() => {
-            // Import and start engine automatically
             import('@/services/trading/engineController').then(({ engineController }) => {
               engineController.startEngine().then(() => {
                 toast.success('מערכת LeviPro הופעלה אוטומטית!', {
                   description: 'מנוע האסטרטגיה האישית פועל עכשיו',
                   duration: 8000,
                 });
-              });
-            });
+              }).catch(console.error);
+            }).catch(console.error);
           }, 2000);
         }
         
-        // Initialize engine status for authenticated users
-        if (session?.user) {
-          initializeUserEngineStatus(session.user.id);
+        // Initialize engine status for new authenticated users
+        if (newSession?.user && event === 'SIGNED_IN') {
+          initializeUserEngineStatus(newSession.user.id);
         }
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      // Check authorization
-      if (session?.user?.email && !AUTHORIZED_USERS.includes(session.user.email)) {
-        console.log('Unauthorized existing session:', session.user.email);
-        supabase.auth.signOut();
-        toast.error('גישה נדחית - משתמש לא מורשה');
-        return;
-      }
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-      
-      if (session?.user) {
-        initializeUserEngineStatus(session.user.id);
-      }
-    });
+    // Initialize auth
+    initializeAuth();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const initializeUserEngineStatus = async (userId: string) => {
@@ -268,6 +298,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Refresh user error:', error);
     }
   };
+
+  // Don't render children until auth is initialized
+  if (!isInitialized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-white text-lg">🔐 LeviPro מתחיל...</p>
+        </div>
+      </div>
+    );
+  }
 
   const value = {
     user,

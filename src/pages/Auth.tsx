@@ -16,15 +16,22 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [hasMounted, setHasMounted] = useState(false);
 
   const { signIn, signUp, isAuthenticated, isLoading: authLoading } = useAuth();
 
-  // Redirect if already authenticated
-  if (isAuthenticated) {
+  // Prevent redirect loops by ensuring component has mounted
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  // Only redirect after component has properly mounted and auth is not loading
+  if (hasMounted && !authLoading && isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  if (authLoading) {
+  // Show loading while auth context is initializing
+  if (!hasMounted || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="flex flex-col items-center gap-4">
