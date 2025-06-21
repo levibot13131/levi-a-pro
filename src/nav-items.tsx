@@ -1,10 +1,10 @@
 
-import { HomeIcon, BarChart3Icon, TrendingUpIcon, MessageSquareIcon, SettingsIcon, ActivityIcon } from "lucide-react";
-import Index from "./pages/Index.tsx";
-import Dashboard from "./pages/Dashboard.tsx";
-import TradingDashboard from "./pages/TradingDashboard.tsx";
-import TradingViewIntegration from "./pages/TradingViewIntegration.tsx";
-import SystemHealth from "./pages/SystemHealth.tsx";
+import { HomeIcon, BarChart3, TrendingUp, Settings, Zap, Search } from "lucide-react";
+import Index from "./pages/Index";
+import TradingDashboard from "./pages/TradingDashboard";
+import Dashboard from "./pages/Dashboard";
+import Signals from "./pages/Signals";
+import SystemAuditDashboard from "./components/trading/SystemAuditDashboard";
 
 export const navItems = [
   {
@@ -14,27 +14,27 @@ export const navItems = [
     page: <Index />,
   },
   {
-    title: "Dashboard",
-    to: "/dashboard",
-    icon: <BarChart3Icon className="h-4 w-4" />,
-    page: <Dashboard />,
-  },
-  {
-    title: "Trading Signals",
-    to: "/trading-signals",
-    icon: <TrendingUpIcon className="h-4 w-4" />,
+    title: "Trading Dashboard",
+    to: "/trading",
+    icon: <TrendingUp className="h-4 w-4" />,
     page: <TradingDashboard />,
   },
   {
-    title: "TradingView",
-    to: "/tradingview",
-    icon: <MessageSquareIcon className="h-4 w-4" />,
-    page: <TradingViewIntegration />,
+    title: "Dashboard",
+    to: "/dashboard",
+    icon: <BarChart3 className="h-4 w-4" />,
+    page: <Dashboard />,
   },
   {
-    title: "System Health",
-    to: "/system-health",
-    icon: <ActivityIcon className="h-4 w-4" />,
-    page: <SystemHealth />,
+    title: "Signals",
+    to: "/signals", 
+    icon: <Zap className="h-4 w-4" />,
+    page: <Signals />,
+  },
+  {
+    title: "System Audit",
+    to: "/audit",
+    icon: <Search className="h-4 w-4" />,
+    page: <SystemAuditDashboard />,
   },
 ];
