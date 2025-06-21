@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,16 +7,20 @@ import { PlayCircle, Square, Activity, TrendingUp, Target, Shield, Brain, BarCha
 import { enhancedSignalEngine } from '@/services/trading/enhancedSignalEngine';
 import { marketIntelligenceEngine } from '@/services/intelligence/marketIntelligenceEngine';
 import { multiTimeframeEngine } from '@/services/analysis/multiTimeframeEngine';
+import { autonomousOperationService } from '@/services/autonomous/autonomousOperationService';
 import ComprehensiveTradingJournal from '../trading/ComprehensiveTradingJournal';
 import TelegramStatusIndicator from '../telegram/TelegramStatusIndicator';
+import LiveNewsFeed from '../news/LiveNewsFeed';
+import EnhancedTradingChart from '../charts/EnhancedTradingChart';
+import ManualTradeEntry, { ManualTradeData } from '../journal/ManualTradeEntry';
 import { toast } from 'sonner';
 
 const UnifiedDashboard: React.FC = () => {
   const [signalEngineStatus, setSignalEngineStatus] = useState(enhancedSignalEngine.getEngineStatus());
   const [marketIntelligence, setMarketIntelligence] = useState(marketIntelligenceEngine.getIntelligence());
   const [multiTimeframeSignals, setMultiTimeframeSignals] = useState(multiTimeframeEngine.getRecentSignals());
-  const [isIntelligenceRunning, setIsIntelligenceRunning] = useState(marketIntelligenceEngine.isEngineRunning());
-  const [isMultiTimeframeRunning, setIsMultiTimeframeRunning] = useState(multiTimeframeEngine.isEngineRunning());
+  const [systemHealth, setSystemHealth] = useState(autonomousOperationService.getSystemHealth());
+  const [manualTrades, setManualTrades] = useState<ManualTradeData[]>([]);
 
   useEffect(() => {
     // Status update interval
@@ -25,45 +28,58 @@ const UnifiedDashboard: React.FC = () => {
       setSignalEngineStatus(enhancedSignalEngine.getEngineStatus());
       setMarketIntelligence(marketIntelligenceEngine.getIntelligence());
       setMultiTimeframeSignals(multiTimeframeEngine.getRecentSignals());
-      setIsIntelligenceRunning(marketIntelligenceEngine.isEngineRunning());
-      setIsMultiTimeframeRunning(multiTimeframeEngine.isEngineRunning());
+      setSystemHealth(autonomousOperationService.getSystemHealth());
     }, 5000);
 
-    // Listen for market intelligence updates
+    // Listen for system events
     const handleIntelligenceUpdate = (event: CustomEvent) => {
       setMarketIntelligence(event.detail);
     };
 
-    // Listen for high-probability setups
     const handleHighProbabilitySetup = (event: CustomEvent) => {
       const setup = event.detail;
       toast.success(`🎯 High-Probability Setup: ${setup.symbol} (${setup.confluence}% confluence)`);
+      setMultiTimeframeSignals(prev => [setup, ...prev.slice(0, 19)]);
+    };
+
+    const handleSystemOperational = (event: CustomEvent) => {
+      toast.success('🚀 LeviPro is now fully operational and autonomous');
+    };
+
+    const handleAutonomousLearning = (event: CustomEvent) => {
+      const { iteration, successRate, improvements } = event.detail;
+      toast.info(`🧠 AI Learning Cycle ${iteration} - Success Rate: ${(successRate * 100).toFixed(1)}%`);
     };
 
     window.addEventListener('market-intelligence-update', handleIntelligenceUpdate as EventListener);
     window.addEventListener('high-probability-setup', handleHighProbabilitySetup as EventListener);
+    window.addEventListener('system-operational', handleSystemOperational as EventListener);
+    window.addEventListener('autonomous-learning-update', handleAutonomousLearning as EventListener);
 
     return () => {
       clearInterval(statusInterval);
       window.removeEventListener('market-intelligence-update', handleIntelligenceUpdate as EventListener);
       window.removeEventListener('high-probability-setup', handleHighProbabilitySetup as EventListener);
+      window.removeEventListener('system-operational', handleSystemOperational as EventListener);
+      window.removeEventListener('autonomous-learning-update', handleAutonomousLearning as EventListener);
     };
   }, []);
 
   const startAllEngines = async () => {
-    await enhancedSignalEngine.start();
-    await marketIntelligenceEngine.start();
-    await multiTimeframeEngine.startAnalysis();
-    toast.success('🚀 All engines activated - LeviPro is now running autonomously');
+    await autonomousOperationService.startAutonomousOperation();
+    toast.success('🚀 All engines activated - LeviPro is now running autonomously 24/7');
   };
 
   const stopAllEngines = () => {
-    enhancedSignalEngine.stop();
-    marketIntelligenceEngine.stop();
-    multiTimeframeEngine.stopAnalysis();
-    toast.info('⏹️ All engines stopped');
+    autonomousOperationService.stopAutonomousOperation();
+    toast.info('⏹️ Autonomous operation stopped');
   };
 
+  const handleAddManualTrade = (trade: ManualTradeData) => {
+    setManualTrades(prev => [trade, ...prev]);
+  };
+
+  const isSystemRunning = systemHealth.isOperational;
   const highProbabilitySetups = multiTimeframeSignals.filter(s => s.highProbabilitySetup);
 
   return (
@@ -74,45 +90,45 @@ const UnifiedDashboard: React.FC = () => {
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Activity className="h-6 w-6 text-blue-500" />
-              LeviPro Master Control
+              LeviPro Autonomous Control Center
             </div>
             <TelegramStatusIndicator />
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div className="flex items-center gap-2">
-              <Badge variant={signalEngineStatus.isRunning ? "default" : "secondary"}>
-                <Target className="h-3 w-3 mr-1" />
-                Signal Engine: {signalEngineStatus.isRunning ? 'Active' : 'Stopped'}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant={isIntelligenceRunning ? "default" : "secondary"}>
-                <Brain className="h-3 w-3 mr-1" />
-                Intelligence: {isIntelligenceRunning ? 'Learning' : 'Stopped'}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant={isMultiTimeframeRunning ? "default" : "secondary"}>
-                <BarChart3 className="h-3 w-3 mr-1" />
-                Multi-TF: {isMultiTimeframeRunning ? 'Analyzing' : 'Stopped'}
-              </Badge>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+            {Object.entries(systemHealth.components).map(([component, status]) => (
+              <div key={component} className="flex items-center gap-2">
+                <Badge variant={status ? "default" : "secondary"}>
+                  {component === 'marketIntelligence' && <Brain className="h-3 w-3 mr-1" />}
+                  {component === 'multiTimeframe' && <BarChart3 className="h-3 w-3 mr-1" />}
+                  {component === 'signalEngine' && <Target className="h-3 w-3 mr-1" />}
+                  {component === 'newsAggregation' && <Activity className="h-3 w-3 mr-1" />}
+                  {component === 'autonomousLearning' && <Brain className="h-3 w-3 mr-1" />}
+                  {component.replace(/([A-Z])/g, ' $1').toLowerCase()}: {status ? 'ON' : 'OFF'}
+                </Badge>
+              </div>
+            ))}
           </div>
           
-          <div className="flex gap-2">
-            {!signalEngineStatus.isRunning || !isIntelligenceRunning || !isMultiTimeframeRunning ? (
+          <div className="flex gap-2 items-center">
+            {!isSystemRunning ? (
               <Button onClick={startAllEngines} className="bg-green-600 hover:bg-green-700">
                 <PlayCircle className="h-4 w-4 mr-2" />
-                Start All Engines
+                Start Autonomous Operation
               </Button>
             ) : (
               <Button onClick={stopAllEngines} variant="destructive">
                 <Square className="h-4 w-4 mr-2" />
-                Stop All Engines
+                Stop Autonomous Operation
               </Button>
             )}
+            
+            <div className="flex items-center gap-4 text-sm">
+              <span>Uptime: {Math.floor(systemHealth.uptime / 60000)}m</span>
+              <span>Signals: {systemHealth.performanceMetrics.signalsGenerated}</span>
+              <span>Success: {(systemHealth.performanceMetrics.successRate * 100).toFixed(1)}%</span>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -139,7 +155,7 @@ const UnifiedDashboard: React.FC = () => {
               </div>
               <div className="text-sm text-muted-foreground">High Impact News</div>
               <div className="text-xs text-muted-foreground">
-                {marketIntelligence.newsFlow.recent.length} total articles
+                Live from {marketIntelligence.newsFlow.recent.length} sources
               </div>
             </CardContent>
           </Card>
@@ -167,7 +183,7 @@ const UnifiedDashboard: React.FC = () => {
               </div>
               <div className="text-sm text-muted-foreground">Risk Level</div>
               <div className="text-xs text-muted-foreground">
-                {new Date(marketIntelligence.lastUpdated).toLocaleTimeString()}
+                Updated {new Date(marketIntelligence.lastUpdated).toLocaleTimeString()}
               </div>
             </CardContent>
           </Card>
@@ -180,13 +196,13 @@ const UnifiedDashboard: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-green-500" />
-              High Probability Setups ({highProbabilitySetups.length})
+              🎯 Elite High Probability Setups ({highProbabilitySetups.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
               {highProbabilitySetups.slice(0, 3).map((setup, index) => (
-                <div key={index} className="border rounded-lg p-4 bg-green-50">
+                <div key={index} className="border rounded-lg p-4 bg-green-50 dark:bg-green-900/20">
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-lg">{setup.symbol}</span>
@@ -218,7 +234,7 @@ const UnifiedDashboard: React.FC = () => {
                   </div>
                   
                   <div className="mt-2 text-xs text-muted-foreground">
-                    Timeframes aligned: {setup.timeframes.filter(tf => tf.trend === setup.overallDirection).length}/{setup.timeframes.length}
+                    Autonomous AI detected cross-timeframe confluence at {new Date(setup.timestamp).toLocaleTimeString()}
                   </div>
                 </div>
               ))}
@@ -230,38 +246,38 @@ const UnifiedDashboard: React.FC = () => {
       {/* Main Dashboard Tabs */}
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="w-full">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="overview">System Overview</TabsTrigger>
+          <TabsTrigger value="charts">Live Charts</TabsTrigger>
+          <TabsTrigger value="news">Market Intelligence</TabsTrigger>
           <TabsTrigger value="signals">Active Signals</TabsTrigger>
           <TabsTrigger value="journal">Trading Journal</TabsTrigger>
-          <TabsTrigger value="intelligence">Market Intelligence</TabsTrigger>
-          <TabsTrigger value="analysis">Multi-Timeframe</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader>
-                <CardTitle>System Status</CardTitle>
+                <CardTitle>Autonomous Operation Status</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span>Signal Engine:</span>
-                    <Badge variant={signalEngineStatus.isRunning ? "default" : "secondary"}>
-                      {signalEngineStatus.isRunning ? 'Active' : 'Stopped'}
+                    <span>System Status:</span>
+                    <Badge variant={systemHealth.isOperational ? "default" : "secondary"}>
+                      {systemHealth.isOperational ? '🤖 AUTONOMOUS' : '⏸️ STANDBY'}
                     </Badge>
                   </div>
                   <div className="flex justify-between">
-                    <span>Intelligence Layer:</span>
-                    <Badge variant="default">Elite Active</Badge>
+                    <span>Learning Engine:</span>
+                    <Badge variant="default">🧠 CONTINUOUS</Badge>
                   </div>
                   <div className="flex justify-between">
                     <span>Risk Management:</span>
-                    <Badge variant="default">Protected</Badge>
+                    <Badge variant="default">🛡️ PROTECTED</Badge>
                   </div>
                   <div className="flex justify-between">
-                    <span>Auto Learning:</span>
-                    <Badge variant="default">Continuous</Badge>
+                    <span>24/7 Operation:</span>
+                    <Badge variant="default">✅ ACTIVE</Badge>
                   </div>
                 </div>
               </CardContent>
@@ -274,20 +290,20 @@ const UnifiedDashboard: React.FC = () => {
               <CardContent>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span>Signals Today:</span>
-                    <span className="font-semibold">12</span>
+                    <span>Signals Generated:</span>
+                    <span className="font-semibold">{systemHealth.performanceMetrics.signalsGenerated}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>High Probability:</span>
-                    <span className="font-semibold text-green-600">8</span>
+                    <span className="font-semibold text-green-600">{highProbabilitySetups.length}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Success Rate:</span>
-                    <span className="font-semibold">78%</span>
+                    <span className="font-semibold">{(systemHealth.performanceMetrics.successRate * 100).toFixed(1)}%</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Risk Level:</span>
-                    <Badge variant="secondary">Medium</Badge>
+                    <span>Learning Cycles:</span>
+                    <span className="font-semibold">{systemHealth.performanceMetrics.learningIterations}</span>
                   </div>
                 </div>
               </CardContent>
@@ -295,96 +311,81 @@ const UnifiedDashboard: React.FC = () => {
           </div>
         </TabsContent>
         
+        <TabsContent value="charts">
+          <EnhancedTradingChart symbol="BTCUSDT" height={600} />
+        </TabsContent>
+        
+        <TabsContent value="news">
+          <LiveNewsFeed />
+        </TabsContent>
+        
         <TabsContent value="signals">
           <Card>
             <CardHeader>
-              <CardTitle>Active Trading Signals</CardTitle>
+              <CardTitle>Live Signal Feed</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                No active signals at the moment. The system is continuously monitoring for opportunities.
-              </div>
+              {multiTimeframeSignals.length > 0 ? (
+                <div className="space-y-4">
+                  {multiTimeframeSignals.slice(0, 5).map((signal, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold">{signal.symbol}</span>
+                          <Badge variant={signal.overallDirection === 'bullish' ? 'default' : 'destructive'}>
+                            {signal.overallDirection.toUpperCase()}
+                          </Badge>
+                          <Badge variant="outline">
+                            {signal.confluence.toFixed(0)}% confluence
+                          </Badge>
+                          {signal.highProbabilitySetup && (
+                            <Badge variant="secondary" className="bg-green-100 text-green-800">
+                              ELITE SETUP
+                            </Badge>
+                          )}
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(signal.timestamp).toLocaleTimeString()}
+                        </span>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Entry: ${signal.entryPrice.toFixed(2)} | Stop: ${signal.stopLoss.toFixed(2)} | R/R: {signal.riskReward.toFixed(2)}:1
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  🤖 Autonomous signal detection is active. Elite setups will appear here.
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
         
-        <TabsContent value="journal">
+        <TabsContent value="journal" className="space-y-4">
+          <ManualTradeEntry onAddTrade={handleAddManualTrade} />
           <ComprehensiveTradingJournal />
-        </TabsContent>
-        
-        <TabsContent value="intelligence">
-          {marketIntelligence ? (
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent News Flow</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {marketIntelligence.newsFlow.recent.slice(0, 5).map((news: any, index: number) => (
-                      <div key={index} className="border-b pb-2">
-                        <div className="font-medium">{news.title}</div>
-                        <div className="text-sm text-muted-foreground">{news.summary}</div>
-                        <div className="flex gap-2 mt-1">
-                          <Badge variant="outline">{news.source}</Badge>
-                          <Badge variant={news.sentiment === 'positive' ? 'default' : news.sentiment === 'negative' ? 'destructive' : 'secondary'}>
-                            {news.sentiment}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
+          {manualTrades.length > 0 && (
             <Card>
-              <CardContent className="text-center py-8">
-                <div className="text-muted-foreground">Market intelligence engine is starting up...</div>
+              <CardHeader>
+                <CardTitle>Recent Manual Entries</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {manualTrades.slice(0, 5).map(trade => (
+                    <div key={trade.id} className="flex justify-between items-center border rounded p-2">
+                      <span>{trade.symbol} - {trade.direction.toUpperCase()}</span>
+                      <span>${trade.entryPrice.toFixed(2)}</span>
+                      <Badge variant={trade.status === 'open' ? 'secondary' : trade.pnl && trade.pnl > 0 ? 'default' : 'destructive'}>
+                        {trade.status}
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           )}
-        </TabsContent>
-        
-        <TabsContent value="analysis">
-          <div className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Multi-Timeframe Signals</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {multiTimeframeSignals.length > 0 ? (
-                  <div className="space-y-4">
-                    {multiTimeframeSignals.slice(0, 5).map((signal, index) => (
-                      <div key={index} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold">{signal.symbol}</span>
-                            <Badge variant={signal.overallDirection === 'bullish' ? 'default' : 'destructive'}>
-                              {signal.overallDirection.toUpperCase()}
-                            </Badge>
-                            <Badge variant="outline">
-                              {signal.confluence.toFixed(0)}% confluence
-                            </Badge>
-                          </div>
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(signal.timestamp).toLocaleTimeString()}
-                          </span>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          R/R: {signal.riskReward.toFixed(2)}:1 | Entry: ${signal.entryPrice.toFixed(2)} | Stop: ${signal.stopLoss.toFixed(2)}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Multi-timeframe analysis is running. Signals will appear here.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
         </TabsContent>
       </Tabs>
     </div>
