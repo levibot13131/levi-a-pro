@@ -1,3 +1,4 @@
+import { Asset } from '@/types/asset.d';
 
 export interface LiveMarketData {
   symbol: string;
