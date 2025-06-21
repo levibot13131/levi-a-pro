@@ -1,90 +1,52 @@
 
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { AuthProvider } from '@/contexts/AuthContext';
-import AuthGuard from '@/components/AuthGuard';
-import Layout from '@/components/Layout';
-import Auth from '@/pages/Auth';
-import Dashboard from '@/pages/Dashboard';
-import Signals from '@/pages/Signals';
-import Fundamentals from '@/pages/Fundamentals';
-import TradingCalculators from '@/pages/TradingCalculators';
-import BacktestingLab from '@/pages/BacktestingLab';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: false,
-    },
-  },
-});
+import { AuthProvider } from './contexts/AuthContext';
+import Layout from './components/layout/Layout';
+import Dashboard from './pages/Dashboard';
+import TechnicalAnalysis from './pages/TechnicalAnalysis';
+import FundamentalData from './pages/FundamentalData';
+import MarketSentiment from './pages/MarketSentiment';
+import ChartsAnalysis from './pages/ChartsAnalysis';
+import TradingEngineControl from './components/trading-engine/TradingEngineControl';
+import AdminDashboard from './components/admin/AdminDashboard';
+import Auth from './pages/Auth';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <div className="min-h-screen bg-background text-foreground">
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={
-                <AuthGuard>
-                  <Layout>
-                    <Navigate to="/dashboard" replace />
-                  </Layout>
-                </AuthGuard>
-              } />
-              <Route path="/dashboard" element={
-                <AuthGuard>
-                  <Layout>
-                    <Dashboard />
-                  </Layout>
-                </AuthGuard>
-              } />
-              <Route path="/signals" element={
-                <AuthGuard>
-                  <Layout>
-                    <Signals />
-                  </Layout>
-                </AuthGuard>
-              } />
-              <Route path="/fundamentals" element={
-                <AuthGuard>
-                  <Layout>
-                    <Fundamentals />
-                  </Layout>
-                </AuthGuard>
-              } />
-              <Route path="/trading-calculators" element={
-                <AuthGuard>
-                  <Layout>
-                    <TradingCalculators />
-                  </Layout>
-                </AuthGuard>
-              } />
-              <Route path="/calculators" element={
-                <AuthGuard>
-                  <Layout>
-                    <TradingCalculators />
-                  </Layout>
-                </AuthGuard>
-              } />
-              <Route path="/backtesting" element={
-                <AuthGuard>
-                  <Layout>
-                    <BacktestingLab />
-                  </Layout>
-                </AuthGuard>
-              } />
-            </Routes>
-          </div>
-          <Toaster position="top-right" />
-        </Router>
-      </AuthProvider>
-    </QueryClientProvider>
+    <AuthProvider>
+      <Router>
+        <div className="App min-h-screen bg-background">
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }>
+              <Route index element={<Dashboard />} />
+              <Route path="technical-analysis" element={<TechnicalAnalysis />} />
+              <Route path="fundamental-data" element={<FundamentalData />} />
+              <Route path="market-sentiment" element={<MarketSentiment />} />
+              <Route path="charts-analysis" element={<ChartsAnalysis />} />
+              <Route path="trading-engine" element={<TradingEngineControl />} />
+              <Route path="admin" element={<AdminDashboard />} />
+            </Route>
+          </Routes>
+          <Toaster 
+            position="top-right" 
+            richColors 
+            expand 
+            closeButton
+            toastOptions={{
+              duration: 5000,
+            }}
+          />
+        </div>
+      </Router>
+    </AuthProvider>
   );
 }
 
