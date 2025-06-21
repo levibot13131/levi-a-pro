@@ -1,7 +1,7 @@
 import { marketDataService } from './marketDataService';
 import { telegramBot } from '../telegram/telegramBot';
 import { eliteSignalFilter } from './eliteSignalFilter';
-import { SignalScoringEngine, ScoredSignal } from './signalScoringEngine';
+import { IntelligenceEnhancedScoring } from './intelligenceEnhancedScoring';
 import { AdaptiveSignalScoring } from '../ai/adaptiveScoring';
 import { signalOutcomeTracker } from '../ai/signalOutcomeTracker';
 import { strategyEngine } from './strategyEngine';
@@ -16,22 +16,23 @@ export class EnhancedSignalEngine {
     totalAnalyzed: 0,
     totalPassed: 0,
     totalSent: 0,
-    rejectionRate: 0
+    rejectionRate: 0,
+    intelligenceEnhanced: 0
   };
 
   public startEliteEngine() {
     if (this.isRunning) return;
     
-    console.log('🚀 Starting Enhanced Signal Engine with AI Learning Loop');
+    console.log('🚀 Starting Enhanced Signal Engine with Real-Time Intelligence Layer');
     this.isRunning = true;
     
     // More frequent analysis for elite signals - every 15 seconds
     this.analysisInterval = setInterval(() => {
-      this.analyzeMarketsWithAI();
+      this.analyzeMarketsWithIntelligence();
     }, 15000);
     
     // Immediate analysis
-    this.analyzeMarketsWithAI();
+    this.analyzeMarketsWithIntelligence();
   }
 
   public stopEngine() {
@@ -44,7 +45,7 @@ export class EnhancedSignalEngine {
     }
   }
 
-  private async analyzeMarketsWithAI() {
+  private async analyzeMarketsWithIntelligence() {
     if (!this.isRunning) return;
 
     try {
@@ -53,7 +54,7 @@ export class EnhancedSignalEngine {
         const potentialSignals = strategyEngine.analyzeMarket(marketData);
         
         for (const signal of potentialSignals) {
-          await this.processSignalWithAI(signal);
+          await this.processSignalWithIntelligence(signal);
           this.stats.totalAnalyzed++;
         }
       }
@@ -61,26 +62,30 @@ export class EnhancedSignalEngine {
       this.updateRejectionRate();
       
       if (this.debugMode) {
-        console.log(`📊 Analysis complete - Analyzed: ${this.stats.totalAnalyzed}, Sent: ${this.stats.totalSent}, Rejection rate: ${this.stats.rejectionRate}%`);
+        console.log(`📊 Intelligence Analysis complete - Analyzed: ${this.stats.totalAnalyzed}, Enhanced: ${this.stats.intelligenceEnhanced}, Sent: ${this.stats.totalSent}, Rejection rate: ${this.stats.rejectionRate}%`);
       }
     } catch (error) {
-      console.error('❌ Error in AI market analysis:', error);
+      console.error('❌ Error in Intelligence market analysis:', error);
     }
   }
 
-  private async processSignalWithAI(signal: any) {
+  private async processSignalWithIntelligence(signal: any) {
     try {
-      // Use adaptive AI scoring instead of basic scoring
-      const scoredSignal: ScoredSignal = AdaptiveSignalScoring.scoreSignalWithAdaptiveLearning(signal);
+      // Use intelligence-enhanced scoring
+      const enhancedSignal = await IntelligenceEnhancedScoring.scoreSignalWithIntelligence(signal);
+      this.stats.intelligenceEnhanced++;
       
       if (this.debugMode) {
-        console.log(`🎯 AI Signal Analysis:`, {
+        console.log(`🧠 Intelligence Signal Analysis:`, {
           symbol: signal.symbol,
           strategy: signal.strategy,
-          score: scoredSignal.score.total,
-          quality: scoredSignal.qualityRating,
-          adaptiveBonus: scoredSignal.score.adaptiveBonus || 0,
-          shouldSend: scoredSignal.shouldSend
+          baseScore: enhancedSignal.score.total - enhancedSignal.score.intelligenceBonus,
+          intelligenceBonus: enhancedSignal.score.intelligenceBonus,
+          fearGreedMultiplier: enhancedSignal.score.fearGreedMultiplier,
+          finalScore: enhancedSignal.score.total,
+          fundamentalRisk: enhancedSignal.intelligenceData.fundamentalRisk,
+          quality: enhancedSignal.qualityRating,
+          shouldSend: enhancedSignal.shouldSend
         });
       }
 
@@ -94,9 +99,9 @@ export class EnhancedSignalEngine {
         return;
       }
 
-      // Only send if both AI scoring and elite filter approve
-      if (scoredSignal.shouldSend && eliteValidation.valid) {
-        await this.sendEliteSignal(signal, scoredSignal);
+      // Only send if intelligence scoring approves
+      if (enhancedSignal.shouldSend && eliteValidation.valid) {
+        await this.sendIntelligenceEnhancedSignal(signal, enhancedSignal);
         this.stats.totalPassed++;
         this.stats.totalSent++;
         
@@ -104,16 +109,21 @@ export class EnhancedSignalEngine {
         eliteSignalFilter.approveEliteSignal(signal);
       }
     } catch (error) {
-      console.error('❌ Error processing AI signal:', error);
+      console.error('❌ Error processing intelligence signal:', error);
     }
   }
 
-  private async sendEliteSignal(signal: any, scoredSignal: ScoredSignal) {
+  private async sendIntelligenceEnhancedSignal(signal: any, enhancedSignal: any) {
     try {
-      // Enhanced Telegram message with AI scoring details
-      const adaptiveBonusText = scoredSignal.score.adaptiveBonus ? `🧠 AI Learning Bonus: +${scoredSignal.score.adaptiveBonus}` : '';
+      const { whaleActivity, sentiment, fearGreed, fundamentalRisk, riskFactors } = enhancedSignal.intelligenceData;
       
-      const message = `🔥 <b>LeviPro Elite Signal</b> ${scoredSignal.qualityRating}
+      // Create enhanced Telegram message with intelligence data
+      const whaleEmoji = whaleActivity?.sentiment === 'bullish' ? '🐋📈' : whaleActivity?.sentiment === 'bearish' ? '🐋📉' : '🐋➡️';
+      const sentimentEmoji = sentiment?.overallSentiment === 'bullish' ? '📈' : sentiment?.overallSentiment === 'bearish' ? '📉' : '➡️';
+      const riskEmoji = fundamentalRisk === 'LOW' ? '✅' : fundamentalRisk === 'MEDIUM' ? '⚠️' : '🚨';
+      const fearGreedEmoji = fearGreed?.classification === 'Extreme Greed' ? '🤑' : fearGreed?.classification === 'Extreme Fear' ? '😰' : '😐';
+      
+      const message = `🔥 <b>LeviPro Elite Signal</b> ${enhancedSignal.qualityRating}
 
 📊 <b>${signal.symbol}</b>
 ${signal.action === 'buy' ? '🟢 BUY' : '🔴 SELL'} @ $${signal.price.toLocaleString()}
@@ -123,29 +133,33 @@ ${signal.action === 'buy' ? '🟢 BUY' : '🔴 SELL'} @ $${signal.price.toLocale
 ⚡ <b>Confidence:</b> ${(signal.confidence * 100).toFixed(1)}%
 📈 <b>R/R:</b> 1:${signal.riskRewardRatio.toFixed(2)}
 
-🏆 <b>AI Quality Score:</b> ${scoredSignal.score.total}/160
-${adaptiveBonusText}
-${signal.strategy === 'almog-personal-method' ? '🧠 <b>Personal Method Priority</b>' : ''}
+🧠 <b>Intelligence Score:</b> ${enhancedSignal.score.total}/160
+${whaleEmoji} <b>Whale Activity:</b> ${whaleActivity?.sentiment || 'Unknown'}
+${sentimentEmoji} <b>Market Sentiment:</b> ${sentiment?.overallSentiment || 'Neutral'}
+${fearGreedEmoji} <b>Fear & Greed:</b> ${fearGreed?.value || 'N/A'} (${fearGreed?.classification || 'Unknown'})
+${riskEmoji} <b>Fundamental Risk:</b> ${fundamentalRisk}
+
+${riskFactors.length > 0 ? `⚠️ <b>Risk Factors:</b> ${riskFactors.join(', ')}` : ''}
 
 📋 <b>Strategy:</b> ${signal.strategy}
 ⏰ ${new Date().toLocaleTimeString('he-IL')}
 
-#LeviPro #Elite #AI #${scoredSignal.qualityRating}`;
+#LeviPro #Elite #Intelligence #${enhancedSignal.qualityRating}`;
 
       const sent = await telegramBot.sendMessage(message);
       
       if (sent) {
-        console.log(`✅ Elite AI signal sent: ${signal.symbol} (Score: ${scoredSignal.score.total}, Quality: ${scoredSignal.qualityRating})`);
+        console.log(`✅ Intelligence-enhanced signal sent: ${signal.symbol} (Score: ${enhancedSignal.score.total}, Risk: ${fundamentalRisk}, Quality: ${enhancedSignal.qualityRating})`);
         
         // Store signal for outcome tracking
-        await this.storeSignalForTracking(signal, scoredSignal);
+        await this.storeSignalForTracking(signal, enhancedSignal);
       }
     } catch (error) {
-      console.error('❌ Error sending elite signal:', error);
+      console.error('❌ Error sending intelligence-enhanced signal:', error);
     }
   }
 
-  private async storeSignalForTracking(signal: any, scoredSignal: ScoredSignal) {
+  private async storeSignalForTracking(signal: any, enhancedSignal: any) {
     try {
       // Store in database for AI learning loop
       const signalData = {
@@ -163,9 +177,9 @@ ${signal.strategy === 'almog-personal-method' ? '🧠 <b>Personal Method Priorit
         telegram_sent: true,
         metadata: {
           ...signal.metadata,
-          aiScore: scoredSignal.score,
-          qualityRating: scoredSignal.qualityRating,
-          adaptiveBonus: scoredSignal.score.adaptiveBonus || 0
+          aiScore: enhancedSignal.score,
+          qualityRating: enhancedSignal.qualityRating,
+          intelligenceBonus: enhancedSignal.score.intelligenceBonus || 0
         }
       };
 
@@ -187,7 +201,7 @@ ${signal.strategy === 'almog-personal-method' ? '🧠 <b>Personal Method Priorit
 
   public async sendTestSignal(): Promise<boolean> {
     try {
-      console.log('🧪 Generating AI test signal with adaptive scoring...');
+      console.log('🧪 Generating Intelligence test signal...');
       
       const testSignal = {
         symbol: 'BTCUSDT',
@@ -198,19 +212,19 @@ ${signal.strategy === 'almog-personal-method' ? '🧠 <b>Personal Method Priorit
         stopLoss: 42800,
         confidence: 0.89,
         riskRewardRatio: 2.43,
-        reasoning: 'AI Test Signal - Personal method with high confluence',
+        reasoning: 'Intelligence Test Signal - Personal method with market intelligence',
         metadata: {
           testSignal: true,
-          aiGenerated: true,
+          intelligenceEnhanced: true,
           multiTimeframeConfluence: true,
           personalMethodMatch: true
         }
       };
 
-      await this.processSignalWithAI(testSignal);
+      await this.processSignalWithIntelligence(testSignal);
       return true;
     } catch (error) {
-      console.error('❌ Error sending AI test signal:', error);
+      console.error('❌ Error sending Intelligence test signal:', error);
       return false;
     }
   }
@@ -221,11 +235,9 @@ ${signal.strategy === 'almog-personal-method' ? '🧠 <b>Personal Method Priorit
   }
 
   public getEngineStatus() {
-    const aiStats = AdaptiveSignalScoring.getAdaptiveLearningStats();
-    
     return {
       isRunning: this.isRunning,
-      signalQuality: this.isRunning ? '🔥 Elite AI + Learning' : '⏸️ Stopped',
+      signalQuality: this.isRunning ? '🧠 Elite Intelligence + AI Learning' : '⏸️ Stopped',
       lastAnalysis: this.isRunning ? new Date().toLocaleTimeString('he-IL') : 'Not running',
       debugMode: this.debugMode,
       scoringStats: {
@@ -233,14 +245,15 @@ ${signal.strategy === 'almog-personal-method' ? '🧠 <b>Personal Method Priorit
         totalPassed: this.stats.totalPassed,
         totalSent: this.stats.totalSent,
         rejectionRate: this.stats.rejectionRate,
-        threshold: SignalScoringEngine.getScoreThreshold()
+        intelligenceEnhanced: this.stats.intelligenceEnhanced,
+        threshold: 160
       },
-      aiLearning: {
+      intelligenceLayer: {
         active: true,
-        strategiesTracked: aiStats.strategyPerformance.length,
-        totalSignalsLearned: aiStats.learningInsights.totalSignalsTracked,
-        overallWinRate: (aiStats.learningInsights.overallWinRate * 100).toFixed(1),
-        topPerformer: aiStats.learningInsights.topPerformer
+        whaleMonitoring: true,
+        sentimentAnalysis: true,
+        fearGreedIntegration: true,
+        fundamentalRiskScoring: true
       }
     };
   }
