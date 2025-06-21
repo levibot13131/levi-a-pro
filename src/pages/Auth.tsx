@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,29 +16,10 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [mounted, setMounted] = useState(false);
 
-  // Use auth hook safely after mount
   const auth = useAuth();
 
-  useEffect(() => {
-    console.log('🔐 Auth page mounted');
-    setMounted(true);
-  }, []);
-
-  // Don't render anything until component is mounted
-  if (!mounted) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
-        <div className="flex flex-col items-center gap-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-          <p className="text-muted-foreground">טוען LeviPro...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Show loading while auth is initializing
+  // Simple loading state while auth initializes
   if (auth.isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
@@ -50,7 +31,7 @@ const Auth = () => {
     );
   }
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated - but only after loading is complete
   if (auth.isAuthenticated) {
     console.log('User authenticated, redirecting to dashboard');
     return <Navigate to="/dashboard" replace />;
@@ -78,6 +59,7 @@ const Auth = () => {
       } else {
         const message = isSignUp ? 'חשבון נוצר בהצלחה!' : 'ברוך הבא ל-LeviPro!';
         toast.success(message);
+        // Don't manually redirect - let the auth state change handle it
       }
     } catch (err) {
       const errorMessage = 'אירעה שגיאה בלתי צפויה';

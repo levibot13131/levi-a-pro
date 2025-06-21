@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { navItems } from "./nav-items";
 import { AuthProvider } from "./contexts/AuthContext";
 import AuthGuard from "./components/auth/AuthGuard";
-import Login from "./pages/Login";
 import Auth from "./pages/Auth";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -34,7 +33,6 @@ const App = () => {
                 <Routes>
                   {/* Public routes - NOT protected by AuthGuard */}
                   <Route path="/auth" element={<Auth />} />
-                  <Route path="/login" element={<Login />} />
                   
                   {/* Protected routes - wrapped in AuthGuard */}
                   {navItems.map(({ to, page }) => (
@@ -49,12 +47,8 @@ const App = () => {
                     />
                   ))}
                   
-                  {/* Root redirect - let AuthGuard handle the logic */}
-                  <Route path="/" element={
-                    <AuthGuard>
-                      <Navigate to="/dashboard" replace />
-                    </AuthGuard>
-                  } />
+                  {/* Root redirect */}
+                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
               </div>
             </BrowserRouter>

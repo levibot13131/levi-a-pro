@@ -94,6 +94,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         setSession(newSession);
         setUser(newSession?.user ?? null);
+        
+        // Only set loading to false after auth state is handled
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+          setIsLoading(false);
+        }
       }
     );
 
