@@ -1,4 +1,3 @@
-
 import { TradingSignal } from '@/types/trading';
 import { toast } from 'sonner';
 
@@ -44,6 +43,86 @@ export class TelegramBot {
     } catch (error) {
       console.error('❌ Error sending LIVE signal to Telegram:', error);
       toast.error('❌ שגיאה בשליחת איתות לטלגרם');
+      return false;
+    }
+  }
+
+  public async sendSignalDemo(): Promise<boolean> {
+    try {
+      console.log('🧪 Sending demo signal to Telegram...');
+      
+      const demoSignal: TradingSignal = {
+        id: `demo-${Date.now()}`,
+        symbol: 'BTCUSDT',
+        strategy: 'almog-personal-method',
+        action: 'buy',
+        price: 65432.50,
+        targetPrice: 67890.25,
+        stopLoss: 63876.12,
+        confidence: 0.85,
+        riskRewardRatio: 1.75,
+        reasoning: 'איתות בדיקה - פריצת התנגדות + RSI חיובי + נפח גבוה',
+        timestamp: Date.now(),
+        status: 'active',
+        telegramSent: false,
+        metadata: { 
+          demo: true,
+          timeframe: '15M',
+          signalCategory: '🧪 בדיקה'
+        }
+      };
+      
+      const message = this.formatLiveSignalMessage(demoSignal);
+      const response = await this.sendMessage(message);
+      
+      if (response) {
+        console.log('✅ Demo signal sent successfully');
+        return true;
+      } else {
+        console.error('❌ Failed to send demo signal');
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Error sending demo signal:', error);
+      return false;
+    }
+  }
+
+  public async sendTestMessage(): Promise<boolean> {
+    try {
+      console.log('🔧 Sending test message to Telegram...');
+      
+      const testMessage = `
+🔧 <b>בדיקת חיבור LeviPro</b>
+
+✅ הבוט מחובר ופעיל
+🕐 זמן: ${new Date().toLocaleString('he-IL', {
+        timeZone: 'Asia/Jerusalem',
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: '2-digit'
+      })}
+🤖 מערכת: LeviPro Trading Engine
+🎯 סטטוס: מוכן לקבלת איתותים
+
+#TestMessage #LeviPro #Connected
+`;
+      
+      const response = await this.sendMessage(testMessage);
+      
+      if (response) {
+        console.log('✅ Test message sent successfully');
+        toast.success('✅ בדיקת חיבור הצליחה');
+        return true;
+      } else {
+        console.error('❌ Failed to send test message');
+        toast.error('❌ שגיאה בבדיקת חיבור');
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Error sending test message:', error);
+      toast.error('❌ שגיאה בבדיקת חיבור');
       return false;
     }
   }
