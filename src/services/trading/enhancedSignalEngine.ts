@@ -1,8 +1,10 @@
+
 import { TradingSignal } from '@/types/trading';
 import { marketDataService } from './marketDataService';
 import { strategyEngine } from './strategyEngine';
 import { IntelligenceEnhancedScoring } from './intelligenceEnhancedScoring';
 import { unifiedTelegramService } from '../telegram/unifiedTelegramService';
+import { telegramBot } from '../telegram/telegramBot';
 import { SignalScoringEngine } from './signalScoringEngine';
 import { riskManagementEngine } from '../risk/riskManagementEngine';
 
