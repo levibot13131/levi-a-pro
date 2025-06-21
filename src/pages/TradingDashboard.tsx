@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,12 +13,16 @@ import {
   Zap, 
   Shield,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  BookOpen,
+  Globe
 } from 'lucide-react';
 import { engineController } from '@/services/trading/engineController';
 import { strategyEngine } from '@/services/trading/strategyEngine';
 import { TradingStrategy } from '@/types/trading';
 import { toast } from 'sonner';
+import TradeJournal from '@/components/trading-engine/TradeJournal';
+import { fundamentalDataService } from '@/services/fundamentalDataService';
 
 const TradingDashboard: React.FC = () => {
   const [isEngineRunning, setIsEngineRunning] = useState(false);
@@ -31,9 +34,10 @@ const TradingDashboard: React.FC = () => {
     personalMethodActive: true
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [fundamentalOverview, setFundamentalOverview] = useState<any>(null);
 
   useEffect(() => {
-    const initializeDashboard = () => {
+    const initializeDashboard = async () => {
       try {
         // Load strategies
         const activeStrategies = strategyEngine.getActiveStrategies();
@@ -48,6 +52,10 @@ const TradingDashboard: React.FC = () => {
           activeStrategies: activeStrategies.length,
           personalMethodActive: true
         });
+        
+        // Load fundamental data overview
+        const fundamentalData = await fundamentalDataService.getFundamentalData(['BTCUSDT', 'ETHUSDT']);
+        setFundamentalOverview(fundamentalData.marketSentiment);
         
         console.log('📊 Dashboard initialized with', activeStrategies.length, 'strategies');
         console.log('🧠 Personal Method confirmed active with 80% weight');
@@ -145,9 +153,18 @@ const TradingDashboard: React.FC = () => {
           <h1 className="text-3xl font-bold mb-2">LeviPro Trading Dashboard</h1>
           <p className="text-muted-foreground">מערכת מסחר אלגוריתמית עם אסטרטגיה אישית</p>
         </div>
-        <Badge variant={isEngineRunning ? "default" : "secondary"} className="text-lg px-4 py-2">
-          {isEngineRunning ? '🟢 מנוע פעיל' : '🔴 מנוע מופסק'}
-        </Badge>
+        <div className="flex items-center gap-4">
+          {fundamentalOverview && (
+            <Badge variant="outline" className="flex items-center gap-2">
+              <Globe className="h-4 w-4" />
+              סנטימנט: {fundamentalOverview.overall === 'bullish' ? 'עליה' : 
+                        fundamentalOverview.overall === 'bearish' ? 'ירידה' : 'נייטרלי'}
+            </Badge>
+          )}
+          <Badge variant={isEngineRunning ? "default" : "secondary"} className="text-lg px-4 py-2">
+            {isEngineRunning ? '🟢 מנוע פעיל' : '🔴 מנוע מופסק'}
+          </Badge>
+        </div>
       </div>
 
       {/* Engine Control */}
@@ -243,11 +260,12 @@ const TradingDashboard: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Strategies Overview */}
+      {/* Main Dashboard Tabs */}
       <Tabs defaultValue="strategies" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="strategies">אסטרטגיות</TabsTrigger>
           <TabsTrigger value="performance">ביצועים</TabsTrigger>
+          <TabsTrigger value="journal">יומן מסחר</TabsTrigger>
         </TabsList>
 
         <TabsContent value="strategies">
@@ -311,7 +329,7 @@ const TradingDashboard: React.FC = () => {
                       {isPersonalMethod && (
                         <div className="mt-3 p-3 bg-purple-100 rounded border">
                           <p className="text-sm text-purple-800 font-medium">
-                            🔥 אסטרטגיה זו פועלת ראשונה תמיד ולא ניתן להשבתה
+                            🔥 אסטרטגיה זו פועלת ראשונה תמיד ولא ניתן להשבתה
                           </p>
                           <p className="text-xs text-purple-600 mt-1">
                             מבוססת על ניתוח לחץ רגשי, מומנטום נרות ואישור פריצות בנפח
@@ -373,6 +391,10 @@ const TradingDashboard: React.FC = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="journal">
+          <TradeJournal />
         </TabsContent>
       </Tabs>
     </div>

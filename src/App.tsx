@@ -1,65 +1,60 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from '@/components/ui/sonner';
+import { AuthProvider } from '@/contexts/AuthContext';
+import AuthGuard from '@/components/AuthGuard';
+import Sidebar from '@/components/Sidebar';
+import Index from '@/pages/Index';
+import TradingDashboard from '@/pages/TradingDashboard';
+import TradingSignals from '@/pages/TradingSignals';
+import BacktestingLab from '@/pages/BacktestingLab';
+import FundamentalData from '@/pages/FundamentalData';
+import Fundamentals from '@/pages/Fundamentals';
+import TradingCalculators from '@/pages/TradingCalculators';
+import Auth from '@/pages/Auth';
+import './App.css';
 
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { navItems } from "./nav-items";
-import { AuthProvider } from "./contexts/AuthContext";
-import AuthGuard from "./components/auth/AuthGuard";
-import Auth from "./pages/Auth";
-import ErrorBoundary from "./components/ErrorBoundary";
+const queryClient = new QueryClient();
 
-// Create QueryClient instance
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      retry: 1,
-    },
-  },
-});
-
-const App = () => {
+function App() {
   console.log('🚀 App component initializing...');
-  
+
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Router>
+          <div className="min-h-screen bg-background">
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route
+                path="/*"
+                element={
+                  <AuthGuard>
+                    <div className="flex">
+                      <Sidebar />
+                      <main className="flex-1 ml-64">
+                        <Routes>
+                          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                          <Route path="/dashboard" element={<TradingDashboard />} />
+                          <Route path="/signals" element={<TradingSignals />} />
+                          <Route path="/backtesting" element={<BacktestingLab />} />
+                          <Route path="/fundamental-data" element={<FundamentalData />} />
+                          <Route path="/fundamentals" element={<Fundamentals />} />
+                          <Route path="/calculators" element={<TradingCalculators />} />
+                        </Routes>
+                      </main>
+                    </div>
+                  </AuthGuard>
+                }
+              />
+            </Routes>
             <Toaster />
-            <BrowserRouter>
-              <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-                <Routes>
-                  {/* Public route - completely separate from AuthGuard */}
-                  <Route path="/auth" element={<Auth />} />
-                  
-                  {/* All protected routes wrapped in AuthGuard */}
-                  {navItems.map(({ to, page }) => (
-                    <Route 
-                      key={to} 
-                      path={to} 
-                      element={
-                        <AuthGuard>
-                          {page}
-                        </AuthGuard>
-                      } 
-                    />
-                  ))}
-                  
-                  {/* Root redirect - only if not on /auth */}
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  
-                  {/* Catch all other routes */}
-                  <Route path="*" element={<Navigate to="/auth" replace />} />
-                </Routes>
-              </div>
-            </BrowserRouter>
-          </TooltipProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+          </div>
+        </Router>
+      </AuthProvider>
+    </QueryClientProvider>
   );
-};
+}
 
 export default App;
