@@ -1,3 +1,4 @@
+
 import { Asset } from '@/types/asset.d';
 
 export interface LiveMarketData {
@@ -9,6 +10,7 @@ export interface LiveMarketData {
   low24h: number;
   marketCap?: number;
   lastUpdated: number;
+  timestamp: number; // Added timestamp for real-time freshness validation
 }
 
 class LiveMarketDataService {
@@ -72,6 +74,7 @@ class LiveMarketDataService {
       }
 
       const data = await response.json();
+      const timestamp = Date.now();
       
       return {
         symbol,
@@ -80,7 +83,8 @@ class LiveMarketDataService {
         change24h: parseFloat(data.priceChangePercent),
         high24h: parseFloat(data.highPrice),
         low24h: parseFloat(data.lowPrice),
-        lastUpdated: Date.now()
+        lastUpdated: timestamp,
+        timestamp // Ensure timestamp is always included
       };
     } catch (error) {
       console.error(`Binance fetch error for ${symbol}:`, error);
@@ -105,6 +109,8 @@ class LiveMarketDataService {
       
       if (!coinData) return null;
       
+      const timestamp = Date.now();
+      
       return {
         symbol,
         price: coinData.usd,
@@ -112,7 +118,8 @@ class LiveMarketDataService {
         change24h: coinData.usd_24h_change || 0,
         high24h: coinData.usd * (1 + (coinData.usd_24h_change || 0) / 100 * 0.5),
         low24h: coinData.usd * (1 - (coinData.usd_24h_change || 0) / 100 * 0.5),
-        lastUpdated: Date.now()
+        lastUpdated: timestamp,
+        timestamp // Ensure timestamp is always included for CoinGecko fallback
       };
     } catch (error) {
       console.error(`CoinGecko fetch error for ${symbol}:`, error);
@@ -133,6 +140,35 @@ class LiveMarketDataService {
     };
     
     return mapping[symbol] || symbol.toLowerCase().replace('usdt', '');
+  }
+
+  // Add method to get data freshness for diagnostic purposes
+  public getDataFreshness(symbol: string): number {
+    const data = this.cache.get(symbol);
+    if (!data || !data.timestamp) return -1;
+    return Date.now() - data.timestamp;
+  }
+
+  // Add method to check if all feeds are healthy
+  public async performHealthCheck(): Promise<{binance: boolean, coinGecko: boolean}> {
+    let binanceHealthy = false;
+    let coinGeckoHealthy = false;
+
+    try {
+      const binanceTest = await this.fetchFromBinance('BTCUSDT');
+      binanceHealthy = binanceTest !== null;
+    } catch {
+      binanceHealthy = false;
+    }
+
+    try {
+      const coinGeckoTest = await this.fetchFromCoinGecko('BTCUSDT');
+      coinGeckoHealthy = coinGeckoTest !== null;
+    } catch {
+      coinGeckoHealthy = false;
+    }
+
+    return { binance: binanceHealthy, coinGecko: coinGeckoHealthy };
   }
 }
 
