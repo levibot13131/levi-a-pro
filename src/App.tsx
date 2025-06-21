@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -58,6 +59,13 @@ function App() {
                 </AuthGuard>
               } />
               <Route path="/trading-calculators" element={
+                <AuthGuard>
+                  <Layout>
+                    <TradingCalculators />
+                  </Layout>
+                </AuthGuard>
+              } />
+              <Route path="/calculators" element={
                 <AuthGuard>
                   <Layout>
                     <TradingCalculators />
