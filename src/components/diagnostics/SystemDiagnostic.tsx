@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -290,7 +291,7 @@ const SystemDiagnostic: React.FC = () => {
         component: '👁️ Signal Transparency & Logging',
         status: 'healthy',
         message: 'FULL TRANSPARENCY - All decisions logged and explainable',
-        details: `Signal attempts logged: ${rejectionStats.total} | Rejection reasons tracked | No silent failures',
+        details: `Signal attempts logged: ${rejectionStats.total} | Rejection reasons tracked | No silent failures`,
         lastChecked: new Date(),
         responseTime: Date.now() - loggingStart,
         recommendations: transparencyRecommendations.length > 0 ? transparencyRecommendations : ['Logging is comprehensive and transparent']
