@@ -1,6 +1,4 @@
 
-import { toast } from 'sonner';
-
 export interface LiveMarketData {
   symbol: string;
   price: number;
@@ -8,61 +6,65 @@ export interface LiveMarketData {
   change24h: number;
   high24h: number;
   low24h: number;
-  lastUpdate: number;
-}
-
-export interface CoinGeckoData {
-  id: string;
-  current_price: number;
-  price_change_percentage_24h: number;
-  total_volume: number;
-  high_24h: number;
-  low_24h: number;
-  market_cap: number;
+  marketCap?: number;
+  lastUpdated: number;
 }
 
 class LiveMarketDataService {
   private cache: Map<string, LiveMarketData> = new Map();
-  private lastUpdate = 0;
-  private readonly CACHE_DURATION = 10000; // 10 seconds cache
+  private lastUpdate: Map<string, number> = new Map();
+  private readonly CACHE_DURATION = 30000; // 30 seconds
 
-  async getLiveMarketData(symbol: string): Promise<LiveMarketData | null> {
-    const cacheKey = symbol.toUpperCase();
+  async getMultipleAssets(symbols: string[]): Promise<Map<string, LiveMarketData>> {
+    const results = new Map<string, LiveMarketData>();
     
-    // Check cache first
-    if (this.cache.has(cacheKey) && Date.now() - this.lastUpdate < this.CACHE_DURATION) {
-      return this.cache.get(cacheKey)!;
+    for (const symbol of symbols) {
+      try {
+        const data = await this.getLiveData(symbol);
+        if (data) {
+          results.set(symbol, data);
+        }
+      } catch (error) {
+        console.error(`Error fetching live data for ${symbol}:`, error);
+      }
     }
+    
+    return results;
+  }
+
+  private async getLiveData(symbol: string): Promise<LiveMarketData | null> {
+    // Check cache first
+    const cached = this.getCachedData(symbol);
+    if (cached) return cached;
 
     try {
-      // Try Binance first
-      const binanceData = await this.fetchFromBinance(symbol);
-      if (binanceData) {
-        this.cache.set(cacheKey, binanceData);
-        this.lastUpdate = Date.now();
-        return binanceData;
+      // Fetch from Binance API
+      const data = await this.fetchFromBinance(symbol);
+      if (data) {
+        this.cache.set(symbol, data);
+        this.lastUpdate.set(symbol, Date.now());
+        return data;
       }
-
-      // Fallback to CoinGecko
-      const coinGeckoData = await this.fetchFromCoinGecko(symbol);
-      if (coinGeckoData) {
-        this.cache.set(cacheKey, coinGeckoData);
-        this.lastUpdate = Date.now();
-        return coinGeckoData;
-      }
-
-      console.warn(`No live data available for ${symbol}`);
-      return null;
+      
+      // Fallback to CoinGecko if Binance fails
+      return await this.fetchFromCoinGecko(symbol);
     } catch (error) {
       console.error(`Error fetching live data for ${symbol}:`, error);
       return null;
     }
   }
 
+  private getCachedData(symbol: string): LiveMarketData | null {
+    const lastUpdate = this.lastUpdate.get(symbol);
+    if (!lastUpdate || Date.now() - lastUpdate > this.CACHE_DURATION) {
+      return null;
+    }
+    return this.cache.get(symbol) || null;
+  }
+
   private async fetchFromBinance(symbol: string): Promise<LiveMarketData | null> {
     try {
-      const binanceSymbol = symbol.replace('USD', 'USDT');
-      const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${binanceSymbol}`);
+      const response = await fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`);
       
       if (!response.ok) {
         throw new Error(`Binance API error: ${response.status}`);
@@ -71,81 +73,65 @@ class LiveMarketDataService {
       const data = await response.json();
       
       return {
-        symbol: binanceSymbol,
+        symbol,
         price: parseFloat(data.lastPrice),
         volume24h: parseFloat(data.volume),
         change24h: parseFloat(data.priceChangePercent),
         high24h: parseFloat(data.highPrice),
         low24h: parseFloat(data.lowPrice),
-        lastUpdate: Date.now()
+        lastUpdated: Date.now()
       };
     } catch (error) {
-      console.error('Binance API error:', error);
+      console.error(`Binance fetch error for ${symbol}:`, error);
       return null;
     }
   }
 
   private async fetchFromCoinGecko(symbol: string): Promise<LiveMarketData | null> {
     try {
-      // Map symbols to CoinGecko IDs
-      const coinGeckoIds: Record<string, string> = {
-        'BTCUSDT': 'bitcoin',
-        'ETHUSDT': 'ethereum',
-        'SOLUSDT': 'solana',
-        'BNBUSDT': 'binancecoin',
-        'ADAUSDT': 'cardano',
-        'DOTUSDT': 'polkadot',
-        'AVAXUSDT': 'avalanche-2'
-      };
-
-      const coinId = coinGeckoIds[symbol.toUpperCase()] || 'bitcoin';
-      
+      // Convert symbol to CoinGecko format
+      const coinId = this.symbolToCoinGeckoId(symbol);
       const response = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_high_low_24h=true`
+        `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true`
       );
-
+      
       if (!response.ok) {
         throw new Error(`CoinGecko API error: ${response.status}`);
       }
 
       const data = await response.json();
       const coinData = data[coinId];
-
-      if (!coinData) {
-        throw new Error(`No data found for ${coinId}`);
-      }
-
+      
+      if (!coinData) return null;
+      
       return {
-        symbol: symbol.toUpperCase(),
+        symbol,
         price: coinData.usd,
         volume24h: coinData.usd_24h_vol || 0,
         change24h: coinData.usd_24h_change || 0,
-        high24h: coinData.usd_24h_high || coinData.usd,
-        low24h: coinData.usd_24h_low || coinData.usd,
-        lastUpdate: Date.now()
+        high24h: coinData.usd * (1 + (coinData.usd_24h_change || 0) / 100 * 0.5),
+        low24h: coinData.usd * (1 - (coinData.usd_24h_change || 0) / 100 * 0.5),
+        lastUpdated: Date.now()
       };
     } catch (error) {
-      console.error('CoinGecko API error:', error);
+      console.error(`CoinGecko fetch error for ${symbol}:`, error);
       return null;
     }
   }
 
-  async getMultipleAssets(symbols: string[]): Promise<Map<string, LiveMarketData>> {
-    const results = new Map<string, LiveMarketData>();
+  private symbolToCoinGeckoId(symbol: string): string {
+    const mapping: Record<string, string> = {
+      'BTCUSDT': 'bitcoin',
+      'ETHUSDT': 'ethereum',
+      'SOLUSDT': 'solana',
+      'BNBUSDT': 'binancecoin',
+      'ADAUSDT': 'cardano',
+      'XRPUSDT': 'ripple',
+      'DOTUSDT': 'polkadot',
+      'LINKUSDT': 'chainlink'
+    };
     
-    for (const symbol of symbols) {
-      const data = await this.getLiveMarketData(symbol);
-      if (data) {
-        results.set(symbol, data);
-      }
-    }
-    
-    return results;
-  }
-
-  clearCache(): void {
-    this.cache.clear();
-    this.lastUpdate = 0;
+    return mapping[symbol] || symbol.toLowerCase().replace('usdt', '');
   }
 }
 

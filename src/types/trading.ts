@@ -1,30 +1,12 @@
 
-export interface TradingStrategy {
-  id: string;
-  name: string;
-  type: 'personal' | 'wyckoff' | 'smc' | 'fibonacci' | 'momentum' | 'candlestick' | 'volume' | 'rsi_macd' | 'patterns';
-  isActive: boolean;
-  weight: number; // Success-based weight (0-1)
-  parameters: Record<string, any>;
-  successRate: number;
-  totalSignals: number;
-  profitableSignals: number;
-  createdAt: number;
-  updatedAt: number;
-}
-
-export interface PersonalTradingStrategy extends TradingStrategy {
-  type: 'personal';
-  parameters: {
-    rsiThreshold: number;
-    volumeIncreaseRequired: boolean;
-    resistanceBreakRequired: boolean;
-    profitTargetPercent: number;
-    stopLossPercent: number;
-    maxRiskPercent: number;
-    riskRewardRatio: number;
-    confirmationPattern?: string;
-  };
+// Core trading types
+export interface PricePoint {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
 }
 
 export interface TradingSignal {
@@ -39,15 +21,7 @@ export interface TradingSignal {
   riskRewardRatio: number;
   reasoning: string;
   timestamp: number;
-  status: 'active' | 'executed' | 'stopped' | 'expired';
-  result?: {
-    executedPrice?: number;
-    exitPrice?: number;
-    profit?: number;
-    profitPercent?: number;
-    exitReason?: 'target' | 'stop' | 'manual' | 'timeout';
-    executedAt?: number;
-  };
+  status: 'active' | 'completed' | 'cancelled';
   telegramSent: boolean;
   metadata?: Record<string, any>;
 }
@@ -69,12 +43,12 @@ export interface MarketData {
     level786: number;
     level382: number;
   };
-  candlestickPattern?: string;
-  wyckoffPhase?: 'accumulation' | 'distribution' | 'markup' | 'markdown';
-  smcSignal?: {
-    orderBlock?: number;
-    liquidityGrab?: boolean;
-    fairValueGap?: number;
+  candlestickPattern: string;
+  wyckoffPhase: 'accumulation' | 'markup' | 'distribution' | 'markdown';
+  smcSignal: {
+    orderBlock: number;
+    liquidityGrab: boolean;
+    fairValueGap: number;
   };
   sentiment: {
     score: number;
@@ -94,22 +68,29 @@ export interface SystemHealth {
   lastCheck: number;
 }
 
-export interface UserSettings {
+export interface TradingStrategy {
   id: string;
-  email: string;
-  telegramBotToken?: string;
-  telegramChatId?: string;
-  binanceApiKey?: string;
-  binanceSecretKey?: string;
-  tradingViewUsername?: string;
-  maxRiskPerTrade: number;
-  autoTradingEnabled: boolean;
-  strategiesEnabled: string[];
-  notificationSettings: {
-    telegram: boolean;
-    email: boolean;
-    pushNotifications: boolean;
-  };
+  name: string;
+  type: string;
+  isActive: boolean;
+  weight: number;
+  parameters: Record<string, any>;
+  successRate: number;
+  totalSignals: number;
+  profitableSignals: number;
   createdAt: number;
   updatedAt: number;
+}
+
+export interface PersonalTradingStrategy extends TradingStrategy {
+  type: 'personal';
+  parameters: {
+    rsiThreshold: number;
+    volumeIncreaseRequired: boolean;
+    resistanceBreakRequired: boolean;
+    profitTargetPercent: number;
+    stopLossPercent: number;
+    maxRiskPercent: number;
+    riskRewardRatio: number;
+  };
 }

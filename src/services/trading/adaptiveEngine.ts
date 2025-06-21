@@ -53,17 +53,18 @@ class AdaptiveEngine {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Store feedback using direct SQL approach to handle new tables
+      // Store feedback directly in signal_feedback table
       const { error } = await supabase
-        .rpc('record_signal_feedback', {
-          p_user_id: user.id,
-          p_signal_id: feedback.signal_id,
-          p_strategy_used: feedback.strategy_used,
-          p_outcome: feedback.outcome,
-          p_profit_loss_percentage: feedback.profit_loss_percentage,
-          p_execution_time: feedback.execution_time.toISOString(),
-          p_market_conditions: feedback.market_conditions
-        });
+        .from('signal_feedback')
+        .insert([{
+          user_id: user.id,
+          signal_id: feedback.signal_id,
+          strategy_used: feedback.strategy_used,
+          outcome: feedback.outcome,
+          profit_loss_percentage: feedback.profit_loss_percentage,
+          execution_time: feedback.execution_time.toISOString(),
+          market_conditions: feedback.market_conditions
+        }]);
 
       if (error) {
         console.error('Error recording signal feedback:', error);
@@ -85,12 +86,14 @@ class AdaptiveEngine {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Get strategy performance using RPC function
+      // Get strategy performance data directly from signal_feedback table
       const { data: performanceData, error } = await supabase
-        .rpc('get_strategy_performance', {
-          p_user_id: user.id,
-          p_strategy_name: strategyName
-        }) as { data: PerformanceDataRow[] | null; error: any };
+        .from('signal_feedback')
+        .select('outcome, profit_loss_percentage, execution_time')
+        .eq('user_id', user.id)
+        .eq('strategy_used', strategyName)
+        .order('execution_time', { ascending: false })
+        .limit(50);
 
       if (error || !performanceData || performanceData.length < this.minSignalsForAdjustment) {
         console.log(`Not enough data for ${strategyName} adjustment (${performanceData?.length || 0} signals)`);
@@ -99,9 +102,9 @@ class AdaptiveEngine {
 
       // Calculate performance metrics
       const totalSignals = performanceData.length;
-      const successfulSignals = performanceData.filter((f: PerformanceDataRow) => f.outcome === 'win').length;
+      const successfulSignals = performanceData.filter(f => f.outcome === 'win').length;
       const successRate = successfulSignals / totalSignals;
-      const avgProfitLoss = performanceData.reduce((sum: number, f: PerformanceDataRow) => sum + f.profit_loss_percentage, 0) / totalSignals;
+      const avgProfitLoss = performanceData.reduce((sum, f) => sum + (f.profit_loss_percentage || 0), 0) / totalSignals;
 
       // Calculate time-of-day performance
       const timePerformance = this.calculateTimeOfDayPerformance(performanceData);
@@ -115,20 +118,22 @@ class AdaptiveEngine {
         console.log(`🧠 Almog's personal strategy weight maintained at ${newWeight} (priority protection)`);
       }
 
-      // Update strategy performance using RPC
+      // Update strategy performance
       const { error: updateError } = await supabase
-        .rpc('update_strategy_performance', {
-          p_user_id: user.id,
-          p_strategy_id: strategyName,
-          p_strategy_name: strategyName,
-          p_total_signals: totalSignals,
-          p_successful_signals: successfulSignals,
-          p_failed_signals: totalSignals - successfulSignals,
-          p_success_rate: successRate,
-          p_avg_profit_loss: avgProfitLoss,
-          p_current_weight: newWeight,
-          p_confidence_score: this.calculateConfidenceScore(successRate, avgProfitLoss),
-          p_time_of_day_performance: timePerformance
+        .from('strategy_performance')
+        .upsert({
+          user_id: user.id,
+          strategy_id: strategyName,
+          strategy_name: strategyName,
+          total_signals: totalSignals,
+          successful_signals: successfulSignals,
+          failed_signals: totalSignals - successfulSignals,
+          success_rate: successRate,
+          avg_profit_loss: avgProfitLoss,
+          current_weight: newWeight,
+          confidence_score: this.calculateConfidenceScore(successRate, avgProfitLoss),
+          time_of_day_performance: timePerformance,
+          last_updated: new Date().toISOString()
         });
 
       if (updateError) {
@@ -150,7 +155,7 @@ class AdaptiveEngine {
     }
   }
 
-  private calculateTimeOfDayPerformance(feedbackData: PerformanceDataRow[]): Record<string, number> {
+  private calculateTimeOfDayPerformance(feedbackData: any[]): Record<string, number> {
     const hourlyPerformance: Record<string, { wins: number; total: number }> = {};
     
     feedbackData.forEach(feedback => {
@@ -177,13 +182,14 @@ class AdaptiveEngine {
 
   private async calculateNewWeight(strategyName: string, successRate: number, avgProfitLoss: number): Promise<number> {
     try {
-      // Get current weight using RPC
+      // Get current weight from strategy_performance table
       const { data: currentPerf } = await supabase
-        .rpc('get_current_strategy_weight', {
-          p_strategy_id: strategyName
-        }) as { data: StrategyWeightRow[] | null };
+        .from('strategy_performance')
+        .select('current_weight')
+        .eq('strategy_id', strategyName)
+        .single();
 
-      const currentWeight = currentPerf?.[0]?.current_weight || 0.5;
+      const currentWeight = currentPerf?.current_weight || 0.5;
 
       // Calculate adjustment based on performance
       let adjustment = 0;
@@ -226,16 +232,19 @@ class AdaptiveEngine {
       if (!user) return [];
 
       const { data, error } = await supabase
-        .rpc('get_all_strategy_performance', {
-          p_user_id: user.id
-        });
+        .from('strategy_performance')
+        .select('*')
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('Error fetching strategy performance:', error);
         return [];
       }
 
-      return data || [];
+      return (data || []).map(d => ({
+        ...d,
+        last_updated: new Date(d.last_updated)
+      }));
     } catch (error) {
       console.error('Error in getStrategyPerformance:', error);
       return [];
@@ -253,24 +262,23 @@ class AdaptiveEngine {
       if (!user) return false;
 
       const { data: performance } = await supabase
-        .rpc('get_strategy_performance_by_name', {
-          p_user_id: user.id,
-          p_strategy_name: strategyName
-        }) as { data: StrategyPerformanceRow[] | null };
+        .from('strategy_performance')
+        .select('success_rate, avg_profit_loss, total_signals')
+        .eq('user_id', user.id)
+        .eq('strategy_id', strategyName)
+        .single();
 
-      if (!performance || !performance[0]) return false;
-
-      const perf = performance[0];
+      if (!performance) return false;
 
       // Disable if success rate < 25% and avg loss > -3%
-      const shouldDisable = perf.success_rate < 0.25 && 
-                           perf.avg_profit_loss < -3.0 && 
-                           perf.total_signals >= 20;
+      const shouldDisable = performance.success_rate < 0.25 && 
+                           performance.avg_profit_loss < -3.0 && 
+                           performance.total_signals >= 20;
 
       if (shouldDisable) {
         console.log(`⚠️ Strategy ${strategyName} marked for disabling due to poor performance`);
         toast.warning(`אסטרטגיה הושבתה: ${strategyName}`, {
-          description: `ביצועים נמוכים: ${(perf.success_rate * 100).toFixed(1)}% הצלחה`,
+          description: `ביצועים נמוכים: ${(performance.success_rate * 100).toFixed(1)}% הצלחה`,
           duration: 10000,
         });
       }
@@ -288,14 +296,15 @@ class AdaptiveEngine {
       if (!user) return [];
 
       const { data: feedbackData } = await supabase
-        .rpc('get_winning_signals_by_hour', {
-          p_user_id: user.id
-        }) as { data: { execution_time: string }[] | null };
+        .from('signal_feedback')
+        .select('execution_time')
+        .eq('user_id', user.id)
+        .eq('outcome', 'win');
 
       if (!feedbackData) return [];
 
       const hourlyWins: Record<number, number> = {};
-      feedbackData.forEach((feedback: { execution_time: string }) => {
+      feedbackData.forEach(feedback => {
         const hour = new Date(feedback.execution_time).getHours();
         hourlyWins[hour] = (hourlyWins[hour] || 0) + 1;
       });

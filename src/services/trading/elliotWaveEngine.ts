@@ -1,4 +1,4 @@
-import { PricePoint } from '@/types/asset';
+import { PricePoint } from '@/types/trading';
 
 export interface ElliotWavePattern {
   wave_id: string;
@@ -373,18 +373,8 @@ class ElliotWaveEngine {
       const isHighPivot = this.isLocalHigh(data, i, lookback);
       const isLowPivot = this.isLocalLow(data, i, lookback);
 
-      if (isHighPivot) {
-        pivots.push({
-          ...current,
-          high: current.high || current.price,
-          price: current.high || current.price,
-        });
-      } else if (isLowPivot) {
-        pivots.push({
-          ...current,
-          low: current.low || current.price,
-          price: current.low || current.price,
-        });
+      if (isHighPivot || isLowPivot) {
+        pivots.push(current);
       }
     }
 
@@ -392,13 +382,11 @@ class ElliotWaveEngine {
   }
 
   private isLocalHigh(data: PricePoint[], index: number, lookback: number): boolean {
-    const current = data[index];
-    const currentHigh = current.high || current.price;
+    const currentHigh = data[index].high;
 
     for (let i = index - lookback; i <= index + lookback; i++) {
       if (i !== index && i >= 0 && i < data.length) {
-        const compareHigh = data[i].high || data[i].price;
-        if (compareHigh >= currentHigh) {
+        if (data[i].high >= currentHigh) {
           return false;
         }
       }
@@ -407,13 +395,11 @@ class ElliotWaveEngine {
   }
 
   private isLocalLow(data: PricePoint[], index: number, lookback: number): boolean {
-    const current = data[index];
-    const currentLow = current.low || current.price;
+    const currentLow = data[index].low;
 
     for (let i = index - lookback; i <= index + lookback; i++) {
       if (i !== index && i >= 0 && i < data.length) {
-        const compareLow = data[i].low || data[i].price;
-        if (compareLow <= currentLow) {
+        if (data[i].low <= currentLow) {
           return false;
         }
       }
