@@ -98,7 +98,7 @@ const EliteSignalDashboard: React.FC = () => {
 
           {engineStatus.isRunning && (
             <div className="text-sm text-muted-foreground">
-              ניתוח אחרון: {engineStatus.lastAnalysis}
+              ניתוח אחרון: {engineStatus.lastAnalysis || 'N/A'}
             </div>
           )}
         </CardContent>

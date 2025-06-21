@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -12,14 +13,16 @@ import TradingEngineControl from './components/trading-engine/TradingEngineContr
 import AdminDashboard from './components/admin/AdminDashboard';
 import Auth from './pages/Auth';
 import ProtectedRoute from './components/auth/ProtectedRoute';
-import { QueryClient } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import RequireAuth from './components/auth/RequireAuth';
 import Analytics from './pages/Analytics';
 
+const queryClient = new QueryClient();
+
 function App() {
   return (
-    <QueryClient>
-      <BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <Router>
         <AuthProvider>
           <Toaster 
             position="top-right" 
@@ -49,8 +52,8 @@ function App() {
             <Route path="/analytics" element={<RequireAuth><Analytics /></RequireAuth>} />
           </Routes>
         </AuthProvider>
-      </BrowserRouter>
-    </QueryClient>
+      </Router>
+    </QueryClientProvider>
   );
 }
 
