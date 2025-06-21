@@ -180,6 +180,7 @@ class LiveSignalEngine {
     if (riskReward < 1.5) {
       reasons.push(`Poor risk/reward ratio: ${riskReward.toFixed(2)} (minimum 1.5 required)`);
     }
+    // FIXED: Correct comparison using sentiment.impact for direction and sentiment.strength for intensity
     if (sentiment.impact === 'negative' && sentiment.strength === 'high') {
       reasons.push(`Strong negative sentiment: ${sentiment.score.toFixed(2)}`);
     }
