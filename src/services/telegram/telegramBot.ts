@@ -1,11 +1,8 @@
 
+import { unifiedTelegramService } from './unifiedTelegramService';
+
 export class TelegramBot {
   private static instance: TelegramBot;
-  private config = {
-    token: '',
-    chatId: '-1001234567890',
-    connected: false
-  };
   
   public static getInstance(): TelegramBot {
     if (!TelegramBot.instance) {
@@ -14,40 +11,47 @@ export class TelegramBot {
     return TelegramBot.instance;
   }
 
+  constructor() {
+    // Auto-initialize with hardcoded credentials for production
+    this.initializeProduction();
+  }
+
+  private async initializeProduction() {
+    const PRODUCTION_TOKEN = '7607389220:AAHSUnDPTR_9iQEmMjZkSy5i0kepBotAUbA';
+    const PRODUCTION_CHAT_ID = '809305569';
+    
+    console.log('🚀 Initializing production Telegram bot...');
+    
+    // Check if already configured
+    const status = unifiedTelegramService.getConnectionStatus();
+    if (!status.connected || status.botToken !== PRODUCTION_TOKEN) {
+      await unifiedTelegramService.initializeWithCredentials(PRODUCTION_TOKEN, PRODUCTION_CHAT_ID);
+    }
+  }
+
   public getConnectionStatus() {
+    const status = unifiedTelegramService.getConnectionStatus();
     return {
-      connected: this.config.connected,
-      status: this.config.connected ? 'Connected' : 'Disconnected',
-      tokenLength: this.config.token.length,
-      chatId: this.config.chatId,
-      hasCredentials: this.config.token.length > 0
+      connected: status.connected,
+      status: status.connected ? 'Connected' : 'Disconnected',
+      tokenLength: status.botToken.length,
+      chatId: status.chatId,
+      hasCredentials: status.hasCredentials
     };
   }
 
   public async configureTelegram(token: string, chatId: string): Promise<boolean> {
-    try {
-      this.config.token = token;
-      this.config.chatId = chatId;
-      this.config.connected = true;
-      console.log('📱 Telegram configured successfully');
-      return true;
-    } catch (error) {
-      console.error('❌ Failed to configure Telegram:', error);
-      return false;
-    }
+    return await unifiedTelegramService.configureTelegram(token, chatId);
   }
 
   public disconnect(): void {
-    this.config.connected = false;
-    this.config.token = '';
-    console.log('📱 Telegram disconnected');
+    unifiedTelegramService.disconnect();
   }
 
   public async testEliteConnection(): Promise<boolean> {
     try {
       console.log('🧪 Testing Telegram Elite connection...');
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      return this.config.connected;
+      return await unifiedTelegramService.sendTestMessage();
     } catch (error) {
       console.error('Telegram test failed:', error);
       return false;
@@ -55,39 +59,15 @@ export class TelegramBot {
   }
 
   public async sendMessage(message: string): Promise<boolean> {
-    try {
-      console.log('📤 Sending Telegram message:', message);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return this.config.connected;
-    } catch (error) {
-      console.error('Failed to send Telegram message:', error);
-      return false;
-    }
+    return await unifiedTelegramService.sendMessage(message);
   }
 
   public async sendTestMessage(): Promise<boolean> {
-    const testMessage = '🧪 Test message from LeviPro system';
-    return this.sendMessage(testMessage);
+    return await unifiedTelegramService.sendTestMessage();
   }
 
   public async sendSignal(signal: any): Promise<boolean> {
-    const actionEmoji = signal.action === 'buy' ? '🟢 BUY' : '🔴 SELL';
-    const message = `
-${actionEmoji}: ${signal.symbol}
-
-💰 Entry: $${signal.price.toFixed(2)}
-🎯 Target: $${signal.targetPrice.toFixed(2)}
-🛑 Stop Loss: $${signal.stopLoss.toFixed(2)}
-⚖️ R/R: ${signal.riskRewardRatio.toFixed(2)}:1
-📊 Confidence: ${(signal.confidence * 100).toFixed(0)}%
-
-🎯 Strategy: ${signal.strategy}
-⏰ Time: ${new Date().toLocaleString('he-IL')}
-
-#LeviPro #${signal.strategy}
-`;
-    
-    return this.sendMessage(message);
+    return await unifiedTelegramService.sendTradingSignal(signal);
   }
 }
 

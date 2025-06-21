@@ -2,7 +2,7 @@ import { TradingSignal } from '@/types/trading';
 import { marketDataService } from './marketDataService';
 import { strategyEngine } from './strategyEngine';
 import { IntelligenceEnhancedScoring } from './intelligenceEnhancedScoring';
-import { telegramBot } from '../telegram/telegramBot';
+import { unifiedTelegramService } from '../telegram/unifiedTelegramService';
 import { SignalScoringEngine } from './signalScoringEngine';
 import { riskManagementEngine } from '../risk/riskManagementEngine';
 
@@ -175,13 +175,16 @@ export class EnhancedSignalEngine {
   private async sendEnhancedSignal(signal: any, scoredSignal: any): Promise<boolean> {
     try {
       const telegramMessage = this.formatEnhancedTelegramMessage(signal, scoredSignal);
-      const sent = await telegramBot.sendMessage(telegramMessage);
+      const sent = await unifiedTelegramService.sendMessage(telegramMessage);
       
       if (sent) {
         this.storeSignalRecord(signal, scoredSignal);
         window.dispatchEvent(new CustomEvent('enhanced-signal-sent', {
           detail: { signal, scoredSignal, riskData: signal.riskData }
         }));
+        console.log('✅ Enhanced signal sent successfully via unified service');
+      } else {
+        console.error('❌ Failed to send enhanced signal via unified service');
       }
       
       return sent;
