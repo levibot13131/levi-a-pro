@@ -51,6 +51,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
     );
   }
 
+  // If no session, redirect to auth page (not login)
   if (!session) {
     return <Navigate to="/auth" replace />;
   }

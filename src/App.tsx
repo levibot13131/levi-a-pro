@@ -27,11 +27,11 @@ const App = () => (
         <BrowserRouter>
           <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
             <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<Login />} />
+              {/* Public routes - NOT protected by AuthGuard */}
               <Route path="/auth" element={<Auth />} />
+              <Route path="/login" element={<Login />} />
               
-              {/* Protected routes */}
+              {/* Protected routes - wrapped in AuthGuard */}
               {navItems.map(({ to, page }) => (
                 <Route 
                   key={to} 
@@ -44,8 +44,12 @@ const App = () => (
                 />
               ))}
               
-              {/* Redirect root to dashboard if authenticated, otherwise to login */}
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              {/* Root redirect - let AuthGuard handle the logic */}
+              <Route path="/" element={
+                <AuthGuard>
+                  <Navigate to="/dashboard" replace />
+                </AuthGuard>
+              } />
             </Routes>
           </div>
         </BrowserRouter>
