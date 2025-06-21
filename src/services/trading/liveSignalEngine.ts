@@ -31,7 +31,7 @@ export interface SignalRejection {
 // FIXED: Corrected sentiment analysis interface with proper typing
 interface SentimentAnalysis {
   score: number; // 0-1 scale
-  impact: 'positive' | 'negative' | 'neutral'; // Changed from strength levels to sentiment direction
+  impact: 'positive' | 'negative' | 'neutral'; // Sentiment direction
   strength: 'high' | 'medium' | 'low'; // Strength of the sentiment
 }
 
