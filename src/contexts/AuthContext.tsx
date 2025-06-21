@@ -38,7 +38,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   const isAdmin = user?.email ? ADMIN_USERS.includes(user.email) : false;
   const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || '';
@@ -46,117 +45,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    // Initialize auth state
-    const initializeAuth = async () => {
+    const initAuth = async () => {
       try {
+        console.log('🔐 Initializing authentication...');
+        
         // Get initial session
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Error getting initial session:', error);
+          console.error('Auth session error:', error);
         }
 
         if (mounted) {
-          // Check authorization
           if (initialSession?.user?.email && !AUTHORIZED_USERS.includes(initialSession.user.email)) {
-            console.log('Unauthorized existing session:', initialSession.user.email);
+            console.log('Unauthorized user, signing out:', initialSession.user.email);
             await supabase.auth.signOut();
-            toast.error('גישה נדחית - משתמש לא מורשה');
             setSession(null);
             setUser(null);
           } else {
             setSession(initialSession);
             setUser(initialSession?.user ?? null);
-            
-            if (initialSession?.user) {
-              initializeUserEngineStatus(initialSession.user.id);
-            }
+            console.log('Auth initialized:', initialSession?.user?.email || 'No user');
           }
-          
           setIsLoading(false);
-          setIsInitialized(true);
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
         if (mounted) {
           setIsLoading(false);
-          setIsInitialized(true);
         }
       }
     };
 
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
-        console.log('Auth event:', event, newSession?.user?.email);
+      (event, newSession) => {
+        console.log('Auth state change:', event, newSession?.user?.email);
         
         if (!mounted) return;
 
         // Check authorization for new sessions
         if (newSession?.user?.email && !AUTHORIZED_USERS.includes(newSession.user.email)) {
           console.log('Unauthorized user attempted access:', newSession.user.email);
-          await supabase.auth.signOut();
+          supabase.auth.signOut();
           toast.error('גישה נדחית - משתמש לא מורשה');
           return;
         }
         
         setSession(newSession);
         setUser(newSession?.user ?? null);
-        
-        // Auto-start engine for admin users (with delay to prevent loops)
-        if (newSession?.user && ADMIN_USERS.includes(newSession.user.email) && event === 'SIGNED_IN') {
-          setTimeout(() => {
-            import('@/services/trading/engineController').then(({ engineController }) => {
-              engineController.startEngine().then(() => {
-                toast.success('מערכת LeviPro הופעלה אוטומטית!', {
-                  description: 'מנוע האסטרטגיה האישית פועל עכשיו',
-                  duration: 8000,
-                });
-              }).catch(console.error);
-            }).catch(console.error);
-          }, 2000);
-        }
-        
-        // Initialize engine status for new authenticated users
-        if (newSession?.user && event === 'SIGNED_IN') {
-          initializeUserEngineStatus(newSession.user.id);
-        }
       }
     );
 
-    // Initialize auth
-    initializeAuth();
+    initAuth();
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
   }, []);
-
-  const initializeUserEngineStatus = async (userId: string) => {
-    try {
-      const { data: existingStatus } = await supabase
-        .from('trading_engine_status')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (!existingStatus) {
-        await supabase
-          .from('trading_engine_status')
-          .insert([{
-            user_id: userId,
-            is_running: false,
-            total_signals_generated: 0,
-            profitable_signals: 0,
-            success_rate: 0
-          }]);
-        console.log('Initialized engine status for user');
-      }
-    } catch (error) {
-      console.error('Error initializing engine status:', error);
-    }
-  };
 
   const signIn = async (email: string, password: string) => {
     // Pre-check authorization
@@ -213,28 +160,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      if (email.toLowerCase() === 'almogahronov1997@gmail.com') {
-        const { data, error } = await supabase.auth.admin.createUser({
-          email: email.toLowerCase(),
-          password,
-          email_confirm: true,
-          user_metadata: {
-            display_name: 'מנהל המערכת'
-          }
-        });
-        
-        if (error && error.message?.includes('already registered')) {
-          return await signIn(email, password);
-        }
-        
-        return { error };
-      }
-
       const { data, error } = await supabase.auth.signUp({
         email: email.toLowerCase(),
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/auth/confirm`,
+          emailRedirectTo: `${window.location.origin}/auth`,
           data: {
             display_name: email.split('@')[0]
           }
@@ -271,7 +201,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast.error(error.message);
       return false;
     }
-    toast.success('ברוך הבא ל-LeviPro!');
     return true;
   };
 
@@ -285,7 +214,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       toast.error(error.message);
       return false;
     }
-    toast.success('חשבון נוצר בהצלחה');
     return true;
   };
 
@@ -298,18 +226,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Refresh user error:', error);
     }
   };
-
-  // Don't render children until auth is initialized
-  if (!isInitialized) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-white text-lg">🔐 LeviPro מתחיל...</p>
-        </div>
-      </div>
-    );
-  }
 
   const value = {
     user,

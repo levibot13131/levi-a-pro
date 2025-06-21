@@ -20,45 +20,49 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <BrowserRouter>
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-              <Routes>
-                {/* Public routes - NOT protected by AuthGuard */}
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/login" element={<Login />} />
-                
-                {/* Protected routes - wrapped in AuthGuard */}
-                {navItems.map(({ to, page }) => (
-                  <Route 
-                    key={to} 
-                    path={to} 
-                    element={
-                      <AuthGuard>
-                        {page}
-                      </AuthGuard>
-                    } 
-                  />
-                ))}
-                
-                {/* Root redirect - let AuthGuard handle the logic */}
-                <Route path="/" element={
-                  <AuthGuard>
-                    <Navigate to="/dashboard" replace />
-                  </AuthGuard>
-                } />
-              </Routes>
-            </div>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  </ErrorBoundary>
-);
+const App = () => {
+  console.log('🚀 App component initializing...');
+  
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <BrowserRouter>
+              <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+                <Routes>
+                  {/* Public routes - NOT protected by AuthGuard */}
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/login" element={<Login />} />
+                  
+                  {/* Protected routes - wrapped in AuthGuard */}
+                  {navItems.map(({ to, page }) => (
+                    <Route 
+                      key={to} 
+                      path={to} 
+                      element={
+                        <AuthGuard>
+                          {page}
+                        </AuthGuard>
+                      } 
+                    />
+                  ))}
+                  
+                  {/* Root redirect - let AuthGuard handle the logic */}
+                  <Route path="/" element={
+                    <AuthGuard>
+                      <Navigate to="/dashboard" replace />
+                    </AuthGuard>
+                  } />
+                </Routes>
+              </div>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
+  );
+};
 
 export default App;

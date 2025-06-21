@@ -16,30 +16,44 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [hasMounted, setHasMounted] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  const { signIn, signUp, isAuthenticated, isLoading: authLoading } = useAuth();
+  // Use auth hook safely after mount
+  const auth = useAuth();
 
-  // Prevent redirect loops by ensuring component has mounted
   useEffect(() => {
-    setHasMounted(true);
+    console.log('🔐 Auth page mounted');
+    setMounted(true);
   }, []);
 
-  // Only redirect after component has properly mounted and auth is not loading
-  if (hasMounted && !authLoading && isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
-  // Show loading while auth context is initializing
-  if (!hasMounted || authLoading) {
+  // Don't render anything until component is mounted
+  if (!mounted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-          <p className="text-muted-foreground">טוען מערכת LeviPro...</p>
+          <p className="text-muted-foreground">טוען LeviPro...</p>
         </div>
       </div>
     );
+  }
+
+  // Show loading while auth is initializing
+  if (auth.isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground">מאתחל מערכת LeviPro...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if already authenticated
+  if (auth.isAuthenticated) {
+    console.log('User authenticated, redirecting to dashboard');
+    return <Navigate to="/dashboard" replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,8 +69,8 @@ const Auth = () => {
 
     try {
       const { error } = isSignUp 
-        ? await signUp(email, password)
-        : await signIn(email, password);
+        ? await auth.signUp(email, password)
+        : await auth.signIn(email, password);
 
       if (error) {
         setError(error.message);

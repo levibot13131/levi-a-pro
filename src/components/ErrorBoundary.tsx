@@ -19,11 +19,12 @@ class ErrorBoundary extends Component<Props, State> {
   };
 
   public static getDerivedStateFromError(error: Error): State {
+    console.error('ErrorBoundary caught error:', error);
     return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error('ErrorBoundary detailed error:', error, errorInfo);
   }
 
   private handleRefresh = () => {
@@ -38,7 +39,7 @@ class ErrorBoundary extends Component<Props, State> {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-red-600">
                 <AlertTriangle className="h-5 w-5" />
-                שגיאה במערכת
+                שגיאה במערכת LeviPro
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
