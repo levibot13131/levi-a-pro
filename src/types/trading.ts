@@ -91,6 +91,11 @@ export interface SystemHealth {
 }
 
 export interface PricePoint {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
   price: number;
   timestamp: number;
   volume?: number;
