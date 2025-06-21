@@ -5,80 +5,159 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Calculator, DollarSign, TrendingUp, Shield, Copy } from 'lucide-react';
+import { AlertTriangle, Calculator, DollarSign, Target, Shield, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 
 const TradingCalculators: React.FC = () => {
-  const [positionSize, setPositionSize] = useState({
-    accountBalance: 10000,
+  // Position Size Calculator State
+  const [positionCalc, setPositionCalc] = useState({
+    accountSize: 10000,
     riskPercent: 2,
-    entryPrice: 43000,
-    stopLoss: 42000,
-    result: 0
+    entryPrice: 0,
+    stopLoss: 0,
+    positionSize: 0,
+    riskAmount: 0
   });
 
-  const [riskReward, setRiskReward] = useState({
-    entryPrice: 43000,
-    stopLoss: 42000,
-    targetPrice: 46000,
+  // Risk/Reward Calculator State
+  const [rrCalc, setRRCalc] = useState({
+    entryPrice: 0,
+    stopLoss: 0,
+    takeProfit: 0,
+    riskAmount: 0,
+    rewardAmount: 0,
     ratio: 0
   });
 
+  // Leverage Calculator State
   const [leverageCalc, setLeverageCalc] = useState({
-    accountBalance: 10000,
-    positionSize: 20000,
-    leverage: 0,
-    margin: 0
+    accountBalance: 1000,
+    positionSize: 10000,
+    leverage: 1,
+    margin: 0,
+    liquidationPrice: 0
+  });
+
+  // Daily Loss Calculator State
+  const [lossCalc, setLossCalc] = useState({
+    dailyStartBalance: 10000,
+    currentBalance: 10000,
+    maxDailyLoss: 5,
+    currentLoss: 0,
+    remainingRisk: 0,
+    stopTrading: false
   });
 
   const calculatePositionSize = () => {
-    const riskAmount = (positionSize.accountBalance * positionSize.riskPercent) / 100;
-    const priceRisk = Math.abs(positionSize.entryPrice - positionSize.stopLoss);
-    const result = riskAmount / priceRisk;
+    const riskAmount = (positionCalc.accountSize * positionCalc.riskPercent) / 100;
+    const priceDistance = Math.abs(positionCalc.entryPrice - positionCalc.stopLoss);
     
-    setPositionSize(prev => ({ ...prev, result }));
+    if (priceDistance === 0) {
+      toast.error('מחיר כניסה וסטופ לוס לא יכולים להיות זהים');
+      return;
+    }
+    
+    const positionSize = riskAmount / priceDistance;
+    
+    setPositionCalc(prev => ({
+      ...prev,
+      positionSize: Number(positionSize.toFixed(8)),
+      riskAmount: Number(riskAmount.toFixed(2))
+    }));
+    
     toast.success('גודל פוזיציה חושב בהצלחה');
   };
 
   const calculateRiskReward = () => {
-    const risk = Math.abs(riskReward.entryPrice - riskReward.stopLoss);
-    const reward = Math.abs(riskReward.targetPrice - riskReward.entryPrice);
+    const risk = Math.abs(rrCalc.entryPrice - rrCalc.stopLoss);
+    const reward = Math.abs(rrCalc.takeProfit - rrCalc.entryPrice);
+    
+    if (risk === 0) {
+      toast.error('סיכון לא יכול להיות אפס');
+      return;
+    }
+    
     const ratio = reward / risk;
     
-    setRiskReward(prev => ({ ...prev, ratio }));
-    toast.success('יחס סיכון/רווח חושב בהצלחה');
+    setRRCalc(prev => ({
+      ...prev,
+      riskAmount: Number(risk.toFixed(2)),
+      rewardAmount: Number(reward.toFixed(2)),
+      ratio: Number(ratio.toFixed(2))
+    }));
+    
+    if (ratio < 1.5) {
+      toast.warning('יחס R/R נמוך מ-1.5 - שקול להתאים את היעדים');
+    } else {
+      toast.success(`יחס R/R מצוין: 1:${ratio.toFixed(2)}`);
+    }
   };
 
   const calculateLeverage = () => {
     const leverage = leverageCalc.positionSize / leverageCalc.accountBalance;
     const margin = leverageCalc.positionSize / leverage;
     
-    setLeverageCalc(prev => ({ ...prev, leverage, margin }));
-    toast.success('מינוף וערבות חושבו בהצלחה');
+    // Simplified liquidation price calculation (assumes 100% margin requirement)
+    const liquidationPrice = leverageCalc.positionSize > leverageCalc.accountBalance 
+      ? leverageCalc.accountBalance * 0.8 
+      : 0;
+    
+    setLeverageCalc(prev => ({
+      ...prev,
+      leverage: Number(leverage.toFixed(2)),
+      margin: Number(margin.toFixed(2)),
+      liquidationPrice: Number(liquidationPrice.toFixed(2))
+    }));
+    
+    if (leverage > 10) {
+      toast.error('⚠️ מינוף גבוה מאוד - סיכון ליקווידציה גבוה!');
+    } else if (leverage > 5) {
+      toast.warning('⚠️ מינוף גבוה - נהל בזהירות');
+    } else {
+      toast.success('רמת מינוף סבירה');
+    }
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success('הועתק ללוח');
+  const calculateDailyLoss = () => {
+    const currentLoss = ((lossCalc.dailyStartBalance - lossCalc.currentBalance) / lossCalc.dailyStartBalance) * 100;
+    const remainingRisk = lossCalc.maxDailyLoss - currentLoss;
+    const stopTrading = currentLoss >= lossCalc.maxDailyLoss;
+    
+    setLossCalc(prev => ({
+      ...prev,
+      currentLoss: Number(currentLoss.toFixed(2)),
+      remainingRisk: Number(remainingRisk.toFixed(2)),
+      stopTrading
+    }));
+    
+    if (stopTrading) {
+      toast.error('🛑 הגעת למגבלת ההפסד היומית - הפסק מסחר');
+    } else if (remainingRisk < 1) {
+      toast.warning('⚠️ קרוב למגבלת ההפסד היומית');
+    } else {
+      toast.success('רמת סיכון יומית תקינה');
+    }
   };
 
   return (
     <div className="container mx-auto py-6 px-4 space-y-6">
-      <div>
+      <div className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-2">מחשבוני מסחר</h1>
-        <p className="text-muted-foreground">כלים לחישוב סיכון, גודל פוזיציה ומינוף</p>
+        <p className="text-muted-foreground">
+          כלים מתקדמים לחישוב סיכון, גודל פוזיציה ונהול קפיטל
+        </p>
       </div>
 
-      <Tabs defaultValue="position-size" className="w-full">
+      <Tabs defaultValue="position" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="position-size">גודל פוזיציה</TabsTrigger>
-          <TabsTrigger value="risk-reward">סיכון/רווח</TabsTrigger>
+          <TabsTrigger value="position">גודל פוזיציה</TabsTrigger>
+          <TabsTrigger value="riskreward">R/R</TabsTrigger>
           <TabsTrigger value="leverage">מינוף</TabsTrigger>
-          <TabsTrigger value="daily-risk">סיכון יומי</TabsTrigger>
+          <TabsTrigger value="dailyloss">הפסד יומי</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="position-size" className="space-y-4">
+        {/* Position Size Calculator */}
+        <TabsContent value="position">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -88,256 +167,298 @@ const TradingCalculators: React.FC = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="accountBalance">יתרת חשבון ($)</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="accountSize">גודל חשבון ($)</Label>
                   <Input
-                    id="accountBalance"
+                    id="accountSize"
                     type="number"
-                    value={positionSize.accountBalance}
-                    onChange={(e) => setPositionSize(prev => ({ ...prev, accountBalance: Number(e.target.value) }))}
+                    value={positionCalc.accountSize}
+                    onChange={(e) => setPositionCalc(prev => ({
+                      ...prev,
+                      accountSize: Number(e.target.value)
+                    }))}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="riskPercent">סיכון לעסקה (%)</Label>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="riskPercent">אחוז סיכון (%)</Label>
                   <Input
                     id="riskPercent"
                     type="number"
-                    value={positionSize.riskPercent}
-                    onChange={(e) => setPositionSize(prev => ({ ...prev, riskPercent: Number(e.target.value) }))}
+                    step="0.1"
+                    value={positionCalc.riskPercent}
+                    onChange={(e) => setPositionCalc(prev => ({
+                      ...prev,
+                      riskPercent: Number(e.target.value)
+                    }))}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="entryPrice">מחיר כניסה ($)</Label>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="entryPrice">מחיר כניסה</Label>
                   <Input
                     id="entryPrice"
                     type="number"
-                    value={positionSize.entryPrice}
-                    onChange={(e) => setPositionSize(prev => ({ ...prev, entryPrice: Number(e.target.value) }))}
+                    step="0.01"
+                    value={positionCalc.entryPrice}
+                    onChange={(e) => setPositionCalc(prev => ({
+                      ...prev,
+                      entryPrice: Number(e.target.value)
+                    }))}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="stopLoss">סטופ לוס ($)</Label>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="stopLoss">סטופ לוס</Label>
                   <Input
                     id="stopLoss"
                     type="number"
-                    value={positionSize.stopLoss}
-                    onChange={(e) => setPositionSize(prev => ({ ...prev, stopLoss: Number(e.target.value) }))}
+                    step="0.01"
+                    value={positionCalc.stopLoss}
+                    onChange={(e) => setPositionCalc(prev => ({
+                      ...prev,
+                      stopLoss: Number(e.target.value)
+                    }))}
                   />
                 </div>
               </div>
-
+              
               <Button onClick={calculatePositionSize} className="w-full">
-                <Calculator className="h-4 w-4 mr-2" />
                 חשב גודל פוזיציה
               </Button>
-
-              {positionSize.result > 0 && (
-                <Card className="bg-green-50 border-green-200">
-                  <CardContent className="pt-6">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-700 mb-2">
-                        {positionSize.result.toFixed(4)} יחידות
-                      </div>
-                      <div className="text-sm text-green-600 mb-4">
-                        גודל פוזיציה מומלץ
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => copyToClipboard(positionSize.result.toFixed(4))}
-                      >
-                        <Copy className="h-4 w-4 mr-2" />
-                        העתק
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+              
+              {positionCalc.positionSize > 0 && (
+                <div className="bg-muted p-4 rounded-lg space-y-2">
+                  <h3 className="font-semibold">תוצאות:</h3>
+                  <p><strong>גודל פוזיציה:</strong> {positionCalc.positionSize.toLocaleString()} יחידות</p>
+                  <p><strong>סכום סיכון:</strong> ${positionCalc.riskAmount.toLocaleString()}</p>
+                  <p><strong>מרחק לסטופ:</strong> {Math.abs(positionCalc.entryPrice - positionCalc.stopLoss).toFixed(2)}</p>
+                </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="risk-reward" className="space-y-4">
+        {/* Risk/Reward Calculator */}
+        <TabsContent value="riskreward">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" />
-                מחשבון יחס סיכון/רווח
+                <Target className="h-5 w-5" />
+                מחשבון יחס סיכון/רווח (R/R)
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="rrEntryPrice">מחיר כניסה ($)</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="rrEntryPrice">מחיר כניסה</Label>
                   <Input
                     id="rrEntryPrice"
                     type="number"
-                    value={riskReward.entryPrice}
-                    onChange={(e) => setRiskReward(prev => ({ ...prev, entryPrice: Number(e.target.value) }))}
+                    step="0.01"
+                    value={rrCalc.entryPrice}
+                    onChange={(e) => setRRCalc(prev => ({
+                      ...prev,
+                      entryPrice: Number(e.target.value)
+                    }))}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="rrStopLoss">סטופ לוס ($)</Label>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="rrStopLoss">סטופ לוס</Label>
                   <Input
                     id="rrStopLoss"
                     type="number"
-                    value={riskReward.stopLoss}
-                    onChange={(e) => setRiskReward(prev => ({ ...prev, stopLoss: Number(e.target.value) }))}
+                    step="0.01"
+                    value={rrCalc.stopLoss}
+                    onChange={(e) => setRRCalc(prev => ({
+                      ...prev,
+                      stopLoss: Number(e.target.value)
+                    }))}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="rrTargetPrice">מחיר יעד ($)</Label>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="takeProfit">טייק פרופיט</Label>
                   <Input
-                    id="rrTargetPrice"
+                    id="takeProfit"
                     type="number"
-                    value={riskReward.targetPrice}
-                    onChange={(e) => setRiskReward(prev => ({ ...prev, targetPrice: Number(e.target.value) }))}
+                    step="0.01"
+                    value={rrCalc.takeProfit}
+                    onChange={(e) => setRRCalc(prev => ({
+                      ...prev,
+                      takeProfit: Number(e.target.value)
+                    }))}
                   />
                 </div>
               </div>
-
+              
               <Button onClick={calculateRiskReward} className="w-full">
-                <TrendingUp className="h-4 w-4 mr-2" />
-                חשב יחס סיכון/רווח
+                חשב יחס R/R
               </Button>
-
-              {riskReward.ratio > 0 && (
-                <Card className="bg-blue-50 border-blue-200">
-                  <CardContent className="pt-6">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-700 mb-2">
-                        1:{riskReward.ratio.toFixed(2)}
-                      </div>
-                      <div className="text-sm text-blue-600 mb-4">
-                        יחס סיכון לרווח
-                      </div>
-                      <Badge className={riskReward.ratio >= 2 ? 'bg-green-100 text-green-800' : riskReward.ratio >= 1.5 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}>
-                        {riskReward.ratio >= 2 ? 'מצוין' : riskReward.ratio >= 1.5 ? 'טוב' : 'לא מומלץ'}
-                      </Badge>
-                    </div>
-                  </CardContent>
-                </Card>
+              
+              {rrCalc.ratio > 0 && (
+                <div className={`p-4 rounded-lg space-y-2 ${
+                  rrCalc.ratio >= 2 ? 'bg-green-100' : 
+                  rrCalc.ratio >= 1.5 ? 'bg-yellow-100' : 'bg-red-100'
+                }`}>
+                  <h3 className="font-semibold">תוצאות:</h3>
+                  <p><strong>סיכון:</strong> {rrCalc.riskAmount.toFixed(2)} נקודות</p>
+                  <p><strong>רווח פוטנציאלי:</strong> {rrCalc.rewardAmount.toFixed(2)} נקודות</p>
+                  <p><strong>יחס R/R:</strong> 1:{rrCalc.ratio}</p>
+                  <p className="text-sm">
+                    {rrCalc.ratio >= 2 ? '✅ יחס מצוין' : 
+                     rrCalc.ratio >= 1.5 ? '⚠️ יחס סביר' : '❌ יחס נמוך'}
+                  </p>
+                </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="leverage" className="space-y-4">
+        {/* Leverage Calculator */}
+        <TabsContent value="leverage">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                מחשבון מינוף וערבות
+                <TrendingUp className="h-5 w-5" />
+                מחשבון מינוף ומרווח
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="levAccountBalance">יתרת חשבון ($)</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="accountBalance">יתרת חשבון ($)</Label>
                   <Input
-                    id="levAccountBalance"
+                    id="accountBalance"
                     type="number"
                     value={leverageCalc.accountBalance}
-                    onChange={(e) => setLeverageCalc(prev => ({ ...prev, accountBalance: Number(e.target.value) }))}
+                    onChange={(e) => setLeverageCalc(prev => ({
+                      ...prev,
+                      accountBalance: Number(e.target.value)
+                    }))}
                   />
                 </div>
-                <div>
-                  <Label htmlFor="levPositionSize">גודל פוזיציה ($)</Label>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="positionSize">גודל פוזיציה ($)</Label>
                   <Input
-                    id="levPositionSize"
+                    id="positionSize"
                     type="number"
                     value={leverageCalc.positionSize}
-                    onChange={(e) => setLeverageCalc(prev => ({ ...prev, positionSize: Number(e.target.value) }))}
+                    onChange={(e) => setLeverageCalc(prev => ({
+                      ...prev,
+                      positionSize: Number(e.target.value)
+                    }))}
                   />
                 </div>
               </div>
-
+              
               <Button onClick={calculateLeverage} className="w-full">
-                <DollarSign className="h-4 w-4 mr-2" />
-                חשב מינוף וערבות
+                חשב מינוף
               </Button>
-
+              
               {leverageCalc.leverage > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card className="bg-purple-50 border-purple-200">
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-700 mb-2">
-                          {leverageCalc.leverage.toFixed(1)}x
-                        </div>
-                        <div className="text-sm text-purple-600">מינוף נדרש</div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card className="bg-orange-50 border-orange-200">
-                    <CardContent className="pt-6">
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-orange-700 mb-2">
-                          ${leverageCalc.margin.toFixed(2)}
-                        </div>
-                        <div className="text-sm text-orange-600">ערבות נדרשת</div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                <div className={`p-4 rounded-lg space-y-2 ${
+                  leverageCalc.leverage > 10 ? 'bg-red-100' :
+                  leverageCalc.leverage > 5 ? 'bg-yellow-100' : 'bg-green-100'
+                }`}>
+                  <h3 className="font-semibold">תוצאות:</h3>
+                  <p><strong>מינוף:</strong> {leverageCalc.leverage}:1</p>
+                  <p><strong>מרווח נדרש:</strong> ${leverageCalc.margin.toLocaleString()}</p>
+                  <p><strong>רמת סיכון:</strong> {
+                    leverageCalc.leverage > 10 ? '🔴 גבוה מאוד' :
+                    leverageCalc.leverage > 5 ? '🟡 בינוני' : '🟢 נמוך'
+                  }</p>
+                  {leverageCalc.leverage > 5 && (
+                    <div className="flex items-center gap-2 text-sm text-orange-600">
+                      <AlertTriangle className="h-4 w-4" />
+                      זהירות: מינוף גבוה מגדיל את הסיכון לליקווידציה
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="daily-risk" className="space-y-4">
+        {/* Daily Loss Calculator */}
+        <TabsContent value="dailyloss">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Shield className="h-5 w-5" />
-                ניהול סיכון יומי
+                מחשבון הפסד יומי
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h3 className="font-semibold">מגבלות יומיות מומלצות</h3>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                      <span className="text-sm">הפסד מקسימלי יומי</span>
-                      <Badge className="bg-green-100 text-green-800">2-3%</Badge>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                      <span className="text-sm">מספר עסקאות מקסימלי</span>
-                      <Badge className="bg-blue-100 text-blue-800">5-8</Badge>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-                      <span className="text-sm">סיכון לעסקה</span>
-                      <Badge className="bg-purple-100 text-purple-800">1-2%</Badge>
-                    </div>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="dailyStartBalance">יתרה בתחילת היום ($)</Label>
+                  <Input
+                    id="dailyStartBalance"
+                    type="number"
+                    value={lossCalc.dailyStartBalance}
+                    onChange={(e) => setLossCalc(prev => ({
+                      ...prev,
+                      dailyStartBalance: Number(e.target.value)
+                    }))}
+                  />
                 </div>
-
-                <div className="space-y-4">
-                  <h3 className="font-semibold">חישוב מהיר</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <Label>יתרת חשבון ($10,000)</Label>
-                      <div className="mt-2 space-y-1">
-                        <div className="text-sm">הפסד מקסימלי יומי (3%): <span className="font-bold text-red-600">$300</span></div>
-                        <div className="text-sm">סיכון לעסקה (2%): <span className="font-bold text-blue-600">$200</span></div>
-                        <div className="text-sm">מספר עסקאות מקסימלי: <span className="font-bold text-green-600">1-2</span></div>
-                      </div>
-                    </div>
-                  </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="currentBalance">יתרה נוכחית ($)</Label>
+                  <Input
+                    id="currentBalance"
+                    type="number"
+                    value={lossCalc.currentBalance}
+                    onChange={(e) => setLossCalc(prev => ({
+                      ...prev,
+                      currentBalance: Number(e.target.value)
+                    }))}
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="maxDailyLoss">מגבלת הפסד יומי (%)</Label>
+                  <Input
+                    id="maxDailyLoss"
+                    type="number"
+                    step="0.1"
+                    value={lossCalc.maxDailyLoss}
+                    onChange={(e) => setLossCalc(prev => ({
+                      ...prev,
+                      maxDailyLoss: Number(e.target.value)
+                    }))}
+                  />
                 </div>
               </div>
-
-              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <h4 className="font-semibold text-yellow-800 mb-2">⚠️ חוקי זהב לניהול סיכון</h4>
-                <ul className="text-sm text-yellow-700 space-y-1">
-                  <li>• לעולם אל תסכן יותר מ-2% מהחשבון בעסקה אחת</li>
-                  <li>• הפסק את המסחר אחרי הגעה למגבלת הפסד יומי</li>
-                  <li>• השתמש תמיד בסטופ לוס</li>
-                  <li>• אל תגדיל פוזיציות מפסידות</li>
-                </ul>
-              </div>
+              
+              <Button onClick={calculateDailyLoss} className="w-full">
+                בדוק סטטוס הפסד יומי
+              </Button>
+              
+              {lossCalc.currentLoss !== 0 && (
+                <div className={`p-4 rounded-lg space-y-2 ${
+                  lossCalc.stopTrading ? 'bg-red-100' :
+                  lossCalc.remainingRisk < 1 ? 'bg-yellow-100' : 'bg-green-100'
+                }`}>
+                  <h3 className="font-semibold">מצב נוכחי:</h3>
+                  <p><strong>הפסד יומי:</strong> {lossCalc.currentLoss.toFixed(2)}%</p>
+                  <p><strong>יתרת סיכון:</strong> {lossCalc.remainingRisk.toFixed(2)}%</p>
+                  <p><strong>סטטוס:</strong> {
+                    lossCalc.stopTrading ? '🛑 הפסק מסחר' :
+                    lossCalc.remainingRisk < 1 ? '⚠️ זהירות' : '✅ תקין'
+                  }</p>
+                  
+                  {lossCalc.stopTrading && (
+                    <div className="bg-red-200 p-2 rounded text-sm">
+                      <strong>הגעת למגבלת ההפסד היומית!</strong><br/>
+                      מומלץ להפסיק את המסחר להיום ולחזור מחר עם ראש צלול.
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

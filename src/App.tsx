@@ -1,56 +1,79 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from '@/components/ui/sonner';
+import { Toaster } from 'sonner';
 import { AuthProvider } from '@/contexts/AuthContext';
 import AuthGuard from '@/components/AuthGuard';
-import Sidebar from '@/components/Sidebar';
-import Index from '@/pages/Index';
-import TradingDashboard from '@/pages/TradingDashboard';
-import TradingSignals from '@/pages/TradingSignals';
-import BacktestingLab from '@/pages/BacktestingLab';
-import FundamentalData from '@/pages/FundamentalData';
+import Layout from '@/components/Layout';
+import Auth from '@/pages/Auth';
+import Dashboard from '@/pages/Dashboard';
+import Signals from '@/pages/Signals';
 import Fundamentals from '@/pages/Fundamentals';
 import TradingCalculators from '@/pages/TradingCalculators';
-import Auth from '@/pages/Auth';
-import './App.css';
+import BacktestingLab from '@/pages/BacktestingLab';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: false,
+    },
+  },
+});
 
 function App() {
-  console.log('🚀 App component initializing...');
-
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router>
-          <div className="min-h-screen bg-background">
+          <div className="min-h-screen bg-background text-foreground">
             <Routes>
               <Route path="/auth" element={<Auth />} />
-              <Route
-                path="/*"
-                element={
-                  <AuthGuard>
-                    <div className="flex">
-                      <Sidebar />
-                      <main className="flex-1 ml-64">
-                        <Routes>
-                          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                          <Route path="/dashboard" element={<TradingDashboard />} />
-                          <Route path="/signals" element={<TradingSignals />} />
-                          <Route path="/backtesting" element={<BacktestingLab />} />
-                          <Route path="/fundamental-data" element={<FundamentalData />} />
-                          <Route path="/fundamentals" element={<Fundamentals />} />
-                          <Route path="/calculators" element={<TradingCalculators />} />
-                        </Routes>
-                      </main>
-                    </div>
-                  </AuthGuard>
-                }
-              />
+              <Route path="/" element={
+                <AuthGuard>
+                  <Layout>
+                    <Navigate to="/dashboard" replace />
+                  </Layout>
+                </AuthGuard>
+              } />
+              <Route path="/dashboard" element={
+                <AuthGuard>
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                </AuthGuard>
+              } />
+              <Route path="/signals" element={
+                <AuthGuard>
+                  <Layout>
+                    <Signals />
+                  </Layout>
+                </AuthGuard>
+              } />
+              <Route path="/fundamentals" element={
+                <AuthGuard>
+                  <Layout>
+                    <Fundamentals />
+                  </Layout>
+                </AuthGuard>
+              } />
+              <Route path="/trading-calculators" element={
+                <AuthGuard>
+                  <Layout>
+                    <TradingCalculators />
+                  </Layout>
+                </AuthGuard>
+              } />
+              <Route path="/backtesting" element={
+                <AuthGuard>
+                  <Layout>
+                    <BacktestingLab />
+                  </Layout>
+                </AuthGuard>
+              } />
             </Routes>
-            <Toaster />
           </div>
+          <Toaster position="top-right" />
         </Router>
       </AuthProvider>
     </QueryClientProvider>
