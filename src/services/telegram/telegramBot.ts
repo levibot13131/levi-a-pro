@@ -1,3 +1,4 @@
+
 import { TradingSignal } from '@/types/trading';
 import { toast } from 'sonner';
 
@@ -47,64 +48,57 @@ export class TelegramBot {
     }
   }
 
-  public async sendSignalDemo(): Promise<boolean> {
-    const demoSignal: TradingSignal = {
-      id: 'demo-test-12345',
-      symbol: 'BTCUSDT',
-      strategy: 'almog-personal-method',
-      action: 'buy',
-      price: 43500.25,
-      targetPrice: 44500.50,
-      stopLoss: 42500.00,
-      confidence: 0.85,
-      riskRewardRatio: 2.0,
-      reasoning: 'Demo - LeviPro Method: Emotional pressure 85% + Triangle breakout + Volume confirmation',
-      timestamp: Date.now(),
-      status: 'active',
-      telegramSent: false
-    };
-
-    return await this.sendSignal(demoSignal);
-  }
-
   private formatLiveSignalMessage(signal: TradingSignal): string {
-    const actionEmoji = signal.action === 'buy' ? '🟢 קנייה' : '🔴 מכירה';
+    const actionEmoji = signal.action === 'buy' ? '🟢 LONG' : '🔴 SHORT';
     const confidenceStars = '⭐'.repeat(Math.ceil(signal.confidence * 5));
     const signalId = `${Date.now().toString().slice(-6)}${Math.random().toString(36).substr(2, 3).toUpperCase()}`;
     
-    // Ensure we have valid prices - fallback to reasonable defaults if NaN
-    const entryPrice = !isNaN(signal.price) && signal.price > 0 ? signal.price : 0;
-    const targetPrice = !isNaN(signal.targetPrice) && signal.targetPrice > 0 ? signal.targetPrice : 
-      (signal.action === 'buy' ? entryPrice * 1.025 : entryPrice * 0.975);
-    const stopLoss = !isNaN(signal.stopLoss) && signal.stopLoss > 0 ? signal.stopLoss :
-      (signal.action === 'buy' ? entryPrice * 0.98 : entryPrice * 1.02);
+    // Validate and format prices with proper error handling
+    const entryPrice = this.validateAndFormatPrice(signal.price, 'Entry');
+    const targetPrice = this.validateAndFormatPrice(signal.targetPrice, 'Target');
+    const stopLoss = this.validateAndFormatPrice(signal.stopLoss, 'StopLoss');
     
-    // Calculate proper R/R ratio
-    const riskAmount = Math.abs(entryPrice - stopLoss);
-    const rewardAmount = Math.abs(targetPrice - entryPrice);
-    const riskRewardRatio = riskAmount > 0 ? rewardAmount / riskAmount : 1.5;
+    // Calculate R/R ratio safely
+    const riskAmount = Math.abs(signal.price - signal.stopLoss);
+    const rewardAmount = Math.abs(signal.targetPrice - signal.price);
+    const riskRewardRatio = riskAmount > 0 && !isNaN(riskAmount) ? rewardAmount / riskAmount : signal.riskRewardRatio || 1.5;
+    
+    // Get timeframe from metadata
+    const timeframe = signal.metadata?.timeframe || '15M';
+    const signalCategory = signal.metadata?.signalCategory || 'טכני';
     
     // Special formatting for Almog's personal method
     const isPersonalMethod = signal.strategy === 'almog-personal-method';
     const strategyName = isPersonalMethod ? '🧠 LeviPro Method - Triangle Magic' : this.getStrategyName(signal.strategy);
     
+    // Format current time in Israel timezone
+    const israelTime = new Date().toLocaleString('he-IL', {
+      timeZone: 'Asia/Jerusalem',
+      hour: '2-digit',
+      minute: '2-digit',
+      day: '2-digit',
+      month: '2-digit'
+    });
+    
     const message = `
 🔥 <b>LeviPro - איתות LIVE ${isPersonalMethod ? '🧠 אישי' : ''}</b> 🔥
 
-${actionEmoji} <b>${signal.symbol}</b>
+${actionEmoji} <b>${signal.symbol.replace('USDT', '/USDT')}</b>
 
 ${isPersonalMethod ? '🧠 <b>LeviPro Method מופעל!</b>' : ''}
 🎯 <b>אסטרטגיה:</b> ${strategyName}
+📊 <b>גרף:</b> ${timeframe}
+🏷️ <b>סוג:</b> ${signalCategory}
 💡 <b>נימוק:</b> ${signal.reasoning}
 
 📊 <b>פרטי עסקה:</b>
-💰 מחיר כניסה: $${entryPrice.toFixed(2)}
-🎯 יעד רווח: $${targetPrice.toFixed(2)}
-🛑 סטופ לוס: $${stopLoss.toFixed(2)}
+💰 מחיר כניסה: ${entryPrice}
+🎯 יעד רווח: ${targetPrice}
+🛑 סטופ לוס: ${stopLoss}
 ⚖️ יחס R/R: 1:${riskRewardRatio.toFixed(1)}
 
 ${confidenceStars} <b>ביטחון:</b> ${(signal.confidence * 100).toFixed(0)}%
-🕐 <b>זמן:</b> ${new Date().toLocaleTimeString('he-IL')}
+🕐 <b>זמן (ישראל):</b> ${israelTime}
 🆔 <b>מזהה:</b> ${signalId}
 
 ${isPersonalMethod ? '🔥 <b>עדיפות גבוהה - LeviPro Method!</b>' : ''}
@@ -113,6 +107,21 @@ ${isPersonalMethod ? '🔥 <b>עדיפות גבוהה - LeviPro Method!</b>' : '
 `;
 
     return message;
+  }
+
+  private validateAndFormatPrice(price: number, type: string): string {
+    if (isNaN(price) || price <= 0) {
+      console.error(`❌ Invalid ${type} price: ${price}`);
+      return '$0.00 (שגיאה)';
+    }
+    
+    // Format with proper currency formatting
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 6
+    }).format(price);
   }
 
   private getStrategyName(strategyId: string): string {
@@ -124,7 +133,9 @@ ${isPersonalMethod ? '🔥 <b>עדיפות גבוהה - LeviPro Method!</b>' : '
       'wyckoff-strategy': 'Wyckoff Method',
       'elliott-wave-strategy': 'Elliott Wave Theory',
       'fibonacci-strategy': 'Fibonacci Retracement',
-      'candlestick-strategy': 'Candlestick Patterns'
+      'candlestick-strategy': 'Candlestick Patterns',
+      'triangle-breakout': 'Triangle Breakout',
+      'volume-analysis': 'Volume Analysis'
     };
     
     return strategyNames[strategyId] || strategyId;
@@ -162,58 +173,41 @@ ${isPersonalMethod ? '🔥 <b>עדיפות גבוהה - LeviPro Method!</b>' : '
     }
   }
 
-  public async sendStartupMessage(): Promise<boolean> {
+  public async sendDailyReport(stats: any): Promise<boolean> {
+    const israelTime = new Date().toLocaleString('he-IL', {
+      timeZone: 'Asia/Jerusalem',
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
     const message = `
-🚀 <b>LeviPro מערכת LIVE הופעלה!</b>
+🌅 <b>דו"ח יומי LeviPro</b> 🌅
+📅 ${israelTime}
 
-✅ מנוע איתותים: פועל בזמן אמת
-🧠 אסטרטגיה אישית: 80% עדיפות קבועה
-📊 8 אסטרטגיות מתקדמות: פעילות
-🛡️ ניהול סיכונים: 2% מקסימום
-📡 נתונים LIVE: Binance + CoinGecko
+📊 <b>סטטיסטיקות היום:</b>
+• איתותים נשלחו: ${stats.dailySignalCount || 0}
+• סשן נוכחי: ${stats.sessionSignalsCount || 0}/3
+• הפסד יומי: ${(stats.dailyLoss || 0).toFixed(1)}%/5%
 
-🎯 המערכת מוכנה לשליחת איתותים אמיתיים!
+🧠 <b>LeviPro Method:</b> פעיל ומופעל
+🎯 <b>עדיפות:</b> 80% קבועה
+⚖️ <b>ניהול סיכונים:</b> פעיל
 
-🕐 זמן: ${new Date().toLocaleString('he-IL')}
-#LeviPro #LIVE #SystemReady
+🤖 המערכת ממשיכה לנטר את השווקים...
+
+#LeviPro #DailyReport #TradingBot
 `;
 
     return await this.sendMessage(message);
   }
 
-  public async sendTestMessage(): Promise<boolean> {
-    const testMessage = `
-🧪 <b>בדיקת חיבור LeviPro LIVE</b>
-
-✅ הבוט מחובר ופועל תקין
-🤖 מערכת LIVE פעילה
-🧠 אסטרטגיה אישית: מוכנה
-🕐 זמן: ${new Date().toLocaleString('he-IL')}
-
-🎯 מערכת המסחר LIVE מוכנה לפעולה!
-
-#LeviPro #Test #LIVE
-`;
-
-    try {
-      const success = await this.sendMessage(testMessage);
-      if (success) {
-        toast.success('✅ הודעת בדיקה LIVE נשלחה בהצלחה לטלגרם');
-      } else {
-        toast.error('❌ שגיאה בשליחת הודעת בדיקה');
-      }
-      return success;
-    } catch (error) {
-      console.error('Error sending test message:', error);
-      toast.error('❌ שגיאה בשליחת הודעת בדיקה');
-      return false;
-    }
-  }
-
-  public getConnectionStatus(): { connected: boolean; chatId: string } {
+  public getConnectionStatus() {
     return {
-      connected: !!this.config.botToken && !!this.config.chatId,
-      chatId: this.config.chatId
+      connected: true,
+      botToken: this.config.botToken ? 'configured' : 'missing',
+      chatId: this.config.chatId ? 'configured' : 'missing'
     };
   }
 }

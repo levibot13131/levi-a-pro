@@ -14,6 +14,7 @@ export class SignalManager {
   private readonly MAX_DAILY_LOSS_PERCENT = 5;
   private readonly MAX_SESSION_SIGNALS = 3;
   private readonly SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 hours
+  private readonly CONFLICT_PREVENTION_WINDOW = 5 * 60 * 1000; // 5 minutes
 
   constructor() {
     this.resetDailyCountersIfNeeded();
@@ -72,10 +73,10 @@ export class SignalManager {
     const activeSymbolSignals = Array.from(this.activeSignals.values())
       .filter(signal => signal.symbol === symbol && signal.status === 'active');
 
-    // Check for direct conflicts (buy vs sell on same symbol within 5 minutes)
+    // Check for direct conflicts (buy vs sell on same symbol within time window)
     const recentConflict = activeSymbolSignals.find(signal => {
       const timeDiff = Date.now() - signal.timestamp;
-      const isRecentSignal = timeDiff < 5 * 60 * 1000; // 5 minutes
+      const isRecentSignal = timeDiff < this.CONFLICT_PREVENTION_WINDOW;
       const isOppositeAction = signal.action !== action;
       
       return isRecentSignal && isOppositeAction;
@@ -85,6 +86,13 @@ export class SignalManager {
   }
 
   public addSignal(signal: TradingSignal): boolean {
+    // Validate signal data before processing
+    if (!this.validateSignalData(signal)) {
+      console.log(`🚫 Signal validation failed: ${signal.symbol}`);
+      toast.error(`איתות נכשל - נתונים לא תקינים: ${signal.symbol}`);
+      return false;
+    }
+
     const validation = this.canCreateSignal(signal.symbol, signal.action, signal.strategy);
     
     if (!validation.allowed) {
@@ -101,18 +109,112 @@ export class SignalManager {
       this.sessionSignalsCount++;
     }
 
-    // Add signal context
+    // Add signal context and timeframe
     signal.metadata = {
       ...signal.metadata,
       dailySignalNumber: this.dailySignalCount,
       sessionSignalNumber: this.sessionSignalsCount,
-      signalType: this.determineSignalType(signal)
+      signalType: this.determineSignalType(signal),
+      timeframe: this.determineTimeframe(signal),
+      signalCategory: this.determineSignalCategory(signal)
     };
 
     console.log(`✅ Signal added: ${signal.symbol} ${signal.action} (${signal.strategy})`);
     console.log(`📊 Daily: ${this.dailySignalCount}, Session: ${this.sessionSignalsCount}`);
     
     return true;
+  }
+
+  private validateSignalData(signal: TradingSignal): boolean {
+    // Check for NaN values
+    if (isNaN(signal.price) || signal.price <= 0) {
+      console.error(`Invalid price: ${signal.price} for ${signal.symbol}`);
+      return false;
+    }
+
+    if (isNaN(signal.targetPrice) || signal.targetPrice <= 0) {
+      console.error(`Invalid target price: ${signal.targetPrice} for ${signal.symbol}`);
+      return false;
+    }
+
+    if (isNaN(signal.stopLoss) || signal.stopLoss <= 0) {
+      console.error(`Invalid stop loss: ${signal.stopLoss} for ${signal.symbol}`);
+      return false;
+    }
+
+    if (isNaN(signal.confidence) || signal.confidence < 0 || signal.confidence > 1) {
+      console.error(`Invalid confidence: ${signal.confidence} for ${signal.symbol}`);
+      return false;
+    }
+
+    if (isNaN(signal.riskRewardRatio) || signal.riskRewardRatio <= 0) {
+      console.error(`Invalid R/R ratio: ${signal.riskRewardRatio} for ${signal.symbol}`);
+      return false;
+    }
+
+    // Validate that prices make sense for buy/sell actions
+    if (signal.action === 'buy') {
+      if (signal.targetPrice <= signal.price || signal.stopLoss >= signal.price) {
+        console.error(`Invalid buy signal prices for ${signal.symbol}: Entry: ${signal.price}, TP: ${signal.targetPrice}, SL: ${signal.stopLoss}`);
+        return false;
+      }
+    } else if (signal.action === 'sell') {
+      if (signal.targetPrice >= signal.price || signal.stopLoss <= signal.price) {
+        console.error(`Invalid sell signal prices for ${signal.symbol}: Entry: ${signal.price}, TP: ${signal.targetPrice}, SL: ${signal.stopLoss}`);
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private determineTimeframe(signal: TradingSignal): string {
+    const metadata = signal.metadata || {};
+    
+    if (metadata.timeframe) {
+      return metadata.timeframe;
+    }
+
+    // Determine based on strategy
+    if (signal.strategy === 'almog-personal-method') {
+      return '15M'; // Personal method uses 15M primarily
+    }
+
+    if (signal.strategy.includes('scalp')) {
+      return '5M';
+    }
+
+    if (signal.strategy.includes('swing')) {
+      return '4H';
+    }
+
+    return '1H'; // Default
+  }
+
+  private determineSignalCategory(signal: TradingSignal): string {
+    const metadata = signal.metadata || {};
+    
+    if (signal.strategy === 'almog-personal-method') {
+      return '🧠 שיטה אישית';
+    }
+
+    if (metadata.triangleBreakout) {
+      return '📈 פריצת משולש';
+    }
+    
+    if (metadata.reversalPattern) {
+      return '🔄 היפוך טרנד';
+    }
+    
+    if (metadata.highVolatility || signal.confidence < 0.7) {
+      return '⚠️ סקאלפ סיכון גבוה';
+    }
+
+    if (signal.action === 'buy') {
+      return '📈 המשך עלייה';
+    } else {
+      return '📉 המשך ירידה';
+    }
   }
 
   private determineSignalType(signal: TradingSignal): string {
