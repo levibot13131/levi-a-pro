@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -16,6 +15,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import RequireAuth from './components/auth/RequireAuth';
 import Analytics from './pages/Analytics';
+import UnifiedDashboard from './components/dashboard/UnifiedDashboard';
 
 const queryClient = new QueryClient();
 
@@ -48,6 +48,7 @@ function App() {
               <Route path="charts-analysis" element={<ChartsAnalysis />} />
               <Route path="trading-engine" element={<TradingEngineControl />} />
               <Route path="admin" element={<AdminDashboard />} />
+              <Route path="/unified-dashboard" element={<UnifiedDashboard />} />
             </Route>
             <Route path="/analytics" element={<RequireAuth><Analytics /></RequireAuth>} />
           </Routes>
