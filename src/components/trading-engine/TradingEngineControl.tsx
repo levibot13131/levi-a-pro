@@ -45,16 +45,35 @@ const TradingEngineControl: React.FC = () => {
 
   const handleTestTelegram = async () => {
     setIsTestingTelegram(true);
+    console.log('🧪 Starting Telegram connection test...');
+    
     try {
+      // First check connection status
+      const status = telegramBot.getConnectionStatus();
+      console.log('📊 Current connection status:', status);
+      
+      if (!status.connected) {
+        toast.error('❌ Telegram not configured - Please set bot token first');
+        return;
+      }
+      
       const success = await telegramBot.testEliteConnection();
       if (success) {
-        toast.success('✅ Telegram Elite connection successful - Check @mytrsdingbot!');
+        toast.success('✅ Test message sent successfully! Check @mytrsdingbot', {
+          description: `Message sent to chat ${status.chatId}`,
+          duration: 5000
+        });
       } else {
-        toast.error('❌ Telegram connection failed - Configure bot token first');
+        toast.error('❌ Test message failed - Check console for detailed logs', {
+          description: 'Verify bot token and chat ID are correct',
+          duration: 10000
+        });
       }
     } catch (error) {
       console.error('Telegram test error:', error);
-      toast.error('❌ Error testing Telegram connection');
+      toast.error('❌ Error testing Telegram connection', {
+        description: error.message || 'Unknown error occurred'
+      });
     } finally {
       setIsTestingTelegram(false);
     }
@@ -62,12 +81,24 @@ const TradingEngineControl: React.FC = () => {
 
   const handleTestSignal = async () => {
     setIsTestingSignal(true);
+    console.log('🎯 Generating test signal...');
+    
     try {
+      // Check Telegram connection first
+      const status = telegramBot.getConnectionStatus();
+      if (!status.connected) {
+        toast.error('❌ Configure Telegram first before sending test signals');
+        return;
+      }
+      
       const success = await enhancedSignalEngine.sendTestSignal();
       if (success) {
-        toast.success('🧪 Test signal generated and sent to Telegram!');
+        toast.success('🧪 Test signal generated and sent to Telegram!', {
+          description: 'Check @mytrsdingbot for the signal',
+          duration: 5000
+        });
       } else {
-        toast.error('❌ Test signal failed');
+        toast.error('❌ Test signal failed - Check console logs');
       }
     } catch (error) {
       console.error('Test signal error:', error);
@@ -125,6 +156,19 @@ const TradingEngineControl: React.FC = () => {
               )}
             </div>
           </div>
+
+          {/* Debug info for Telegram */}
+          {debugMode && (
+            <div className="mb-4 p-3 bg-slate-100 rounded border">
+              <h4 className="font-semibold text-sm mb-2">🔧 Debug Info</h4>
+              <div className="text-xs space-y-1">
+                <div>Telegram Status: {telegramBot.getConnectionStatus().status}</div>
+                <div>Bot Token Length: {telegramBot.getConnectionStatus().tokenLength}</div>
+                <div>Chat ID: {telegramBot.getConnectionStatus().chatId}</div>
+                <div>Has Credentials: {telegramBot.getConnectionStatus().hasCredentials ? '✅' : '❌'}</div>
+              </div>
+            </div>
+          )}
 
           {/* Quick Actions */}
           <div className="flex gap-2 flex-wrap">
