@@ -100,3 +100,53 @@ export interface PricePoint {
   timestamp: number;
   volume?: number;
 }
+
+// Additional types for comprehensive system support
+export interface SignalScoringStats {
+  totalSignalsAnalyzed: number;
+  signalsPassedFilter: number;
+  averageScore: number;
+  topScore: number;
+  rejectionRate: number;
+  totalSent: number;
+  intelligenceEnhanced: number;
+  lastAnalysis?: string;
+}
+
+export interface IntelligenceData {
+  whaleActivity: {
+    sentiment: string;
+    impact: number;
+  };
+  sentiment: {
+    overallSentiment: string;
+    score: number;
+  };
+  fearGreed: {
+    classification: string;
+    index: number;
+  };
+  fundamentalRisk: string;
+}
+
+export interface RiskData {
+  recommendedPositionSize: number;
+  maxPositionValue: number;
+  riskAmount: number;
+  exposurePercent: number;
+  allowed: boolean;
+  reason?: string;
+}
+
+export interface EngineStatus {
+  isRunning: boolean;
+  signalQuality: string;
+  scoringStats: SignalScoringStats;
+  intelligenceLayer: {
+    whaleMonitoring: boolean;
+    sentimentAnalysis: boolean;
+    fearGreedIntegration: boolean;
+    fundamentalRiskScoring: boolean;
+  };
+  lastAnalysis?: string;
+}

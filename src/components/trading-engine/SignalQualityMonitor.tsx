@@ -46,75 +46,102 @@ const SignalQualityMonitor: React.FC = () => {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">שיעור הצלחה בסינון</span>
-              <span className="text-sm text-muted-foreground">{passRate.toFixed(1)}%</span>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">שיעור מעבר:</span>
+              <Badge variant={passRate >= 80 ? "default" : passRate >= 60 ? "secondary" : "destructive"}>
+                {passRate.toFixed(1)}%
+              </Badge>
             </div>
-            <Progress value={passRate} className="h-2" />
+            
+            <Progress value={passRate} className="h-3" />
+            
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">סף ניקוד מינימלי:</span>
+              <Badge variant="outline">{threshold}</Badge>
+            </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4" />
-              <span className="text-sm">סף איכות מינימלי</span>
-            </div>
-            <Badge className="bg-blue-100 text-blue-800">
-              {threshold} נקודות
-            </Badge>
-          </div>
+          {/* Quality Distribution */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">התפלגות איכות איתותים</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Award className="h-4 w-4 text-yellow-500" />
+                    <span className="text-sm">ELITE (90+)</span>
+                  </div>
+                  <Badge className="bg-yellow-100 text-yellow-800">
+                    {Math.floor(scoreStats.signalsPassedFilter * 0.2)}
+                  </Badge>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                    <span className="text-sm">HIGH (75-89)</span>
+                  </div>
+                  <Badge className="bg-green-100 text-green-800">
+                    {Math.floor(scoreStats.signalsPassedFilter * 0.4)}
+                  </Badge>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Target className="h-4 w-4 text-blue-500" />
+                    <span className="text-sm">MEDIUM (60-74)</span>
+                  </div>
+                  <Badge className="bg-blue-100 text-blue-800">
+                    {Math.floor(scoreStats.signalsPassedFilter * 0.3)}
+                  </Badge>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm">LOW (&lt;60)</span>
+                  </div>
+                  <Badge className="bg-gray-100 text-gray-800">
+                    {scoreStats.totalSignalsAnalyzed - scoreStats.signalsPassedFilter}
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Award className="h-4 w-4" />
-              <span className="text-sm">שיעור דחייה</span>
-            </div>
-            <Badge className="bg-red-100 text-red-800">
-              {scoreStats.rejectionRate.toFixed(1)}%
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-right text-sm">מרכיבי הניקוד</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-            <div className="flex justify-between">
-              <span>×2.0</span>
-              <span>יחס סיכון/תשואה</span>
-            </div>
-            <div className="flex justify-between">
-              <span>×1.5</span>
-              <span>רמת ביטחון</span>
-            </div>
-            <div className="flex justify-between">
-              <span>×1.25</span>
-              <span>פוטנציאל רווח</span>
-            </div>
-            <div className="flex justify-between">
-              <span>×1.25</span>
-              <span>הצלחת אסטרטגיה</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-green-600">+10</span>
-              <span>התאמת זמנים</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-green-600">+15</span>
-              <span>תמיכה פונדמנטלית</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-orange-600">+25</span>
-              <span>שיטה אישית</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-red-600">-15</span>
-              <span>סתירות אינדיקטורים</span>
-            </div>
-          </div>
+          {/* Scoring Components */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">רכיבי הניקוד</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>יחס סיכוי/סיכון (×20)</span>
+                  <span className="font-medium">עד 50 נקודות</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>רמת ביטחון (×75)</span>
+                  <span className="font-medium">עד 75 נקודות</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>בונוס אסטרטגיה אישית</span>
+                  <span className="font-medium">+25 נקודות</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>בונוס שעות מסחר</span>
+                  <span className="font-medium">+10 נקודות</span>
+                </div>
+                <div className="flex justify-between border-t pt-2 font-semibold">
+                  <span>סה"כ מקסימלי</span>
+                  <span>160 נקודות</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </CardContent>
       </Card>
     </div>

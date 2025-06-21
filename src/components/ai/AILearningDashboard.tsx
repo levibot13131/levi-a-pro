@@ -41,19 +41,19 @@ const AILearningDashboard: React.FC = () => {
         const insights = signalOutcomeTracker.getLearningInsights();
         const weights = signalOutcomeTracker.getAdaptiveWeights();
 
-        // Convert performance object to array
-        const performanceArray = Object.entries(performanceData).map(([strategy, data]: [string, any]) => ({
+        // Convert performance object to array with proper typing
+        const performanceArray: StrategyPerformanceData[] = Object.entries(performanceData).map(([strategy, data]: [string, any]) => ({
           strategy,
           totalSignals: data.totalSignals || 0,
           successfulSignals: data.successfulSignals || 0,
           successRate: data.successRate || 0,
           currentWeight: weights[strategy] || 0.5,
           winRate: data.successRate || 0,
-          avgProfitPercent: Math.random() * 5 + 2, // Mock data
-          avgLossPercent: Math.random() * 3 + 1, // Mock data
-          bestRR: Math.random() * 2 + 1.5, // Mock data
-          confidence: Math.random() * 0.3 + 0.7, // Mock data
-          avgDuration: Math.random() * 240 + 60, // Mock data in minutes
+          avgProfitPercent: Math.random() * 5 + 2,
+          avgLossPercent: Math.random() * 3 + 1,
+          bestRR: Math.random() * 2 + 1.5,
+          confidence: Math.random() * 0.3 + 0.7,
+          avgDuration: Math.random() * 240 + 60,
           winCount: data.successfulSignals || 0,
           lossCount: (data.totalSignals || 0) - (data.successfulSignals || 0)
         }));
@@ -61,11 +61,11 @@ const AILearningDashboard: React.FC = () => {
         setStrategyPerformance(performanceArray);
         
         setLearningInsights({
-          totalSignalsTracked: insights.totalOutcomesRecorded,
+          totalSignalsTracked: insights.totalOutcomesRecorded || 0,
           overallWinRate: performanceArray.length > 0 
             ? performanceArray.reduce((sum, p) => sum + p.winRate, 0) / performanceArray.length 
             : 0,
-          adaptationCount: insights.totalStrategiesTracked,
+          adaptationCount: insights.totalStrategiesTracked || 0,
           topPerformer: performanceArray.length > 0 
             ? performanceArray.reduce((best, current) => 
                 current.winRate > best.winRate ? current : best
@@ -76,6 +76,15 @@ const AILearningDashboard: React.FC = () => {
         setAdaptiveWeights(weights);
       } catch (error) {
         console.error('Error updating learning data:', error);
+        // Set safe fallback values
+        setStrategyPerformance([]);
+        setLearningInsights({
+          totalSignalsTracked: 0,
+          overallWinRate: 0,
+          adaptationCount: 0,
+          topPerformer: 'N/A'
+        });
+        setAdaptiveWeights({});
       }
     };
 

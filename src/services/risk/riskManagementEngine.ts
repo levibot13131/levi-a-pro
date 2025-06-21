@@ -1,42 +1,38 @@
 
-interface RiskConfiguration {
-  maxDailyLossPercent: number;
-  maxRiskPerTradePercent: number;
-  maxExposurePerAsset: number;
-  maxSimultaneousPositions: number;
-  accountCapital: number;
-  enableRiskFiltering: boolean;
-  emergencyPause: boolean;
+import { TradingSignal, RiskData } from '@/types/trading';
+
+interface RiskLimits {
+  maxDailyRisk: number;
+  maxPositionSize: number;
+  maxConcurrentPositions: number;
+  maxDrawdown: number;
+  minRiskReward: number;
 }
 
-interface PositionSizeCalculation {
-  recommendedPositionSize: number;
-  maxPositionValue: number;
-  riskAmount: number;
-  exposurePercent: number;
-  withinLimits: boolean;
-  riskWarnings: string[];
-}
-
-interface RiskExposure {
-  currentDailyLoss: number;
+interface RiskMetrics {
+  currentDailyRisk: number;
   activePositions: number;
-  totalExposure: number;
-  exposureByAsset: Map<string, number>;
-  exposureByStrategy: Map<string, number>;
+  currentDrawdown: number;
+  portfolioValue: number;
 }
 
 export class RiskManagementEngine {
   private static instance: RiskManagementEngine;
-  private riskConfig: RiskConfiguration;
-  private currentExposure: RiskExposure;
-  private dailyTrades: Array<{ timestamp: number; pnl: number; symbol: string; strategy: string }> = [];
+  
+  private riskLimits: RiskLimits = {
+    maxDailyRisk: 5.0, // 5% max daily risk
+    maxPositionSize: 2.0, // 2% max per position
+    maxConcurrentPositions: 5,
+    maxDrawdown: 10.0, // 10% max drawdown
+    minRiskReward: 1.5 // Minimum 1.5:1 R/R
+  };
 
-  private constructor() {
-    this.riskConfig = this.loadDefaultConfig();
-    this.currentExposure = this.initializeExposure();
-    this.resetDailyCountersIfNeeded();
-  }
+  private currentMetrics: RiskMetrics = {
+    currentDailyRisk: 0,
+    activePositions: 0,
+    currentDrawdown: 0,
+    portfolioValue: 100000 // Default portfolio value
+  };
 
   public static getInstance(): RiskManagementEngine {
     if (!RiskManagementEngine.instance) {
@@ -45,175 +41,104 @@ export class RiskManagementEngine {
     return RiskManagementEngine.instance;
   }
 
-  private loadDefaultConfig(): RiskConfiguration {
-    return {
-      maxDailyLossPercent: 3.0,
-      maxRiskPerTradePercent: 1.5,
-      maxExposurePerAsset: 10.0,
-      maxSimultaneousPositions: 5,
-      accountCapital: 10000, // Default - should be configured by user
-      enableRiskFiltering: true,
-      emergencyPause: false
-    };
-  }
-
-  private initializeExposure(): RiskExposure {
-    return {
-      currentDailyLoss: 0,
-      activePositions: 0,
-      totalExposure: 0,
-      exposureByAsset: new Map(),
-      exposureByStrategy: new Map()
-    };
-  }
-
-  private resetDailyCountersIfNeeded() {
-    const today = new Date().toDateString();
-    const lastReset = localStorage.getItem('risk_last_reset');
-    
-    if (lastReset !== today) {
-      this.currentExposure.currentDailyLoss = 0;
-      this.dailyTrades = [];
-      localStorage.setItem('risk_last_reset', today);
-      console.log('🔄 Daily risk counters reset');
-    }
-  }
-
-  public calculatePositionSize(signal: any): PositionSizeCalculation {
-    const { price, stopLoss, symbol } = signal;
-    const warnings: string[] = [];
-    
-    // Calculate risk per unit
-    const riskPerUnit = Math.abs(price - stopLoss);
-    const riskPercent = (riskPerUnit / price) * 100;
-    
-    // Calculate maximum risk amount
-    const maxRiskAmount = (this.riskConfig.accountCapital * this.riskConfig.maxRiskPerTradePercent) / 100;
-    
-    // Calculate recommended position size
-    const recommendedUnits = maxRiskAmount / riskPerUnit;
-    const recommendedPositionSize = recommendedUnits * price;
-    const exposurePercent = (recommendedPositionSize / this.riskConfig.accountCapital) * 100;
-    
-    // Check limits
-    let withinLimits = true;
-    
-    // Check daily loss limit
-    if (this.currentExposure.currentDailyLoss >= this.riskConfig.maxDailyLossPercent) {
-      withinLimits = false;
-      warnings.push(`Daily loss limit exceeded (${this.currentExposure.currentDailyLoss.toFixed(1)}%)`);
-    }
-    
-    // Check simultaneous positions
-    if (this.currentExposure.activePositions >= this.riskConfig.maxSimultaneousPositions) {
-      withinLimits = false;
-      warnings.push(`Max simultaneous positions reached (${this.currentExposure.activePositions})`);
-    }
-    
-    // Check asset exposure
-    const currentAssetExposure = this.currentExposure.exposureByAsset.get(symbol) || 0;
-    if (currentAssetExposure + exposurePercent > this.riskConfig.maxExposurePerAsset) {
-      withinLimits = false;
-      warnings.push(`Asset exposure limit exceeded for ${symbol}`);
-    }
-    
-    // Check emergency pause
-    if (this.riskConfig.emergencyPause) {
-      withinLimits = false;
-      warnings.push('Emergency pause activated');
-    }
-    
-    return {
-      recommendedPositionSize,
-      maxPositionValue: recommendedPositionSize,
-      riskAmount: maxRiskAmount,
-      exposurePercent,
-      withinLimits,
-      riskWarnings: warnings
-    };
-  }
-
-  public shouldAllowSignal(signal: any): { allowed: boolean; reason?: string; riskInfo?: PositionSizeCalculation } {
-    this.resetDailyCountersIfNeeded();
-    
-    if (!this.riskConfig.enableRiskFiltering) {
-      return { allowed: true };
-    }
-    
-    const positionCalc = this.calculatePositionSize(signal);
-    
-    if (!positionCalc.withinLimits) {
+  public shouldAllowSignal(signal: TradingSignal): { allowed: boolean; reason?: string; riskInfo?: RiskData } {
+    // Check risk/reward ratio
+    if (signal.riskRewardRatio < this.riskLimits.minRiskReward) {
       return {
         allowed: false,
-        reason: `Risk limits exceeded: ${positionCalc.riskWarnings.join(', ')}`,
-        riskInfo: positionCalc
+        reason: `Risk/Reward ratio ${signal.riskRewardRatio.toFixed(2)} below minimum ${this.riskLimits.minRiskReward}`
       };
     }
-    
-    return { allowed: true, riskInfo: positionCalc };
-  }
 
-  public updateTradeResult(symbol: string, strategy: string, pnlPercent: number) {
-    this.dailyTrades.push({
-      timestamp: Date.now(),
-      pnl: pnlPercent,
-      symbol,
-      strategy
-    });
-    
-    if (pnlPercent < 0) {
-      this.currentExposure.currentDailyLoss += Math.abs(pnlPercent);
-      
-      // Auto-pause if daily loss limit exceeded
-      if (this.currentExposure.currentDailyLoss >= this.riskConfig.maxDailyLossPercent) {
-        this.riskConfig.emergencyPause = true;
-        console.log('🚨 Emergency pause activated due to daily loss limit');
-      }
+    // Check concurrent positions
+    if (this.currentMetrics.activePositions >= this.riskLimits.maxConcurrentPositions) {
+      return {
+        allowed: false,
+        reason: `Maximum concurrent positions (${this.riskLimits.maxConcurrentPositions}) reached`
+      };
     }
-  }
 
-  public getRiskConfiguration(): RiskConfiguration {
-    return { ...this.riskConfig };
-  }
+    // Calculate position size
+    const riskAmount = Math.abs(signal.price - signal.stopLoss);
+    const riskPercent = (riskAmount / signal.price) * 100;
+    const recommendedPositionSize = Math.min(
+      this.riskLimits.maxPositionSize,
+      (this.riskLimits.maxPositionSize / riskPercent) * 100
+    );
 
-  public updateRiskConfiguration(config: Partial<RiskConfiguration>) {
-    this.riskConfig = { ...this.riskConfig, ...config };
-    console.log('⚙️ Risk configuration updated:', config);
-  }
+    // Check if this position would exceed daily risk
+    const positionRisk = (recommendedPositionSize / 100) * this.currentMetrics.portfolioValue * (riskPercent / 100);
+    if (this.currentMetrics.currentDailyRisk + positionRisk > (this.riskLimits.maxDailyRisk / 100) * this.currentMetrics.portfolioValue) {
+      return {
+        allowed: false,
+        reason: 'Daily risk limit would be exceeded'
+      };
+    }
 
-  public getCurrentExposure(): RiskExposure {
-    return { ...this.currentExposure };
-  }
+    const riskInfo: RiskData = {
+      recommendedPositionSize,
+      maxPositionValue: (recommendedPositionSize / 100) * this.currentMetrics.portfolioValue,
+      riskAmount: positionRisk,
+      exposurePercent: recommendedPositionSize,
+      allowed: true
+    };
 
-  public getDailyStats() {
     return {
-      dailyLoss: this.currentExposure.currentDailyLoss,
-      dailyTrades: this.dailyTrades.length,
-      activePositions: this.currentExposure.activePositions,
-      totalExposure: this.currentExposure.totalExposure,
-      isWithinLimits: this.currentExposure.currentDailyLoss < this.riskConfig.maxDailyLossPercent,
-      emergencyPause: this.riskConfig.emergencyPause
+      allowed: true,
+      riskInfo
     };
   }
 
-  public resetEmergencyPause() {
-    this.riskConfig.emergencyPause = false;
-    console.log('✅ Emergency pause lifted');
-  }
+  public generateRiskSummaryForSignal(signal: TradingSignal): string {
+    const riskCheck = this.shouldAllowSignal(signal);
+    
+    if (!riskCheck.allowed) {
+      return `🚫 <b>Risk Management:</b> Signal blocked - ${riskCheck.reason}`;
+    }
 
-  public generateRiskSummaryForSignal(signal: any): string {
-    const positionCalc = this.calculatePositionSize(signal);
-    const dailyStats = this.getDailyStats();
+    const riskInfo = riskCheck.riskInfo!;
     
     return `
-📊 Risk Summary:
-• Max risk: ${this.riskConfig.maxRiskPerTradePercent}%
-• Suggested position: ${positionCalc.exposurePercent.toFixed(2)}%
-• Risk amount: $${positionCalc.riskAmount.toFixed(2)}
-• Daily loss: ${dailyStats.dailyLoss.toFixed(1)}%/${this.riskConfig.maxDailyLossPercent}%
-• Active positions: ${dailyStats.activePositions}/${this.riskConfig.maxSimultaneousPositions}
-• Exposure level: ${positionCalc.withinLimits ? 'Acceptable ✅' : 'Risk Exceeded ⚠️'}
-${positionCalc.riskWarnings.length > 0 ? `⚠️ Warnings: ${positionCalc.riskWarnings.join(', ')}` : ''}`;
+🔒 <b>Risk Management:</b>
+💰 Recommended Size: ${riskInfo.recommendedPositionSize.toFixed(1)}%
+💵 Max Position Value: $${riskInfo.maxPositionValue.toFixed(0)}
+🚨 Risk Amount: $${riskInfo.riskAmount.toFixed(0)}
+📊 Portfolio Exposure: ${riskInfo.exposurePercent.toFixed(1)}%`;
+  }
+
+  public updatePortfolioValue(newValue: number) {
+    this.currentMetrics.portfolioValue = newValue;
+  }
+
+  public recordPositionOpened(riskAmount: number) {
+    this.currentMetrics.activePositions++;
+    this.currentMetrics.currentDailyRisk += riskAmount;
+  }
+
+  public recordPositionClosed(result: number) {
+    this.currentMetrics.activePositions = Math.max(0, this.currentMetrics.activePositions - 1);
+    
+    if (result < 0) {
+      this.currentMetrics.currentDrawdown += Math.abs(result);
+    } else {
+      this.currentMetrics.currentDrawdown = Math.max(0, this.currentMetrics.currentDrawdown - result);
+    }
+  }
+
+  public getRiskMetrics(): RiskMetrics {
+    return { ...this.currentMetrics };
+  }
+
+  public getRiskLimits(): RiskLimits {
+    return { ...this.riskLimits };
+  }
+
+  public updateRiskLimits(newLimits: Partial<RiskLimits>) {
+    this.riskLimits = { ...this.riskLimits, ...newLimits };
+  }
+
+  public resetDailyRisk() {
+    this.currentMetrics.currentDailyRisk = 0;
   }
 }
 

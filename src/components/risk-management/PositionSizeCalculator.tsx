@@ -1,46 +1,56 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calculator, Shield, AlertTriangle, TrendingUp } from 'lucide-react';
-import { riskManagementEngine } from '@/services/risk/riskManagementEngine';
+import { Calculator, TrendingUp, AlertCircle } from 'lucide-react';
 
 export const PositionSizeCalculator: React.FC = () => {
-  const [accountCapital, setAccountCapital] = useState<number>(10000);
-  const [riskPercentage, setRiskPercentage] = useState<number>(1.5);
   const [entryPrice, setEntryPrice] = useState<number>(0);
-  const [stopLossPrice, setStopLossPrice] = useState<number>(0);
+  const [stopLoss, setStopLoss] = useState<number>(0);
+  const [targetPrice, setTargetPrice] = useState<number>(0);
+  const [riskPercent, setRiskPercent] = useState<number>(2);
+  const [portfolioValue, setPortfolioValue] = useState<number>(100000);
   const [calculation, setCalculation] = useState<any>(null);
 
   const calculatePosition = () => {
-    if (entryPrice <= 0 || stopLossPrice <= 0) return;
+    if (!entryPrice || !stopLoss || !riskPercent || !portfolioValue) return;
 
-    // Update risk engine with current capital
-    riskManagementEngine.updateRiskConfiguration({ 
-      accountCapital,
-      maxRiskPerTradePercent: riskPercentage 
-    });
-
-    // Create mock signal for calculation
-    const mockSignal = {
-      price: entryPrice,
-      stopLoss: stopLossPrice,
-      symbol: 'CALCULATION',
-      action: entryPrice > stopLossPrice ? 'sell' : 'buy'
-    };
-
-    const positionCalc = riskManagementEngine.calculatePositionSize(mockSignal);
-    const riskSummary = riskManagementEngine.generateRiskSummaryForSignal(mockSignal);
+    const riskAmount = Math.abs(entryPrice - stopLoss);
+    const riskPercentDecimal = riskPercent / 100;
+    const portfolioRiskAmount = portfolioValue * riskPercentDecimal;
     
+    const positionSize = portfolioRiskAmount / riskAmount;
+    const positionValue = positionSize * entryPrice;
+    const positionPercent = (positionValue / portfolioValue) * 100;
+    
+    let rewardAmount = 0;
+    let riskRewardRatio = 0;
+    
+    if (targetPrice) {
+      rewardAmount = Math.abs(targetPrice - entryPrice);
+      riskRewardRatio = rewardAmount / riskAmount;
+    }
+
     setCalculation({
-      ...positionCalc,
-      riskSummary,
-      stopLossDistance: Math.abs(entryPrice - stopLossPrice),
-      stopLossPercent: (Math.abs(entryPrice - stopLossPrice) / entryPrice) * 100
+      positionSize: positionSize,
+      positionValue: positionValue,
+      positionPercent: positionPercent,
+      riskAmount: portfolioRiskAmount,
+      rewardAmount: rewardAmount * positionSize,
+      riskRewardRatio: riskRewardRatio,
+      maxLoss: portfolioRiskAmount,
+      potentialProfit: targetPrice ? rewardAmount * positionSize : 0
     });
+  };
+
+  const getRiskColor = (percent: number) => {
+    if (percent > 5) return 'text-red-600';
+    if (percent > 3) return 'text-orange-600';
+    if (percent > 1) return 'text-yellow-600';
+    return 'text-green-600';
   };
 
   return (
@@ -48,51 +58,69 @@ export const PositionSizeCalculator: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Calculator className="h-5 w-5" />
-            LeviPro Position Size Calculator
+            <Calculator className="h-5 w-5 text-blue-500" />
+            Position Size Calculator
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          {/* Input Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="capital">Account Capital ($)</Label>
+              <Label htmlFor="portfolio-value">Portfolio Value ($)</Label>
               <Input
-                id="capital"
+                id="portfolio-value"
                 type="number"
-                value={accountCapital}
-                onChange={(e) => setAccountCapital(Number(e.target.value))}
+                value={portfolioValue}
+                onChange={(e) => setPortfolioValue(Number(e.target.value))}
+                placeholder="100000"
               />
             </div>
+
             <div>
-              <Label htmlFor="risk">Max Risk Per Trade (%)</Label>
+              <Label htmlFor="risk-percent">Risk Per Trade (%)</Label>
               <Input
-                id="risk"
+                id="risk-percent"
                 type="number"
-                value={riskPercentage}
-                onChange={(e) => setRiskPercentage(Number(e.target.value))}
-                max={5}
-                min={0.5}
-                step={0.1}
+                step="0.1"
+                value={riskPercent}
+                onChange={(e) => setRiskPercent(Number(e.target.value))}
+                placeholder="2"
               />
             </div>
+
             <div>
-              <Label htmlFor="entry">Entry Price ($)</Label>
+              <Label htmlFor="entry-price">Entry Price ($)</Label>
               <Input
-                id="entry"
+                id="entry-price"
                 type="number"
+                step="0.01"
                 value={entryPrice}
                 onChange={(e) => setEntryPrice(Number(e.target.value))}
-                step={0.01}
+                placeholder="50.00"
               />
             </div>
+
             <div>
-              <Label htmlFor="stopLoss">Stop Loss Price ($)</Label>
+              <Label htmlFor="stop-loss">Stop Loss ($)</Label>
               <Input
-                id="stopLoss"
+                id="stop-loss"
                 type="number"
-                value={stopLossPrice}
-                onChange={(e) => setStopLossPrice(Number(e.target.value))}
-                step={0.01}
+                step="0.01"
+                value={stopLoss}
+                onChange={(e) => setStopLoss(Number(e.target.value))}
+                placeholder="48.00"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="target-price">Target Price ($) - Optional</Label>
+              <Input
+                id="target-price"
+                type="number"
+                step="0.01"
+                value={targetPrice}
+                onChange={(e) => setTargetPrice(Number(e.target.value))}
+                placeholder="55.00"
               />
             </div>
           </div>
@@ -102,69 +130,89 @@ export const PositionSizeCalculator: React.FC = () => {
             Calculate Position Size
           </Button>
 
+          {/* Results */}
           {calculation && (
-            <div className="mt-6 space-y-4">
-              {/* Position Size Results */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Card className="p-4 bg-blue-50">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="h-4 w-4 text-blue-600" />
-                    <span className="font-semibold">Position Size</span>
+            <Card className="bg-gray-50">
+              <CardHeader>
+                <CardTitle className="text-lg">Calculation Results</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {calculation.positionSize.toFixed(2)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Shares/Units</div>
                   </div>
-                  <p className="text-2xl font-bold text-blue-600">
-                    ${calculation.recommendedPositionSize.toFixed(2)}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {calculation.exposurePercent.toFixed(2)}% of capital
-                  </p>
-                </Card>
 
-                <Card className="p-4 bg-red-50">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Shield className="h-4 w-4 text-red-600" />
-                    <span className="font-semibold">Risk Amount</span>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600">
+                      ${calculation.positionValue.toFixed(0)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Position Value</div>
                   </div>
-                  <p className="text-2xl font-bold text-red-600">
-                    ${calculation.riskAmount.toFixed(2)}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {calculation.stopLossPercent.toFixed(2)}% SL distance
-                  </p>
-                </Card>
 
-                <Card className="p-4 bg-green-50">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Shield className="h-4 w-4 text-green-600" />
-                    <span className="font-semibold">Risk Status</span>
+                  <div className="text-center">
+                    <div className={`text-2xl font-bold ${getRiskColor(calculation.positionPercent)}`}>
+                      {calculation.positionPercent.toFixed(1)}%
+                    </div>
+                    <div className="text-sm text-muted-foreground">Portfolio Allocation</div>
                   </div>
-                  <Badge variant={calculation.withinLimits ? "default" : "destructive"}>
-                    {calculation.withinLimits ? 'Within Limits ✅' : 'Risk Exceeded ⚠️'}
-                  </Badge>
-                  {calculation.riskWarnings.length > 0 && (
-                    <div className="mt-2">
-                      {calculation.riskWarnings.map((warning: string, index: number) => (
-                        <p key={index} className="text-xs text-red-600 flex items-center gap-1">
-                          <AlertTriangle className="h-3 w-3" />
-                          {warning}
-                        </p>
-                      ))}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-3 bg-red-50 rounded-lg">
+                    <div className="text-sm text-muted-foreground">Max Loss</div>
+                    <div className="text-lg font-bold text-red-600">
+                      ${calculation.maxLoss.toFixed(0)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {riskPercent}% of portfolio
+                    </div>
+                  </div>
+
+                  {targetPrice > 0 && (
+                    <div className="p-3 bg-green-50 rounded-lg">
+                      <div className="text-sm text-muted-foreground">Potential Profit</div>
+                      <div className="text-lg font-bold text-green-600">
+                        ${calculation.potentialProfit.toFixed(0)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        R/R: {calculation.riskRewardRatio.toFixed(2)}:1
+                      </div>
                     </div>
                   )}
-                </Card>
-              </div>
+                </div>
 
-              {/* Risk Summary */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Risk Analysis Summary</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <pre className="text-xs whitespace-pre-wrap font-mono bg-gray-50 p-3 rounded">
-                    {calculation.riskSummary}
-                  </pre>
-                </CardContent>
-              </Card>
-            </div>
+                {/* Risk Warnings */}
+                {calculation.positionPercent > 10 && (
+                  <div className="flex items-center gap-2 p-3 bg-red-100 rounded-lg">
+                    <AlertCircle className="h-5 w-5 text-red-600" />
+                    <span className="text-sm text-red-800">
+                      Warning: Position size exceeds 10% of portfolio. Consider reducing risk.
+                    </span>
+                  </div>
+                )}
+
+                {calculation.riskRewardRatio > 0 && calculation.riskRewardRatio < 1.5 && (
+                  <div className="flex items-center gap-2 p-3 bg-yellow-100 rounded-lg">
+                    <AlertCircle className="h-5 w-5 text-yellow-600" />
+                    <span className="text-sm text-yellow-800">
+                      Risk/Reward ratio is below 1.5:1. Consider better target or entry.
+                    </span>
+                  </div>
+                )}
+
+                {calculation.riskRewardRatio >= 2 && (
+                  <div className="flex items-center gap-2 p-3 bg-green-100 rounded-lg">
+                    <TrendingUp className="h-5 w-5 text-green-600" />
+                    <span className="text-sm text-green-800">
+                      Excellent risk/reward ratio of {calculation.riskRewardRatio.toFixed(2)}:1
+                    </span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           )}
         </CardContent>
       </Card>
