@@ -11,6 +11,9 @@ const CustomBarChart: React.FC<ChartBaseProps> = ({
   showPatterns,
   showSignals
 }) => {
+  // Log chart rendering decisions for transparency
+  console.log(`📊 BarChart rendering: ${data.length} data points, volume: ${showVolume ? 'ON' : 'OFF'}`);
+  
   return (
     <BarChart data={data} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
       <CartesianGrid strokeDasharray="3 3" stroke="#888888" opacity={0.2} />
