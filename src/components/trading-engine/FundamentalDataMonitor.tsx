@@ -244,4 +244,4 @@ const FundamentalDataMonitor: React.FC = () => {
   );
 };
 
-export default FundamentalDataMon
+export default FundamentalDataMonitor;

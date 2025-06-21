@@ -11,11 +11,13 @@ import { toast } from 'sonner';
 
 const EliteSignalDashboard: React.FC = () => {
   const [engineStatus, setEngineStatus] = useState(enhancedSignalEngine.getEngineStatus());
+  const [eliteStats, setEliteStats] = useState(eliteSignalFilter.getEliteStats());
   const [isTestingTelegram, setIsTestingTelegram] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setEngineStatus(enhancedSignalEngine.getEngineStatus());
+      setEliteStats(eliteSignalFilter.getEliteStats());
     }, 5000);
 
     return () => clearInterval(interval);
@@ -107,11 +109,11 @@ const EliteSignalDashboard: React.FC = () => {
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-blue-600">
-              {engineStatus.eliteStats.dailySignalCount}
+              {eliteStats.dailySignals}
             </div>
             <div className="text-sm text-muted-foreground">איתותים היום</div>
             <div className="text-xs text-muted-foreground">
-              נותרו: {engineStatus.eliteStats.remainingDailySlots}
+              נותרו: {eliteStats.config.maxSignalsPerDay - eliteStats.dailySignals}
             </div>
           </CardContent>
         </Card>
@@ -119,18 +121,18 @@ const EliteSignalDashboard: React.FC = () => {
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-green-600">
-              {engineStatus.eliteStats.sessionSignalCount}
+              {eliteStats.sessionSignals}
             </div>
             <div className="text-sm text-muted-foreground">סשן נוכחי</div>
             <div className="text-xs text-muted-foreground">
-              נותרו: {engineStatus.eliteStats.remainingSessionSlots}
+              נותרו: {eliteStats.config.maxSignalsPerSession - eliteStats.sessionSignals}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-orange-600">≥1.5</div>
+            <div className="text-2xl font-bold text-orange-600">≥{eliteStats.config.requiredRiskReward}</div>
             <div className="text-sm text-muted-foreground">יחס R/R מינימום</div>
             <div className="text-xs text-muted-foreground">רק איכות גבוהה</div>
           </CardContent>
@@ -138,7 +140,7 @@ const EliteSignalDashboard: React.FC = () => {
 
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-purple-600">&gt;80%</div>
+            <div className="text-2xl font-bold text-purple-600">{(eliteStats.config.requiredConfidence * 100).toFixed(0)}%</div>
             <div className="text-sm text-muted-foreground">Confidence מינימום</div>
             <div className="text-xs text-muted-foreground">פילטר אליט</div>
           </CardContent>
@@ -158,8 +160,8 @@ const EliteSignalDashboard: React.FC = () => {
             <div className="space-y-2">
               <h4 className="font-semibold text-sm">פילטרי איכות:</h4>
               <ul className="text-sm space-y-1 text-muted-foreground">
-                <li>• Confidence מעל 80%</li>
-                <li>• יחס R/R מינימום 1.5:1</li>
+                <li>• Confidence מעל {(eliteStats.config.requiredConfidence * 100).toFixed(0)}%</li>
+                <li>• יחס R/R מינימום {eliteStats.config.requiredRiskReward}:1</li>
                 <li>• פוטנציאל רווח פי 4 על ההון</li>
                 <li>• שיטה אישית - עדיפות עליונה</li>
               </ul>
@@ -168,7 +170,7 @@ const EliteSignalDashboard: React.FC = () => {
             <div className="space-y-2">
               <h4 className="font-semibold text-sm">מגבלות בטיחות:</h4>
               <ul className="text-sm space-y-1 text-muted-foreground">
-                <li>• מקסימום 3 איתותים לסשן</li>
+                <li>• מקסימום {eliteStats.config.maxSignalsPerSession} איתותים לסשן</li>
                 <li>• מניעת קונפליקטים (5 דקות)</li>
                 <li>• לחץ רגשי + מומנטום + פריצה</li>
                 <li>• הודעות טלגרם מקצועיות</li>
