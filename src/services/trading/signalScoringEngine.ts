@@ -1,4 +1,3 @@
-
 export interface SignalScoreBreakdown {
   rrScore: number;
   confidenceScore: number;
@@ -8,6 +7,7 @@ export interface SignalScoreBreakdown {
   fundamentalBonus: number;
   conflictPenalty: number;
   personalMethodBonus: number;
+  adaptiveBonus?: number;
   total: number;
 }
 
@@ -99,7 +99,7 @@ export class SignalScoringEngine {
     };
   }
 
-  private static determineQualityRating(score: number): 'ELITE' | 'HIGH' | 'MEDIUM' | 'LOW' | 'REJECTED' {
+  public static determineQualityRating(score: number): 'ELITE' | 'HIGH' | 'MEDIUM' | 'LOW' | 'REJECTED' {
     if (score >= 200) return 'ELITE';
     if (score >= this.SCORE_THRESHOLD) return 'HIGH';
     if (score >= 120) return 'MEDIUM';

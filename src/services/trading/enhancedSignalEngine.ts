@@ -111,6 +111,8 @@ export class EnhancedSignalEngine {
   private async sendEliteSignal(signal: any, scoredSignal: ScoredSignal) {
     try {
       // Enhanced Telegram message with AI scoring details
+      const adaptiveBonusText = scoredSignal.score.adaptiveBonus ? `🧠 AI Learning Bonus: +${scoredSignal.score.adaptiveBonus}` : '';
+      
       const message = `🔥 <b>LeviPro Elite Signal</b> ${scoredSignal.qualityRating}
 
 📊 <b>${signal.symbol}</b>
@@ -122,7 +124,7 @@ ${signal.action === 'buy' ? '🟢 BUY' : '🔴 SELL'} @ $${signal.price.toLocale
 📈 <b>R/R:</b> 1:${signal.riskRewardRatio.toFixed(2)}
 
 🏆 <b>AI Quality Score:</b> ${scoredSignal.score.total}/160
-${scoredSignal.score.adaptiveBonus ? `🧠 AI Learning Bonus: +${scoredSignal.score.adaptiveBonus}` : ''}
+${adaptiveBonusText}
 ${signal.strategy === 'almog-personal-method' ? '🧠 <b>Personal Method Priority</b>' : ''}
 
 📋 <b>Strategy:</b> ${signal.strategy}

@@ -64,6 +64,16 @@ export class SignalOutcomeTracker {
       }
 
       signals?.forEach(signal => {
+        // Safely handle metadata conversion
+        let signalMetadata: Record<string, any> = {};
+        if (signal.metadata) {
+          if (typeof signal.metadata === 'object' && signal.metadata !== null && !Array.isArray(signal.metadata)) {
+            signalMetadata = signal.metadata as Record<string, any>;
+          } else {
+            signalMetadata = { raw: signal.metadata };
+          }
+        }
+
         const outcome: SignalOutcome = {
           signalId: signal.signal_id,
           symbol: signal.symbol,
@@ -79,7 +89,7 @@ export class SignalOutcomeTracker {
           profitPercent: signal.profit_percent ? Number(signal.profit_percent) : undefined,
           duration: this.calculateDuration(signal.created_at, signal.executed_at),
           timestamp: new Date(signal.created_at).getTime(),
-          metadata: signal.metadata || {}
+          metadata: signalMetadata
         };
 
         this.outcomes.set(outcome.signalId, outcome);
@@ -250,13 +260,14 @@ export class SignalOutcomeTracker {
       timestamp: Date.now()
     };
 
-    // Save learning event to database
+    // Save learning event to database - Fixed user_id issue
     try {
       await supabase
         .from('strategy_performance')
         .upsert({
           strategy_id: outcome.strategy,
           strategy_name: outcome.strategy,
+          user_id: 'system', // Add required user_id field
           total_signals: performance.totalSignals,
           successful_signals: performance.winCount,
           failed_signals: performance.lossCount,
@@ -273,9 +284,11 @@ export class SignalOutcomeTracker {
     }
 
     // Broadcast learning update
-    window.dispatchEvent(new CustomEvent('ai-learning-update', {
-      detail: { learningEvent, performance }
-    }));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('ai-learning-update', {
+        detail: { learningEvent, performance }
+      }));
+    }
   }
 
   private startActiveSignalMonitoring() {
