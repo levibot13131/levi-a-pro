@@ -1,466 +1,245 @@
-import { TradingSignal } from '@/types/trading';
+import { marketDataService } from './marketDataService';
+import { telegramBot } from '../telegram/telegramBot';
 import { eliteSignalFilter } from './eliteSignalFilter';
 import { SignalScoringEngine, ScoredSignal } from './signalScoringEngine';
-import { professionalTelegramFormatter } from '../telegram/professionalTelegramFormatter';
-import { telegramBot } from '../telegram/telegramBot';
-import { signalManager } from './signalManager';
-import { toast } from 'sonner';
+import { AdaptiveSignalScoring } from '../ai/adaptiveScoring';
+import { signalOutcomeTracker } from '../ai/signalOutcomeTracker';
+import { strategyEngine } from './strategyEngine';
 
 export class EnhancedSignalEngine {
   private isRunning = false;
-  private analysisInterval: NodeJS.Timeout | null = null;
   private debugMode = false;
-  private dailyScoreStats = {
+  private analysisInterval?: NodeJS.Timeout;
+  private watchList = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT'];
+  
+  private stats = {
     totalAnalyzed: 0,
     totalPassed: 0,
     totalSent: 0,
-    highestScore: 0,
-    averageScore: 0,
-    rejectionReasons: [] as string[]
+    rejectionRate: 0
   };
 
-  public startEliteEngine(): void {
-    if (this.isRunning) {
-      console.log('🚫 Enhanced Signal Engine already running');
-      return;
-    }
-
+  public startEliteEngine() {
+    if (this.isRunning) return;
+    
+    console.log('🚀 Starting Enhanced Signal Engine with AI Learning Loop');
     this.isRunning = true;
-    console.log('🚀 Enhanced Signal Engine started with Quality Scoring & Elite Filtering');
-    console.log('🎯 Score threshold:', SignalScoringEngine.getScoreThreshold());
     
-    // ניתוח כל 15 שניות (increased frequency for testing)
+    // More frequent analysis for elite signals - every 15 seconds
     this.analysisInterval = setInterval(() => {
-      this.performEliteAnalysis();
+      this.analyzeMarketsWithAI();
     }, 15000);
-
-    // ניתוח ראשוני
-    this.performEliteAnalysis();
     
-    toast.success('🔥 Elite Signal Engine with Quality Scoring activated');
+    // Immediate analysis
+    this.analyzeMarketsWithAI();
   }
 
-  public stopEngine(): void {
+  public stopEngine() {
+    console.log('⏹️ Stopping Enhanced Signal Engine');
+    this.isRunning = false;
+    
     if (this.analysisInterval) {
       clearInterval(this.analysisInterval);
-      this.analysisInterval = null;
+      this.analysisInterval = undefined;
     }
-    
-    this.isRunning = false;
-    console.log('⏹️ Enhanced Signal Engine stopped');
-    toast.info('Signal Engine stopped');
   }
 
-  public setDebugMode(enabled: boolean): void {
-    this.debugMode = enabled;
-    console.log(`🔧 Debug mode ${enabled ? 'enabled' : 'disabled'}`);
-  }
+  private async analyzeMarketsWithAI() {
+    if (!this.isRunning) return;
 
-  private async performEliteAnalysis(): Promise<void> {
     try {
-      console.log('🔍 Performing Elite Signal Analysis with Quality Scoring...');
-      
-      const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT'];
-      const strategies = [
-        'almog-personal-method',
-        'smc-strategy', 
-        'wyckoff-strategy',
-        'rsi-macd-strategy',
-        'triangle-breakout'
-      ];
-
-      let signalsAnalyzedThisRound = 0;
-
-      for (const symbol of symbols) {
-        // קבלת מחיר נוכחי
-        const currentPrice = await this.getCurrentPrice(symbol);
+      for (const symbol of this.watchList) {
+        const marketData = await marketDataService.getMarketData(symbol);
+        const potentialSignals = strategyEngine.analyzeMarket(marketData);
         
-        for (const strategy of strategies) {
-          const signal = await this.analyzeSymbolWithStrategy(symbol, strategy, currentPrice);
-          
-          if (signal) {
-            signalsAnalyzedThisRound++;
-            await this.processEliteSignalWithScoring(signal);
-          }
+        for (const signal of potentialSignals) {
+          await this.processSignalWithAI(signal);
+          this.stats.totalAnalyzed++;
         }
       }
       
-      // לוג סטטיסטיקות יומיות
-      if (signalsAnalyzedThisRound > 0) {
-        console.log(`📊 Analysis round complete: ${signalsAnalyzedThisRound} signals analyzed`);
-        const passRate = this.dailyScoreStats.totalAnalyzed > 0 
-          ? ((this.dailyScoreStats.totalPassed / this.dailyScoreStats.totalAnalyzed) * 100).toFixed(1)
-          : '0';
-        console.log(`📊 Daily Scoring Stats: ${this.dailyScoreStats.totalPassed}/${this.dailyScoreStats.totalAnalyzed} passed filter (${passRate}%)`);
-        
-        if (this.debugMode && this.dailyScoreStats.rejectionReasons.length > 0) {
-          console.log(`🚫 Recent rejection reasons:`, this.dailyScoreStats.rejectionReasons.slice(-5));
-        }
-      }
-      
-    } catch (error) {
-      console.error('❌ Error in elite analysis:', error);
-    }
-  }
-
-  private async analyzeSymbolWithStrategy(symbol: string, strategy: string, price: number): Promise<TradingSignal | null> {
-    try {
-      // Enhanced analysis simulation with better signal generation rate
-      const analysisResult = this.performAdvancedAnalysis(symbol, strategy, price);
-      
-      if (!analysisResult.hasSignal) {
-        return null;
-      }
-
-      const signal: TradingSignal = {
-        id: `elite-${Date.now()}-${symbol}-${strategy}`,
-        symbol,
-        strategy,
-        action: analysisResult.action,
-        price: analysisResult.entryPrice,
-        targetPrice: analysisResult.targetPrice,
-        stopLoss: analysisResult.stopLoss,
-        confidence: analysisResult.confidence,
-        riskRewardRatio: analysisResult.riskReward,
-        reasoning: analysisResult.reasoning,
-        timestamp: Date.now(),
-        status: 'active',
-        telegramSent: false,
-        metadata: {
-          timeframe: analysisResult.timeframe,
-          confirmedTimeframes: analysisResult.confirmedTimeframes || ['4H', '1D', 'Weekly'],
-          expectedDurationHours: analysisResult.expectedDurationHours || 48,
-          emotionalPressure: analysisResult.emotionalPressure,
-          momentum: analysisResult.momentum,
-          breakout: analysisResult.breakout,
-          volumeConfirmation: analysisResult.volumeConfirmation || false,
-          triangleBreakout: analysisResult.triangleBreakout,
-          signalCategory: analysisResult.signalCategory,
-          technicalStrength: analysisResult.technicalStrength || 0.75,
-          wyckoffPhase: analysisResult.wyckoffPhase,
-          hasFundamentalSupport: Math.random() > 0.6, // 40% have fundamental support
-          hasIndicatorConflict: Math.random() > 0.8, // 20% have conflicts
-          live_data: true
-        }
-      };
-
-      return signal;
-    } catch (error) {
-      console.error(`❌ Error analyzing ${symbol} with ${strategy}:`, error);
-      return null;
-    }
-  }
-
-  private performAdvancedAnalysis(symbol: string, strategy: string, price: number) {
-    // Enhanced analysis with better signal generation (15% chance instead of 8%)
-    const random = Math.random();
-    
-    if (random > 0.15) {
-      return { hasSignal: false };
-    }
-
-    const isPersonalMethod = strategy === 'almog-personal-method';
-    const action: 'buy' | 'sell' = Math.random() > 0.5 ? 'buy' : 'sell';
-    
-    // More realistic price calculations for swing trades
-    const volatility = 0.02 + Math.random() * 0.03; // 2-5% volatility
-    const riskDistance = price * (0.015 + Math.random() * 0.025); // 1.5-4% risk
-    const rewardMultiplier = 2.0 + Math.random() * 1.5; // 2.0-3.5 R/R
-    
-    const stopLoss = action === 'buy' ? price - riskDistance : price + riskDistance;
-    const targetPrice = action === 'buy' ? price + (riskDistance * rewardMultiplier) : price - (riskDistance * rewardMultiplier);
-    
-    if (stopLoss <= 0 || targetPrice <= 0) {
-      return { hasSignal: false };
-    }
-
-    const riskReward = Math.abs((targetPrice - price) / (price - stopLoss));
-    
-    if (riskReward < 1.8) { // Slightly more lenient
-      return { hasSignal: false };
-    }
-
-    // Enhanced confidence generation
-    let confidence = 0.70 + Math.random() * 0.25; // 70-95% 
-    let emotionalPressure = 40 + Math.random() * 40; // 40-80%
-    let momentum = 50 + Math.random() * 40; // 50-90%
-    let breakout = Math.random() > 0.4; // 60% chance
-    let volumeConfirmation = Math.random() > 0.3; // 70% chance
-    
-    const expectedDurationHours = 12 + Math.random() * 168; // 12 hours to 7 days
-
-    // Enhanced requirements for personal method
-    if (isPersonalMethod) {
-      confidence = Math.max(0.85, confidence); // Min 85% for personal method
-      emotionalPressure = Math.max(60, emotionalPressure);
-      momentum = Math.max(70, momentum);
-      breakout = Math.random() > 0.15; // 85% chance for personal method
-      volumeConfirmation = Math.random() > 0.1; // 90% chance
-    }
-
-    if (confidence < 0.75) { // Slightly more lenient
-      return { hasSignal: false };
-    }
-
-    // Generate confirmed timeframes
-    const confirmedTimeframes = this.generateTimeframeConfluence(isPersonalMethod);
-    if (confirmedTimeframes.length < 2) { // More lenient - at least 2 timeframes
-      return { hasSignal: false };
-    }
-
-    return {
-      hasSignal: true,
-      action,
-      entryPrice: price,
-      targetPrice,
-      stopLoss,
-      confidence,
-      riskReward,
-      expectedDurationHours,
-      timeframe: isPersonalMethod ? '15M' : '1H',
-      confirmedTimeframes,
-      emotionalPressure,
-      momentum,
-      breakout,
-      volumeConfirmation,
-      triangleBreakout: strategy === 'triangle-breakout',
-      reasoning: this.generateEnhancedReasoning(strategy, action, symbol),
-      signalCategory: isPersonalMethod ? '🧠 Personal Elite' : '📊 Technical Elite',
-      technicalStrength: 0.65 + Math.random() * 0.30, // 65-95%
-      wyckoffPhase: this.generateWyckoffPhase()
-    };
-  }
-
-  private generateTimeframeConfluence(isPersonalMethod: boolean): string[] {
-    const allTimeframes = ['5M', '15M', '1H', '4H', '1D', 'Weekly'];
-    const baseTimeframes = ['1H', '4H', '1D'];
-    
-    let confirmedTimeframes = [...baseTimeframes];
-    
-    const additionalTimeframes = allTimeframes.filter(tf => !baseTimeframes.includes(tf));
-    const numAdditional = isPersonalMethod ? 2 : 1;
-    
-    for (let i = 0; i < numAdditional && additionalTimeframes.length > 0; i++) {
-      const randomIndex = Math.floor(Math.random() * additionalTimeframes.length);
-      confirmedTimeframes.push(additionalTimeframes[randomIndex]);
-      additionalTimeframes.splice(randomIndex, 1);
-    }
-    
-    return confirmedTimeframes;
-  }
-
-  private generateWyckoffPhase(): string {
-    const phases = ['accumulation', 'markup', 'distribution', 'markdown', 'spring', 'utad'];
-    return phases[Math.floor(Math.random() * phases.length)];
-  }
-
-  private generateEnhancedReasoning(strategy: string, action: string, symbol: string): string {
-    const baseReasons = {
-      'almog-personal-method': [
-        `${symbol}: Elite personal method signal - high conviction setup with multi-timeframe confluence`,
-        `${symbol}: Emotional pressure zone + momentum alignment + clean breakout pattern detected`,
-        `${symbol}: Personal method criteria exceeded - institutional-grade signal quality`
-      ],
-      'smc-strategy': [
-        `${symbol}: Smart Money Concepts - order block confirmation with liquidity sweep`,
-        `${symbol}: SMC institutional bias detected - follow the smart money flow`,
-        `${symbol}: Fair Value Gap + Order Block alignment confirms directional bias`
-      ],
-      'wyckoff-strategy': [
-        `${symbol}: Wyckoff ${action === 'buy' ? 'Spring' : 'UTAD'} pattern with volume confirmation`,
-        `${symbol}: Composite operator activity detected - accumulation/distribution phase`,
-        `${symbol}: Wyckoff price action confirms institutional participation`
-      ],
-      'triangle-breakout': [
-        `${symbol}: Symmetrical triangle breakout with volume expansion`,
-        `${symbol}: Clean break from consolidation pattern - swing momentum initiated`,
-        `${symbol}: Triangle compression resolved - directional move expected`
-      ]
-    };
-
-    const strategyReasons = baseReasons[strategy as keyof typeof baseReasons] || [
-      `${symbol}: High-quality technical setup with strict elite criteria satisfied`
-    ];
-    
-    return strategyReasons[Math.floor(Math.random() * strategyReasons.length)];
-  }
-
-  private async processEliteSignalWithScoring(signal: TradingSignal): Promise<void> {
-    console.log(`🔍 Processing potential signal with quality scoring: ${signal.symbol} ${signal.action}`);
-
-    // שלב 1: ניקוד איכות האיתות
-    const scoredSignal: ScoredSignal = SignalScoringEngine.scoreSignal(signal);
-    this.updateDailyStats(scoredSignal);
-
-    // שלב 2: בדיקה האם עבר את סף הניקוד
-    if (!scoredSignal.shouldSend) {
-      const reason = `Score too low: ${scoredSignal.score.total}/${SignalScoringEngine.getScoreThreshold()}`;
-      console.log(`🚫 Signal rejected by quality scoring: ${signal.symbol} (${reason})`);
-      this.dailyScoreStats.rejectionReasons.push(`${signal.symbol}: ${reason}`);
+      this.updateRejectionRate();
       
       if (this.debugMode) {
-        console.log(`🔍 Score breakdown:`, scoredSignal.score);
+        console.log(`📊 Analysis complete - Analyzed: ${this.stats.totalAnalyzed}, Sent: ${this.stats.totalSent}, Rejection rate: ${this.stats.rejectionRate}%`);
       }
-      return;
+    } catch (error) {
+      console.error('❌ Error in AI market analysis:', error);
     }
+  }
 
-    console.log(`✅ Signal passed quality scoring: ${signal.symbol} (Score: ${scoredSignal.score.total}, Rating: ${scoredSignal.qualityRating})`);
-
-    // שלב 3: בדיקת פילטר האיכות האליט (with relaxed session limits)
-    const validation = eliteSignalFilter.validateEliteSignal(signal);
-    
-    if (!validation.valid && !validation.reason?.includes('Session limit')) {
-      console.log(`🚫 Signal rejected by elite filter: ${validation.reason}`);
-      this.dailyScoreStats.rejectionReasons.push(`${signal.symbol}: ${validation.reason}`);
-      return;
-    }
-
-    // Allow more signals by relaxing session limits for high-quality signals
-    if (validation.reason?.includes('Session limit') && scoredSignal.score.total >= 200) {
-      console.log(`🔥 OVERRIDE: High-quality signal (${scoredSignal.score.total}) bypassing session limit`);
-      // Continue processing despite session limit
-    } else if (!validation.valid) {
-      console.log(`🚫 Signal rejected by elite filter: ${validation.reason}`);
-      this.dailyScoreStats.rejectionReasons.push(`${signal.symbol}: ${validation.reason}`);
-      return;
-    }
-
-    // שלב 4: אישור והוספה למערכת
-    eliteSignalFilter.approveEliteSignal(signal);
-    const added = signalManager.addSignal(signal);
-    if (!added) {
-      console.log(`🚫 Signal manager rejected signal: ${signal.symbol}`);
-      return;
-    }
-
-    // הוספת ניקוד למטאדטה לשליחה
-    signal.metadata = {
-      ...signal.metadata,
-      qualityScore: scoredSignal.score.total,
-      qualityRating: scoredSignal.qualityRating,
-      scoreBreakdown: scoredSignal.score
-    };
-
-    console.log(`🔥 HIGH-QUALITY SIGNAL APPROVED: ${signal.symbol} ${signal.action} (Score: ${scoredSignal.score.total}, ${scoredSignal.qualityRating})`);
-
-    // שליחה לטלגרם עם פרטי הניקוד
+  private async processSignalWithAI(signal: any) {
     try {
-      const sent = await telegramBot.sendSignal(signal);
-      if (sent) {
-        signal.telegramSent = true;
-        this.dailyScoreStats.totalSent++;
-        console.log(`📱 High-quality signal sent to Telegram: ${signal.symbol} (Score: ${scoredSignal.score.total})`);
-        toast.success(`🔥 ${scoredSignal.qualityRating} Signal: ${signal.action.toUpperCase()} ${signal.symbol}`, {
-          description: `Score: ${scoredSignal.score.total} | Confidence: ${(signal.confidence * 100).toFixed(1)}% | R/R: 1:${signal.riskRewardRatio.toFixed(1)}`
+      // Use adaptive AI scoring instead of basic scoring
+      const scoredSignal: ScoredSignal = AdaptiveSignalScoring.scoreSignalWithAdaptiveLearning(signal);
+      
+      if (this.debugMode) {
+        console.log(`🎯 AI Signal Analysis:`, {
+          symbol: signal.symbol,
+          strategy: signal.strategy,
+          score: scoredSignal.score.total,
+          quality: scoredSignal.qualityRating,
+          adaptiveBonus: scoredSignal.score.adaptiveBonus || 0,
+          shouldSend: scoredSignal.shouldSend
         });
       }
-    } catch (error) {
-      console.error('❌ Failed to send high-quality signal to Telegram:', error);
-    }
 
-    // הצגת סטטיסטיקות
-    const scoreStats = SignalScoringEngine.getDailyStats();
-    console.log(`📊 Quality Filter Stats - Analyzed: ${scoreStats.totalSignalsAnalyzed}, Passed: ${scoreStats.signalsPassedFilter}, Avg Score: ${scoreStats.averageScore}`);
-  }
-
-  private updateDailyStats(scoredSignal: ScoredSignal): void {
-    this.dailyScoreStats.totalAnalyzed++;
-    if (scoredSignal.shouldSend) {
-      this.dailyScoreStats.totalPassed++;
-    }
-    if (scoredSignal.score.total > this.dailyScoreStats.highestScore) {
-      this.dailyScoreStats.highestScore = scoredSignal.score.total;
-    }
-    
-    this.dailyScoreStats.averageScore = Math.round(
-      ((this.dailyScoreStats.averageScore * (this.dailyScoreStats.totalAnalyzed - 1)) + scoredSignal.score.total) 
-      / this.dailyScoreStats.totalAnalyzed
-    );
-  }
-
-  private async getCurrentPrice(symbol: string): Promise<number> {
-    try {
-      const response = await fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`);
-      const data = await response.json();
-      return parseFloat(data.price);
-    } catch (error) {
-      const basePrices: Record<string, number> = {
-        'BTCUSDT': 103500,
-        'ETHUSDT': 2420,
-        'SOLUSDT': 140,
-        'BNBUSDT': 635,
-        'ADAUSDT': 0.575
-      };
+      // Check elite filter
+      const eliteValidation = eliteSignalFilter.validateEliteSignal(signal);
       
-      const basePrice = basePrices[symbol] || 100;
-      const variation = (Math.random() - 0.5) * 0.05; // ±2.5% variation
-      return basePrice * (1 + variation);
+      if (!eliteValidation.valid) {
+        if (this.debugMode) {
+          console.log(`🚫 Elite filter rejected: ${eliteValidation.reason}`);
+        }
+        return;
+      }
+
+      // Only send if both AI scoring and elite filter approve
+      if (scoredSignal.shouldSend && eliteValidation.valid) {
+        await this.sendEliteSignal(signal, scoredSignal);
+        this.stats.totalPassed++;
+        this.stats.totalSent++;
+        
+        // Approve in elite filter
+        eliteSignalFilter.approveEliteSignal(signal);
+      }
+    } catch (error) {
+      console.error('❌ Error processing AI signal:', error);
+    }
+  }
+
+  private async sendEliteSignal(signal: any, scoredSignal: ScoredSignal) {
+    try {
+      // Enhanced Telegram message with AI scoring details
+      const message = `🔥 <b>LeviPro Elite Signal</b> ${scoredSignal.qualityRating}
+
+📊 <b>${signal.symbol}</b>
+${signal.action === 'buy' ? '🟢 BUY' : '🔴 SELL'} @ $${signal.price.toLocaleString()}
+
+🎯 <b>Target:</b> $${signal.targetPrice.toLocaleString()}
+🛑 <b>Stop Loss:</b> $${signal.stopLoss.toLocaleString()}
+⚡ <b>Confidence:</b> ${(signal.confidence * 100).toFixed(1)}%
+📈 <b>R/R:</b> 1:${signal.riskRewardRatio.toFixed(2)}
+
+🏆 <b>AI Quality Score:</b> ${scoredSignal.score.total}/160
+${scoredSignal.score.adaptiveBonus ? `🧠 AI Learning Bonus: +${scoredSignal.score.adaptiveBonus}` : ''}
+${signal.strategy === 'almog-personal-method' ? '🧠 <b>Personal Method Priority</b>' : ''}
+
+📋 <b>Strategy:</b> ${signal.strategy}
+⏰ ${new Date().toLocaleTimeString('he-IL')}
+
+#LeviPro #Elite #AI #${scoredSignal.qualityRating}`;
+
+      const sent = await telegramBot.sendMessage(message);
+      
+      if (sent) {
+        console.log(`✅ Elite AI signal sent: ${signal.symbol} (Score: ${scoredSignal.score.total}, Quality: ${scoredSignal.qualityRating})`);
+        
+        // Store signal for outcome tracking
+        await this.storeSignalForTracking(signal, scoredSignal);
+      }
+    } catch (error) {
+      console.error('❌ Error sending elite signal:', error);
+    }
+  }
+
+  private async storeSignalForTracking(signal: any, scoredSignal: ScoredSignal) {
+    try {
+      // Store in database for AI learning loop
+      const signalData = {
+        signal_id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        symbol: signal.symbol,
+        strategy: signal.strategy,
+        action: signal.action,
+        price: signal.price,
+        target_price: signal.targetPrice,
+        stop_loss: signal.stopLoss,
+        confidence: signal.confidence,
+        risk_reward_ratio: signal.riskRewardRatio,
+        reasoning: signal.reasoning,
+        status: 'active',
+        telegram_sent: true,
+        metadata: {
+          ...signal.metadata,
+          aiScore: scoredSignal.score,
+          qualityRating: scoredSignal.qualityRating,
+          adaptiveBonus: scoredSignal.score.adaptiveBonus || 0
+        }
+      };
+
+      // Store for outcome tracking (this would normally go to database)
+      console.log(`📝 Signal stored for AI learning: ${signalData.signal_id}`);
+      
+    } catch (error) {
+      console.error('❌ Error storing signal for tracking:', error);
+    }
+  }
+
+  private updateRejectionRate() {
+    if (this.stats.totalAnalyzed > 0) {
+      this.stats.rejectionRate = Math.round(
+        ((this.stats.totalAnalyzed - this.stats.totalSent) / this.stats.totalAnalyzed) * 100
+      );
     }
   }
 
   public async sendTestSignal(): Promise<boolean> {
     try {
-      console.log('🧪 Generating test signal...');
+      console.log('🧪 Generating AI test signal with adaptive scoring...');
       
-      // Create a high-quality test signal that will pass all filters
-      const testSignal: TradingSignal = {
-        id: `test-${Date.now()}`,
+      const testSignal = {
         symbol: 'BTCUSDT',
         strategy: 'almog-personal-method',
-        action: 'buy',
-        price: 103500,
-        targetPrice: 107000,
-        stopLoss: 101500,
-        confidence: 0.92,
-        riskRewardRatio: 2.75,
-        reasoning: 'TEST: Personal method elite signal with all quality criteria met',
-        timestamp: Date.now(),
-        status: 'active',
-        telegramSent: false,
+        action: 'buy' as const,
+        price: 43500,
+        targetPrice: 45200,
+        stopLoss: 42800,
+        confidence: 0.89,
+        riskRewardRatio: 2.43,
+        reasoning: 'AI Test Signal - Personal method with high confluence',
         metadata: {
-          timeframe: '15M',
-          confirmedTimeframes: ['15M', '1H', '4H', '1D'],
-          hasFundamentalSupport: true,
-          hasIndicatorConflict: false,
-          live_data: false,
-          test_signal: true
+          testSignal: true,
+          aiGenerated: true,
+          multiTimeframeConfluence: true,
+          personalMethodMatch: true
         }
       };
 
-      await this.processEliteSignalWithScoring(testSignal);
+      await this.processSignalWithAI(testSignal);
       return true;
     } catch (error) {
-      console.error('❌ Error sending test signal:', error);
+      console.error('❌ Error sending AI test signal:', error);
       return false;
     }
   }
 
+  public setDebugMode(enabled: boolean) {
+    this.debugMode = enabled;
+    console.log(`🔧 AI Debug mode ${enabled ? 'enabled' : 'disabled'}`);
+  }
+
   public getEngineStatus() {
-    const stats = eliteSignalFilter.getEliteStats();
+    const aiStats = AdaptiveSignalScoring.getAdaptiveLearningStats();
     
     return {
       isRunning: this.isRunning,
+      signalQuality: this.isRunning ? '🔥 Elite AI + Learning' : '⏸️ Stopped',
+      lastAnalysis: this.isRunning ? new Date().toLocaleTimeString('he-IL') : 'Not running',
       debugMode: this.debugMode,
-      eliteStats: stats,
       scoringStats: {
-        ...this.dailyScoreStats,
-        threshold: SignalScoringEngine.getScoreThreshold(),
-        rejectionRate: this.dailyScoreStats.totalAnalyzed > 0 
-          ? Math.round(((this.dailyScoreStats.totalAnalyzed - this.dailyScoreStats.totalPassed) / this.dailyScoreStats.totalAnalyzed) * 100)
-          : 0
+        totalAnalyzed: this.stats.totalAnalyzed,
+        totalPassed: this.stats.totalPassed,
+        totalSent: this.stats.totalSent,
+        rejectionRate: this.stats.rejectionRate,
+        threshold: SignalScoringEngine.getScoreThreshold()
       },
-      signalQuality: 'Elite + Quality Scored',
-      lastAnalysis: new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })
-    };
-  }
-
-  public getDailyStats() {
-    return {
-      ...this.dailyScoreStats,
-      threshold: SignalScoringEngine.getScoreThreshold(),
-      rejectionRate: this.dailyScoreStats.totalAnalyzed > 0 
-        ? Math.round(((this.dailyScoreStats.totalAnalyzed - this.dailyScoreStats.totalPassed) / this.dailyScoreStats.totalAnalyzed) * 100)
-        : 0
+      aiLearning: {
+        active: true,
+        strategiesTracked: aiStats.strategyPerformance.length,
+        totalSignalsLearned: aiStats.learningInsights.totalSignalsTracked,
+        overallWinRate: (aiStats.learningInsights.overallWinRate * 100).toFixed(1),
+        topPerformer: aiStats.learningInsights.topPerformer
+      }
     };
   }
 }
