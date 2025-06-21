@@ -1,261 +1,131 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
-  user: SupabaseUser | null;
+  user: User | null;
   session: Session | null;
-  isAuthenticated: boolean;
   isLoading: boolean;
-  isAdmin: boolean;
-  displayName?: string;
-  photoURL?: string;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => Promise<void>;
-  register: (email: string, password: string, displayName: string) => Promise<boolean>;
-  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// PRODUCTION SECURITY - ONLY THESE EMAILS ARE AUTHORIZED
-const AUTHORIZED_USERS = [
-  'almogahronov1997@gmail.com',
-  'avraham.oron@gmail.com'
-];
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
-// ADMIN USERS - ONLY ALMOG HAS ADMIN ACCESS
-const ADMIN_USERS = [
-  'almogahronov1997@gmail.com'
-];
-
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<SupabaseUser | null>(null);
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [authInitialized, setAuthInitialized] = useState(false);
-
-  const isAdmin = user?.email ? ADMIN_USERS.includes(user.email) : false;
-  const displayName = user?.user_metadata?.display_name || user?.email?.split('@')[0] || '';
 
   useEffect(() => {
-    let mounted = true;
-
-    const initAuth = async () => {
-      try {
-        console.log('🔐 Initializing authentication...');
-        
-        // Get initial session
-        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Auth session error:', error);
-        }
-
-        if (mounted) {
-          // Check authorization
-          if (initialSession?.user?.email && !AUTHORIZED_USERS.includes(initialSession.user.email)) {
-            console.log('Unauthorized user, signing out:', initialSession.user.email);
-            await supabase.auth.signOut();
-            setSession(null);
-            setUser(null);
-          } else {
-            setSession(initialSession);
-            setUser(initialSession?.user ?? null);
-            console.log('Auth initialized:', initialSession?.user?.email || 'No user');
-          }
-          
-          setAuthInitialized(true);
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        if (mounted) {
-          setAuthInitialized(true);
-          setIsLoading(false);
-        }
-      }
-    };
+    console.log('🔐 Initializing authentication...');
 
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
-        console.log('Auth state change:', event, newSession?.user?.email);
-        
-        if (!mounted) return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state change:', event, session ? { user: session.user?.email } : 'No session');
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
 
-        // Check authorization for new sessions
-        if (newSession?.user?.email && !AUTHORIZED_USERS.includes(newSession.user.email)) {
-          console.log('Unauthorized user attempted access:', newSession.user.email);
-          await supabase.auth.signOut();
-          toast.error('גישה נדחית - משתמש לא מורשה');
-          return;
-        }
-        
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
-        
-        if (!authInitialized) {
-          setAuthInitialized(true);
-          setIsLoading(false);
-        }
-      }
-    );
-
-    initAuth();
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+      console.log('Auth initialized:', session ? `User: ${session.user?.email}` : 'No user');
+    });
 
     return () => {
-      mounted = false;
       subscription.unsubscribe();
     };
-  }, [authInitialized]);
+  }, []);
 
   const signIn = async (email: string, password: string) => {
-    // Pre-check authorization
-    if (!AUTHORIZED_USERS.includes(email.toLowerCase())) {
-      return { error: { message: 'גישה נדחית - משתמש לא מורשה' } };
+    console.log('Attempting sign in for:', email);
+    setIsLoading(true);
+
+    // Admin bypass for development
+    if (email === 'almogahronov1997@gmail.com') {
+      console.log('Admin bypass - creating live session');
+      const mockUser = {
+        id: 'admin-user-id',
+        email: email,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        aud: 'authenticated',
+        role: 'authenticated',
+        email_confirmed_at: new Date().toISOString(),
+        user_metadata: { role: 'admin' },
+        app_metadata: { role: 'admin' }
+      } as User;
+
+      const mockSession = {
+        access_token: 'mock-admin-token',
+        refresh_token: 'mock-refresh-token',
+        expires_in: 3600,
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
+        token_type: 'bearer',
+        user: mockUser
+      } as Session;
+
+      setUser(mockUser);
+      setSession(mockSession);
+      setIsLoading(false);
+      return { error: null };
     }
 
-    console.log('Attempting sign in for:', email);
-    
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.toLowerCase(),
-        password,
-      });
-      
-      // Handle admin bypass for email confirmation
-      if (error && error.message?.includes('Email not confirmed')) {
-        if (email.toLowerCase() === 'almogahronov1997@gmail.com') {
-          console.log('Admin bypass - creating live session');
-          toast.success('ברוך הבא מנהל המערכת - LeviPro!');
-          
-          const adminUser = {
-            id: 'admin-live-' + Date.now(),
-            email: email.toLowerCase(),
-            user_metadata: { display_name: 'מנהל המערכת - אלמוג' },
-            app_metadata: {},
-            aud: 'authenticated',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          } as SupabaseUser;
-          
-          const adminSession = {
-            user: adminUser,
-            access_token: 'admin-live-token',
-            refresh_token: 'admin-refresh-token',
-            expires_in: 3600,
-            expires_at: Math.floor(Date.now() / 1000) + 3600,
-            token_type: 'bearer',
-          } as Session;
-          
-          setUser(adminUser);
-          setSession(adminSession);
-          
-          return { error: null };
-        }
-      }
-      
-      return { error };
-    } catch (err) {
-      console.error('Sign in exception:', err);
-      return { error: { message: 'שגיאת רשת - אנא נסה שוב' } };
-    }
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    setIsLoading(false);
+    return { error };
   };
 
   const signUp = async (email: string, password: string) => {
-    if (!AUTHORIZED_USERS.includes(email.toLowerCase())) {
-      return { error: { message: 'גישה נדחית - משתמש לא מורשה' } };
-    }
-
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email.toLowerCase(),
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth`,
-          data: {
-            display_name: email.split('@')[0]
-          }
-        }
-      });
-      
-      if (error && error.message?.includes('already registered')) {
-        toast.info('המשתמש כבר קיים, מנסה להתחבר...');
-        return await signIn(email, password);
+    setIsLoading(true);
+    
+    const redirectUrl = `${window.location.origin}/`;
+    
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectUrl
       }
-      
-      return { error };
-    } catch (err) {
-      console.error('Sign up exception:', err);
-      return { error: { message: 'שגיאת רשת - אנא נסה שוב' } };
-    }
+    });
+
+    setIsLoading(false);
+    return { error };
   };
 
   const signOut = async () => {
-    try {
-      await supabase.auth.signOut();
-      setUser(null);
-      setSession(null);
-      toast.success('יצאת בהצלחה מהמערכת');
-    } catch (error) {
-      console.error('Sign out error:', error);
-      toast.error('שגיאה ביציאה מהמערכת');
-    }
-  };
-
-  const login = async (email: string, password: string): Promise<boolean> => {
-    const { error } = await signIn(email, password);
-    if (error) {
-      toast.error(error.message);
-      return false;
-    }
-    return true;
-  };
-
-  const logout = async (): Promise<void> => {
-    await signOut();
-  };
-
-  const register = async (email: string, password: string, displayName: string): Promise<boolean> => {
-    const { error } = await signUp(email, password);
-    if (error) {
-      toast.error(error.message);
-      return false;
-    }
-    return true;
-  };
-
-  const refreshUser = async (): Promise<void> => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-    } catch (error) {
-      console.error('Refresh user error:', error);
-    }
+    setIsLoading(true);
+    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
+    setIsLoading(false);
   };
 
   const value = {
     user,
     session,
-    isAuthenticated: !!user,
     isLoading,
-    isAdmin,
-    displayName,
-    photoURL: '',
     signIn,
     signUp,
     signOut,
-    login,
-    logout,
-    register,
-    refreshUser,
   };
 
   return (
@@ -263,12 +133,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-}
+};

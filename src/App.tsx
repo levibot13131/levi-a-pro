@@ -27,6 +27,7 @@ function App() {
               </ProtectedRoute>
             }>
               <Route index element={<Dashboard />} />
+              <Route path="dashboard" element={<Dashboard />} />
               <Route path="technical-analysis" element={<TechnicalAnalysis />} />
               <Route path="fundamental-data" element={<FundamentalData />} />
               <Route path="market-sentiment" element={<MarketSentiment />} />

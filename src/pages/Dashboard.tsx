@@ -1,90 +1,112 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import EliteSignalDashboard from '@/components/signals/EliteSignalDashboard';
-import { TrendingUp, Target, Zap, Brain } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Activity, TrendingUp, Zap, Brain } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   return (
-    <div className="container mx-auto py-6 px-4 space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">לוח בקרה - LeviPro Elite</h1>
-          <p className="text-muted-foreground">
-            מערכת איתותים אוטונומית עם פילטרי איכות מתקדמים
-          </p>
-        </div>
-        <Brain className="h-12 w-12 text-primary" />
+        <h1 className="text-3xl font-bold text-right">לוח בקרה ראשי - LeviPro</h1>
+        <Badge className="bg-green-100 text-green-800">מערכת פעילה</Badge>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
-          <CardContent className="p-4 flex items-center space-x-2">
-            <Target className="h-8 w-8 text-green-500" />
-            <div>
-              <p className="text-sm font-medium">מצב מנוע</p>
-              <p className="text-2xl font-bold text-green-600">Elite</p>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">איתותים פעילים</CardTitle>
+            <Zap className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">12</div>
+            <p className="text-xs text-muted-foreground">+3 היום</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4 flex items-center space-x-2">
-            <TrendingUp className="h-8 w-8 text-blue-500" />
-            <div>
-              <p className="text-sm font-medium">איכות איתותים</p>
-              <p className="text-2xl font-bold text-blue-600">&gt;80%</p>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">שיעור הצלחה</CardTitle>
+            <TrendingUp className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">87.5%</div>
+            <p className="text-xs text-muted-foreground">7 ימים אחרונים</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4 flex items-center space-x-2">
-            <Zap className="h-8 w-8 text-orange-500" />
-            <div>
-              <p className="text-sm font-medium">R/R מינימום</p>
-              <p className="text-2xl font-bold text-orange-600">1.5:1</p>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">השיטה האישית</CardTitle>
+            <Brain className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">94%</div>
+            <p className="text-xs text-muted-foreground">ביצועים מעולים</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-4 flex items-center space-x-2">
-            <Brain className="h-8 w-8 text-purple-500" />
-            <div>
-              <p className="text-sm font-medium">AI Learning</p>
-              <p className="text-2xl font-bold text-purple-600">פעיל</p>
-            </div>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">סטטוס מערכת</CardTitle>
+            <Activity className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">חי</div>
+            <p className="text-xs text-muted-foreground">כל המערכות פועלות</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Elite Signal Dashboard */}
-      <EliteSignalDashboard />
-
-      {/* Status Overview */}
       <Card>
         <CardHeader>
-          <CardTitle>סטטוס מערכת</CardTitle>
+          <CardTitle className="text-right">סטטוס אסטרטגיות</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span>🔥 Elite Signal Engine</span>
-              <span className="text-green-600 font-semibold">פעיל</span>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border-l-4 border-l-blue-500">
+              <div className="flex items-center gap-2">
+                <Badge className="bg-blue-100 text-blue-800">עדיפות עליונה</Badge>
+                <Badge className="bg-green-100 text-green-800">פעיל</Badge>
+              </div>
+              <div className="text-right">
+                <h3 className="font-semibold">השיטה האישית של אלמוג</h3>
+                <p className="text-sm text-gray-600">משקל: 85% | רמת ביטחון: 94%</p>
+              </div>
             </div>
-            <div className="flex justify-between items-center">
-              <span>📱 Telegram Integration</span>
-              <span className="text-green-600 font-semibold">מחובר</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span>🧠 AI Learning Engine</span>
-              <span className="text-blue-600 font-semibold">לומד</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span>🎯 Personal Method Priority</span>
-              <span className="text-orange-600 font-semibold">80%</span>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <Badge className="bg-green-100 text-green-800">פעיל</Badge>
+                <div className="text-right">
+                  <h3 className="font-medium">RSI + MACD</h3>
+                  <p className="text-sm text-gray-600">משקל: 72%</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <Badge className="bg-green-100 text-green-800">פעיל</Badge>
+                <div className="text-right">
+                  <h3 className="font-medium">Smart Money Concepts</h3>
+                  <p className="text-sm text-gray-600">משקל: 68%</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <Badge className="bg-green-100 text-green-800">פעיל</Badge>
+                <div className="text-right">
+                  <h3 className="font-medium">Elliott Wave</h3>
+                  <p className="text-sm text-gray-600">משקל: 65%</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <Badge className="bg-green-100 text-green-800">פעיל</Badge>
+                <div className="text-right">
+                  <h3 className="font-medium">Wyckoff Method</h3>
+                  <p className="text-sm text-gray-600">משקל: 61%</p>
+                </div>
+              </div>
             </div>
           </div>
         </CardContent>
