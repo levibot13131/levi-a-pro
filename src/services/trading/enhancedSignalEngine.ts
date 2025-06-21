@@ -1,255 +1,53 @@
+import { TradingSignal } from '@/types/trading';
 import { marketDataService } from './marketDataService';
-import { telegramBot } from '../telegram/telegramBot';
-import { eliteSignalFilter } from './eliteSignalFilter';
-import { IntelligenceEnhancedScoring } from './intelligenceEnhancedScoring';
-import { AdaptiveSignalScoring } from '../ai/adaptiveScoring';
-import { signalOutcomeTracker } from '../ai/signalOutcomeTracker';
 import { strategyEngine } from './strategyEngine';
+import { IntelligenceEnhancedScoring } from './intelligenceEnhancedScoring';
+import { telegramBot } from '../telegram/telegramBot';
+import { SignalScoringEngine } from './signalScoringEngine';
+import { riskManagementEngine } from '../risk/riskManagementEngine';
 
 export class EnhancedSignalEngine {
   private isRunning = false;
   private debugMode = false;
-  private analysisInterval?: NodeJS.Timeout;
-  private watchList = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT'];
-  
-  private stats = {
-    totalAnalyzed: 0,
-    totalPassed: 0,
-    totalSent: 0,
-    rejectionRate: 0,
-    intelligenceEnhanced: 0
+  private rejectionStats = {
+    total: 0,
+    byReason: {} as { [key: string]: number }
   };
 
-  public startEliteEngine() {
-    if (this.isRunning) return;
-    
-    console.log('🚀 Starting Enhanced Signal Engine with Real-Time Intelligence Layer');
+  constructor() {
+    this.initializeEngine();
+  }
+
+  private async initializeEngine() {
+    console.log('🚀 LeviPro Enhanced Signal Engine initializing...');
+  }
+
+  public async start() {
+    if (this.isRunning) {
+      console.log('Engine is already running');
+      return;
+    }
+
+    console.log('▶️ Starting LeviPro Signal Engine with Enhanced Quality Scoring...');
     this.isRunning = true;
-    
-    // More frequent analysis for elite signals - every 15 seconds
-    this.analysisInterval = setInterval(() => {
-      this.analyzeMarketsWithIntelligence();
-    }, 15000);
-    
-    // Immediate analysis
-    this.analyzeMarketsWithIntelligence();
   }
 
-  public stopEngine() {
-    console.log('⏹️ Stopping Enhanced Signal Engine');
+  public stop() {
+    if (!this.isRunning) {
+      console.log('Engine is not running');
+      return;
+    }
+
+    console.log('⏹️ Stopping LeviPro Signal Engine');
     this.isRunning = false;
-    
-    if (this.analysisInterval) {
-      clearInterval(this.analysisInterval);
-      this.analysisInterval = undefined;
-    }
-  }
-
-  private async analyzeMarketsWithIntelligence() {
-    if (!this.isRunning) return;
-
-    try {
-      for (const symbol of this.watchList) {
-        const marketData = await marketDataService.getMarketData(symbol);
-        const potentialSignals = strategyEngine.analyzeMarket(marketData);
-        
-        for (const signal of potentialSignals) {
-          await this.processSignalWithIntelligence(signal);
-          this.stats.totalAnalyzed++;
-        }
-      }
-      
-      this.updateRejectionRate();
-      
-      if (this.debugMode) {
-        console.log(`📊 Intelligence Analysis complete - Analyzed: ${this.stats.totalAnalyzed}, Enhanced: ${this.stats.intelligenceEnhanced}, Sent: ${this.stats.totalSent}, Rejection rate: ${this.stats.rejectionRate}%`);
-      }
-    } catch (error) {
-      console.error('❌ Error in Intelligence market analysis:', error);
-    }
-  }
-
-  private async processSignalWithIntelligence(signal: any) {
-    try {
-      // Use intelligence-enhanced scoring
-      const enhancedSignal = await IntelligenceEnhancedScoring.scoreSignalWithIntelligence(signal);
-      this.stats.intelligenceEnhanced++;
-      
-      if (this.debugMode) {
-        console.log(`🧠 Intelligence Signal Analysis:`, {
-          symbol: signal.symbol,
-          strategy: signal.strategy,
-          baseScore: enhancedSignal.score.total - enhancedSignal.score.intelligenceBonus,
-          intelligenceBonus: enhancedSignal.score.intelligenceBonus,
-          fearGreedMultiplier: enhancedSignal.score.fearGreedMultiplier,
-          finalScore: enhancedSignal.score.total,
-          fundamentalRisk: enhancedSignal.intelligenceData.fundamentalRisk,
-          quality: enhancedSignal.qualityRating,
-          shouldSend: enhancedSignal.shouldSend
-        });
-      }
-
-      // Check elite filter
-      const eliteValidation = eliteSignalFilter.validateEliteSignal(signal);
-      
-      if (!eliteValidation.valid) {
-        if (this.debugMode) {
-          console.log(`🚫 Elite filter rejected: ${eliteValidation.reason}`);
-        }
-        return;
-      }
-
-      // Only send if intelligence scoring approves
-      if (enhancedSignal.shouldSend && eliteValidation.valid) {
-        await this.sendIntelligenceEnhancedSignal(signal, enhancedSignal);
-        this.stats.totalPassed++;
-        this.stats.totalSent++;
-        
-        // Approve in elite filter
-        eliteSignalFilter.approveEliteSignal(signal);
-      }
-    } catch (error) {
-      console.error('❌ Error processing intelligence signal:', error);
-    }
-  }
-
-  private async sendIntelligenceEnhancedSignal(signal: any, enhancedSignal: any) {
-    try {
-      const { whaleActivity, sentiment, fearGreed, fundamentalRisk, riskFactors } = enhancedSignal.intelligenceData;
-      
-      // Create enhanced Telegram message with intelligence data
-      const whaleEmoji = whaleActivity?.sentiment === 'bullish' ? '🐋📈' : whaleActivity?.sentiment === 'bearish' ? '🐋📉' : '🐋➡️';
-      const sentimentEmoji = sentiment?.overallSentiment === 'bullish' ? '📈' : sentiment?.overallSentiment === 'bearish' ? '📉' : '➡️';
-      const riskEmoji = fundamentalRisk === 'LOW' ? '✅' : fundamentalRisk === 'MEDIUM' ? '⚠️' : '🚨';
-      const fearGreedEmoji = fearGreed?.classification === 'Extreme Greed' ? '🤑' : fearGreed?.classification === 'Extreme Fear' ? '😰' : '😐';
-      
-      const message = `🔥 <b>LeviPro Elite Signal</b> ${enhancedSignal.qualityRating}
-
-📊 <b>${signal.symbol}</b>
-${signal.action === 'buy' ? '🟢 BUY' : '🔴 SELL'} @ $${signal.price.toLocaleString()}
-
-🎯 <b>Target:</b> $${signal.targetPrice.toLocaleString()}
-🛑 <b>Stop Loss:</b> $${signal.stopLoss.toLocaleString()}
-⚡ <b>Confidence:</b> ${(signal.confidence * 100).toFixed(1)}%
-📈 <b>R/R:</b> 1:${signal.riskRewardRatio.toFixed(2)}
-
-🧠 <b>Intelligence Score:</b> ${enhancedSignal.score.total}/160
-${whaleEmoji} <b>Whale Activity:</b> ${whaleActivity?.sentiment || 'Unknown'}
-${sentimentEmoji} <b>Market Sentiment:</b> ${sentiment?.overallSentiment || 'Neutral'}
-${fearGreedEmoji} <b>Fear & Greed:</b> ${fearGreed?.value || 'N/A'} (${fearGreed?.classification || 'Unknown'})
-${riskEmoji} <b>Fundamental Risk:</b> ${fundamentalRisk}
-
-${riskFactors.length > 0 ? `⚠️ <b>Risk Factors:</b> ${riskFactors.join(', ')}` : ''}
-
-📋 <b>Strategy:</b> ${signal.strategy}
-⏰ ${new Date().toLocaleTimeString('he-IL')}
-
-#LeviPro #Elite #Intelligence #${enhancedSignal.qualityRating}`;
-
-      const sent = await telegramBot.sendMessage(message);
-      
-      if (sent) {
-        console.log(`✅ Intelligence-enhanced signal sent: ${signal.symbol} (Score: ${enhancedSignal.score.total}, Risk: ${fundamentalRisk}, Quality: ${enhancedSignal.qualityRating})`);
-        
-        // Store signal for outcome tracking
-        await this.storeSignalForTracking(signal, enhancedSignal);
-      }
-    } catch (error) {
-      console.error('❌ Error sending intelligence-enhanced signal:', error);
-    }
-  }
-
-  private async storeSignalForTracking(signal: any, enhancedSignal: any) {
-    try {
-      // Store in database for AI learning loop
-      const signalData = {
-        signal_id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        symbol: signal.symbol,
-        strategy: signal.strategy,
-        action: signal.action,
-        price: signal.price,
-        target_price: signal.targetPrice,
-        stop_loss: signal.stopLoss,
-        confidence: signal.confidence,
-        risk_reward_ratio: signal.riskRewardRatio,
-        reasoning: signal.reasoning,
-        status: 'active',
-        telegram_sent: true,
-        metadata: {
-          ...signal.metadata,
-          aiScore: enhancedSignal.score,
-          qualityRating: enhancedSignal.qualityRating,
-          intelligenceBonus: enhancedSignal.score.intelligenceBonus || 0
-        }
-      };
-
-      // Store for outcome tracking (this would normally go to database)
-      console.log(`📝 Signal stored for AI learning: ${signalData.signal_id}`);
-      
-    } catch (error) {
-      console.error('❌ Error storing signal for tracking:', error);
-    }
-  }
-
-  private updateRejectionRate() {
-    if (this.stats.totalAnalyzed > 0) {
-      this.stats.rejectionRate = Math.round(
-        ((this.stats.totalAnalyzed - this.stats.totalSent) / this.stats.totalAnalyzed) * 100
-      );
-    }
-  }
-
-  public async sendTestSignal(): Promise<boolean> {
-    try {
-      console.log('🧪 Generating Intelligence test signal...');
-      
-      const testSignal = {
-        symbol: 'BTCUSDT',
-        strategy: 'almog-personal-method',
-        action: 'buy' as const,
-        price: 43500,
-        targetPrice: 45200,
-        stopLoss: 42800,
-        confidence: 0.89,
-        riskRewardRatio: 2.43,
-        reasoning: 'Intelligence Test Signal - Personal method with market intelligence',
-        metadata: {
-          testSignal: true,
-          intelligenceEnhanced: true,
-          multiTimeframeConfluence: true,
-          personalMethodMatch: true
-        }
-      };
-
-      await this.processSignalWithIntelligence(testSignal);
-      return true;
-    } catch (error) {
-      console.error('❌ Error sending Intelligence test signal:', error);
-      return false;
-    }
-  }
-
-  public setDebugMode(enabled: boolean) {
-    this.debugMode = enabled;
-    console.log(`🔧 AI Debug mode ${enabled ? 'enabled' : 'disabled'}`);
   }
 
   public getEngineStatus() {
     return {
       isRunning: this.isRunning,
-      signalQuality: this.isRunning ? '🧠 Elite Intelligence + AI Learning' : '⏸️ Stopped',
-      lastAnalysis: this.isRunning ? new Date().toLocaleTimeString('he-IL') : 'Not running',
-      debugMode: this.debugMode,
-      scoringStats: {
-        totalAnalyzed: this.stats.totalAnalyzed,
-        totalPassed: this.stats.totalPassed,
-        totalSent: this.stats.totalSent,
-        rejectionRate: this.stats.rejectionRate,
-        intelligenceEnhanced: this.stats.intelligenceEnhanced,
-        threshold: 160
-      },
+      signalQuality: 'Elite Intelligence Layer Active',
+      scoringStats: SignalScoringEngine.getDailyStats(),
       intelligenceLayer: {
-        active: true,
         whaleMonitoring: true,
         sentimentAnalysis: true,
         fearGreedIntegration: true,
@@ -257,6 +55,229 @@ ${riskFactors.length > 0 ? `⚠️ <b>Risk Factors:</b> ${riskFactors.join(', ')
       }
     };
   }
-}
 
-export const enhancedSignalEngine = new EnhancedSignalEngine();
+  public setDebugMode(enabled: boolean) {
+    this.debugMode = enabled;
+    console.log(`🔧 Debug mode ${enabled ? 'enabled' : 'disabled'}`);
+  }
+
+  private generateBaseSignal(marketData: any): TradingSignal | null {
+    // Placeholder - replace with actual signal generation logic
+    const newSignals = strategyEngine.analyzeMarket(marketData);
+    if (newSignals.length === 0) return null;
+    return newSignals[0]; // Just take the first one for simplicity
+  }
+
+  public async sendTestSignal(): Promise<boolean> {
+    try {
+      // Mock signal data
+      const mockSignal: TradingSignal = {
+        id: `test-${Date.now()}`,
+        symbol: 'BTCUSDT',
+        strategy: 'test-signal',
+        action: 'buy',
+        price: 45000,
+        targetPrice: 46000,
+        stopLoss: 44000,
+        confidence: 0.9,
+        riskRewardRatio: 2.5,
+        reasoning: 'Test signal for demonstration',
+        timestamp: Date.now(),
+        status: 'active',
+        telegramSent: false
+      };
+
+      // Apply intelligence scoring
+      const intelligenceSignal = await IntelligenceEnhancedScoring.scoreSignalWithIntelligence(mockSignal);
+      
+      // ✅ NEW: Apply risk management filtering
+      const riskCheck = riskManagementEngine.shouldAllowSignal(intelligenceSignal.signal);
+      
+      if (!riskCheck.allowed) {
+        console.log(`🚫 Test signal blocked by risk management: ${riskCheck.reason}`);
+        return false;
+      }
+
+      // Enhanced signal with risk data
+      const enhancedSignal = {
+        ...intelligenceSignal.signal,
+        riskData: riskCheck.riskInfo,
+        riskSummary: riskManagementEngine.generateRiskSummaryForSignal(intelligenceSignal.signal)
+      };
+
+      // Send enhanced signal
+      const sent = await this.sendEnhancedSignal(enhancedSignal, intelligenceSignal);
+      return sent;
+    } catch (error) {
+      console.error('❌ Error sending test signal:', error);
+      return false;
+    }
+  }
+
+  private getQualityEmoji(quality: string): string {
+    switch (quality) {
+      case 'ELITE': return '💎';
+      case 'HIGH': return '🔥';
+      case 'MEDIUM': return '🎯';
+      case 'LOW': return '⚠️';
+      default: return 'ℹ️';
+    }
+  }
+
+  private storeSignalRecord(signal: any, scoredSignal: any) {
+    // Placeholder - store signal in database or local tracking
+    console.log('📝 Storing signal record:', { signal, scoredSignal });
+  }
+
+  private updateStats(quality: string) {
+    // Placeholder - update signal statistics
+    console.log(`📊 Updating stats for quality: ${quality}`);
+  }
+
+  public async analyzeAndSendSignal(marketData: any): Promise<boolean> {
+    try {
+      // Generate base signal
+      const baseSignal = this.generateBaseSignal(marketData);
+      if (!baseSignal) return false;
+
+      // Apply intelligence scoring
+      const intelligenceSignal = await IntelligenceEnhancedScoring.scoreSignalWithIntelligence(baseSignal);
+      
+      // ✅ NEW: Apply risk management filtering
+      const riskCheck = riskManagementEngine.shouldAllowSignal(intelligenceSignal.signal);
+      
+      if (!riskCheck.allowed) {
+        console.log(`🚫 Signal blocked by risk management: ${riskCheck.reason}`);
+        
+        // Log rejection for analytics
+        this.logRejectedSignal(intelligenceSignal.signal, 'RISK_EXCEEDED', riskCheck.reason);
+        
+        // Optionally send risk warning to Telegram
+        if (this.debugMode) {
+          const riskWarning = `⚠️ RISK ALERT: Signal for ${intelligenceSignal.signal.symbol} blocked\n${riskCheck.reason}`;
+          await telegramBot.sendMessage(riskWarning);
+        }
+        
+        return false;
+      }
+
+      // Enhanced signal with risk data
+      const enhancedSignal = {
+        ...intelligenceSignal.signal,
+        riskData: riskCheck.riskInfo,
+        riskSummary: riskManagementEngine.generateRiskSummaryForSignal(intelligenceSignal.signal)
+      };
+
+      // Check if should send based on quality and risk
+      if (intelligenceSignal.shouldSend && riskCheck.allowed) {
+        const sent = await this.sendEnhancedSignal(enhancedSignal, intelligenceSignal);
+        
+        if (sent) {
+          // Update risk tracking
+          this.updateRiskTracking(enhancedSignal);
+          
+          // Update statistics
+          this.updateStats(intelligenceSignal.qualityRating);
+          
+          console.log(`✅ Risk-verified signal sent: ${enhancedSignal.symbol} (${intelligenceSignal.qualityRating})`);
+          return true;
+        }
+      }
+
+      return false;
+    } catch (error) {
+      console.error('❌ Error in enhanced signal analysis:', error);
+      return false;
+    }
+  }
+
+  private async sendEnhancedSignal(signal: any, scoredSignal: any): Promise<boolean> {
+    try {
+      // Enhanced Telegram message with risk data
+      const telegramMessage = this.formatEnhancedTelegramMessage(signal, scoredSignal);
+      
+      // Send to Telegram
+      const sent = await telegramBot.sendMessage(telegramMessage);
+      
+      if (sent) {
+        // Store in database or local tracking
+        this.storeSignalRecord(signal, scoredSignal);
+        
+        // Emit for UI updates
+        window.dispatchEvent(new CustomEvent('enhanced-signal-sent', {
+          detail: { signal, scoredSignal, riskData: signal.riskData }
+        }));
+      }
+      
+      return sent;
+    } catch (error) {
+      console.error('❌ Error sending enhanced signal:', error);
+      return false;
+    }
+  }
+
+  private formatEnhancedTelegramMessage(signal: any, scoredSignal: any): string {
+    const riskData = signal.riskData;
+    const intelligenceData = scoredSignal.intelligenceData;
+    
+    const actionEmoji = signal.action === 'buy' ? '🟢 BUY' : '🔴 SELL';
+    const qualityEmoji = this.getQualityEmoji(scoredSignal.qualityRating);
+    
+    return `
+${qualityEmoji} <b>${actionEmoji}: ${signal.symbol}</b>
+
+💰 <b>Entry:</b> $${signal.price.toFixed(2)}
+🎯 <b>Target:</b> $${signal.targetPrice.toFixed(2)}
+🛑 <b>Stop Loss:</b> $${signal.stopLoss.toFixed(2)}
+⚖️ <b>R/R:</b> ${signal.riskRewardRatio.toFixed(2)}:1
+📊 <b>Confidence:</b> ${(signal.confidence * 100).toFixed(0)}%
+
+🧠 <b>Intelligence Analysis:</b>
+🐋 Whale Activity: ${intelligenceData.whaleActivity?.sentiment || 'Neutral'}
+📱 Sentiment: ${intelligenceData.sentiment?.overallSentiment || 'Neutral'}
+😰 Fear & Greed: ${intelligenceData.fearGreed?.classification || 'Unknown'}
+🚨 Risk Level: ${intelligenceData.fundamentalRisk}
+
+${signal.riskSummary}
+
+🎯 <b>Strategy:</b> ${signal.strategy}
+⏰ <b>Time:</b> ${new Date().toLocaleString('he-IL')}
+
+#LeviPro #${scoredSignal.qualityRating} #RiskManaged
+`;
+  }
+
+  private updateRiskTracking(signal: any) {
+    // This would be called when position is opened
+    // For now, just log the risk exposure
+    console.log(`📊 Risk tracking updated for ${signal.symbol}:`, {
+      positionSize: signal.riskData?.recommendedPositionSize,
+      riskAmount: signal.riskData?.riskAmount,
+      exposurePercent: signal.riskData?.exposurePercent
+    });
+  }
+
+  private logRejectedSignal(signal: any, reason: string, details?: string) {
+    // Store rejected signals for analysis
+    const rejection = {
+      timestamp: Date.now(),
+      symbol: signal.symbol,
+      action: signal.action,
+      price: signal.price,
+      reason,
+      details,
+      strategy: signal.strategy
+    };
+    
+    // Add to rejection log (could be stored in database)
+    console.log('📝 Signal rejected:', rejection);
+    
+    // Update rejection statistics
+    this.rejectionStats.total++;
+    this.rejectionStats.byReason[reason] = (this.rejectionStats.byReason[reason] || 0) + 1;
+  }
+
+  public getRejectionStats() {
+    return { ...this.rejectionStats };
+  }
+}

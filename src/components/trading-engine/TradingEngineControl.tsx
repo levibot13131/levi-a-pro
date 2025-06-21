@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +14,8 @@ import SystemHealthMonitor from './SystemHealthMonitor';
 import SignalRejectionMonitor from './SignalRejectionMonitor';
 import FundamentalDataMonitor from './FundamentalDataMonitor';
 import { toast } from 'sonner';
+import { PositionSizeCalculator } from '@/components/risk-management/PositionSizeCalculator';
+import { RiskControlPanel } from '@/components/risk-management/RiskControlPanel';
 
 const TradingEngineControl: React.FC = () => {
   const [engineStatus, setEngineStatus] = useState(enhancedSignalEngine.getEngineStatus());
@@ -224,13 +225,15 @@ const TradingEngineControl: React.FC = () => {
 
       {/* Tabbed Interface */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="telegram">Telegram</TabsTrigger>
           <TabsTrigger value="intelligence">Intelligence</TabsTrigger>
           <TabsTrigger value="quality">Quality</TabsTrigger>
           <TabsTrigger value="health">Health</TabsTrigger>
           <TabsTrigger value="rejection">Rejection</TabsTrigger>
+          <TabsTrigger value="risk">Risk Control</TabsTrigger>
+          <TabsTrigger value="position">Position Calc</TabsTrigger>
         </TabsList>
         
         <TabsContent value="overview" className="space-y-4">
@@ -339,6 +342,14 @@ const TradingEngineControl: React.FC = () => {
         
         <TabsContent value="rejection">
           <SignalRejectionMonitor />
+        </TabsContent>
+        
+        <TabsContent value="risk">
+          <RiskControlPanel />
+        </TabsContent>
+        
+        <TabsContent value="position">
+          <PositionSizeCalculator />
         </TabsContent>
       </Tabs>
     </div>
