@@ -24,14 +24,59 @@ const CustomBarChart: React.FC<ChartBaseProps> = ({
         stroke="#888888"
         minTickGap={30}
       />
-      <YAxis 
-        domain={['auto', 'auto']} 
-        tickFormatter={formatPrice}
-        tick={{ fontSize: 12 }}
-        width={80}
-        stroke="#888888"
-        orientation="right"
-      />
+      
+      {showVolume ? (
+        // When showing volume, use dual Y-axes with proper yAxisId matching
+        <>
+          <YAxis 
+            yAxisId="price"
+            domain={['auto', 'auto']} 
+            tickFormatter={formatPrice}
+            tick={{ fontSize: 12 }}
+            width={80}
+            stroke="#888888"
+            orientation="left"
+          />
+          <YAxis 
+            yAxisId="volume"
+            domain={['auto', 'auto']} 
+            tick={{ fontSize: 12 }}
+            width={80}
+            stroke="#888888"
+            orientation="right"
+          />
+          <Bar 
+            yAxisId="price"
+            dataKey="price" 
+            fill={isPositiveChange ? "#10b981" : "#ef4444"} 
+            radius={[4, 4, 0, 0]}
+          />
+          <Bar 
+            yAxisId="volume"
+            dataKey="volume" 
+            fill="#8884d8" 
+            opacity={0.5} 
+          />
+        </>
+      ) : (
+        // When not showing volume, use single Y-axis without yAxisId
+        <>
+          <YAxis 
+            domain={['auto', 'auto']} 
+            tickFormatter={formatPrice}
+            tick={{ fontSize: 12 }}
+            width={80}
+            stroke="#888888"
+            orientation="right"
+          />
+          <Bar 
+            dataKey="price" 
+            fill={isPositiveChange ? "#10b981" : "#ef4444"} 
+            radius={[4, 4, 0, 0]}
+          />
+        </>
+      )}
+
       <Tooltip 
         formatter={(value: number, name: string) => {
           if (name === 'price') return [formatPrice(value), 'מחיר'];
@@ -41,14 +86,6 @@ const CustomBarChart: React.FC<ChartBaseProps> = ({
         labelFormatter={formatDate}
         contentStyle={{ textAlign: 'right', direction: 'rtl' }}
       />
-      <Bar 
-        dataKey="price" 
-        fill={isPositiveChange ? "#10b981" : "#ef4444"} 
-        radius={[4, 4, 0, 0]}
-      />
-      {showVolume && (
-        <Bar dataKey="volume" fill="#8884d8" opacity={0.5} />
-      )}
     </BarChart>
   );
 };
