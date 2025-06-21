@@ -11,18 +11,22 @@ export class TelegramBot {
 
   private initializeCredentials() {
     // Try to get credentials from localStorage first
-    const storedToken = localStorage.getItem('telegram_bot_token');
-    const storedChatId = localStorage.getItem('telegram_chat_id');
-    
-    if (storedToken && storedChatId) {
-      this.botToken = storedToken;
-      this.chatId = storedChatId;
-      this.isConnected = true;
-      console.log('✅ Telegram bot initialized with stored credentials');
-      console.log(`🔑 Bot token: ${this.botToken.substring(0, 10)}... (${this.botToken.length} chars)`);
-      console.log(`💬 Chat ID: ${this.chatId}`);
-    } else {
-      console.log('⚠️ No Telegram credentials found in storage');
+    try {
+      const storedToken = localStorage.getItem('telegram_bot_token');
+      const storedChatId = localStorage.getItem('telegram_chat_id');
+      
+      if (storedToken && storedChatId) {
+        this.botToken = storedToken;
+        this.chatId = storedChatId;
+        this.isConnected = true;
+        console.log('✅ Telegram bot initialized with stored credentials');
+        console.log(`🔑 Bot token: ${this.botToken.substring(0, 10)}... (${this.botToken.length} chars)`);
+        console.log(`💬 Chat ID: ${this.chatId}`);
+      } else {
+        console.log('⚠️ No Telegram credentials found in storage');
+      }
+    } catch (error) {
+      console.error('❌ Error accessing localStorage:', error);
     }
   }
 
@@ -48,7 +52,7 @@ export class TelegramBot {
       };
 
       console.log('🔗 API URL:', url.replace(this.botToken, '[TOKEN_HIDDEN]'));
-      console.log('📦 Payload:', { ...payload, text: payload.text.substring(0, 50) + '...' });
+      console.log('📦 Full payload being sent:', payload);
 
       const response = await fetch(url, {
         method: 'POST',
@@ -58,38 +62,70 @@ export class TelegramBot {
         body: JSON.stringify(payload)
       });
 
-      console.log(`📡 Response status: ${response.status} ${response.statusText}`);
+      console.log(`📡 HTTP Response status: ${response.status} ${response.statusText}`);
+      console.log(`📡 Response headers:`, Object.fromEntries(response.headers.entries()));
       
-      const responseData = await response.json();
-      console.log('📋 Response data:', responseData);
+      let responseData;
+      try {
+        responseData = await response.json();
+        console.log('📋 Full response data:', responseData);
+      } catch (parseError) {
+        console.error('❌ Failed to parse response JSON:', parseError);
+        const responseText = await response.text();
+        console.error('📋 Raw response text:', responseText);
+        return false;
+      }
       
       if (response.ok && responseData.ok) {
-        console.log('✅ Message sent to Telegram successfully!');
+        console.log('🎉 ✅ MESSAGE SUCCESSFULLY SENT TO TELEGRAM!');
         console.log(`📨 Message ID: ${responseData.result.message_id}`);
         console.log(`👤 Chat details:`, responseData.result.chat);
+        console.log(`⏰ Message timestamp:`, new Date(responseData.result.date * 1000));
         return true;
       } else {
-        console.error('❌ Telegram API error response:');
-        console.error('Status:', response.status);
-        console.error('Error code:', responseData.error_code);
-        console.error('Error description:', responseData.description);
+        console.error('❌ ❌ TELEGRAM API ERROR RESPONSE:');
+        console.error('❌ HTTP Status:', response.status);
+        console.error('❌ Response OK:', response.ok);
+        console.error('❌ Telegram OK:', responseData.ok);
+        console.error('❌ Error code:', responseData.error_code);
+        console.error('❌ Error description:', responseData.description);
         
-        // Specific error handling
+        // Specific error handling with detailed explanations
         if (responseData.error_code === 400) {
-          console.error('🚫 Bad Request - Check chat ID and message format');
+          console.error('🚫 BAD REQUEST - Possible issues:');
+          console.error('   - Invalid chat_id format');
+          console.error('   - Message too long (over 4096 chars)');
+          console.error('   - Invalid parse_mode');
+          console.error('   - Malformed message text');
         } else if (responseData.error_code === 401) {
-          console.error('🔑 Unauthorized - Bot token is invalid');
+          console.error('🔑 UNAUTHORIZED - Bot token is invalid or expired');
+          console.error('   - Check if token is correct from @BotFather');
+          console.error('   - Verify no extra spaces or characters');
         } else if (responseData.error_code === 403) {
-          console.error('🚨 Forbidden - Bot blocked by user or chat not found');
+          console.error('🚨 FORBIDDEN - Possible issues:');
+          console.error('   - Bot blocked by user');
+          console.error('   - Chat not found or bot not in chat');
+          console.error('   - Bot lacks permission to send messages');
+        } else if (responseData.error_code === 429) {
+          console.error('⏰ RATE LIMITED - Too many requests');
+          console.error('   - Wait before sending more messages');
         }
         
         return false;
       }
     } catch (error) {
-      console.error('❌ Network error sending Telegram message:');
-      console.error('Error type:', error.constructor.name);
-      console.error('Error message:', error.message);
-      console.error('Full error:', error);
+      console.error('❌ ❌ NETWORK/FETCH ERROR:');
+      console.error('❌ Error type:', error.constructor.name);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Full error object:', error);
+      
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        console.error('🌐 NETWORK ISSUE - Possible causes:');
+        console.error('   - No internet connection');
+        console.error('   - Blocked by CORS policy');
+        console.error('   - Telegram servers unreachable');
+      }
+      
       return false;
     }
   }
@@ -108,12 +144,16 @@ Message ID: test-${Date.now()}
 #LeviPro #Test #ConnectionVerified`;
 
     console.log('🧪 Sending test message to verify connection...');
+    console.log('🧪 Test message content:', testMessage);
+    
     const result = await this.sendMessage(testMessage);
     
     if (result) {
-      console.log('🎉 Test message sent successfully to @mytrsdingbot!');
+      console.log('🎉 🎉 TEST MESSAGE SENT SUCCESSFULLY TO @mytrsdingbot!');
+      console.log('🎉 Check your Telegram now - message should be visible');
     } else {
-      console.error('💥 Test message failed - check credentials and connection');
+      console.error('💥 💥 TEST MESSAGE FAILED - CHECK ERRORS ABOVE');
+      console.error('💥 Verify bot token and chat ID are correct');
     }
     
     return result;
@@ -144,9 +184,9 @@ ${signal.action === 'buy' ? '🟢 BUY' : '🔴 SELL'} @ $${signal.price.toLocale
       const sent = await this.sendMessage(message);
       
       if (sent) {
-        console.log(`✅ Elite signal delivered to Telegram: ${signal.symbol} ${signal.action}`);
+        console.log(`✅ ✅ ELITE SIGNAL DELIVERED TO TELEGRAM: ${signal.symbol} ${signal.action}`);
       } else {
-        console.error(`❌ Failed to deliver signal to Telegram: ${signal.symbol}`);
+        console.error(`❌ ❌ FAILED TO DELIVER SIGNAL TO TELEGRAM: ${signal.symbol}`);
       }
       
       return sent;
@@ -177,9 +217,9 @@ If you receive this message, your bot is working perfectly!
     const sent = await this.sendMessage(testMessage);
     
     if (sent) {
-      console.log('🎊 Elite connection test SUCCESSFUL - Message delivered!');
+      console.log('🎊 🎊 ELITE CONNECTION TEST SUCCESSFUL - MESSAGE DELIVERED!');
     } else {
-      console.error('🚨 Elite connection test FAILED - Message not delivered!');
+      console.error('🚨 🚨 ELITE CONNECTION TEST FAILED - MESSAGE NOT DELIVERED!');
     }
     
     return sent;
@@ -188,18 +228,35 @@ If you receive this message, your bot is working perfectly!
   public configureTelegram(botToken: string, chatId: string): boolean {
     try {
       console.log('⚙️ Configuring Telegram bot...');
-      console.log(`🔑 Token length: ${botToken.length} characters`);
-      console.log(`💬 Chat ID: ${chatId}`);
+      console.log(`🔑 Token received - Length: ${botToken.length} characters`);
+      console.log(`💬 Chat ID received: ${chatId}`);
+      
+      // Validate token format (should start with number followed by colon)
+      if (!botToken.match(/^\d+:[A-Za-z0-9_-]+$/)) {
+        console.error('❌ Invalid bot token format - should be like "123456789:ABCDEF..."');
+        return false;
+      }
+      
+      // Validate chat ID (should be numeric)
+      if (!chatId.match(/^-?\d+$/)) {
+        console.error('❌ Invalid chat ID format - should be numeric');
+        return false;
+      }
       
       this.botToken = botToken.trim();
       this.chatId = chatId.trim();
       
       // Store in localStorage for persistence
-      localStorage.setItem('telegram_bot_token', this.botToken);
-      localStorage.setItem('telegram_chat_id', this.chatId);
+      try {
+        localStorage.setItem('telegram_bot_token', this.botToken);
+        localStorage.setItem('telegram_chat_id', this.chatId);
+        console.log('💾 Credentials stored in localStorage');
+      } catch (storageError) {
+        console.error('⚠️ Failed to store in localStorage:', storageError);
+      }
       
       this.isConnected = true;
-      console.log('✅ Telegram bot configured and credentials stored');
+      console.log('✅ Telegram bot configured successfully');
       return true;
     } catch (error) {
       console.error('❌ Failed to configure Telegram bot:', error);
@@ -215,10 +272,12 @@ If you receive this message, your bot is working perfectly!
       lastPing: Date.now(),
       status: this.isConnected ? 'active' : 'disconnected',
       tokenLength: this.botToken.length,
-      hasCredentials: !!(this.botToken && this.chatId)
+      hasCredentials: !!(this.botToken && this.chatId),
+      tokenValid: this.botToken.match(/^\d+:[A-Za-z0-9_-]+$/) !== null,
+      chatIdValid: this.chatId.match(/^-?\d+$/) !== null
     };
     
-    console.log('📊 Connection status:', status);
+    console.log('📊 Connection status check:', status);
     return status;
   }
 
@@ -229,8 +288,13 @@ If you receive this message, your bot is working perfectly!
     this.chatId = '';
     this.isConnected = false;
     
-    localStorage.removeItem('telegram_bot_token');
-    localStorage.removeItem('telegram_chat_id');
+    try {
+      localStorage.removeItem('telegram_bot_token');
+      localStorage.removeItem('telegram_chat_id');
+      console.log('🗑️ Credentials removed from localStorage');
+    } catch (error) {
+      console.error('⚠️ Error removing from localStorage:', error);
+    }
     
     console.log('🔌 Telegram bot disconnected and credentials cleared');
   }
