@@ -1,6 +1,6 @@
-
 import { TradingSignal } from '@/types/trading';
 import { eliteSignalFilter } from './eliteSignalFilter';
+import { SignalScoringEngine, ScoredSignal } from './signalScoringEngine';
 import { professionalTelegramFormatter } from '../telegram/professionalTelegramFormatter';
 import { telegramBot } from '../telegram/telegramBot';
 import { signalManager } from './signalManager';
@@ -9,6 +9,13 @@ import { toast } from 'sonner';
 export class EnhancedSignalEngine {
   private isRunning = false;
   private analysisInterval: NodeJS.Timeout | null = null;
+  private dailyScoreStats = {
+    totalAnalyzed: 0,
+    totalPassed: 0,
+    totalSent: 0,
+    highestScore: 0,
+    averageScore: 0
+  };
 
   public startEliteEngine(): void {
     if (this.isRunning) {
@@ -17,7 +24,7 @@ export class EnhancedSignalEngine {
     }
 
     this.isRunning = true;
-    console.log('🚀 Enhanced Signal Engine started with Elite Filtering');
+    console.log('🚀 Enhanced Signal Engine started with Quality Scoring & Elite Filtering');
     
     // ניתוח כל 30 שניות
     this.analysisInterval = setInterval(() => {
@@ -27,7 +34,7 @@ export class EnhancedSignalEngine {
     // ניתוח ראשוני
     this.performEliteAnalysis();
     
-    toast.success('🔥 Elite Signal Engine activated');
+    toast.success('🔥 Elite Signal Engine with Quality Scoring activated');
   }
 
   public stopEngine(): void {
@@ -43,7 +50,7 @@ export class EnhancedSignalEngine {
 
   private async performEliteAnalysis(): Promise<void> {
     try {
-      console.log('🔍 Performing Elite Signal Analysis...');
+      console.log('🔍 Performing Elite Signal Analysis with Quality Scoring...');
       
       const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT'];
       const strategies = [
@@ -62,10 +69,13 @@ export class EnhancedSignalEngine {
           const signal = await this.analyzeSymbolWithStrategy(symbol, strategy, currentPrice);
           
           if (signal) {
-            await this.processEliteSignal(signal);
+            await this.processEliteSignalWithScoring(signal);
           }
         }
       }
+      
+      // לוג סטטיסטיקות יומיות
+      console.log(`📊 Daily Scoring Stats: ${this.dailyScoreStats.totalPassed}/${this.dailyScoreStats.totalAnalyzed} passed filter (${((this.dailyScoreStats.totalPassed/this.dailyScoreStats.totalAnalyzed)*100).toFixed(1)}%)`);
       
     } catch (error) {
       console.error('❌ Error in elite analysis:', error);
@@ -93,7 +103,7 @@ export class EnhancedSignalEngine {
         riskRewardRatio: analysisResult.riskReward,
         reasoning: analysisResult.reasoning,
         timestamp: Date.now(),
-        status: 'active', // Fixed: using allowed status value
+        status: 'active',
         telegramSent: false,
         metadata: {
           timeframe: analysisResult.timeframe,
@@ -107,7 +117,9 @@ export class EnhancedSignalEngine {
           signalCategory: analysisResult.signalCategory,
           technicalStrength: analysisResult.technicalStrength || 0.75,
           wyckoffPhase: analysisResult.wyckoffPhase,
-          live_data: true // Mark as live signal for filtering
+          hasFundamentalSupport: Math.random() > 0.7, // 30% have fundamental support
+          hasIndicatorConflict: Math.random() > 0.85, // 15% have conflicts
+          live_data: true
         }
       };
 
@@ -259,49 +271,82 @@ export class EnhancedSignalEngine {
     return strategyReasons[Math.floor(Math.random() * strategyReasons.length)];
   }
 
-  private async processEliteSignal(signal: TradingSignal): Promise<void> {
-    console.log(`🔍 Processing potential elite signal: ${signal.symbol} ${signal.action}`);
+  private async processEliteSignalWithScoring(signal: TradingSignal): Promise<void> {
+    console.log(`🔍 Processing potential signal with quality scoring: ${signal.symbol} ${signal.action}`);
 
-    // בדיקת פילטר האיכות האליט
-    const validation = eliteSignalFilter.validateEliteSignal(signal);
-    
-    if (!validation.valid) {
-      console.log(`🚫 Signal rejected: ${validation.reason}`);
+    // שלב 1: ניקוד איכות האיתות
+    const scoredSignal: ScoredSignal = SignalScoringEngine.scoreSignal(signal);
+    this.updateDailyStats(scoredSignal);
+
+    // שלב 2: בדיקה האם עבר את סף הניקוד
+    if (!scoredSignal.shouldSend) {
+      console.log(`🚫 Signal rejected by quality scoring: ${signal.symbol} (Score: ${scoredSignal.score.total}, Required: ${SignalScoringEngine.getScoreThreshold()})`);
       return;
     }
 
-    // אישור האיתות האליט
-    eliteSignalFilter.approveEliteSignal(signal);
+    console.log(`✅ Signal passed quality scoring: ${signal.symbol} (Score: ${scoredSignal.score.total}, Rating: ${scoredSignal.qualityRating})`);
 
-    // הוספה למנהל האיתותים
+    // שלב 3: בדיקת פילטר האיכות האליט (קיים)
+    const validation = eliteSignalFilter.validateEliteSignal(signal);
+    
+    if (!validation.valid) {
+      console.log(`🚫 Signal rejected by elite filter: ${validation.reason}`);
+      return;
+    }
+
+    // שלב 4: אישור והוספה למערכת
+    eliteSignalFilter.approveEliteSignal(signal);
     const added = signalManager.addSignal(signal);
     if (!added) {
       console.log(`🚫 Signal manager rejected signal: ${signal.symbol}`);
       return;
     }
 
-    console.log(`🔥 ELITE SIGNAL APPROVED: ${signal.symbol} ${signal.action} (${(signal.confidence * 100).toFixed(1)}%)`);
+    // הוספת ניקוד למטאדטה לשליחה
+    signal.metadata = {
+      ...signal.metadata,
+      qualityScore: scoredSignal.score.total,
+      qualityRating: scoredSignal.qualityRating,
+      scoreBreakdown: scoredSignal.score
+    };
 
-    // יצירת הודעת טלגרם מקצועית
-    const telegramMessage = professionalTelegramFormatter.formatEliteSignal(signal);
-    
-    // שליחה לטלגרם
+    console.log(`🔥 HIGH-QUALITY SIGNAL APPROVED: ${signal.symbol} ${signal.action} (Score: ${scoredSignal.score.total}, ${scoredSignal.qualityRating})`);
+
+    // שליחה לטלגרם עם פרטי הניקוד
     try {
       const sent = await telegramBot.sendSignal(signal);
       if (sent) {
         signal.telegramSent = true;
-        console.log(`📱 Elite signal sent to Telegram: ${signal.symbol}`);
-        toast.success(`🔥 Elite Signal: ${signal.action.toUpperCase()} ${signal.symbol}`, {
-          description: `Confidence: ${(signal.confidence * 100).toFixed(1)}% | R/R: 1:${signal.riskRewardRatio.toFixed(1)}`
+        this.dailyScoreStats.totalSent++;
+        console.log(`📱 High-quality signal sent to Telegram: ${signal.symbol} (Score: ${scoredSignal.score.total})`);
+        toast.success(`🔥 ${scoredSignal.qualityRating} Signal: ${signal.action.toUpperCase()} ${signal.symbol}`, {
+          description: `Score: ${scoredSignal.score.total} | Confidence: ${(signal.confidence * 100).toFixed(1)}% | R/R: 1:${signal.riskRewardRatio.toFixed(1)}`
         });
       }
     } catch (error) {
-      console.error('❌ Failed to send elite signal to Telegram:', error);
+      console.error('❌ Failed to send high-quality signal to Telegram:', error);
     }
 
     // הצגת סטטיסטיקות
-    const stats = eliteSignalFilter.getEliteStats();
-    console.log(`📊 Elite Stats - Daily: ${stats.dailySignalCount}/${stats.maxDailySignals}, Session: ${stats.sessionSignalCount}/${stats.maxSessionSignals}`);
+    const eliteStats = eliteSignalFilter.getEliteStats();
+    const scoreStats = SignalScoringEngine.getDailyStats();
+    console.log(`📊 Quality Filter Stats - Analyzed: ${scoreStats.totalSignalsAnalyzed}, Passed: ${scoreStats.signalsPassedFilter}, Avg Score: ${scoreStats.averageScore}`);
+  }
+
+  private updateDailyStats(scoredSignal: ScoredSignal): void {
+    this.dailyScoreStats.totalAnalyzed++;
+    if (scoredSignal.shouldSend) {
+      this.dailyScoreStats.totalPassed++;
+    }
+    if (scoredSignal.score.total > this.dailyScoreStats.highestScore) {
+      this.dailyScoreStats.highestScore = scoredSignal.score.total;
+    }
+    
+    // עדכון ממוצע
+    this.dailyScoreStats.averageScore = Math.round(
+      ((this.dailyScoreStats.averageScore * (this.dailyScoreStats.totalAnalyzed - 1)) + scoredSignal.score.total) 
+      / this.dailyScoreStats.totalAnalyzed
+    );
   }
 
   private async getCurrentPrice(symbol: string): Promise<number> {
@@ -328,10 +373,19 @@ export class EnhancedSignalEngine {
 
   public getEngineStatus() {
     const stats = eliteSignalFilter.getEliteStats();
+    const scoreStats = SignalScoringEngine.getDailyStats();
+    
     return {
       isRunning: this.isRunning,
       eliteStats: stats,
-      signalQuality: 'Elite Only',
+      scoringStats: {
+        ...this.dailyScoreStats,
+        threshold: SignalScoringEngine.getScoreThreshold(),
+        rejectionRate: this.dailyScoreStats.totalAnalyzed > 0 
+          ? Math.round(((this.dailyScoreStats.totalAnalyzed - this.dailyScoreStats.totalPassed) / this.dailyScoreStats.totalAnalyzed) * 100)
+          : 0
+      },
+      signalQuality: 'Elite + Quality Scored',
       lastAnalysis: new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })
     };
   }

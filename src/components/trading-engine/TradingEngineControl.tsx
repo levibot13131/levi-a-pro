@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Activity, Settings, TrendingUp, PlayCircle, Square, TestTube } from 'lucide-react';
 import { enhancedSignalEngine } from '@/services/trading/enhancedSignalEngine';
 import { telegramBot } from '@/services/telegram/telegramBot';
+import SignalQualityMonitor from './SignalQualityMonitor';
 import { toast } from 'sonner';
 
 const TradingEngineControl: React.FC = () => {
@@ -21,10 +22,10 @@ const TradingEngineControl: React.FC = () => {
   }, []);
 
   const handleStartEngine = () => {
-    console.log('🚀 Starting LeviPro Signal Engine...');
+    console.log('🚀 Starting LeviPro Signal Engine with Quality Scoring...');
     enhancedSignalEngine.startEliteEngine();
     setEngineStatus(enhancedSignalEngine.getEngineStatus());
-    toast.success('🔥 LeviPro Signal Engine activated!');
+    toast.success('🔥 LeviPro Signal Engine with Quality Scoring activated!');
   };
 
   const handleStopEngine = () => {
@@ -38,7 +39,7 @@ const TradingEngineControl: React.FC = () => {
     setIsTestingTelegram(true);
     try {
       console.log('🧪 Testing Telegram connection...');
-      const testMessage = `🧪 <b>LeviPro Test Signal</b>
+      const testMessage = `🧪 <b>LeviPro Quality Signal Test</b>
 
 📊 BTCUSDT
 🟢 BUY @ $43,250
@@ -46,12 +47,13 @@ const TradingEngineControl: React.FC = () => {
 🛑 Stop: $42,800
 ⚡ Confidence: 95%
 📈 R/R: 1:1.7
+🏆 Quality Score: 187/160
 
-#LeviPro #Test #Live`;
+#LeviPro #QualityFilter #Test`;
 
       const success = await telegramBot.sendMessage(testMessage);
       if (success) {
-        toast.success('✅ Test signal sent to Telegram successfully!');
+        toast.success('✅ Test signal with quality score sent successfully!');
       } else {
         toast.error('❌ Failed to send test signal');
       }
@@ -71,7 +73,7 @@ const TradingEngineControl: React.FC = () => {
           מנוע המסחר LeviPro
         </h1>
         <p className="text-muted-foreground">
-          בקרة וניהול מנוע האיתותים החכם
+          בקרה וניהול מנוע איתותים חכם עם ניקוד איכות
         </p>
       </div>
 
@@ -92,6 +94,11 @@ const TradingEngineControl: React.FC = () => {
               <span className="text-sm text-muted-foreground">
                 {engineStatus.signalQuality}
               </span>
+              {engineStatus.scoringStats && (
+                <Badge className="bg-purple-100 text-purple-800">
+                  ניקוד: {engineStatus.scoringStats.threshold}+ נדרש
+                </Badge>
+              )}
             </div>
             
             <div className="flex gap-2">
@@ -126,28 +133,31 @@ const TradingEngineControl: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Signal Quality Monitor */}
+      <SignalQualityMonitor />
+
       {/* Engine Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="text-right flex items-center gap-2">
               <Settings className="h-5 w-5" />
-              הגדרות מנוע
+              הגדרות איכות
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2 text-right">
               <div className="flex justify-between">
-                <span className="font-semibold">איכות גבוהה</span>
-                <span>פילטר</span>
+                <span className="font-semibold">160+ נקודות</span>
+                <span>סף איכות מינימלי</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-semibold">2:1+</span>
+                <span>יחס R/R מינימום</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-semibold">80%+</span>
                 <span>Confidence מינימום</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-semibold">1.5:1+</span>
-                <span>יחס R/R מינימום</span>
               </div>
             </div>
           </CardContent>
@@ -167,12 +177,12 @@ const TradingEngineControl: React.FC = () => {
                 <span>איתותים היום</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-bold text-green-600">{engineStatus.eliteStats?.remainingDailySlots || 50}</span>
-                <span>נותרו היום</span>
+                <span className="font-bold text-green-600">{engineStatus.scoringStats?.totalPassed || 0}</span>
+                <span>עברו ניקוד איכות</span>
               </div>
               <div className="flex justify-between">
-                <span className="font-bold">87%</span>
-                <span>שיעור הצלחה</span>
+                <span className="font-bold">{engineStatus.scoringStats?.rejectionRate || 0}%</span>
+                <span>שיעור דחייה</span>
               </div>
             </div>
           </CardContent>
@@ -193,7 +203,7 @@ const TradingEngineControl: React.FC = () => {
               </div>
               <div className="flex justify-between">
                 <Badge className="bg-green-100 text-green-800">✅ פעיל</Badge>
-                <span>Data Feed</span>
+                <span>ניקוד איכות</span>
               </div>
               <div className="flex justify-between">
                 <Badge className="bg-blue-100 text-blue-800">🔄 רצה</Badge>
@@ -211,13 +221,13 @@ const TradingEngineControl: React.FC = () => {
             <div className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-blue-500 animate-pulse" />
               <span className="text-blue-600 font-medium">
-                {engineStatus.isRunning ? 'סורק שווקים בזמן אמת...' : 'מנוע במצב המתנה'}
+                {engineStatus.isRunning ? 'סורק שווקים עם ניקוד איכות...' : 'מנוע במצב המתנה'}
               </span>
             </div>
             <div className="text-right">
-              <p className="font-semibold">LeviPro Elite Engine</p>
+              <p className="font-semibold">LeviPro Elite Engine + Quality Scoring</p>
               <p className="text-sm text-muted-foreground">
-                {engineStatus.isRunning ? 'פעיל ומנטר 5 נכסים' : 'לחץ הפעל כדי להתחיל'}
+                {engineStatus.isRunning ? 'רק איתותים באיכות גבוהה יישלחו' : 'לחץ הפעל כדי להתחיל'}
               </p>
             </div>
           </div>
