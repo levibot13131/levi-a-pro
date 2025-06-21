@@ -1,4 +1,3 @@
-
 import { PricePoint } from '@/types/asset';
 
 export interface ElliotWavePattern {
@@ -22,6 +21,29 @@ export interface WaveStructure {
   end_time: number;
   wave_type: 'impulse' | 'correction';
   fibonacci_level?: number;
+}
+
+export interface WaveType {
+  wave_number: number | string;
+  start_price: number;
+  end_price: number;
+  start_time: number;
+  end_time: number;
+  wave_type: 'impulse' | 'correction';
+  fibonacci_level?: number;
+}
+
+export interface ElliotWaveAnalysis {
+  wave_id: string;
+  symbol: string;
+  pattern_type: 'impulse' | 'corrective';
+  wave_count: number;
+  current_wave: 1 | 2 | 3 | 4 | 5 | 'A' | 'B' | 'C';
+  wave_structure: WaveStructure[];
+  confidence: number;
+  projected_targets: number[];
+  invalidation_level: number;
+  timestamp: number;
 }
 
 class ElliotWaveEngine {
@@ -340,6 +362,63 @@ class ElliotWaveEngine {
     // Simplified current wave determination
     // In a real implementation, this would analyze the most recent price action
     return 5;
+  }
+
+  private identifyPivotPoints(data: PricePoint[]): PricePoint[] {
+    const pivots: PricePoint[] = [];
+    const lookback = 3;
+
+    for (let i = lookback; i < data.length - lookback; i++) {
+      const current = data[i];
+      const isHighPivot = this.isLocalHigh(data, i, lookback);
+      const isLowPivot = this.isLocalLow(data, i, lookback);
+
+      if (isHighPivot) {
+        pivots.push({
+          ...current,
+          high: current.high || current.price,
+          price: current.high || current.price,
+        });
+      } else if (isLowPivot) {
+        pivots.push({
+          ...current,
+          low: current.low || current.price,
+          price: current.low || current.price,
+        });
+      }
+    }
+
+    return pivots;
+  }
+
+  private isLocalHigh(data: PricePoint[], index: number, lookback: number): boolean {
+    const current = data[index];
+    const currentHigh = current.high || current.price;
+
+    for (let i = index - lookback; i <= index + lookback; i++) {
+      if (i !== index && i >= 0 && i < data.length) {
+        const compareHigh = data[i].high || data[i].price;
+        if (compareHigh >= currentHigh) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private isLocalLow(data: PricePoint[], index: number, lookback: number): boolean {
+    const current = data[index];
+    const currentLow = current.low || current.price;
+
+    for (let i = index - lookback; i <= index + lookback; i++) {
+      if (i !== index && i >= 0 && i < data.length) {
+        const compareLow = data[i].low || data[i].price;
+        if (compareLow <= currentLow) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }
 

@@ -25,6 +25,23 @@ export interface SignalFeedback {
   market_conditions: string;
 }
 
+// Type definitions for RPC responses
+interface PerformanceDataRow {
+  outcome: string;
+  profit_loss_percentage: number;
+  execution_time: string;
+}
+
+interface StrategyWeightRow {
+  current_weight: number;
+}
+
+interface StrategyPerformanceRow {
+  success_rate: number;
+  avg_profit_loss: number;
+  total_signals: number;
+}
+
 class AdaptiveEngine {
   private learningRate = 0.1;
   private minSignalsForAdjustment = 10;
@@ -73,7 +90,7 @@ class AdaptiveEngine {
         .rpc('get_strategy_performance', {
           p_user_id: user.id,
           p_strategy_name: strategyName
-        });
+        }) as { data: PerformanceDataRow[] | null; error: any };
 
       if (error || !performanceData || performanceData.length < this.minSignalsForAdjustment) {
         console.log(`Not enough data for ${strategyName} adjustment (${performanceData?.length || 0} signals)`);
@@ -82,9 +99,9 @@ class AdaptiveEngine {
 
       // Calculate performance metrics
       const totalSignals = performanceData.length;
-      const successfulSignals = performanceData.filter((f: any) => f.outcome === 'win').length;
+      const successfulSignals = performanceData.filter((f: PerformanceDataRow) => f.outcome === 'win').length;
       const successRate = successfulSignals / totalSignals;
-      const avgProfitLoss = performanceData.reduce((sum: number, f: any) => sum + f.profit_loss_percentage, 0) / totalSignals;
+      const avgProfitLoss = performanceData.reduce((sum: number, f: PerformanceDataRow) => sum + f.profit_loss_percentage, 0) / totalSignals;
 
       // Calculate time-of-day performance
       const timePerformance = this.calculateTimeOfDayPerformance(performanceData);
@@ -133,7 +150,7 @@ class AdaptiveEngine {
     }
   }
 
-  private calculateTimeOfDayPerformance(feedbackData: any[]): Record<string, number> {
+  private calculateTimeOfDayPerformance(feedbackData: PerformanceDataRow[]): Record<string, number> {
     const hourlyPerformance: Record<string, { wins: number; total: number }> = {};
     
     feedbackData.forEach(feedback => {
@@ -164,7 +181,7 @@ class AdaptiveEngine {
       const { data: currentPerf } = await supabase
         .rpc('get_current_strategy_weight', {
           p_strategy_id: strategyName
-        });
+        }) as { data: StrategyWeightRow[] | null };
 
       const currentWeight = currentPerf?.[0]?.current_weight || 0.5;
 
@@ -239,7 +256,7 @@ class AdaptiveEngine {
         .rpc('get_strategy_performance_by_name', {
           p_user_id: user.id,
           p_strategy_name: strategyName
-        });
+        }) as { data: StrategyPerformanceRow[] | null };
 
       if (!performance || !performance[0]) return false;
 
@@ -273,12 +290,12 @@ class AdaptiveEngine {
       const { data: feedbackData } = await supabase
         .rpc('get_winning_signals_by_hour', {
           p_user_id: user.id
-        });
+        }) as { data: { execution_time: string }[] | null };
 
       if (!feedbackData) return [];
 
       const hourlyWins: Record<number, number> = {};
-      feedbackData.forEach((feedback: any) => {
+      feedbackData.forEach((feedback: { execution_time: string }) => {
         const hour = new Date(feedback.execution_time).getHours();
         hourlyWins[hour] = (hourlyWins[hour] || 0) + 1;
       });
