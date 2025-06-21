@@ -119,9 +119,7 @@ const Fundamentals = () => {
               </Badge>
             </div>
             <div className="text-sm text-muted-foreground">
-              מקורות: {fundamentalData.marketSent
-
-iment.sources.join(', ')}
+              מקורות: {fundamentalData.marketSentiment.sources.join(', ')}
             </div>
           </div>
         </CardContent>

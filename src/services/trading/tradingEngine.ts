@@ -2,6 +2,7 @@ import { TradingSignal, MarketData, SystemHealth } from '@/types/trading';
 import { strategyEngine } from './strategyEngine';
 import { marketDataService } from './marketDataService';
 import { telegramBot } from '../telegram/telegramBot';
+import { signalManager } from './signalManager';
 import { toast } from 'sonner';
 
 export class TradingEngine {
@@ -98,12 +99,16 @@ export class TradingEngine {
         const newSignals = strategyEngine.analyzeMarket(marketData);
         
         for (const signal of newSignals) {
-          await this.processSignal(signal);
+          // Validate and ensure accurate pricing
+          const validatedSignal = await this.validateAndPriceSignal(signal, marketData);
+          if (validatedSignal) {
+            await this.processSignal(validatedSignal);
+          }
         }
       }
       
-      console.log(`✅ Market analysis complete. Active signals: ${this.getActiveSignals().length}`);
-      console.log(`🧠 Personal Method signals generated: ${this.signals.filter(s => s.strategy === 'almog-personal-method').length}`);
+      const stats = signalManager.getDailyStats();
+      console.log(`✅ Market analysis complete. Daily: ${stats.dailySignalCount}, Session: ${stats.sessionSignalsCount}`);
       
     } catch (error) {
       console.error('❌ Error during market analysis:', error);
@@ -111,32 +116,89 @@ export class TradingEngine {
     }
   }
 
-  private async processSignal(signal: TradingSignal) {
-    // Check if we already have a similar signal
-    const existingSignal = this.signals.find(s => 
-      s.symbol === signal.symbol && 
-      s.action === signal.action && 
-      s.status === 'active' &&
-      Math.abs(s.timestamp - signal.timestamp) < 300000 // Within 5 minutes
-    );
+  private async validateAndPriceSignal(signal: TradingSignal, marketData: MarketData): Promise<TradingSignal | null> {
+    try {
+      // Ensure we have valid market data and pricing
+      if (!marketData.price || isNaN(marketData.price) || marketData.price <= 0) {
+        console.error(`❌ Invalid market data for ${signal.symbol}`);
+        return null;
+      }
 
-    if (existingSignal) {
-      console.log(`⏭️ Skipping duplicate signal for ${signal.symbol}`);
-      return;
+      // Use live market price
+      const currentPrice = marketData.price;
+      
+      // Calculate proper targets based on strategy
+      let targetPrice: number;
+      let stopLoss: number;
+      
+      if (signal.strategy === 'almog-personal-method') {
+        // LeviPro Method: Fixed 1.75 R/R ratio
+        if (signal.action === 'buy') {
+          stopLoss = currentPrice * 0.985; // 1.5% stop loss
+          const riskAmount = currentPrice - stopLoss;
+          targetPrice = currentPrice + (riskAmount * 1.75); // 1.75 R/R
+        } else {
+          stopLoss = currentPrice * 1.015; // 1.5% stop loss
+          const riskAmount = stopLoss - currentPrice;
+          targetPrice = currentPrice - (riskAmount * 1.75); // 1.75 R/R
+        }
+      } else {
+        // Standard calculation for other strategies
+        if (signal.action === 'buy') {
+          targetPrice = currentPrice * 1.025; // 2.5% profit target
+          stopLoss = currentPrice * 0.98; // 2% stop loss
+        } else {
+          targetPrice = currentPrice * 0.975; // 2.5% profit target
+          stopLoss = currentPrice * 1.02; // 2% stop loss
+        }
+      }
+
+      // Calculate actual R/R ratio
+      const riskAmount = Math.abs(currentPrice - stopLoss);
+      const rewardAmount = Math.abs(targetPrice - currentPrice);
+      const riskRewardRatio = riskAmount > 0 ? rewardAmount / riskAmount : 1.5;
+
+      // Update signal with accurate pricing
+      const pricedSignal: TradingSignal = {
+        ...signal,
+        price: currentPrice,
+        targetPrice: Number(targetPrice.toFixed(2)),
+        stopLoss: Number(stopLoss.toFixed(2)),
+        riskRewardRatio: Number(riskRewardRatio.toFixed(2)),
+        metadata: {
+          ...signal.metadata,
+          timeframe: marketData.wyckoffPhase ? '15M' : '5M', // Add timeframe context
+          priceValidated: true,
+          marketDataTimestamp: Date.now()
+        }
+      };
+
+      return pricedSignal;
+    } catch (error) {
+      console.error(`❌ Error validating signal for ${signal.symbol}:`, error);
+      return null;
+    }
+  }
+
+  private async processSignal(signal: TradingSignal) {
+    // Use signal manager to validate and prevent conflicts
+    const added = signalManager.addSignal(signal);
+    if (!added) {
+      return; // Signal was blocked by validation
     }
 
-    // Add signal to our list
+    // Add to our list
     this.signals.push(signal);
     
     // Log with special attention to personal method
     if (signal.strategy === 'almog-personal-method') {
-      console.log(`🔥 PERSONAL METHOD SIGNAL: ${signal.action.toUpperCase()} ${signal.symbol} at ${signal.price} (${(signal.confidence * 100).toFixed(0)}% confidence)`);
+      console.log(`🔥 PERSONAL METHOD SIGNAL: ${signal.action.toUpperCase()} ${signal.symbol} at $${signal.price} (Target: $${signal.targetPrice}, SL: $${signal.stopLoss})`);
       toast.success(`🧠 איתות אסטרטגיה אישית: ${signal.action.toUpperCase()} ${signal.symbol}`);
     } else {
-      console.log(`📢 New trading signal: ${signal.action.toUpperCase()} ${signal.symbol} at ${signal.price}`);
+      console.log(`📢 New trading signal: ${signal.action.toUpperCase()} ${signal.symbol} at $${signal.price}`);
     }
     
-    // Send to Telegram with priority for personal method
+    // Send to Telegram with proper formatting
     try {
       const sent = await telegramBot.sendSignal(signal);
       if (sent) {
@@ -164,7 +226,8 @@ export class TradingEngine {
       totalSignals: this.signals.length,
       activeStrategies: strategyEngine.getActiveStrategies(),
       personalMethodActive: true,
-      personalMethodWeight: 0.80
+      personalMethodWeight: 0.80,
+      dailyStats: signalManager.getDailyStats()
     };
 
     this.statusListeners.forEach(listener => listener(status));
@@ -201,7 +264,7 @@ export class TradingEngine {
     return health;
   }
 
-  private async checkBinanceHealth(): Promise<boolean> {
+  private async checkBinanceHealth(): Promise<boolean>  {
     try {
       const testData = await marketDataService.getMarketData('BTCUSDT');
       return testData !== null;
@@ -225,6 +288,7 @@ export class TradingEngine {
   }
 
   private async sendStartupNotification() {
+    const stats = signalManager.getDailyStats();
     const message = `
 🚀 <b>LeviPro מנוע מסחר הופעל</b>
 
@@ -232,6 +296,11 @@ export class TradingEngine {
 🧠 <b>אסטרטגיה אישית: 80% עדיפות מובטחת</b>
 📊 רשימת מעקב: ${this.watchList.join(', ')}
 🎯 ${strategyEngine.getActiveStrategies().length} אסטרטגיות פעילות
+
+📈 מגבלות יומיות:
+• איתותים: ${stats.dailySignalCount}/50
+• הפסד מקסימלי: ${stats.dailyLoss.toFixed(1)}%/5%
+• סשן נוכחי: ${stats.sessionSignalsCount}/3
 
 המערכת תשלח איתותים אוטומטיים כאשר תזהה הזדמנויות מסחר.
 האסטרטגיה האישית מקבלת עדיפות ראשונה תמיד.
@@ -323,7 +392,8 @@ export class TradingEngine {
       isRunning: this.isRunning,
       lastSignalTime: this.signals.length > 0 ? Math.max(...this.signals.map(s => s.timestamp)) : null,
       totalSignals: this.signals.length,
-      activeStrategies: strategyEngine.getActiveStrategies()
+      activeStrategies: strategyEngine.getActiveStrategies(),
+      dailyStats: signalManager.getDailyStats()
     };
   }
 }
