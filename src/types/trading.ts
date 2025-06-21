@@ -24,6 +24,13 @@ export interface TradingSignal {
   status: 'active' | 'completed' | 'cancelled';
   telegramSent: boolean;
   metadata?: Record<string, any>;
+  // Added missing fields for profit tracking
+  profit?: number;
+  profitPercent?: number;
+  executedPrice?: number;
+  exitPrice?: number;
+  executedAt?: number;
+  exitReason?: string;
 }
 
 export interface MarketData {

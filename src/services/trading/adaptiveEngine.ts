@@ -231,7 +231,7 @@ class AdaptiveEngine {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
-      const { data, error } = await supabase
+      const { data: rawData, error } = await supabase
         .from('strategy_performance')
         .select('*')
         .eq('user_id', user.id);
@@ -241,9 +241,21 @@ class AdaptiveEngine {
         return [];
       }
 
-      return (data || []).map(d => ({
-        ...d,
-        last_updated: new Date(d.last_updated)
+      // Fixed: Properly parse time_of_day_performance JSON and convert last_updated to Date
+      return (rawData || []).map(d => ({
+        strategy_id: d.strategy_id,
+        strategy_name: d.strategy_name,
+        total_signals: d.total_signals,
+        successful_signals: d.successful_signals,
+        failed_signals: d.failed_signals,
+        success_rate: d.success_rate,
+        avg_profit_loss: d.avg_profit_loss,
+        current_weight: d.current_weight,
+        confidence_score: d.confidence_score,
+        last_updated: new Date(d.last_updated),
+        time_of_day_performance: typeof d.time_of_day_performance === 'string' 
+          ? JSON.parse(d.time_of_day_performance) 
+          : (d.time_of_day_performance as Record<string, number> || {})
       }));
     } catch (error) {
       console.error('Error in getStrategyPerformance:', error);
@@ -313,7 +325,7 @@ class AdaptiveEngine {
       const topHours = Object.entries(hourlyWins)
         .sort(([,a], [,b]) => b - a)
         .slice(0, 3)
-        .map(([hour]) => `${hour}:00-${(parseInt(hour) + 1) % 24}:00`);
+        .map(([hour]) =>  `${hour}:00-${(parseInt(hour) + 1) % 24}:00`);
 
       return topHours;
     } catch (error) {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -78,8 +77,9 @@ const TradingDashboard = () => {
 
   const updateStats = () => {
     const allSignals = tradingEngine.getAllSignals();
+    // Fixed: Use status 'completed' and check profit field exists and is positive
     const profitable = allSignals.filter(s => 
-      s.result && s.result.profit && s.result.profit > 0
+      s.status === 'completed' && s.profit !== undefined && s.profit > 0
     ).length;
     
     setEngineStats({
