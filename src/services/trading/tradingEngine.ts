@@ -21,6 +21,7 @@ export class TradingEngine {
 
   private analysisInterval?: NodeJS.Timeout;
   private healthCheckInterval?: NodeJS.Timeout;
+  private statusListeners: ((status: any) => void)[] = [];
 
   constructor() {
     this.initializeEngine();
@@ -38,7 +39,7 @@ export class TradingEngine {
       return;
     }
 
-    console.log('▶️ Starting LeviPro Trading Engine');
+    console.log('▶️ Starting LeviPro Trading Engine with Personal Method Priority');
     this.isRunning = true;
 
     // Start market analysis every 30 seconds
@@ -54,10 +55,13 @@ export class TradingEngine {
     // Initial analysis
     await this.analyzeMarkets();
     
-    toast.success('מנוע המסחר הופעל בהצלחה');
+    toast.success('🎯 מנוע המסחר LeviPro הופעל - אסטרטגיה אישית פעילה');
     
     // Send startup notification to Telegram
     await this.sendStartupNotification();
+    
+    // Notify status listeners
+    this.notifyStatusListeners();
   }
 
   public stop() {
@@ -80,12 +84,13 @@ export class TradingEngine {
     }
 
     toast.info('מנוע המסחר הופסק');
+    this.notifyStatusListeners();
   }
 
   private async analyzeMarkets() {
     if (!this.isRunning) return;
 
-    console.log('📊 Analyzing markets...');
+    console.log('📊 Analyzing markets with Personal Method priority...');
     
     try {
       const marketDataMap = await marketDataService.getMultipleMarketData(this.watchList);
@@ -99,6 +104,8 @@ export class TradingEngine {
       }
       
       console.log(`✅ Market analysis complete. Active signals: ${this.getActiveSignals().length}`);
+      console.log(`🧠 Personal Method signals generated: ${this.signals.filter(s => s.strategy === 'almog-personal-method').length}`);
+      
     } catch (error) {
       console.error('❌ Error during market analysis:', error);
       toast.error('שגיאה בניתוח השווקים');
@@ -122,29 +129,27 @@ export class TradingEngine {
     // Add signal to our list
     this.signals.push(signal);
     
-    console.log(`📢 New trading signal: ${signal.action.toUpperCase()} ${signal.symbol} at ${signal.price}`);
+    // Log with special attention to personal method
+    if (signal.strategy === 'almog-personal-method') {
+      console.log(`🔥 PERSONAL METHOD SIGNAL: ${signal.action.toUpperCase()} ${signal.symbol} at ${signal.price} (${(signal.confidence * 100).toFixed(0)}% confidence)`);
+      toast.success(`🧠 איתות אסטרטגיה אישית: ${signal.action.toUpperCase()} ${signal.symbol}`);
+    } else {
+      console.log(`📢 New trading signal: ${signal.action.toUpperCase()} ${signal.symbol} at ${signal.price}`);
+    }
     
-    // Send to Telegram
+    // Send to Telegram with priority for personal method
     try {
       const sent = await telegramBot.sendSignal(signal);
       if (sent) {
         signal.telegramSent = true;
-        console.log(`📱 Signal sent to Telegram: ${signal.symbol}`);
+        console.log(`📱 Signal sent to Telegram: ${signal.symbol} (${signal.strategy})`);
       }
     } catch (error) {
       console.error(`❌ Failed to send signal to Telegram: ${error}`);
     }
 
-    // Save to database (implement with Supabase)
-    await this.saveSignalToDatabase(signal);
-    
     // Trigger UI update
     this.notifySignalListeners(signal);
-  }
-
-  private async saveSignalToDatabase(signal: TradingSignal) {
-    // TODO: Implement Supabase save
-    console.log(`💾 Saving signal to database: ${signal.id}`);
   }
 
   private notifySignalListeners(signal: TradingSignal) {
@@ -153,16 +158,37 @@ export class TradingEngine {
     }));
   }
 
+  private notifyStatusListeners() {
+    const status = {
+      isRunning: this.isRunning,
+      lastSignalTime: this.signals.length > 0 ? Math.max(...this.signals.map(s => s.timestamp)) : null,
+      totalSignals: this.signals.length,
+      activeStrategies: strategyEngine.getActiveStrategies(),
+      personalMethodActive: true,
+      personalMethodWeight: 0.80
+    };
+
+    this.statusListeners.forEach(listener => listener(status));
+  }
+
+  public addStatusListener(listener: (status: any) => void) {
+    this.statusListeners.push(listener);
+  }
+
+  public removeStatusListener(listener: (status: any) => void) {
+    this.statusListeners = this.statusListeners.filter(l => l !== listener);
+  }
+
   private async performHealthCheck(): Promise<SystemHealth> {
     console.log('🔍 Performing system health check...');
     
     const health: SystemHealth = {
       binance: await this.checkBinanceHealth(),
-      tradingView: await this.checkTradingViewHealth(),
-      twitter: await this.checkTwitterHealth(),
+      tradingView: true, // Placeholder
+      twitter: true, // Placeholder
       coinGecko: await this.checkCoinGeckoHealth(),
       telegram: await this.checkTelegramHealth(),
-      fundamentalData: await this.checkFundamentalDataHealth(),
+      fundamentalData: true, // Placeholder
       lastCheck: Date.now()
     };
 
@@ -172,11 +198,6 @@ export class TradingEngine {
     const totalServices = Object.keys(health).length - 1;
     
     console.log(`💚 System health: ${healthyServices}/${totalServices} services healthy`);
-    
-    // Dispatch health update event
-    window.dispatchEvent(new CustomEvent('system-health-update', {
-      detail: health
-    }));
     
     return health;
   }
@@ -190,16 +211,6 @@ export class TradingEngine {
     }
   }
 
-  private async checkTradingViewHealth(): Promise<boolean> {
-    // TODO: Implement TradingView health check
-    return true; // Placeholder
-  }
-
-  private async checkTwitterHealth(): Promise<boolean> {
-    // TODO: Implement Twitter API health check
-    return true; // Placeholder
-  }
-
   private async checkCoinGeckoHealth(): Promise<boolean> {
     try {
       const response = await fetch('https://api.coingecko.com/api/v3/ping');
@@ -210,13 +221,8 @@ export class TradingEngine {
   }
 
   private async checkTelegramHealth(): Promise<boolean> {
-    // TODO: Implement Telegram bot health check
-    return true; // Placeholder
-  }
-
-  private async checkFundamentalDataHealth(): Promise<boolean> {
-    // TODO: Implement fundamental data sources health check
-    return true; // Placeholder
+    const status = telegramBot.getConnectionStatus();
+    return status.connected;
   }
 
   private async sendStartupNotification() {
@@ -224,12 +230,14 @@ export class TradingEngine {
 🚀 <b>LeviPro מנוע מסחר הופעל</b>
 
 ✅ המערכת פועלת ומנטרת את השווקים
+🧠 <b>אסטרטגיה אישית: 80% עדיפות מובטחת</b>
 📊 רשימת מעקב: ${this.watchList.join(', ')}
-🧠 אסטרטגיות פעילות: ${strategyEngine.getActiveStrategies().length}
+🎯 ${strategyEngine.getActiveStrategies().length} אסטרטגיות פעילות
 
 המערכת תשלח איתותים אוטומטיים כאשר תזהה הזדמנויות מסחר.
+האסטרטגיה האישית מקבלת עדיפות ראשונה תמיד.
 
-#LeviPro #TradingEngine #Active
+#LeviPro #TradingEngine #PersonalMethod #Active
 `;
 
     try {
@@ -243,11 +251,6 @@ export class TradingEngine {
     // Listen for manual signal creation
     window.addEventListener('create-manual-signal', ((event: CustomEvent) => {
       this.processSignal(event.detail);
-    }) as EventListener);
-
-    // Listen for strategy updates
-    window.addEventListener('strategy-updated', ((event: CustomEvent) => {
-      console.log('Strategy updated:', event.detail);
     }) as EventListener);
   }
 
@@ -272,47 +275,13 @@ export class TradingEngine {
     return [...this.watchList];
   }
 
-  public addToWatchList(symbol: string) {
-    if (!this.watchList.includes(symbol)) {
-      this.watchList.push(symbol);
-      console.log(`➕ Added ${symbol} to watch list`);
-    }
-  }
-
-  public removeFromWatchList(symbol: string) {
-    const index = this.watchList.indexOf(symbol);
-    if (index > -1) {
-      this.watchList.splice(index, 1);
-      console.log(`➖ Removed ${symbol} from watch list`);
-    }
-  }
-
-  public async executeManualSignal(symbol: string, action: 'buy' | 'sell', reasoning: string) {
-    const marketData = await marketDataService.getMarketData(symbol);
-    if (!marketData) {
-      toast.error(`לא ניתן לקבל נתוני שוק עבור ${symbol}`);
-      return;
-    }
-
-    const signal: TradingSignal = {
-      id: `manual-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      symbol,
-      strategy: 'manual',
-      action,
-      price: marketData.price,
-      targetPrice: action === 'buy' ? marketData.price * 1.03 : marketData.price * 0.97,
-      stopLoss: action === 'buy' ? marketData.price * 0.98 : marketData.price * 1.02,
-      confidence: 1.0,
-      riskRewardRatio: 1.5,
-      reasoning: `איתות ידני: ${reasoning}`,
-      timestamp: Date.now(),
-      status: 'active',
-      telegramSent: false,
-      metadata: { manual: true, userGenerated: true }
+  public getStatus() {
+    return {
+      isRunning: this.isRunning,
+      lastSignalTime: this.signals.length > 0 ? Math.max(...this.signals.map(s => s.timestamp)) : null,
+      totalSignals: this.signals.length,
+      activeStrategies: strategyEngine.getActiveStrategies()
     };
-
-    await this.processSignal(signal);
-    toast.success('איתות ידני נוצר ונשלח');
   }
 }
 
