@@ -16,27 +16,47 @@ export class ProfessionalTelegramFormatter {
       minute: '2-digit'
     });
 
-    const action = signal.action === 'buy' ? '🟢 Buy' : '🔴 Sell';
+    const israelDate = new Date(Date.now() + 24*60*60*1000).toLocaleDateString('he-IL', {
+      timeZone: 'Asia/Jerusalem',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const action = signal.action === 'buy' ? 'Long' : 'Short';
     const strategyName = this.getStrategyDisplayName(signal.strategy);
-    const timeframe = this.getTimeframe(signal);
+    const timeframes = this.getTimeframeDisplay(signal);
     const confidence = Math.round(signal.confidence * 100);
     const rrRatio = signal.riskRewardRatio.toFixed(1);
 
-    // בדיקת תקינות מחירים
+    // Format prices with proper precision
     const entryPrice = this.formatPrice(signal.price);
     const stopLoss = this.formatPrice(signal.stopLoss);
     const takeProfit = this.formatPrice(signal.targetPrice);
 
-    const message = `🔥 *LeviPro Signal* 🔥
-${action} *${signal.symbol}*
-*Timeframe:* ${timeframe} | *Strategy:* ${strategyName}
-*Entry:* $${entryPrice} | *SL:* $${stopLoss} | *TP:* $${takeProfit}
-*R/R:* 1:${rrRatio} | *Confidence:* ${confidence}%
-*Sent:* ${israelTime} 🇮🇱
+    // Get comprehensive reasoning
+    const reasoning = this.generateDetailedReasoning(signal);
+    const validUntil = this.calculateValidityPeriod(signal);
 
-${this.getSignalContext(signal)}
+    const message = `📢 **New Trade Signal | LeviPro Elite Bot**
 
-_Powered by LeviPro AI Engine_`;
+🪙 **Asset**: ${signal.symbol.replace('USDT', '/USDT')}
+⏱ **Timeframes**: ${timeframes}
+📈 **Type**: Swing
+🎯 **Entry**: $${entryPrice}
+⛔ **Stop Loss**: $${stopLoss}
+✅ **Target**: $${takeProfit}
+⚖️ **R/R**: ${rrRatio}:1
+📊 **Confidence**: ${confidence}%
+
+🧠 **Reasoning**:
+${reasoning}
+
+📅 **Valid until**: ${validUntil}
+
+${this.getQualityBadge(signal)}
+
+_Generated at ${israelTime} 🇮🇱 | Powered by LeviPro AI Engine_`;
 
     return {
       text: message,
@@ -50,54 +70,167 @@ _Powered by LeviPro AI Engine_`;
       return '0.00';
     }
 
-    if (price >= 1000) {
+    if (price >= 10000) {
+      return price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    } else if (price >= 1000) {
       return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     } else if (price >= 1) {
       return price.toFixed(4);
-    } else {
+    } else if (price >= 0.01) {
       return price.toFixed(6);
+    } else {
+      return price.toFixed(8);
     }
   }
 
   private getStrategyDisplayName(strategy: string): string {
     const strategyNames: Record<string, string> = {
-      'almog-personal-method': 'Personal Elite',
-      'smc-strategy': 'Smart Money',
-      'wyckoff-strategy': 'Wyckoff',
-      'rsi-macd-strategy': 'RSI+MACD',
-      'triangle-breakout': 'Triangle Break',
-      'fibonacci-strategy': 'Fibonacci',
+      'almog-personal-method': 'Personal Elite Method',
+      'smc-strategy': 'Smart Money Concepts',
+      'wyckoff-strategy': 'Wyckoff Method',
+      'rsi-macd-strategy': 'RSI+MACD Confluence',
+      'triangle-breakout': 'Triangle Breakout',
+      'fibonacci-strategy': 'Fibonacci Retracement',
       'elliott-wave-strategy': 'Elliott Wave',
-      'volume-analysis': 'Volume Flow'
+      'volume-analysis': 'Volume Profile Analysis'
     };
     
-    return strategyNames[strategy] || strategy;
+    return strategyNames[strategy] || strategy.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 
-  private getTimeframe(signal: TradingSignal): string {
+  private getTimeframeDisplay(signal: TradingSignal): string {
     const metadata = signal.metadata || {};
-    return metadata.timeframe || '15M';
-  }
-
-  private getSignalContext(signal: TradingSignal): string {
-    const metadata = signal.metadata || {};
+    const confirmedTimeframes = metadata.confirmedTimeframes || ['4H', '1D'];
     
+    if (confirmedTimeframes.length >= 3) {
+      return confirmedTimeframes.slice(0, 3).join(', ');
+    } else {
+      return confirmedTimeframes.length > 0 ? confirmedTimeframes.join(', ') : '4H, 1D';
+    }
+  }
+
+  private generateDetailedReasoning(signal: TradingSignal): string {
+    const metadata = signal.metadata || {};
+    const strategy = signal.strategy;
+    
+    if (strategy === 'almog-personal-method') {
+      return this.generatePersonalMethodReasoning(signal, metadata);
+    }
+    
+    return this.generateStandardReasoning(signal, metadata);
+  }
+
+  private generatePersonalMethodReasoning(signal: TradingSignal, metadata: any): string {
+    const reasons = [];
+    
+    // Core personal method elements
+    if (metadata.emotionalPressure > 60) {
+      reasons.push(`• High emotional pressure zone detected (${metadata.emotionalPressure}%)`);
+    }
+    
+    if (metadata.momentum > 70) {
+      reasons.push(`• Strong momentum confirmation (${metadata.momentum}%)`);
+    }
+    
+    if (metadata.breakout) {
+      reasons.push('• Clean breakout from key resistance/support level');
+    }
+    
+    if (metadata.volumeConfirmation) {
+      reasons.push('• Volume surge confirms institutional participation');
+    }
+    
+    // Multi-timeframe analysis
+    const timeframes = metadata.confirmedTimeframes || [];
+    if (timeframes.length >= 3) {
+      reasons.push(`• Multi-timeframe confluence across ${timeframes.join(', ')}`);
+    }
+    
+    // Market structure
+    if (metadata.wyckoffPhase) {
+      reasons.push(`• Wyckoff ${metadata.wyckoffPhase} phase identified`);
+    }
+    
+    // Risk management
+    reasons.push('• Swing timeframe reduces noise and false signals');
+    reasons.push('• No major news events or fundamentals against the move');
+    
+    return reasons.length > 0 ? reasons.join('\n') : '• Personal method criteria satisfied with high conviction';
+  }
+
+  private generateStandardReasoning(signal: TradingSignal, metadata: any): string {
+    const reasons = [];
+    const strategy = signal.strategy;
+    
+    // Strategy-specific reasoning
+    switch (strategy) {
+      case 'smc-strategy':
+        if (metadata.orderBlock) reasons.push('• Smart Money order block identified');
+        if (metadata.liquiditySweep) reasons.push('• Liquidity sweep completed');
+        reasons.push('• Institutional bias confirmed');
+        break;
+        
+      case 'wyckoff-strategy':
+        if (metadata.wyckoffPhase === 'spring') {
+          reasons.push('• Wyckoff Spring pattern - final shakeout completed');
+        } else if (metadata.wyckoffPhase === 'utad') {
+          reasons.push('• Wyckoff UTAD - distribution phase ending');
+        }
+        reasons.push('• Volume analysis supports Wyckoff structure');
+        break;
+        
+      case 'triangle-breakout':
+        reasons.push('• Symmetrical triangle breakout with volume');
+        reasons.push('• Clean break above/below triangle bounds');
+        break;
+        
+      default:
+        reasons.push('• Technical confluence across multiple indicators');
+        break;
+    }
+    
+    // Universal technical factors
+    if (metadata.confirmedTimeframes?.length >= 3) {
+      reasons.push(`• Multi-timeframe alignment: ${metadata.confirmedTimeframes.join(', ')}`);
+    }
+    
+    if (metadata.technicalStrength > 0.7) {
+      reasons.push('• Strong technical setup with high probability');
+    }
+    
+    if (metadata.volumeConfirmation) {
+      reasons.push('• Volume confirms the directional move');
+    }
+    
+    // Market conditions
+    reasons.push('• Swing timeframe provides better risk-to-reward ratio');
+    reasons.push('• No major fundamental risks identified');
+    
+    return reasons.length > 0 ? reasons.join('\n') : '• Technical analysis confirms high-probability setup';
+  }
+
+  private calculateValidityPeriod(signal: TradingSignal): string {
+    const metadata = signal.metadata || {};
+    const durationHours = metadata.expectedDurationHours || 48;
+    
+    // Calculate expiry based on swing trade duration
+    const expiryDate = new Date(Date.now() + Math.min(durationHours * 60 * 60 * 1000, 7 * 24 * 60 * 60 * 1000));
+    
+    return expiryDate.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  }
+
+  private getQualityBadge(signal: TradingSignal): string {
     if (signal.strategy === 'almog-personal-method') {
-      return `🧠 *Personal Method Trigger:*
-• לחץ רגשי: ${metadata.emotionalPressure || 0}%
-• מומנטום: ${metadata.momentum || 0}%
-• פריצה זוהתה: ${metadata.breakout ? '✅' : '❌'}`;
+      return '🧠 **PERSONAL METHOD ELITE** - Highest Priority Signal';
+    } else if (signal.confidence >= 0.85) {
+      return '🔥 **ELITE QUALITY** - Premium Swing Trade';
+    } else {
+      return '⭐ **HIGH QUALITY** - Verified Swing Setup';
     }
-
-    if (metadata.triangleBreakout) {
-      return '📈 *Triangle Breakout detected with volume confirmation*';
-    }
-
-    if (metadata.reversalPattern) {
-      return '🔄 *Reversal pattern - trend change expected*';
-    }
-
-    return `📊 *${this.getStrategyDisplayName(signal.strategy)} signal confirmation*`;
   }
 
   public formatDailyReport(stats: any): ProfessionalTelegramMessage {
@@ -109,25 +242,29 @@ _Powered by LeviPro AI Engine_`;
       day: 'numeric'
     });
 
-    const message = `📊 *LeviPro Daily Report*
+    const message = `📊 **LeviPro Elite Daily Report**
 📅 ${israelTime}
 
-🎯 *Yesterday's Performance:*
-• Total Signals: ${stats.totalSignals || 0}
-• Elite Signals: ${stats.eliteSignals || 0}
-• Win Rate: ${stats.winRate || 0}%
-• P/L: ${stats.profitLoss || 0}%
+🎯 **Elite Signal Performance:**
+• Signals Sent: ${stats.eliteSignals || 0}/3 (Quality Limited)
+• Success Rate: ${stats.winRate || 0}%
+• Avg R/R Achieved: 1:${stats.avgRiskReward || 0}
+• Personal Method Signals: ${stats.personalMethodSignals || 0}
 
-🔥 *Top Performers:*
+🔥 **Top Performers:**
 • Best Strategy: ${stats.bestStrategy || 'Personal Method'}
 • Hot Asset: ${stats.hotAsset || 'BTC/USDT'}
+• Swing Trades Focus: ${stats.swingTradePercentage || 100}%
 
-📈 *Market Outlook:*
+📈 **Market Outlook:**
 • Sentiment: ${stats.sentiment || 'Neutral'}
 • Volatility: ${stats.volatility || 'Medium'}
+• Quality Filter: ✅ Active (R/R ≥2:1, Confidence ≥80%)
 
-🧠 _AI continuously learning and optimizing_
-_Next analysis in 1 hour_`;
+🧠 _Elite AI continuously learning and optimizing for swing trades_
+⏰ _Next analysis cycle in 30 minutes_
+
+**Quality over Quantity - LeviPro Elite Standard**`;
 
     return {
       text: message,

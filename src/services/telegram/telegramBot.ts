@@ -17,11 +17,15 @@ interface ConnectionStatus {
   connected: boolean;
   lastMessageTime?: number;
   error?: string;
+  chatId?: string;
 }
 
 export class TelegramBot {
   private config: TelegramConfig;
-  private connectionStatus: ConnectionStatus = { connected: false };
+  private connectionStatus: ConnectionStatus = { 
+    connected: false,
+    chatId: TELEGRAM_CHAT_ID
+  };
 
   constructor() {
     this.config = {
@@ -95,17 +99,29 @@ export class TelegramBot {
       if (response.ok) {
         const result = await response.json();
         console.log('✅ LIVE message sent successfully to Telegram');
-        this.connectionStatus = { connected: true, lastMessageTime: Date.now() };
+        this.connectionStatus = { 
+          connected: true, 
+          lastMessageTime: Date.now(),
+          chatId: this.config.chatId
+        };
         return true;
       } else {
         const errorData = await response.json();
         console.error('❌ Telegram API error:', errorData);
-        this.connectionStatus = { connected: false, error: errorData.description };
+        this.connectionStatus = { 
+          connected: false, 
+          error: errorData.description,
+          chatId: this.config.chatId
+        };
         return false;
       }
     } catch (error) {
       console.error('❌ Network error sending to Telegram:', error);
-      this.connectionStatus = { connected: false, error: String(error) };
+      this.connectionStatus = { 
+        connected: false, 
+        error: String(error),
+        chatId: this.config.chatId
+      };
       return false;
     }
   }
@@ -133,24 +149,75 @@ _Test completed at ${new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusa
     try {
       console.log('📱 Sending demo signal to Telegram...');
       
-      const demoMessage = `🔥 *LeviPro Demo Signal* 🔥
-🟢 *Buy BTC/USDT*
-*Timeframe:* 4H + 1D | *Strategy:* Wyckoff Spring
-*Entry:* $43,250 | *SL:* $41,800 | *TP:* $46,150
-*R/R:* 1:2.1 | *Confidence:* 85%
-*Sent:* ${new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })} 🇮🇱
+      const demoMessage = `📢 **New Trade Signal | LeviPro Elite Bot**
 
-🧠 *Reasoning:*
+🪙 **Asset**: BTC/USDT
+⏱ **Timeframes**: 4H, 1D, Weekly
+📈 **Type**: Swing
+🎯 **Entry**: $43,250
+⛔ **Stop Loss**: $41,800
+✅ **Target**: $46,150
+⚖️ **R/R**: 2.1:1
+📊 **Confidence**: 85%
+
+🧠 **Reasoning**:
 • Wyckoff spring pattern completed
-• 4H + Daily confluence
 • Volume confirmation on breakout
-• RSI oversold recovery
+• 4H + Daily confluence detected
+• RSI oversold recovery initiated
+• No major news risks identified
+
+📅 **Valid until**: ${new Date(Date.now() + 24*60*60*1000).toLocaleDateString()}
 
 _This is a demo signal - Powered by LeviPro AI Engine_`;
       
-      return await this.sendMessage(demoMessage);
+      return await this.sendMessage(demoMessage, 'Markdown');
     } catch (error) {
       console.error('❌ Error sending demo signal:', error);
+      return false;
+    }
+  }
+
+  public async broadcastSignal(signal: TradingSignal, chatIds: string[] = []): Promise<boolean> {
+    try {
+      console.log('📡 Broadcasting signal to multiple chats:', chatIds.length || 'default');
+      
+      const formattedMessage = professionalTelegramFormatter.formatEliteSignal(signal);
+      const targets = chatIds.length > 0 ? chatIds : [this.config.chatId];
+      
+      let successCount = 0;
+      
+      for (const chatId of targets) {
+        try {
+          const url = `${TELEGRAM_API_URL}${this.config.botToken}/sendMessage`;
+          
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              chat_id: chatId,
+              text: formattedMessage.text,
+              parse_mode: formattedMessage.parseMode,
+              disable_web_page_preview: true
+            })
+          });
+
+          if (response.ok) {
+            successCount++;
+            console.log(`✅ Signal broadcasted to chat: ${chatId}`);
+          } else {
+            console.error(`❌ Failed to broadcast to chat: ${chatId}`);
+          }
+        } catch (error) {
+          console.error(`❌ Error broadcasting to chat ${chatId}:`, error);
+        }
+      }
+      
+      return successCount > 0;
+    } catch (error) {
+      console.error('❌ Error in broadcast signal:', error);
       return false;
     }
   }
@@ -176,6 +243,16 @@ _Test completed at ${new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusa
       console.error('❌ Error testing elite connection:', error);
       return false;
     }
+  }
+
+  public updateChatId(newChatId: string): void {
+    this.config.chatId = newChatId;
+    this.connectionStatus.chatId = newChatId;
+    console.log(`📱 Updated Telegram chat ID to: ${newChatId}`);
+  }
+
+  public getCurrentChatId(): string {
+    return this.config.chatId;
   }
 }
 
