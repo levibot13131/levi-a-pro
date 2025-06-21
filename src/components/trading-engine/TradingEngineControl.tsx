@@ -4,10 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Activity, Settings, TrendingUp, PlayCircle, Square, TestTube, Bug, Zap } from 'lucide-react';
 import { enhancedSignalEngine } from '@/services/trading/enhancedSignalEngine';
 import { telegramBot } from '@/services/telegram/telegramBot';
 import SignalQualityMonitor from './SignalQualityMonitor';
+import SystemHealthMonitor from './SystemHealthMonitor';
+import SignalRejectionMonitor from './SignalRejectionMonitor';
+import FundamentalDataMonitor from './FundamentalDataMonitor';
 import { toast } from 'sonner';
 
 const TradingEngineControl: React.FC = () => {
@@ -25,10 +29,10 @@ const TradingEngineControl: React.FC = () => {
   }, []);
 
   const handleStartEngine = () => {
-    console.log('🚀 Starting LeviPro Signal Engine with Quality Scoring...');
+    console.log('🚀 Starting LeviPro Signal Engine with Enhanced Quality Scoring...');
     enhancedSignalEngine.startEliteEngine();
     setEngineStatus(enhancedSignalEngine.getEngineStatus());
-    toast.success('🔥 LeviPro Signal Engine with Quality Scoring activated!');
+    toast.success('🔥 LeviPro Enhanced Signal Engine activated!');
   };
 
   const handleStopEngine = () => {
@@ -97,10 +101,10 @@ const TradingEngineControl: React.FC = () => {
       <div className="text-right">
         <h1 className="text-3xl font-bold flex items-center justify-end gap-2">
           <Activity className="h-8 w-8" />
-          מנוע המסחר LeviPro
+          מנוע המסחר LeviPro Enhanced
         </h1>
         <p className="text-muted-foreground">
-          בקרה וניהול מנוע איתותים חכם עם ניקוד איכות
+          בקרה וניהול מנוע איתותים חכם עם ניקוד איכות משופר
         </p>
       </div>
 
@@ -109,7 +113,7 @@ const TradingEngineControl: React.FC = () => {
         <CardHeader>
           <CardTitle className="text-right flex items-center gap-2">
             <Activity className="h-5 w-5 text-blue-500" />
-            בקרת מנוע איתותים
+            בקרת מנוע איתותים משופר
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -192,98 +196,136 @@ const TradingEngineControl: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Signal Quality Monitor */}
-      <SignalQualityMonitor />
+      {/* Enhanced Monitoring Dashboard */}
+      <Tabs defaultValue="quality" className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="quality">ניקוד איכות</TabsTrigger>
+          <TabsTrigger value="rejections">איתותים שנדחו</TabsTrigger>
+          <TabsTrigger value="health">בריאות מערכת</TabsTrigger>
+          <TabsTrigger value="fundamental">נתוני יסוד</TabsTrigger>
+          <TabsTrigger value="stats">סטטיסטיקות</TabsTrigger>
+        </TabsList>
 
-      {/* Engine Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-right flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              הגדרות איכות
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-right">
-              <div className="flex justify-between">
-                <span className="font-semibold">160+ נקודות</span>
-                <span>סף איכות מינימלי</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-semibold">1.8:1+</span>
-                <span>יחס R/R מינימום</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-semibold">75%+</span>
-                <span>Confidence מינימום</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-semibold">15 שניות</span>
-                <span>תדירות ניתוח</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <TabsContent value="quality" className="space-y-4">
+          <SignalQualityMonitor />
+        </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-right flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              ביצועים יומיים
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-right">
-              <div className="flex justify-between">
-                <span className="font-bold text-blue-600">{engineStatus.scoringStats?.totalAnalyzed || 0}</span>
-                <span>נותחו היום</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-bold text-green-600">{engineStatus.scoringStats?.totalPassed || 0}</span>
-                <span>עברו ניקוד איכות</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-bold text-purple-600">{engineStatus.scoringStats?.totalSent || 0}</span>
-                <span>נשלחו לטלגרם</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="font-bold">{engineStatus.scoringStats?.rejectionRate || 0}%</span>
-                <span>שיעור דחייה</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <TabsContent value="rejections" className="space-y-4">
+          <SignalRejectionMonitor />
+        </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-right flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              מצב מערכת
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-right">
-              <div className="flex justify-between">
-                <Badge className="bg-green-100 text-green-800">✅ מחובר</Badge>
-                <span>Telegram</span>
-              </div>
-              <div className="flex justify-between">
-                <Badge className="bg-green-100 text-green-800">✅ פעיל</Badge>
-                <span>ניקוד איכות</span>
-              </div>
-              <div className="flex justify-between">
-                <Badge className="bg-blue-100 text-blue-800">🔄 רצה</Badge>
-                <span>מנוע ניתוח</span>
-              </div>
-              <div className="flex justify-between">
-                <Badge className="bg-green-100 text-green-800">✅ חי</Badge>
-                <span>נתוני מחירים</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+        <TabsContent value="health" className="space-y-4">
+          <SystemHealthMonitor />
+        </TabsContent>
+
+        <TabsContent value="fundamental" className="space-y-4">
+          <FundamentalDataMonitor />
+        </TabsContent>
+
+        <TabsContent value="stats" className="space-y-4">
+          {/* Engine Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-right flex items-center gap-2">
+                  <Settings className="h-5 w-5" />
+                  הגדרות איכות משופרות
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-right">
+                  <div className="flex justify-between">
+                    <span className="font-semibold">160+ נקודות</span>
+                    <span>סף איכות מינימלי</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold">1.8:1+</span>
+                    <span>יחס R/R מינימום</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold">75%+</span>
+                    <span>Confidence מינימום</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold">+25 נקודות</span>
+                    <span>בונוס שיטה אישית</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-semibold">15 שניות</span>
+                    <span>תדירות ניתוח</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-right flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  ביצועים יומיים
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-right">
+                  <div className="flex justify-between">
+                    <span className="font-bold text-blue-600">{engineStatus.scoringStats?.totalAnalyzed || 0}</span>
+                    <span>נותחו היום</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-bold text-green-600">{engineStatus.scoringStats?.totalPassed || 0}</span>
+                    <span>עברו ניקוד איכות</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-bold text-purple-600">{engineStatus.scoringStats?.totalSent || 0}</span>
+                    <span>נשלחו לטלגרם</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-bold">{engineStatus.scoringStats?.rejectionRate || 0}%</span>
+                    <span>שיעור דחייה</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-right flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  מצב מערכת משופר
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 text-right">
+                  <div className="flex justify-between">
+                    <Badge className="bg-green-100 text-green-800">✅ מחובר</Badge>
+                    <span>Telegram</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <Badge className="bg-green-100 text-green-800">✅ פעיל</Badge>
+                    <span>ניקוד איכות</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <Badge className="bg-green-100 text-green-800">✅ חי</Badge>
+                    <span>נתוני לווייתנים</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <Badge className="bg-green-100 text-green-800">✅ חי</Badge>
+                    <span>מדד פחד ותאוות בצע</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <Badge className="bg-blue-100 text-blue-800">🔄 רצה</Badge>
+                    <span>מנוע ניתוח</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <Badge className="bg-green-100 text-green-800">✅ חי</Badge>
+                    <span>נתוני מחירים</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Live Activity */}
       <Card className="bg-gradient-to-r from-blue-50 to-green-50">
@@ -292,13 +334,13 @@ const TradingEngineControl: React.FC = () => {
             <div className="flex items-center gap-2">
               <Activity className="h-5 w-5 text-blue-500 animate-pulse" />
               <span className="text-blue-600 font-medium">
-                {engineStatus.isRunning ? 'סורק שווקים עם ניקוד איכות...' : 'מנוע במצב המתנה'}
+                {engineStatus.isRunning ? 'סורק שווקים עם ניקוד איכות משופר...' : 'מנוע במצב המתנה'}
               </span>
             </div>
             <div className="text-right">
-              <p className="font-semibold">LeviPro Elite Engine + Quality Scoring</p>
+              <p className="font-semibold">LeviPro Enhanced Engine + Advanced Quality Scoring</p>
               <p className="text-sm text-muted-foreground">
-                {engineStatus.isRunning ? 'רק איתותים באיכות גבוהה יישלחו' : 'לחץ הפעל כדי להתחיל'}
+                {engineStatus.isRunning ? 'רק איתותים באיכות עליונה יישלחו' : 'לחץ הפעל כדי להתחיל'}
               </p>
             </div>
           </div>
