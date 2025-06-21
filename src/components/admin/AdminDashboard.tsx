@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { 
   Users, Settings, BarChart3, MessageSquare, 
-  Plus, Trash2, Edit, CheckCircle, XCircle 
+  Plus, Trash2, Edit, CheckCircle, XCircle, TrendingUp
 } from 'lucide-react';
 import { adaptiveEngine } from '@/services/trading/adaptiveEngine';
 import { eliteSignalFilter } from '@/services/trading/eliteSignalFilter';

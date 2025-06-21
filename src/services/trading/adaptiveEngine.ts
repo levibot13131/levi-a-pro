@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -23,6 +22,16 @@ export interface SignalFeedback {
   profit_loss_percentage: number;
   execution_time: Date;
   market_conditions: string;
+}
+
+export interface AdaptiveLearningStats {
+  overallWinRate: number;
+  avgRiskReward: number;
+  bestStrategy: string;
+  worstStrategy: string;
+  improvementTrend: 'improving' | 'declining' | 'stable';
+  totalSignalsProcessed: number;
+  learningConfidence: number;
 }
 
 // Type definitions for RPC responses
@@ -332,6 +341,65 @@ class AdaptiveEngine {
       console.error('Error getting optimal trading hours:', error);
       return [];
     }
+  }
+
+  async getAdaptiveLearningStats(): Promise<AdaptiveLearningStats> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return this.getDefaultStats();
+      }
+
+      // Get all strategy performance data
+      const strategies = await this.getStrategyPerformance();
+      
+      if (strategies.length === 0) {
+        return this.getDefaultStats();
+      }
+
+      // Calculate overall statistics
+      const totalSignals = strategies.reduce((sum, s) => sum + s.total_signals, 0);
+      const totalWins = strategies.reduce((sum, s) => sum + s.successful_signals, 0);
+      const overallWinRate = totalSignals > 0 ? totalWins / totalSignals : 0;
+
+      // Calculate average risk/reward
+      const avgRiskReward = strategies.reduce((sum, s) => sum + s.avg_profit_loss, 0) / strategies.length;
+
+      // Find best and worst performing strategies
+      const sortedByWinRate = strategies.sort((a, b) => b.success_rate - a.success_rate);
+      const bestStrategy = sortedByWinRate[0]?.strategy_name || 'Unknown';
+      const worstStrategy = sortedByWinRate[sortedByWinRate.length - 1]?.strategy_name || 'Unknown';
+
+      // Determine improvement trend (simplified logic)
+      const improvementTrend = overallWinRate >= 0.6 ? 'improving' : 
+                             overallWinRate >= 0.4 ? 'stable' : 'declining';
+
+      return {
+        overallWinRate,
+        avgRiskReward,
+        bestStrategy,
+        worstStrategy,
+        improvementTrend,
+        totalSignalsProcessed: totalSignals,
+        learningConfidence: Math.min(0.95, overallWinRate * 1.2) // Cap at 95%
+      };
+
+    } catch (error) {
+      console.error('Error getting adaptive learning stats:', error);
+      return this.getDefaultStats();
+    }
+  }
+
+  private getDefaultStats(): AdaptiveLearningStats {
+    return {
+      overallWinRate: 0.0,
+      avgRiskReward: 0.0,
+      bestStrategy: 'No data',
+      worstStrategy: 'No data',
+      improvementTrend: 'stable',
+      totalSignalsProcessed: 0,
+      learningConfidence: 0.0
+    };
   }
 }
 
