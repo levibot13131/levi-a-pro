@@ -16,44 +16,47 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import RequireAuth from './components/auth/RequireAuth';
 import Analytics from './pages/Analytics';
 import UnifiedDashboard from './components/dashboard/UnifiedDashboard';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <AuthProvider>
-          <Toaster 
-            position="top-right" 
-            richColors 
-            expand 
-            closeButton
-            toastOptions={{
-              duration: 5000,
-            }}
-          />
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/" element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Dashboard />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="technical-analysis" element={<TechnicalAnalysis />} />
-              <Route path="fundamental-data" element={<FundamentalData />} />
-              <Route path="market-sentiment" element={<MarketSentiment />} />
-              <Route path="charts-analysis" element={<ChartsAnalysis />} />
-              <Route path="trading-engine" element={<TradingEngineControl />} />
-              <Route path="admin" element={<AdminDashboard />} />
-              <Route path="/unified-dashboard" element={<UnifiedDashboard />} />
-            </Route>
-            <Route path="/analytics" element={<RequireAuth><Analytics /></RequireAuth>} />
-          </Routes>
-        </AuthProvider>
-      </Router>
+      <ThemeProvider defaultTheme="dark" storageKey="levipro-ui-theme">
+        <Router>
+          <AuthProvider>
+            <Toaster 
+              position="top-right" 
+              richColors 
+              expand 
+              closeButton
+              toastOptions={{
+                duration: 5000,
+              }}
+            />
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Dashboard />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="technical-analysis" element={<TechnicalAnalysis />} />
+                <Route path="fundamental-data" element={<FundamentalData />} />
+                <Route path="market-sentiment" element={<MarketSentiment />} />
+                <Route path="charts-analysis" element={<ChartsAnalysis />} />
+                <Route path="trading-engine" element={<TradingEngineControl />} />
+                <Route path="admin" element={<AdminDashboard />} />
+                <Route path="unified-dashboard" element={<UnifiedDashboard />} />
+              </Route>
+              <Route path="/analytics" element={<RequireAuth><Analytics /></RequireAuth>} />
+            </Routes>
+          </AuthProvider>
+        </Router>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }
