@@ -60,6 +60,93 @@ export type Database = {
         }
         Relationships: []
       }
+      signal_feedback: {
+        Row: {
+          created_at: string
+          execution_time: string
+          id: string
+          market_conditions: string | null
+          outcome: string
+          profit_loss_percentage: number
+          signal_id: string
+          strategy_used: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          execution_time: string
+          id?: string
+          market_conditions?: string | null
+          outcome: string
+          profit_loss_percentage: number
+          signal_id: string
+          strategy_used: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          execution_time?: string
+          id?: string
+          market_conditions?: string | null
+          outcome?: string
+          profit_loss_percentage?: number
+          signal_id?: string
+          strategy_used?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      strategy_performance: {
+        Row: {
+          avg_profit_loss: number
+          confidence_score: number
+          created_at: string
+          current_weight: number
+          failed_signals: number
+          id: string
+          last_updated: string
+          strategy_id: string
+          strategy_name: string
+          success_rate: number
+          successful_signals: number
+          time_of_day_performance: Json | null
+          total_signals: number
+          user_id: string
+        }
+        Insert: {
+          avg_profit_loss?: number
+          confidence_score?: number
+          created_at?: string
+          current_weight?: number
+          failed_signals?: number
+          id?: string
+          last_updated?: string
+          strategy_id: string
+          strategy_name: string
+          success_rate?: number
+          successful_signals?: number
+          time_of_day_performance?: Json | null
+          total_signals?: number
+          user_id: string
+        }
+        Update: {
+          avg_profit_loss?: number
+          confidence_score?: number
+          created_at?: string
+          current_weight?: number
+          failed_signals?: number
+          id?: string
+          last_updated?: string
+          strategy_id?: string
+          strategy_name?: string
+          success_rate?: number
+          successful_signals?: number
+          time_of_day_performance?: Json | null
+          total_signals?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       system_health_log: {
         Row: {
           binance_status: boolean

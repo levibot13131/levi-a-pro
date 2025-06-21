@@ -1,102 +1,73 @@
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { User } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+import { Toaster } from 'sonner';
 
-import { Toaster } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import Index from "./pages/Index";
-import Dashboard from "./pages/Dashboard";
-import TradingSignals from "./pages/TradingSignals";
-import SystemHealth from "./pages/SystemHealth";
-import IntegrationStatus from "./pages/IntegrationStatus";
-import TradingViewIntegration from "./pages/TradingViewIntegration";
-import Auth from "./pages/Auth";
-import EmailConfirm from "./pages/EmailConfirm";
-import Admin from "./pages/Admin";
-import Profile from "./pages/Profile";
-import RequireAuth from "./components/auth/RequireAuth";
-import Navbar from "./components/layout/Navbar";
+// Layout components
+import Sidebar from '@/components/layout/Sidebar';
+import Header from '@/components/layout/Header';
+import AuthGuard from '@/components/auth/AuthGuard';
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+// Page components
+import Dashboard from '@/components/Dashboard';
+import TradingSignals from '@/components/trading/TradingSignals';
+import ComprehensiveAnalysis from '@/components/comprehensive-analysis/ComprehensiveAnalysis';
+import AdaptiveDashboard from '@/components/trading/AdaptiveDashboard';
+import SystemAudit from '@/components/system/SystemAudit';
+import Settings from '@/components/Settings';
+import SystemOverview from '@/components/system/SystemOverview';
+import Login from '@/components/auth/Login';
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <BrowserRouter>
-          <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-            <Routes>
-              {/* Public routes */}
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/auth/confirm" element={<EmailConfirm />} />
-              <Route path="/confirm" element={<EmailConfirm />} />
-              
-              {/* Protected routes */}
-              <Route path="/" element={
-                <RequireAuth>
-                  <Navbar />
-                  <Index />
-                </RequireAuth>
-              } />
-              <Route path="/dashboard" element={
-                <RequireAuth>
-                  <Navbar />
-                  <Dashboard />
-                </RequireAuth>
-              } />
-              <Route path="/trading-signals" element={
-                <RequireAuth>
-                  <Navbar />
-                  <TradingSignals />
-                </RequireAuth>
-              } />
-              <Route path="/system-health" element={
-                <RequireAuth>
-                  <Navbar />
-                  <SystemHealth />
-                </RequireAuth>
-              } />
-              <Route path="/integration-status" element={
-                <RequireAuth>
-                  <Navbar />
-                  <IntegrationStatus />
-                </RequireAuth>
-              } />
-              <Route path="/tradingview" element={
-                <RequireAuth>
-                  <Navbar />
-                  <TradingViewIntegration />
-                </RequireAuth>
-              } />
-              <Route path="/admin" element={
-                <RequireAuth adminOnly={true}>
-                  <Navbar />
-                  <Admin />
-                </RequireAuth>
-              } />
-              <Route path="/profile" element={
-                <RequireAuth>
-                  <Navbar />
-                  <Profile />
-                </RequireAuth>
-              } />
-              
-              {/* Catch all - redirect to home */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const { data: { user: supaUser } } = await supabase.auth.getUser();
+        setUser(supaUser);
+      } catch (error) {
+        console.error('Error fetching user:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+
+    supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+  }, []);
+
+  return (
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        <AuthGuard>
+          <div className="flex h-screen">
+            <Sidebar />
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <Header />
+              <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50 p-6">
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/signals" element={<TradingSignals />} />
+                  <Route path="/analysis" element={<ComprehensiveAnalysis />} />
+                  <Route path="/adaptive" element={<AdaptiveDashboard />} />
+                  <Route path="/audit" element={<SystemAudit />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/system" element={<SystemOverview />} />
+                  <Route path="/login" element={<Login />} />
+                </Routes>
+              </main>
+            </div>
           </div>
-        </BrowserRouter>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+        </AuthGuard>
+      </div>
+    </Router>
+  );
+}
 
 export default App;
