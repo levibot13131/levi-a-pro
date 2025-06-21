@@ -14,16 +14,16 @@ export const navItems = [
     page: <Index />,
   },
   {
-    title: "Trading Dashboard",
-    to: "/trading",
-    icon: <TrendingUp className="h-4 w-4" />,
-    page: <TradingDashboard />,
-  },
-  {
     title: "Dashboard",
     to: "/dashboard",
     icon: <BarChart3 className="h-4 w-4" />,
     page: <Dashboard />,
+  },
+  {
+    title: "Trading Dashboard",
+    to: "/trading",
+    icon: <TrendingUp className="h-4 w-4" />,
+    page: <TradingDashboard />,
   },
   {
     title: "Signals",
