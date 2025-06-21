@@ -29,7 +29,7 @@ const technicalIndicators = [
 ];
 
 const patterns = [
-  { name: 'דוג'י', confidence: 85, type: 'reversal', timeframe: '1H' },
+  { name: "דוג'י", confidence: 85, type: 'reversal', timeframe: '1H' },
   { name: 'פטיש', confidence: 72, type: 'bullish', timeframe: '4H' },
   { name: 'משולש עולה', confidence: 91, type: 'continuation', timeframe: '1D' },
 ];
