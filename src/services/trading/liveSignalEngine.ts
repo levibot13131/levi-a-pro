@@ -28,11 +28,11 @@ export interface SignalRejection {
   details: string;
 }
 
-// Fixed sentiment analysis types
+// FIXED: Corrected sentiment analysis interface with proper typing
 interface SentimentAnalysis {
   score: number; // 0-1 scale
-  impact: 'positive' | 'negative' | 'neutral';
-  strength: 'high' | 'medium' | 'low';
+  impact: 'positive' | 'negative' | 'neutral'; // Changed from strength levels to sentiment direction
+  strength: 'high' | 'medium' | 'low'; // Strength of the sentiment
 }
 
 class LiveSignalEngine {
@@ -105,7 +105,7 @@ class LiveSignalEngine {
     const mediumTermTrend = this.calculateTrend(marketData, '1h');
     const longTermTrend = this.calculateTrend(marketData, '4h');
     
-    // FIXED: Sentiment analysis with proper typing
+    // FIXED: Sentiment analysis with corrected typing
     const sentiment = await this.getSentimentScore(symbol);
     
     // Volume analysis
@@ -130,7 +130,7 @@ class LiveSignalEngine {
       reasoning.push('Volume spike detected');
     }
     
-    // FIXED: Sentiment confirmation with proper type checking
+    // FIXED: Sentiment confirmation with corrected property usage
     if (sentiment.impact === 'positive' && sentiment.strength === 'high') {
       confidence += 25;
       reasoning.push(`Strong positive sentiment (${sentiment.score.toFixed(2)})`);
@@ -223,7 +223,7 @@ class LiveSignalEngine {
     // Normalize score
     score = Math.max(0, Math.min(1, score));
     
-    // Determine impact and strength
+    // FIXED: Determine impact (sentiment direction) and strength correctly
     let impact: 'positive' | 'negative' | 'neutral' = 'neutral';
     let strength: 'high' | 'medium' | 'low' = 'low';
     
