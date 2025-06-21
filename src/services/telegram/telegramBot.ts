@@ -18,6 +18,18 @@ export class TelegramBot {
     }
   }
 
+  public async sendTestMessage(): Promise<boolean> {
+    const testMessage = `🧪 <b>LeviPro Test Message</b>
+
+✅ Connection Test Successful
+🔥 System Online
+📡 Signal Transmission Ready
+
+#LeviPro #Test #${new Date().toLocaleTimeString('he-IL')}`;
+
+    return await this.sendMessage(testMessage);
+  }
+
   public async sendSignal(signal: any): Promise<boolean> {
     const message = `🔥 <b>LeviPro Signal</b>
 
