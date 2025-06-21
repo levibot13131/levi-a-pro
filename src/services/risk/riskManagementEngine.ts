@@ -16,6 +16,16 @@ interface RiskMetrics {
   portfolioValue: number;
 }
 
+interface DailyStats {
+  dailyLoss: number;
+  activePositions: number;
+  isWithinLimits: boolean;
+  emergencyPause: boolean;
+  totalSignalsToday: number;
+  rejectedSignalsToday: number;
+  exposureLevel: number;
+}
+
 export class RiskManagementEngine {
   private static instance: RiskManagementEngine;
   
@@ -34,6 +44,10 @@ export class RiskManagementEngine {
     portfolioValue: 100000 // Default portfolio value
   };
 
+  private dailySignalCount = 0;
+  private dailyRejectedCount = 0;
+  private emergencyPauseActive = false;
+
   public static getInstance(): RiskManagementEngine {
     if (!RiskManagementEngine.instance) {
       RiskManagementEngine.instance = new RiskManagementEngine();
@@ -44,6 +58,7 @@ export class RiskManagementEngine {
   public shouldAllowSignal(signal: TradingSignal): { allowed: boolean; reason?: string; riskInfo?: RiskData } {
     // Check risk/reward ratio
     if (signal.riskRewardRatio < this.riskLimits.minRiskReward) {
+      this.dailyRejectedCount++;
       return {
         allowed: false,
         reason: `Risk/Reward ratio ${signal.riskRewardRatio.toFixed(2)} below minimum ${this.riskLimits.minRiskReward}`
@@ -52,6 +67,7 @@ export class RiskManagementEngine {
 
     // Check concurrent positions
     if (this.currentMetrics.activePositions >= this.riskLimits.maxConcurrentPositions) {
+      this.dailyRejectedCount++;
       return {
         allowed: false,
         reason: `Maximum concurrent positions (${this.riskLimits.maxConcurrentPositions}) reached`
@@ -69,6 +85,7 @@ export class RiskManagementEngine {
     // Check if this position would exceed daily risk
     const positionRisk = (recommendedPositionSize / 100) * this.currentMetrics.portfolioValue * (riskPercent / 100);
     if (this.currentMetrics.currentDailyRisk + positionRisk > (this.riskLimits.maxDailyRisk / 100) * this.currentMetrics.portfolioValue) {
+      this.dailyRejectedCount++;
       return {
         allowed: false,
         reason: 'Daily risk limit would be exceeded'
@@ -83,6 +100,7 @@ export class RiskManagementEngine {
       allowed: true
     };
 
+    this.dailySignalCount++;
     return {
       allowed: true,
       riskInfo
@@ -104,6 +122,22 @@ export class RiskManagementEngine {
 💵 Max Position Value: $${riskInfo.maxPositionValue.toFixed(0)}
 🚨 Risk Amount: $${riskInfo.riskAmount.toFixed(0)}
 📊 Portfolio Exposure: ${riskInfo.exposurePercent.toFixed(1)}%`;
+  }
+
+  public getDailyStats(): DailyStats {
+    const dailyLossPercent = (this.currentMetrics.currentDailyRisk / this.currentMetrics.portfolioValue) * 100;
+    const isWithinLimits = dailyLossPercent <= this.riskLimits.maxDailyRisk && 
+                          this.currentMetrics.activePositions <= this.riskLimits.maxConcurrentPositions;
+    
+    return {
+      dailyLoss: dailyLossPercent,
+      activePositions: this.currentMetrics.activePositions,
+      isWithinLimits,
+      emergencyPause: this.emergencyPauseActive,
+      totalSignalsToday: this.dailySignalCount,
+      rejectedSignalsToday: this.dailyRejectedCount,
+      exposureLevel: (this.currentMetrics.currentDailyRisk / this.currentMetrics.portfolioValue) * 100
+    };
   }
 
   public updatePortfolioValue(newValue: number) {
@@ -139,6 +173,16 @@ export class RiskManagementEngine {
 
   public resetDailyRisk() {
     this.currentMetrics.currentDailyRisk = 0;
+    this.dailySignalCount = 0;
+    this.dailyRejectedCount = 0;
+  }
+
+  public enableEmergencyPause() {
+    this.emergencyPauseActive = true;
+  }
+
+  public disableEmergencyPause() {
+    this.emergencyPauseActive = false;
   }
 }
 
