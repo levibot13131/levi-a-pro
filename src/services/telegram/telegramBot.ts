@@ -1,4 +1,3 @@
-
 import { TradingSignal } from '@/types/trading';
 import { toast } from 'sonner';
 
@@ -27,7 +26,7 @@ export class TelegramBot {
 
   public async sendSignal(signal: TradingSignal): Promise<boolean> {
     try {
-      console.log('📱 Sending LIVE signal to Telegram:', signal.symbol, signal.action);
+      console.log('📱 Sending LIVE signal to Telegram:', signal.symbol, signal.action, `Price: $${signal.price?.toFixed(2) || 'N/A'}`);
       
       const message = this.formatLiveSignalMessage(signal);
       const response = await this.sendMessage(message);
@@ -48,19 +47,18 @@ export class TelegramBot {
     }
   }
 
-  // ADD MISSING METHOD
   public async sendSignalDemo(): Promise<boolean> {
     const demoSignal: TradingSignal = {
       id: 'demo-test-12345',
       symbol: 'BTCUSDT',
       strategy: 'almog-personal-method',
       action: 'buy',
-      price: 43500,
-      targetPrice: 44500,
-      stopLoss: 42500,
+      price: 43500.25,
+      targetPrice: 44500.50,
+      stopLoss: 42500.00,
       confidence: 0.85,
       riskRewardRatio: 2.0,
-      reasoning: 'Demo signal - Emotional pressure 85% + Momentum confirmation + Volume breakout',
+      reasoning: 'Demo - LeviPro Method: Emotional pressure 85% + Triangle breakout + Volume confirmation',
       timestamp: Date.now(),
       status: 'active',
       telegramSent: false
@@ -74,32 +72,44 @@ export class TelegramBot {
     const confidenceStars = '⭐'.repeat(Math.ceil(signal.confidence * 5));
     const signalId = `${Date.now().toString().slice(-6)}${Math.random().toString(36).substr(2, 3).toUpperCase()}`;
     
+    // Ensure we have valid prices - fallback to reasonable defaults if NaN
+    const entryPrice = !isNaN(signal.price) && signal.price > 0 ? signal.price : 0;
+    const targetPrice = !isNaN(signal.targetPrice) && signal.targetPrice > 0 ? signal.targetPrice : 
+      (signal.action === 'buy' ? entryPrice * 1.025 : entryPrice * 0.975);
+    const stopLoss = !isNaN(signal.stopLoss) && signal.stopLoss > 0 ? signal.stopLoss :
+      (signal.action === 'buy' ? entryPrice * 0.98 : entryPrice * 1.02);
+    
+    // Calculate proper R/R ratio
+    const riskAmount = Math.abs(entryPrice - stopLoss);
+    const rewardAmount = Math.abs(targetPrice - entryPrice);
+    const riskRewardRatio = riskAmount > 0 ? rewardAmount / riskAmount : 1.5;
+    
     // Special formatting for Almog's personal method
     const isPersonalMethod = signal.strategy === 'almog-personal-method';
-    const strategyName = isPersonalMethod ? '🧠 אסטרטגיה אישית - משולש הקסם' : this.getStrategyName(signal.strategy);
+    const strategyName = isPersonalMethod ? '🧠 LeviPro Method - Triangle Magic' : this.getStrategyName(signal.strategy);
     
     const message = `
 🔥 <b>LeviPro - איתות LIVE ${isPersonalMethod ? '🧠 אישי' : ''}</b> 🔥
 
 ${actionEmoji} <b>${signal.symbol}</b>
 
-${isPersonalMethod ? '🧠 <b>אסטרטגיה אישית מופעלת!</b>' : ''}
+${isPersonalMethod ? '🧠 <b>LeviPro Method מופעל!</b>' : ''}
 🎯 <b>אסטרטגיה:</b> ${strategyName}
 💡 <b>נימוק:</b> ${signal.reasoning}
 
 📊 <b>פרטי עסקה:</b>
-💰 מחיר כניסה: $${signal.price.toFixed(2)}
-🎯 יעד רווח: $${signal.targetPrice.toFixed(2)}
-🛑 סטופ לוס: $${signal.stopLoss.toFixed(2)}
-⚖️ יחס R/R: 1:${signal.riskRewardRatio.toFixed(1)}
+💰 מחיר כניסה: $${entryPrice.toFixed(2)}
+🎯 יעד רווח: $${targetPrice.toFixed(2)}
+🛑 סטופ לוס: $${stopLoss.toFixed(2)}
+⚖️ יחס R/R: 1:${riskRewardRatio.toFixed(1)}
 
 ${confidenceStars} <b>ביטחון:</b> ${(signal.confidence * 100).toFixed(0)}%
 🕐 <b>זמן:</b> ${new Date().toLocaleTimeString('he-IL')}
 🆔 <b>מזהה:</b> ${signalId}
 
-${isPersonalMethod ? '🔥 <b>עדיפות גבוהה - אסטרטגיה אישית!</b>' : ''}
+${isPersonalMethod ? '🔥 <b>עדיפות גבוהה - LeviPro Method!</b>' : ''}
 🤖 <b>LeviPro LIVE Engine</b>
-#TradingSignal #${signal.symbol} #LeviPro ${isPersonalMethod ? '#PersonalMethod' : ''}
+#TradingSignal #${signal.symbol} #LeviPro ${isPersonalMethod ? '#LeviProMethod' : ''}
 `;
 
     return message;

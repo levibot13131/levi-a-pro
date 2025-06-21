@@ -1,4 +1,3 @@
-
 import { MarketData, TradingStrategy } from '@/types/trading';
 import { TradingSignal } from '@/types/trading';
 
@@ -15,7 +14,7 @@ export class StrategyEngine {
     
     // ALMOG'S PERSONAL STRATEGY - HARDCODED 80% WEIGHT - IMMUNE TO AUTO-DISABLE
     this.strategies.set('almog-personal-method', {
-      name: 'Almog Personal Method - Triangle Magic',
+      name: 'Almog Personal Method - LeviPro Triangle Magic',
       weight: 0.80, // HARDCODED - NEVER CHANGES
       immune: true, // IMMUNE TO AUTO-DISABLE
       priority: 1, // ALWAYS FIRST
@@ -95,7 +94,7 @@ export class StrategyEngine {
     if (strategy) {
       // Personal method is immune to changes
       if (strategyId === 'almog-personal-method' && strategy.immune) {
-        console.log('🛡️ Personal Method is immune to changes');
+        console.log('🛡️ Personal Method is immune to changes - maintaining 80% weight');
         return;
       }
       
@@ -105,9 +104,11 @@ export class StrategyEngine {
     }
   }
 
-  // ALMOG'S PERSONAL METHOD - THE CORE STRATEGY
+  // ALMOG'S PERSONAL METHOD - THE CORE STRATEGY - FULLY ENHANCED
   private analyzePersonalMethod(marketData: MarketData): TradingSignal[] {
     const signals: TradingSignal[] = [];
+    
+    console.log(`🧠 Analyzing ${marketData.symbol} with Personal Method - Price: $${marketData.price?.toFixed(2) || 'N/A'}`);
     
     // EMOTIONAL PRESSURE ANALYSIS - CORE OF PERSONAL METHOD
     const emotionalPressure = this.calculateEmotionalPressure(marketData);
@@ -118,19 +119,34 @@ export class StrategyEngine {
     // BREAKOUT CONFIRMATION WITH VOLUME
     const breakoutConfirmation = this.analyzeBreakoutWithVolume(marketData);
     
-    // COMBINE ALL THREE FOR TRIANGLE MAGIC
-    if (emotionalPressure > 0.7 && momentumSignal > 0.6 && breakoutConfirmation) {
+    // TRIANGLE PATTERN DETECTION
+    const trianglePattern = this.detectTrianglePattern(marketData);
+    
+    // PRESSURE ZONES IDENTIFICATION
+    const pressureZones = this.identifyPressureZones(marketData);
+    
+    console.log(`📊 ${marketData.symbol} Analysis: Emotional=${(emotionalPressure*100).toFixed(0)}%, Momentum=${(momentumSignal*100).toFixed(0)}%, Breakout=${breakoutConfirmation}, Triangle=${trianglePattern}, Zones=${pressureZones.length}`);
+    
+    // COMBINE ALL FACTORS FOR LEVIPI METHOD
+    const combinedSignal = this.combineLeviProFactors(emotionalPressure, momentumSignal, breakoutConfirmation, trianglePattern, pressureZones);
+    
+    if (combinedSignal.shouldTrade) {
+      const currentPrice = marketData.price || 0;
+      
+      // Calculate proper entry, target, and stop loss based on method
+      const { targetPrice, stopLoss } = this.calculatePersonalMethodLevels(currentPrice, combinedSignal.action, marketData);
+      
       const signal: TradingSignal = {
         id: `personal-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         symbol: marketData.symbol,
         strategy: 'almog-personal-method',
-        action: momentumSignal > 0.8 ? 'buy' : 'sell',
-        price: marketData.price,
-        targetPrice: momentumSignal > 0.8 ? marketData.price * 1.03 : marketData.price * 0.97,
-        stopLoss: momentumSignal > 0.8 ? marketData.price * 0.98 : marketData.price * 1.02,
-        confidence: Math.min(emotionalPressure * momentumSignal, 0.95),
-        riskRewardRatio: 1.5,
-        reasoning: `Personal Method Triangle: Emotional Pressure ${(emotionalPressure * 100).toFixed(0)}% + Momentum ${(momentumSignal * 100).toFixed(0)}% + Volume Confirmation`,
+        action: combinedSignal.action,
+        price: currentPrice,
+        targetPrice,
+        stopLoss,
+        confidence: combinedSignal.confidence,
+        riskRewardRatio: Math.abs(targetPrice - currentPrice) / Math.abs(currentPrice - stopLoss),
+        reasoning: `LeviPro Method: ${combinedSignal.reasoning}`,
         timestamp: Date.now(),
         status: 'active',
         telegramSent: false,
@@ -139,22 +155,23 @@ export class StrategyEngine {
           emotionalPressure,
           momentumSignal,
           breakoutConfirmation,
-          triangleMagic: true
+          trianglePattern,
+          pressureZones: pressureZones.length,
+          leviProMethod: true
         }
       };
       
       signals.push(signal);
-      console.log('🔥 Personal Method Signal Generated:', signal.symbol, signal.action, `${(signal.confidence * 100).toFixed(0)}%`);
+      console.log(`🔥 PERSONAL METHOD SIGNAL: ${signal.action.toUpperCase()} ${signal.symbol} at $${signal.price.toFixed(2)} -> TP: $${signal.targetPrice.toFixed(2)}, SL: $${signal.stopLoss.toFixed(2)} (${(signal.confidence * 100).toFixed(0)}%)`);
     }
     
     return signals;
   }
 
   private calculateEmotionalPressure(marketData: MarketData): number {
-    // Real emotional pressure calculation based on RSI, volatility, and volume spikes
     const rsi = marketData.rsi || 50;
-    const volumeSpike = marketData.volume > marketData.avgVolume * 1.5;
-    const priceVolatility = Math.abs(marketData.priceChange / marketData.price) * 100;
+    const volumeSpike = (marketData.volume || 0) > (marketData.avgVolume || 1) * 1.5;
+    const priceVolatility = Math.abs((marketData.priceChange || 0)) / (marketData.price || 1) * 100;
     
     let pressure = 0;
     
@@ -168,19 +185,22 @@ export class StrategyEngine {
     // High volatility = high emotions
     if (priceVolatility > 2) pressure += Math.min(priceVolatility / 10, 0.4);
     
+    // MACD divergence adds pressure
+    const macd = marketData.macdData || marketData.macd;
+    if (macd && Math.abs(macd.histogram || 0) > 50) pressure += 0.2;
+    
     return Math.min(pressure, 1.0);
   }
 
   private analyzeMomentumWithCandles(marketData: MarketData): number {
-    // Real momentum analysis with candlestick patterns
-    const priceChange = marketData.priceChange;
-    const volumeRatio = marketData.volume / marketData.avgVolume;
+    const priceChange = marketData.priceChange || 0;
+    const volumeRatio = (marketData.volume || 0) / (marketData.avgVolume || 1);
     const candlePattern = marketData.candlestickPattern || '';
     
     let momentum = 0.5;
     
     // Price momentum
-    if (Math.abs(priceChange) > marketData.price * 0.01) {
+    if (Math.abs(priceChange) > 1) {
       momentum += priceChange > 0 ? 0.2 : -0.2;
     }
     
@@ -194,17 +214,111 @@ export class StrategyEngine {
     if (bullishPatterns.includes(candlePattern)) momentum += 0.25;
     if (bearishPatterns.includes(candlePattern)) momentum -= 0.25;
     
+    // VWAP momentum
+    const price = marketData.price || 0;
+    const vwap = marketData.vwap || price;
+    if (price > vwap * 1.005) momentum += 0.1;
+    if (price < vwap * 0.995) momentum -= 0.1;
+    
     return Math.max(0, Math.min(1, momentum));
   }
 
   private analyzeBreakoutWithVolume(marketData: MarketData): boolean {
-    // Real breakout analysis with volume confirmation
-    const volumeRatio = marketData.volume / marketData.avgVolume;
-    const priceChange = Math.abs(marketData.priceChange);
-    const volatility = priceChange / marketData.price;
+    const volumeRatio = (marketData.volume || 0) / (marketData.avgVolume || 1);
+    const priceChange = Math.abs(marketData.priceChange || 0);
     
     // Confirmed breakout needs volume spike + significant price move
-    return volumeRatio > 1.3 && volatility > 0.015;
+    return volumeRatio > 1.3 && priceChange > 1.5;
+  }
+
+  private detectTrianglePattern(marketData: MarketData): boolean {
+    // Simplified triangle detection based on price action and volatility
+    const rsi = marketData.rsi || 50;
+    const priceChange = Math.abs(marketData.priceChange || 0);
+    const volumeRatio = (marketData.volume || 0) / (marketData.avgVolume || 1);
+    
+    // Triangle formation: decreasing volatility + RSI in middle range + volume buildup
+    const isTriangle = priceChange < 2 && rsi > 40 && rsi < 60 && volumeRatio > 1.1;
+    
+    return isTriangle;
+  }
+
+  private identifyPressureZones(marketData: MarketData): Array<{level: number, type: 'support' | 'resistance'}> {
+    const price = marketData.price || 0;
+    const zones = [];
+    
+    // VWAP as dynamic support/resistance
+    const vwap = marketData.vwap || price;
+    if (Math.abs(price - vwap) / price < 0.01) {
+      zones.push({ level: vwap, type: price > vwap ? 'support' : 'resistance' });
+    }
+    
+    // Fibonacci levels as pressure zones
+    const fib = marketData.fibonacci;
+    if (fib) {
+      if (Math.abs(price - fib.level618) / price < 0.005) {
+        zones.push({ level: fib.level618, type: 'support' });
+      }
+      if (Math.abs(price - fib.level786) / price < 0.005) {
+        zones.push({ level: fib.level786, type: 'resistance' });
+      }
+    }
+    
+    return zones;
+  }
+
+  private combineLeviProFactors(
+    emotionalPressure: number,
+    momentumSignal: number,
+    breakoutConfirmation: boolean,
+    trianglePattern: boolean,
+    pressureZones: Array<{level: number, type: 'support' | 'resistance'}>
+  ): { shouldTrade: boolean; action: 'buy' | 'sell'; confidence: number; reasoning: string } {
+    
+    // LeviPro Method requires multiple confirmations
+    const hasEmotionalSignal = emotionalPressure > 0.6;
+    const hasMomentumSignal = momentumSignal > 0.6 || momentumSignal < 0.4;
+    const hasVolumeConfirmation = breakoutConfirmation;
+    const hasPatternSetup = trianglePattern || pressureZones.length > 0;
+    
+    const confirmations = [hasEmotionalSignal, hasMomentumSignal, hasVolumeConfirmation, hasPatternSetup].filter(Boolean).length;
+    
+    if (confirmations >= 3) {
+      const action = momentumSignal > 0.5 ? 'buy' : 'sell';
+      const confidence = Math.min((emotionalPressure + Math.abs(momentumSignal - 0.5) * 2 + (breakoutConfirmation ? 0.2 : 0)) / 1.4, 0.95);
+      
+      const reasoning = `Emotional pressure ${(emotionalPressure * 100).toFixed(0)}% + Momentum ${action} + ${breakoutConfirmation ? 'Volume breakout' : 'Pattern setup'} + ${pressureZones.length} pressure zones`;
+      
+      return {
+        shouldTrade: true,
+        action,
+        confidence,
+        reasoning
+      };
+    }
+    
+    return {
+      shouldTrade: false,
+      action: 'buy',
+      confidence: 0,
+      reasoning: `Insufficient confirmations: ${confirmations}/4 required`
+    };
+  }
+
+  private calculatePersonalMethodLevels(currentPrice: number, action: 'buy' | 'sell', marketData: MarketData): { targetPrice: number; stopLoss: number } {
+    const volatilityMultiplier = Math.max(Math.abs(marketData.priceChange || 2) / 100, 0.015);
+    
+    if (action === 'buy') {
+      return {
+        targetPrice: currentPrice * (1 + volatilityMultiplier * 2), // 2:1 R/R minimum
+        stopLoss: currentPrice * (1 - volatilityMultiplier)
+      };
+    } else {
+      return {
+        targetPrice: currentPrice * (1 - volatilityMultiplier * 2),
+        stopLoss: currentPrice * (1 + volatilityMultiplier)
+      };
+    }
   }
 
   // RSI + MACD Strategy Implementation
