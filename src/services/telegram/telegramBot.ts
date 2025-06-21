@@ -13,8 +13,15 @@ interface TelegramConfig {
   chatId: string;
 }
 
+interface ConnectionStatus {
+  connected: boolean;
+  lastMessageTime?: number;
+  error?: string;
+}
+
 export class TelegramBot {
   private config: TelegramConfig;
+  private connectionStatus: ConnectionStatus = { connected: false };
 
   constructor() {
     this.config = {
@@ -66,7 +73,7 @@ export class TelegramBot {
     }
   }
 
-  private async sendMessage(message: string, parseMode: 'Markdown' | 'HTML' = 'Markdown'): Promise<boolean> {
+  public async sendMessage(message: string, parseMode: 'Markdown' | 'HTML' = 'Markdown'): Promise<boolean> {
     try {
       const url = `${TELEGRAM_API_URL}${this.config.botToken}/sendMessage`;
       
@@ -88,16 +95,68 @@ export class TelegramBot {
       if (response.ok) {
         const result = await response.json();
         console.log('✅ LIVE message sent successfully to Telegram');
+        this.connectionStatus = { connected: true, lastMessageTime: Date.now() };
         return true;
       } else {
         const errorData = await response.json();
         console.error('❌ Telegram API error:', errorData);
+        this.connectionStatus = { connected: false, error: errorData.description };
         return false;
       }
     } catch (error) {
       console.error('❌ Network error sending to Telegram:', error);
+      this.connectionStatus = { connected: false, error: String(error) };
       return false;
     }
+  }
+
+  public async sendTestMessage(): Promise<boolean> {
+    try {
+      console.log('🧪 Sending test message to Telegram...');
+      
+      const testMessage = `🧪 *Test Message*
+
+✅ LeviPro Elite Signal Engine Connected
+🎯 Only high-quality signals (R/R ≥ 2:1, Confidence > 80%)
+🔥 Swing Trade Focus Active
+
+_Test completed at ${new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })} 🇮🇱_`;
+      
+      return await this.sendMessage(testMessage);
+    } catch (error) {
+      console.error('❌ Error sending test message:', error);
+      return false;
+    }
+  }
+
+  public async sendSignalDemo(): Promise<boolean> {
+    try {
+      console.log('📱 Sending demo signal to Telegram...');
+      
+      const demoMessage = `🔥 *LeviPro Demo Signal* 🔥
+🟢 *Buy BTC/USDT*
+*Timeframe:* 4H + 1D | *Strategy:* Wyckoff Spring
+*Entry:* $43,250 | *SL:* $41,800 | *TP:* $46,150
+*R/R:* 1:2.1 | *Confidence:* 85%
+*Sent:* ${new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })} 🇮🇱
+
+🧠 *Reasoning:*
+• Wyckoff spring pattern completed
+• 4H + Daily confluence
+• Volume confirmation on breakout
+• RSI oversold recovery
+
+_This is a demo signal - Powered by LeviPro AI Engine_`;
+      
+      return await this.sendMessage(demoMessage);
+    } catch (error) {
+      console.error('❌ Error sending demo signal:', error);
+      return false;
+    }
+  }
+
+  public getConnectionStatus(): ConnectionStatus {
+    return { ...this.connectionStatus };
   }
 
   public async testEliteConnection(): Promise<boolean> {
@@ -107,7 +166,7 @@ export class TelegramBot {
       const testMessage = `🧪 *Elite Connection Test*
 
 ✅ LeviPro Elite Signal Engine Connected
-🎯 Only high-quality signals (R/R ≥ 1.5, Confidence > 80%)
+🎯 Only high-quality swing signals (R/R ≥ 2:1, Confidence > 80%)
 🔥 Personal Method Priority Active
 
 _Test completed at ${new Date().toLocaleString('he-IL', { timeZone: 'Asia/Jerusalem' })} 🇮🇱_`;

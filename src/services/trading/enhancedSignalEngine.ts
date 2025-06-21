@@ -93,7 +93,7 @@ export class EnhancedSignalEngine {
         riskRewardRatio: analysisResult.riskReward,
         reasoning: analysisResult.reasoning,
         timestamp: Date.now(),
-        status: 'pending',
+        status: 'active', // Fixed: changed from 'pending' to 'active'
         telegramSent: false,
         metadata: {
           timeframe: analysisResult.timeframe,
