@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,7 +8,7 @@ import {
   Signal, 
   Globe, 
   Calculator,
-  Flask,
+  TestTube,
   Settings, 
   LogOut, 
   Menu, 
@@ -29,7 +30,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'איתותים', href: '/signals', icon: Signal },
     { name: 'ניתוח פונדמנטלי', href: '/fundamentals', icon: Globe },
     { name: 'מחשבוני מסחר', href: '/trading-calculators', icon: Calculator },
-    { name: 'מעבדת בדיקות', href: '/backtesting', icon: Flask },
+    { name: 'מעבדת בדיקות', href: '/backtesting', icon: TestTube },
   ];
 
   const handleSignOut = async () => {

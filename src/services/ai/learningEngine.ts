@@ -64,11 +64,12 @@ export class AILearningEngine {
 
   private async loadHistoricalData() {
     try {
-      // Load historical signal results from database
+      // Load historical trading signals from database
       const { data: results, error } = await supabase
-        .from('signal_results')
+        .from('trading_signals')
         .select('*')
-        .order('timestamp', { ascending: false })
+        .not('exit_price', 'is', null)
+        .order('created_at', { ascending: false })
         .limit(1000);
 
       if (error) {
@@ -76,7 +77,22 @@ export class AILearningEngine {
         return;
       }
 
-      this.signalResults = results || [];
+      // Convert trading signals to signal results format
+      this.signalResults = (results || []).map(signal => ({
+        signalId: signal.signal_id,
+        strategy: signal.strategy,
+        symbol: signal.symbol,
+        action: signal.action as 'buy' | 'sell',
+        entryPrice: Number(signal.price) || 0,
+        exitPrice: Number(signal.exit_price) || 0,
+        profitPercent: Number(signal.profit_percent) || 0,
+        outcome: this.determineOutcome(Number(signal.profit_percent) || 0),
+        duration: this.calculateDuration(signal.created_at, signal.executed_at),
+        timestamp: new Date(signal.created_at).getTime(),
+        confidence: Number(signal.confidence) || 0.5,
+        riskRewardRatio: Number(signal.risk_reward_ratio) || 1.0
+      }));
+
       console.log(`📊 Loaded ${this.signalResults.length} historical signal results`);
       
       this.calculateStrategyPerformance();
@@ -84,6 +100,19 @@ export class AILearningEngine {
     } catch (error) {
       console.error('Error initializing AI learning engine:', error);
     }
+  }
+
+  private determineOutcome(profitPercent: number): 'win' | 'loss' | 'breakeven' {
+    if (profitPercent > 0.1) return 'win';
+    if (profitPercent < -0.1) return 'loss';
+    return 'breakeven';
+  }
+
+  private calculateDuration(createdAt: string, executedAt: string | null): number {
+    if (!executedAt) return 0;
+    const start = new Date(createdAt).getTime();
+    const end = new Date(executedAt).getTime();
+    return Math.floor((end - start) / (1000 * 60)); // Duration in minutes
   }
 
   private startPerformanceTracking() {
@@ -103,10 +132,16 @@ export class AILearningEngine {
     console.log('📝 Recording signal result:', result);
     
     try {
-      // Save to database
+      // Save to trading_signals table with exit data
       const { error } = await supabase
-        .from('signal_results')
-        .insert([result]);
+        .from('trading_signals')
+        .update({
+          exit_price: result.exitPrice,
+          profit_percent: result.profitPercent,
+          status: 'completed',
+          exit_reason: result.outcome
+        })
+        .eq('signal_id', result.signalId);
 
       if (error) {
         console.error('Error saving signal result:', error);
