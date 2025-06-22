@@ -9,6 +9,84 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      api_status: {
+        Row: {
+          api_quota_limit: number | null
+          api_quota_used: number | null
+          created_at: string | null
+          error_count: number | null
+          id: string
+          is_active: boolean | null
+          last_error_message: string | null
+          last_health_check: string | null
+          service_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          api_quota_limit?: number | null
+          api_quota_used?: number | null
+          created_at?: string | null
+          error_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_error_message?: string | null
+          last_health_check?: string | null
+          service_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          api_quota_limit?: number | null
+          api_quota_used?: number | null
+          created_at?: string | null
+          error_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_error_message?: string | null
+          last_health_check?: string | null
+          service_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      learning_iterations: {
+        Row: {
+          accuracy_rate: number | null
+          confidence_adjustments: Json | null
+          created_at: string | null
+          data_points_processed: number | null
+          id: string
+          iteration_number: number
+          market_conditions_learned: Json | null
+          strategy_weights: Json | null
+          successful_predictions: number | null
+          total_predictions: number | null
+        }
+        Insert: {
+          accuracy_rate?: number | null
+          confidence_adjustments?: Json | null
+          created_at?: string | null
+          data_points_processed?: number | null
+          id?: string
+          iteration_number: number
+          market_conditions_learned?: Json | null
+          strategy_weights?: Json | null
+          successful_predictions?: number | null
+          total_predictions?: number | null
+        }
+        Update: {
+          accuracy_rate?: number | null
+          confidence_adjustments?: Json | null
+          created_at?: string | null
+          data_points_processed?: number | null
+          id?: string
+          iteration_number?: number
+          market_conditions_learned?: Json | null
+          strategy_weights?: Json | null
+          successful_predictions?: number | null
+          total_predictions?: number | null
+        }
+        Relationships: []
+      }
       market_data_cache: {
         Row: {
           candlestick_pattern: string | null
@@ -60,6 +138,51 @@ export type Database = {
         }
         Relationships: []
       }
+      market_intelligence: {
+        Row: {
+          content: string | null
+          content_type: string
+          id: string
+          impact_level: string | null
+          is_processed: boolean | null
+          metadata: Json | null
+          processed_at: string | null
+          published_at: string | null
+          sentiment: string | null
+          source: string
+          symbols: string[] | null
+          title: string
+        }
+        Insert: {
+          content?: string | null
+          content_type: string
+          id?: string
+          impact_level?: string | null
+          is_processed?: boolean | null
+          metadata?: Json | null
+          processed_at?: string | null
+          published_at?: string | null
+          sentiment?: string | null
+          source: string
+          symbols?: string[] | null
+          title: string
+        }
+        Update: {
+          content?: string | null
+          content_type?: string
+          id?: string
+          impact_level?: string | null
+          is_processed?: boolean | null
+          metadata?: Json | null
+          processed_at?: string | null
+          published_at?: string | null
+          sentiment?: string | null
+          source?: string
+          symbols?: string[] | null
+          title?: string
+        }
+        Relationships: []
+      }
       signal_feedback: {
         Row: {
           created_at: string
@@ -93,6 +216,81 @@ export type Database = {
           signal_id?: string
           strategy_used?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      signal_history: {
+        Row: {
+          action: string
+          actual_profit_loss: number | null
+          closed_at: string | null
+          confidence: number
+          created_at: string | null
+          entry_price: number
+          exit_price: number | null
+          exit_reason: string | null
+          id: string
+          market_conditions: Json | null
+          outcome: string | null
+          performance_score: number | null
+          reasoning: string | null
+          risk_reward_ratio: number
+          sentiment_data: Json | null
+          signal_id: string
+          stop_loss: number
+          strategy: string
+          symbol: string
+          target_price: number
+          user_id: string | null
+          was_correct: boolean | null
+        }
+        Insert: {
+          action: string
+          actual_profit_loss?: number | null
+          closed_at?: string | null
+          confidence: number
+          created_at?: string | null
+          entry_price: number
+          exit_price?: number | null
+          exit_reason?: string | null
+          id?: string
+          market_conditions?: Json | null
+          outcome?: string | null
+          performance_score?: number | null
+          reasoning?: string | null
+          risk_reward_ratio: number
+          sentiment_data?: Json | null
+          signal_id: string
+          stop_loss: number
+          strategy: string
+          symbol: string
+          target_price: number
+          user_id?: string | null
+          was_correct?: boolean | null
+        }
+        Update: {
+          action?: string
+          actual_profit_loss?: number | null
+          closed_at?: string | null
+          confidence?: number
+          created_at?: string | null
+          entry_price?: number
+          exit_price?: number | null
+          exit_reason?: string | null
+          id?: string
+          market_conditions?: Json | null
+          outcome?: string | null
+          performance_score?: number | null
+          reasoning?: string | null
+          risk_reward_ratio?: number
+          sentiment_data?: Json | null
+          signal_id?: string
+          stop_loss?: number
+          strategy?: string
+          symbol?: string
+          target_price?: number
+          user_id?: string | null
+          was_correct?: boolean | null
         }
         Relationships: []
       }
@@ -354,6 +552,45 @@ export type Database = {
         }
         Relationships: []
       }
+      user_profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_quota_reset: string | null
+          signal_quota_daily: number | null
+          signals_received_today: number | null
+          subscription_tier: string | null
+          telegram_chat_id: string | null
+          updated_at: string | null
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_quota_reset?: string | null
+          signal_quota_daily?: number | null
+          signals_received_today?: number | null
+          subscription_tier?: string | null
+          telegram_chat_id?: string | null
+          updated_at?: string | null
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_quota_reset?: string | null
+          signal_quota_daily?: number | null
+          signals_received_today?: number | null
+          subscription_tier?: string | null
+          telegram_chat_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
       user_trading_settings: {
         Row: {
           auto_trading_enabled: boolean
@@ -407,7 +644,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      reset_daily_quotas: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      update_signal_outcome: {
+        Args: {
+          p_signal_id: string
+          p_outcome: string
+          p_exit_price: number
+          p_exit_reason?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

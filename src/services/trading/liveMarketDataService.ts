@@ -1,5 +1,7 @@
 
-// Live Market Data Service - Real-time data integration
+// Live Market Data Service - Real-time data integration via Supabase Edge Functions
+import { supabase } from '@/integrations/supabase/client';
+
 export interface LiveMarketData {
   symbol: string;
   price: number;
@@ -23,65 +25,76 @@ class LiveMarketDataService {
   private updateInterval = 30000; // 30 seconds
 
   async getMultipleAssets(symbols: string[]): Promise<Map<string, LiveMarketData>> {
-    console.log(`🔍 Fetching live data for ${symbols.length} symbols: ${symbols.join(', ')}`);
+    console.log(`🔍 Fetching LIVE data for ${symbols.length} symbols: ${symbols.join(', ')}`);
     
-    const results = new Map<string, LiveMarketData>();
-    
-    for (const symbol of symbols) {
-      try {
-        // Simulate real market data with realistic variations
-        const basePrice = this.getBasePrice(symbol);
-        const priceVariation = (Math.random() - 0.5) * 0.1; // ±5% variation
-        const volumeVariation = Math.random() * 2; // 0-2x variation
-        
-        const marketData: LiveMarketData = {
-          symbol,
-          price: basePrice * (1 + priceVariation),
-          change24h: (Math.random() - 0.5) * 10, // ±5% daily change
-          volume24h: this.getBaseVolume(symbol) * volumeVariation,
-          high24h: basePrice * (1 + Math.abs(priceVariation) + 0.02),
-          low24h: basePrice * (1 - Math.abs(priceVariation) - 0.02),
-          timestamp: Date.now()
-        };
-        
-        results.set(symbol, marketData);
-        this.cache.set(symbol, marketData);
-        
-        console.log(`📊 ${symbol}: $${marketData.price.toFixed(2)} (${marketData.change24h.toFixed(2)}%) Vol: ${marketData.volume24h.toLocaleString()}`);
-        
-      } catch (error) {
-        console.error(`❌ Error fetching data for ${symbol}:`, error);
+    try {
+      // Call live market data Edge function
+      const { data, error } = await supabase.functions.invoke('market-data-stream');
+      
+      if (error) {
+        console.error('❌ Error calling market-data-stream:', error);
+        throw error;
       }
+
+      if (!data.success) {
+        throw new Error('Market data service returned error');
+      }
+
+      const results = new Map<string, LiveMarketData>();
+      
+      // Process live data
+      for (const marketData of data.data) {
+        if (symbols.includes(marketData.symbol)) {
+          results.set(marketData.symbol, marketData);
+          this.cache.set(marketData.symbol, marketData);
+          
+          console.log(`📊 LIVE ${marketData.symbol}: $${marketData.price.toFixed(2)} (${marketData.change24h.toFixed(2)}%) Vol: ${marketData.volume24h.toLocaleString()}`);
+        }
+      }
+      
+      this.lastUpdate = Date.now();
+      console.log(`✅ LIVE data updated for ${results.size}/${symbols.length} symbols`);
+      
+      return results;
+      
+    } catch (error) {
+      console.error('❌ Error fetching live market data:', error);
+      
+      // Fallback to cached data if available
+      const results = new Map<string, LiveMarketData>();
+      for (const symbol of symbols) {
+        const cached = this.cache.get(symbol);
+        if (cached) {
+          results.set(symbol, cached);
+        }
+      }
+      
+      if (results.size === 0) {
+        throw new Error('No live market data available and no cache');
+      }
+      
+      return results;
     }
-    
-    this.lastUpdate = Date.now();
-    console.log(`✅ Live data updated for ${results.size}/${symbols.length} symbols`);
-    
-    return results;
   }
 
   async performHealthCheck(): Promise<HealthCheckResult> {
-    console.log('🔍 Performing market data health check...');
+    console.log('🔍 Performing LIVE market data health check...');
     
     try {
-      // Simulate Binance API check
-      const binanceHealthy = Math.random() > 0.1; // 90% success rate
-      
-      // Simulate CoinGecko API check
-      const coinGeckoHealthy = Math.random() > 0.15; // 85% success rate
+      const { data, error } = await supabase.functions.invoke('market-data-stream');
       
       const result: HealthCheckResult = {
-        binance: binanceHealthy,
-        coinGecko: coinGeckoHealthy,
-        overall: binanceHealthy || coinGeckoHealthy,
+        binance: false, // Not directly connected
+        coinGecko: !error && data?.success,
+        overall: !error && data?.success,
         lastChecked: Date.now()
       };
       
-      console.log(`📡 Health Check: Binance=${binanceHealthy ? '✅' : '❌'} | CoinGecko=${coinGeckoHealthy ? '✅' : '❌'}`);
+      console.log(`📡 LIVE Health Check: CoinGecko=${result.coinGecko ? '✅' : '❌'}`);
       
       return result;
     } catch (error) {
-      console.error('❌ Health check failed:', error);
+      console.error('❌ Live health check failed:', error);
       return {
         binance: false,
         coinGecko: false,
@@ -93,33 +106,9 @@ class LiveMarketDataService {
 
   getDataFreshness(symbol: string): number {
     const cachedData = this.cache.get(symbol);
-    if (!cachedData) return -1; // No data available
+    if (!cachedData) return -1;
     
     return Date.now() - cachedData.timestamp;
-  }
-
-  private getBasePrice(symbol: string): number {
-    const basePrices = {
-      'BTCUSDT': 67500,
-      'ETHUSDT': 3520,
-      'SOLUSDT': 195,
-      'BNBUSDT': 600,
-      'ADAUSDT': 0.45,
-      'DOTUSDT': 8.50
-    };
-    return basePrices[symbol as keyof typeof basePrices] || 100;
-  }
-
-  private getBaseVolume(symbol: string): number {
-    const baseVolumes = {
-      'BTCUSDT': 800000000,
-      'ETHUSDT': 600000000,
-      'SOLUSDT': 150000000,
-      'BNBUSDT': 100000000,
-      'ADAUSDT': 200000000,
-      'DOTUSDT': 50000000
-    };
-    return baseVolumes[symbol as keyof typeof baseVolumes] || 10000000;
   }
 
   getConnectionStatus() {
@@ -128,7 +117,7 @@ class LiveMarketDataService {
       connected: isConnected,
       lastUpdate: this.lastUpdate,
       cacheSize: this.cache.size,
-      status: isConnected ? 'Connected' : 'Disconnected'
+      status: isConnected ? 'Connected to LIVE APIs' : 'Disconnected'
     };
   }
 }
