@@ -251,6 +251,14 @@ const EnhancedTradingChart: React.FC<EnhancedTradingChartProps> = ({
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
                 <XAxis dataKey="time" tick={{ fontSize: 12 }} />
                 <YAxis domain={['dataMin - 100', 'dataMax + 100']} tick={{ fontSize: 12 }} />
+                {showVolume && (
+                  <YAxis 
+                    yAxisId="volume"
+                    orientation="right" 
+                    domain={['auto', 'auto']} 
+                    tick={{ fontSize: 12 }} 
+                  />
+                )}
                 <Tooltip 
                   formatter={(value: any, name: string) => [
                     typeof value === 'number' ? `$${value.toFixed(2)}` : value,
@@ -315,12 +323,12 @@ const EnhancedTradingChart: React.FC<EnhancedTradingChartProps> = ({
                   dot={false}
                 />
                 
-                {/* Volume bars */}
+                {/* Volume bars with proper yAxisId */}
                 {showVolume && (
                   <Bar
+                    yAxisId="volume"
                     dataKey="volume"
                     fill="rgba(100, 116, 139, 0.3)"
-                    yAxisId="volume"
                   />
                 )}
               </ComposedChart>
