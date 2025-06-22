@@ -41,6 +41,7 @@ class LiveSignalEngine {
   private rejections: SignalRejection[] = [];
   private interval: NodeJS.Timeout | null = null;
   private lastAnalysisTime = 0;
+  private lastAnalysisReport = '';
   
   private readonly AUTHORIZED_CHAT_ID = '809305569';
   private readonly BOT_TOKEN = '7607389220:AAHSUnDPTR_9iQEmMjZkSy5i0kepBotAUbA';
@@ -50,8 +51,9 @@ class LiveSignalEngine {
   start() {
     if (this.isRunning) return;
     
-    console.log('🚀 LiveSignalEngine starting with REAL market analysis...');
-    console.log('📊 Analysis will run every 30 seconds with full transparency');
+    console.log('🚀 LeviPro v1.0 Starting - ENTERPRISE GRADE ANALYSIS');
+    console.log('📊 Real signals will be analyzed every 30 seconds');
+    console.log('🎯 Minimum criteria: 80% confidence + 1.5 R/R + proper sentiment');
     this.isRunning = true;
     
     // Run analysis every 30 seconds
@@ -69,19 +71,20 @@ class LiveSignalEngine {
       this.interval = null;
     }
     this.isRunning = false;
-    console.log('🛑 LiveSignalEngine stopped');
+    console.log('🛑 LeviPro Signal Engine stopped');
   }
 
   private async analyzeMarkets() {
     const analysisStart = Date.now();
     this.lastAnalysisTime = analysisStart;
     
-    console.log('🔍 === STARTING MARKET ANALYSIS CYCLE ===');
-    console.log(`⏰ Analysis Time: ${new Date().toLocaleString()}`);
+    console.log('🔍 === LEVIPRO ANALYSIS CYCLE START ===');
+    console.log(`⏰ Time: ${new Date().toLocaleString()}`);
     
     let totalAnalyzed = 0;
     let signalsGenerated = 0;
     let rejectionsLogged = 0;
+    let analysisReport = [];
     
     for (const symbol of this.SYMBOLS) {
       try {
@@ -96,12 +99,15 @@ class LiveSignalEngine {
           await this.sendTelegramSignal(signal);
           signalsGenerated++;
           console.log(`🎯 ✅ SIGNAL SENT: ${signal.symbol} ${signal.action} at $${signal.price}`);
+          analysisReport.push(`✅ ${symbol}: SIGNAL SENT (${analysis.confidence}%)`);
         } else {
           this.logRejection(symbol, analysis);
           rejectionsLogged++;
+          analysisReport.push(`❌ ${symbol}: REJECTED - ${analysis.reason} (${analysis.confidence}%)`);
         }
       } catch (error) {
         console.error(`❌ Error analyzing ${symbol}:`, error);
+        analysisReport.push(`⚠️ ${symbol}: ERROR - ${error.message}`);
         rejectionsLogged++;
       }
     }
@@ -109,13 +115,17 @@ class LiveSignalEngine {
     const analysisEnd = Date.now();
     const duration = analysisEnd - analysisStart;
     
-    console.log('\n🏁 === ANALYSIS CYCLE COMPLETE ===');
+    // Store report for UI access
+    this.lastAnalysisReport = analysisReport.join('\n');
+    
+    console.log('\n🏁 === LEVIPRO ANALYSIS COMPLETE ===');
     console.log(`⚡ Duration: ${duration}ms`);
     console.log(`📊 Symbols Analyzed: ${totalAnalyzed}`);
     console.log(`🎯 Signals Generated: ${signalsGenerated}`);
-    console.log(`❌ Rejections Logged: ${rejectionsLogged}`);
+    console.log(`❌ Rejections: ${rejectionsLogged}`);
     console.log(`📈 Total Signals Today: ${this.signals.length}`);
     console.log(`📉 Total Rejections Today: ${this.rejections.length}`);
+    console.log('💡 NEXT ANALYSIS IN 30 SECONDS');
     console.log('================================================\n');
   }
 
@@ -477,6 +487,10 @@ ${signal.volumeSpike ? '🌊 זינוק נפח זוהה' : ''}
     return this.rejections.slice(-limit);
   }
 
+  getLastAnalysisReport(): string {
+    return this.lastAnalysisReport;
+  }
+
   getEngineStatus() {
     return {
       isRunning: this.isRunning,
@@ -487,7 +501,8 @@ ${signal.volumeSpike ? '🌊 זינוק נפח זוהה' : ''}
         `Intelligence Active: ${this.signals.length} signals sent, ${this.rejections.length} filtered out` :
         'Engine stopped - no analysis running',
       analysisFrequency: '30 seconds',
-      uptime: this.isRunning ? Date.now() - this.lastAnalysisTime : 0
+      uptime: this.isRunning ? Date.now() - this.lastAnalysisTime : 0,
+      lastAnalysisReport: this.lastAnalysisReport
     };
   }
 

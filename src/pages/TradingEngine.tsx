@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,6 +21,7 @@ import { backgroundSignalService } from '@/services/trading/backgroundSignalServ
 import EnhancedSystemDiagnostic from '@/components/diagnostics/EnhancedSystemDiagnostic';
 import ImprovedLiveCandlestickChart from '@/components/charts/ImprovedLiveCandlestickChart';
 import TradingJournalDashboard from '@/components/journal/TradingJournalDashboard';
+import WhyNoSignalBanner from '@/components/trading-engine/WhyNoSignalBanner';
 
 const TradingEngine: React.FC = () => {
   const [engineStatus, setEngineStatus] = useState({
@@ -85,6 +85,9 @@ const TradingEngine: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Why No Signal Banner */}
+      <WhyNoSignalBanner />
+
       {/* Engine Control Header */}
       <Card className="border-2 border-blue-500">
         <CardHeader>
