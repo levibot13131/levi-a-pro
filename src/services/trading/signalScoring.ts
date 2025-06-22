@@ -39,7 +39,7 @@ export class SignalScoring {
       reasoning.push('Normal volume levels');
     }
     
-    // FIXED: Correct sentiment analysis logic - using impact AND strength properly
+    // CORRECTED: Proper sentiment analysis logic using both impact AND strength
     if (sentiment.impact === 'positive') {
       if (sentiment.strength === 'high') {
         confidence += 25;
