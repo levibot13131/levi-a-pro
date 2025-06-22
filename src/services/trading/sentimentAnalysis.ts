@@ -15,6 +15,7 @@ export class SentimentAnalyzer {
     let negativeCount = 0;
     
     news.forEach(item => {
+      // FIXED: Use item.impact for comparison with 'positive'/'negative'
       if (item.impact === 'positive') {
         score += 0.15;
         positiveCount++;

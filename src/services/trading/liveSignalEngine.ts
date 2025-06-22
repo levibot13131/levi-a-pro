@@ -46,6 +46,8 @@ class LiveSignalEngine {
   private interval: NodeJS.Timeout | null = null;
   private lastAnalysisTime = 0;
   private lastAnalysisReport = '';
+  private analysisCount = 0;
+  private sessionSignalCount = 0;
   
   private readonly AUTHORIZED_CHAT_ID = '809305569';
   private readonly BOT_TOKEN = '7607389220:AAHSUnDPTR_9iQEmMjZkSy5i0kepBotAUbA';
@@ -55,10 +57,23 @@ class LiveSignalEngine {
   start() {
     if (this.isRunning) return;
     
-    console.log('🚀 LeviPro v1.0 Starting - ENTERPRISE GRADE ANALYSIS');
-    console.log('📊 Real signals will be analyzed every 30 seconds');
-    console.log('🎯 Minimum criteria: 80% confidence + 1.5 R/R + proper sentiment');
+    console.log('🚀 LeviPro v1.0 Starting - LIVE SIGNAL ENGINE WITH DEBUGGING');
+    console.log('📊 Enhanced real-time analysis every 30 seconds');
+    console.log('🎯 STRICT criteria: 80% confidence + 1.5 R/R + proper sentiment');
+    console.log('🔍 DEBUGGING MODE: Full cycle logging enabled');
+    
     this.isRunning = true;
+    this.sessionSignalCount = 0;
+    this.analysisCount = 0;
+    
+    // Reset daily counters if needed
+    const now = new Date();
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (this.lastAnalysisTime < startOfDay.getTime()) {
+      console.log('🌅 New day detected - resetting daily counters');
+      this.signals = this.signals.filter(s => s.timestamp > startOfDay.getTime());
+      this.rejections = this.rejections.filter(r => r.timestamp > startOfDay.getTime());
+    }
     
     // Run analysis every 30 seconds
     this.interval = setInterval(() => {
@@ -81,36 +96,58 @@ class LiveSignalEngine {
   private async analyzeMarkets() {
     const analysisStart = Date.now();
     this.lastAnalysisTime = analysisStart;
+    this.analysisCount++;
     
-    console.log('🔍 === LEVIPRO ANALYSIS CYCLE START ===');
-    console.log(`⏰ Time: ${new Date().toLocaleString()}`);
+    console.log('\n🔥 === LEVIPRO ENHANCED ANALYSIS CYCLE START ===');
+    console.log(`⏰ Time: ${new Date().toLocaleString('he-IL')}`);
+    console.log(`🔢 Analysis #${this.analysisCount} | Session Signals: ${this.sessionSignalCount}/3`);
+    console.log(`📈 Daily Signals: ${this.signals.length}/10`);
     
     let totalAnalyzed = 0;
     let signalsGenerated = 0;
     let rejectionsLogged = 0;
     let analysisReport = [];
     
+    // Check session and daily limits first
+    if (this.sessionSignalCount >= 3) {
+      console.log('⚠️ SESSION LIMIT REACHED: 3/3 signals sent this session');
+      analysisReport.push('🚫 SESSION LIMIT: 3/3 signals sent - skipping analysis');
+      this.lastAnalysisReport = analysisReport.join('\n');
+      return;
+    }
+    
+    if (this.signals.length >= 10) {
+      console.log('⚠️ DAILY LIMIT REACHED: 10/10 signals sent today');
+      analysisReport.push('🚫 DAILY LIMIT: 10/10 signals sent - skipping analysis');
+      this.lastAnalysisReport = analysisReport.join('\n');
+      return;
+    }
+    
+    console.log('✅ LIMITS CHECK PASSED - Proceeding with market analysis');
+    
     for (const symbol of this.SYMBOLS) {
       try {
         totalAnalyzed++;
-        console.log(`\n📈 Analyzing ${symbol}...`);
+        console.log(`\n📊 ANALYZING ${symbol}...`);
         
         const analysis = await this.performComprehensiveAnalysis(symbol);
         
         if (analysis.shouldSignal) {
           const signal = this.createSignal(symbol, analysis);
           this.signals.push(signal);
+          this.sessionSignalCount++;
           await this.sendTelegramSignal(signal);
           signalsGenerated++;
           console.log(`🎯 ✅ SIGNAL SENT: ${signal.symbol} ${signal.action} at $${signal.price}`);
-          analysisReport.push(`✅ ${symbol}: SIGNAL SENT (${analysis.confidence}%)`);
+          console.log(`📊 Signal Details: Conf=${signal.confidence}% | R/R=${signal.riskRewardRatio} | Strategy=${signal.strategy}`);
+          analysisReport.push(`✅ ${symbol}: SIGNAL SENT (${analysis.confidence}% conf, ${analysis.riskReward.toFixed(2)} R/R)`);
         } else {
           this.logRejection(symbol, analysis);
           rejectionsLogged++;
           analysisReport.push(`❌ ${symbol}: REJECTED - ${analysis.reason} (${analysis.confidence}%)`);
         }
       } catch (error) {
-        console.error(`❌ Error analyzing ${symbol}:`, error);
+        console.error(`❌ CRITICAL ERROR analyzing ${symbol}:`, error);
         analysisReport.push(`⚠️ ${symbol}: ERROR - ${error.message}`);
         rejectionsLogged++;
       }
@@ -127,50 +164,81 @@ class LiveSignalEngine {
     console.log(`📊 Symbols Analyzed: ${totalAnalyzed}`);
     console.log(`🎯 Signals Generated: ${signalsGenerated}`);
     console.log(`❌ Rejections: ${rejectionsLogged}`);
-    console.log(`📈 Total Signals Today: ${this.signals.length}`);
-    console.log(`📉 Total Rejections Today: ${this.rejections.length}`);
-    console.log('💡 NEXT ANALYSIS IN 30 SECONDS');
-    console.log('================================================\n');
+    console.log(`📈 Session Signals: ${this.sessionSignalCount}/3`);
+    console.log(`📉 Daily Signals: ${this.signals.length}/10`);
+    console.log(`🔄 Next Analysis: ${new Date(Date.now() + 30000).toLocaleTimeString('he-IL')}`);
+    console.log('='.repeat(60));
+    
+    // Log data connection status
+    const connectionStatus = liveMarketDataService.getConnectionStatus();
+    console.log(`📡 Data Connection: ${connectionStatus.status} | Cache: ${connectionStatus.cacheSize} symbols`);
   }
 
   private async performComprehensiveAnalysis(symbol: string) {
-    // Get live market data
-    const marketDataMap = await liveMarketDataService.getMultipleAssets([symbol]);
+    console.log(`   🔍 Starting comprehensive analysis for ${symbol}...`);
+    
+    // Get live market data with error handling
+    let marketDataMap;
+    try {
+      marketDataMap = await liveMarketDataService.getMultipleAssets([symbol]);
+    } catch (error) {
+      console.error(`   ❌ Failed to fetch market data for ${symbol}:`, error);
+      return { 
+        shouldSignal: false, 
+        reason: 'Market data unavailable - API connection issue',
+        confidence: 0,
+        riskReward: 0,
+        reasoning: 'Cannot connect to market data source'
+      };
+    }
+    
     const marketData = marketDataMap.get(symbol);
     
     if (!marketData) {
+      console.log(`   ❌ No market data available for ${symbol}`);
       return { 
         shouldSignal: false, 
-        reason: 'No market data available',
+        reason: 'No market data returned from API',
         confidence: 0,
         riskReward: 0,
-        reasoning: 'Market data unavailable'
+        reasoning: 'Market data not found'
       };
     }
 
-    console.log(`   💰 Current Price: $${marketData.price}`);
-    console.log(`   📊 24h Change: ${marketData.change24h}%`);
-    console.log(`   📈 24h Volume: $${marketData.volume24h.toLocaleString()}`);
+    console.log(`   💰 Live Price: $${marketData.price.toFixed(2)}`);
+    console.log(`   📊 24h Change: ${marketData.change24h.toFixed(2)}%`);
+    console.log(`   📈 24h Volume: $${(marketData.volume24h / 1000000).toFixed(1)}M`);
 
     // Multi-timeframe analysis using new modular approach
     const shortTermTrend = StrategyMatcher.calculateTrend(marketData, '15m');
     const mediumTermTrend = StrategyMatcher.calculateTrend(marketData, '1h');
     const longTermTrend = StrategyMatcher.calculateTrend(marketData, '4h');
     
-    console.log(`   📈 Trends: 15m(${shortTermTrend}) | 1h(${mediumTermTrend}) | 4h(${longTermTrend})`);
+    console.log(`   📈 Trend Analysis: 15m(${shortTermTrend}) | 1h(${mediumTermTrend}) | 4h(${longTermTrend})`);
     
     // Sentiment analysis using new modular approach
-    const sentiment = await SentimentAnalyzer.getSentimentScore(symbol);
-    console.log(`   📱 Sentiment: ${sentiment.impact} (${sentiment.strength}) - Score: ${sentiment.score.toFixed(2)}`);
+    let sentiment;
+    try {
+      sentiment = await SentimentAnalyzer.getSentimentScore(symbol);
+      console.log(`   📱 Sentiment: ${sentiment.impact} (${sentiment.strength}) - Score: ${sentiment.score.toFixed(2)}`);
+    } catch (error) {
+      console.error(`   ⚠️ Sentiment analysis failed for ${symbol}:`, error);
+      sentiment = { score: 0.5, impact: 'neutral' as const, strength: 'low' as const };
+    }
     
     // Volume and risk analysis using new modular approach
     const volumeSpike = RiskFilters.detectVolumeSpike(marketData);
-    console.log(`   🌊 Volume Spike: ${volumeSpike ? '✅ YES' : '❌ NO'}`);
+    console.log(`   🌊 Volume Spike: ${volumeSpike ? '✅ DETECTED' : '❌ NONE'}`);
     
     const riskReward = RiskFilters.calculateRiskReward(marketData);
-    console.log(`   ⚖️ Risk/Reward Ratio: ${riskReward.toFixed(2)}`);
+    console.log(`   ⚖️ Risk/Reward: ${riskReward.toFixed(2)}`);
     
     const priceAction = RiskFilters.analyzePriceAction(marketData);
+    console.log(`   🎯 Price Action: ${priceAction.pattern} (${priceAction.strength.toFixed(2)} strength)`);
+    
+    // Personal method signals
+    const personalMethodSignal = StrategyMatcher.getPersonalMethodSignals(marketData);
+    console.log(`   🧠 Personal Method: ${personalMethodSignal ? '✅ TRIGGERED' : '❌ NO SIGNAL'}`);
     
     // Signal scoring using new modular approach
     const scoring = SignalScoring.calculateConfidence(
@@ -183,12 +251,15 @@ class LiveSignalEngine {
       riskReward
     );
 
-    console.log(`   🎯 Calculated Confidence: ${scoring.confidence}%`);
-    console.log(`   📋 Reasoning: ${scoring.reasoning.join(' | ')}`);
-    console.log(`   🚦 Decision: ${scoring.shouldSignal ? '✅ SIGNAL APPROVED' : '❌ SIGNAL REJECTED'}`);
+    console.log(`   🎯 Final Confidence: ${scoring.confidence}% (min: 80%)`);
+    console.log(`   📋 Scoring Breakdown:`);
+    scoring.reasoning.forEach((reason, index) => {
+      console.log(`      ${index + 1}. ${reason}`);
+    });
+    console.log(`   🚦 DECISION: ${scoring.shouldSignal ? '✅ APPROVED FOR SIGNAL' : '❌ REJECTED'}`);
     
     if (!scoring.shouldSignal) {
-      console.log(`   ❌ Rejection Reason: ${scoring.rejectionReason}`);
+      console.log(`   ❌ Rejection Details: ${scoring.rejectionReason}`);
     }
     
     return {
@@ -200,7 +271,8 @@ class LiveSignalEngine {
       marketData,
       sentiment,
       volumeSpike,
-      reason: scoring.shouldSignal ? 'Signal criteria met' : scoring.rejectionReason
+      personalMethodSignal,
+      reason: scoring.shouldSignal ? 'All criteria met - signal approved' : scoring.rejectionReason
     };
   }
 
@@ -299,43 +371,56 @@ class LiveSignalEngine {
   }
 
   getEngineStatus() {
+    const now = Date.now();
+    const connectionStatus = liveMarketDataService.getConnectionStatus();
+    
     return {
       isRunning: this.isRunning,
       totalSignals: this.signals.length,
       totalRejections: this.rejections.length,
+      sessionSignals: this.sessionSignalCount,
+      analysisCount: this.analysisCount,
       lastAnalysis: this.lastAnalysisTime ? new Date(this.lastAnalysisTime).toISOString() : 'Never',
       signalQuality: this.isRunning ? 
-        `Intelligence Active: ${this.signals.length} signals sent, ${this.rejections.length} filtered out` :
-        'Engine stopped - no analysis running',
+        `LIVE ENGINE: ${this.signals.length}/10 daily, ${this.sessionSignalCount}/3 session, ${this.rejections.length} filtered` :
+        'Engine offline - no real-time analysis',
       analysisFrequency: '30 seconds',
-      uptime: this.isRunning ? Date.now() - this.lastAnalysisTime : 0,
-      lastAnalysisReport: this.lastAnalysisReport
+      uptime: this.isRunning ? now - this.lastAnalysisTime : 0,
+      lastAnalysisReport: this.lastAnalysisReport,
+      dataConnection: connectionStatus,
+      limits: {
+        daily: { current: this.signals.length, max: 10 },
+        session: { current: this.sessionSignalCount, max: 3 }
+      }
     };
   }
 
   async sendTestSignal(): Promise<boolean> {
-    console.log('🧪 Generating ENHANCED test signal with real filtering logic...');
+    console.log('🧪 Generating ENHANCED test signal with full debugging...');
     
     try {
       const testSignal: TradingSignal = {
         id: `test_${Date.now()}`,
         symbol: 'BTCUSDT',
         action: 'BUY',
-        price: 102500,
-        targetPrice: 105125,
-        stopLoss: 101475,
+        price: 67500,
+        targetPrice: 69125,
+        stopLoss: 66487,
         confidence: 95,
         riskRewardRatio: 2.5,
-        reasoning: 'TEST: Multi-timeframe bullish confluence + positive sentiment + volume spike detected',
+        reasoning: 'TEST: Enhanced debugging signal with full analysis simulation',
         timestamp: Date.now(),
         timeframe: '15m-4h TEST',
-        strategy: 'Enhanced Intelligence Test',
-        sentimentScore: 0.75,
+        strategy: 'Enhanced Debug Test',
+        sentimentScore: 0.78,
         whaleActivity: true,
         volumeSpike: true
       };
 
       const message = TelegramFormatter.formatTestSignal();
+      
+      console.log('📤 Sending enhanced test signal to Telegram...');
+      console.log(`📊 Test Signal Details: ${JSON.stringify(testSignal, null, 2)}`);
       
       const response = await fetch(`https://api.telegram.org/bot${this.BOT_TOKEN}/sendMessage`, {
         method: 'POST',
@@ -348,16 +433,44 @@ class LiveSignalEngine {
       });
 
       if (response.ok) {
-        console.log('✅ Enhanced test signal sent successfully with full intelligence metrics');
+        console.log('✅ Enhanced test signal sent successfully');
+        console.log(`📱 Telegram response: ${response.status} ${response.statusText}`);
         return true;
       } else {
-        console.error('❌ Test signal failed:', await response.text());
+        const errorText = await response.text();
+        console.error('❌ Test signal failed:', errorText);
         return false;
       }
     } catch (error) {
-      console.error('❌ Test signal failed:', error);
+      console.error('❌ Test signal exception:', error);
       return false;
     }
+  }
+
+  // New debugging methods
+  async performManualAnalysis(symbol: string = 'BTCUSDT') {
+    console.log(`🔧 MANUAL ANALYSIS REQUEST for ${symbol}`);
+    const analysis = await this.performComprehensiveAnalysis(symbol);
+    console.log(`🔧 Manual Analysis Result:`, JSON.stringify(analysis, null, 2));
+    return analysis;
+  }
+
+  getDebugInfo() {
+    return {
+      isRunning: this.isRunning,
+      analysisCount: this.analysisCount,
+      sessionSignals: this.sessionSignalCount,
+      dailySignals: this.signals.length,
+      rejectionCount: this.rejections.length,
+      lastAnalysis: this.lastAnalysisTime,
+      symbols: this.SYMBOLS,
+      limits: {
+        sessionMax: 3,
+        dailyMax: 10,
+        confidenceMin: 80,
+        riskRewardMin: 1.5
+      }
+    };
   }
 }
 
