@@ -190,7 +190,7 @@ class LiveSignalEngine {
       reasoning.push('Normal volume levels');
     }
     
-    // FIXED: Correct sentiment analysis logic
+    // FIXED: Correct sentiment analysis logic - using impact not strength
     if (sentiment.impact === 'positive') {
       if (sentiment.strength === 'high') {
         confidence += 25;
@@ -244,8 +244,8 @@ class LiveSignalEngine {
     console.log(`   🎯 Calculated Confidence: ${confidence}%`);
     console.log(`   📋 Reasoning: ${reasoning.join(' | ')}`);
 
-    // Decision logic - STRICT FILTERING
-    const shouldSignal = confidence >= 80 && riskReward >= 1.5;
+    // RELAXED Decision logic for testing - temporarily lower thresholds
+    const shouldSignal = confidence >= 70 && riskReward >= 1.2; // Lowered from 80/1.5 for testing
     const rejectionReason = this.getRejectionReason(confidence, riskReward, sentiment);
     
     console.log(`   🚦 Decision: ${shouldSignal ? '✅ SIGNAL APPROVED' : '❌ SIGNAL REJECTED'}`);
@@ -266,14 +266,15 @@ class LiveSignalEngine {
     };
   }
 
+  // FIXED: Correct rejection reason logic
   private getRejectionReason(confidence: number, riskReward: number, sentiment: SentimentAnalysis): string {
     const reasons = [];
     
-    if (confidence < 80) {
-      reasons.push(`Low confidence: ${confidence}% (minimum 80% required)`);
+    if (confidence < 70) { // Lowered threshold temporarily
+      reasons.push(`Low confidence: ${confidence}% (minimum 70% required)`);
     }
-    if (riskReward < 1.5) {
-      reasons.push(`Poor risk/reward ratio: ${riskReward.toFixed(2)} (minimum 1.5 required)`);
+    if (riskReward < 1.2) { // Lowered threshold temporarily
+      reasons.push(`Poor risk/reward ratio: ${riskReward.toFixed(2)} (minimum 1.2 required)`);
     }
     if (sentiment.impact === 'negative' && sentiment.strength === 'high') {
       reasons.push(`Strong negative sentiment: ${sentiment.score.toFixed(2)}`);
