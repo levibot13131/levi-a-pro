@@ -1,52 +1,70 @@
 
-import { TradingSignal } from './liveSignalEngine';
+interface TradingSignal {
+  id: string;
+  symbol: string;
+  action: 'BUY' | 'SELL';
+  price: number;
+  targetPrice: number;
+  stopLoss: number;
+  confidence: number;
+  riskRewardRatio: number;
+  reasoning: string;
+  timestamp: number;
+  timeframe: string;
+  strategy: string;
+  sentimentScore?: number;
+  whaleActivity?: boolean;
+  volumeSpike?: boolean;
+}
 
 export class TelegramFormatter {
   static formatSignal(signal: TradingSignal): string {
     const emoji = signal.action === 'BUY' ? '🟢' : '🔴';
     const action = signal.action === 'BUY' ? 'קנייה' : 'מכירה';
     
-    return `
-🚀 *LeviPro LIVE Signal* ${emoji}
+    return `${emoji} *אות ${action} - LeviPro*
 
-*${action} ${signal.symbol}*
-💰 מחיר כניסה: $${signal.price.toLocaleString()}
-🎯 יעד: $${signal.targetPrice.toLocaleString()}
-🛡️ סטופ לוס: $${signal.stopLoss.toLocaleString()}
+💰 *${signal.symbol}*
+📈 מחיר כניסה: $${signal.price.toFixed(2)}
+🎯 מטרה: $${signal.targetPrice.toFixed(2)}
+🛡️ סטופ לוס: $${signal.stopLoss.toFixed(2)}
 
-⚡ *ביטחון: ${signal.confidence}%*
-📊 יחס R/R: ${signal.riskRewardRatio.toFixed(2)}
-🧠 רציונל: ${signal.reasoning}
+📊 *פרמטרים:*
+• רמת ביטחון: ${signal.confidence}%
+• יחס סיכון/רווח: ${signal.riskRewardRatio.toFixed(2)}
+• אסטרטגיה: ${signal.strategy}
+• מסגרת זמן: ${signal.timeframe}
 
-⏰ זמן: ${new Date().toLocaleString('he-IL')}
-📈 תבנית: ${signal.strategy}
-${signal.sentimentScore ? `📱 סנטימנט: ${(signal.sentimentScore * 100).toFixed(0)}%` : ''}
-${signal.volumeSpike ? '🌊 זינוק נפח זוהה' : ''}
+${signal.sentimentScore ? `📰 ניתוח סנטימנט: ${(signal.sentimentScore * 100).toFixed(0)}%` : ''}
+${signal.volumeSpike ? '🌊 זינוק בנפח מסחר זוהה' : ''}
+${signal.whaleActivity ? '🐋 פעילות לווייתנים' : ''}
 
-*🔥 LeviPro v1.0 - Live Intelligence*
-    `;
+📝 *נימוק:* ${signal.reasoning}
+
+⏰ ${new Date(signal.timestamp).toLocaleString('he-IL')}
+
+_הודעה אוטומטית מ-LeviPro AI_`;
   }
 
   static formatTestSignal(): string {
-    return `
-🧪 *LeviPro Test Signal* 🔥
+    return `🧪 *בדיקת מערכת - LeviPro*
 
-*קנייה BTCUSDT*
-💰 מחיר כניסה: $102,500
-🎯 יעד: $105,125
-🛡️ סטופ לוס: $101,475
+✅ *מערכת פעילה ותקינה*
 
-⚡ *ביטחון: 95%*
-📊 יחס R/R: 2.5
-🧠 רציונל: TEST: Multi-timeframe bullish confluence + positive sentiment + volume spike detected
+📊 *סטטוס רכיבים:*
+• מנוע אותות: פעיל
+• ניתוח נתונים: פעיל  
+• API חיצוניים: מחוברים
+• מסנני איכות: פעילים
 
-⏰ זמן: ${new Date().toLocaleString('he-IL')}
-📈 תבנית: Enhanced Intelligence Test
-📱 סנטימנט: 75%
-🌊 זינוק נפח זוהה
-🐋 פעילות לווייתנים זוהתה
+🎯 *הגדרות מסנן:*
+• רמת ביטחון מינימלית: 80%
+• יחס סיכון/רווח מינימלי: 1.5
+• הגבלה יומית: 10 אותות
+• הגבלה לסשן: 3 אותות
 
-*🔥 LeviPro v1.0 - Test Complete*
-    `;
+⏰ ${new Date().toLocaleString('he-IL')}
+
+_בדיקת תקינות אוטומטית_`;
   }
 }
