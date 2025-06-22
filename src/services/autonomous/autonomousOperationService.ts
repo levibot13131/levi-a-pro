@@ -8,11 +8,15 @@ export interface SystemHealth {
     signalEngine: boolean;
     riskManager: boolean;
     telegramBot: boolean;
+    autonomousLearning: boolean;
+    multiTimeframe: boolean;
   };
   performanceMetrics: {
     signalsGenerated: number;
     successRate: number;
     avgResponseTime: number;
+    learningIterations: number;
+    dataPointsProcessed: number;
   };
   lastHealthCheck: number;
 }
@@ -22,6 +26,8 @@ class AutonomousOperationService {
   private startTime = 0;
   private signalsGenerated = 0;
   private successfulSignals = 0;
+  private learningIterations = 0;
+  private dataPointsProcessed = 0;
 
   startAutonomousOperation(): void {
     if (this.isRunning) return;
@@ -57,12 +63,16 @@ class AutonomousOperationService {
         newsService: true,
         signalEngine: this.isRunning,
         riskManager: true,
-        telegramBot: true
+        telegramBot: true,
+        autonomousLearning: this.isRunning,
+        multiTimeframe: this.isRunning
       },
       performanceMetrics: {
         signalsGenerated: this.signalsGenerated,
         successRate: this.signalsGenerated > 0 ? this.successfulSignals / this.signalsGenerated : 0,
-        avgResponseTime: 150
+        avgResponseTime: 150,
+        learningIterations: this.learningIterations,
+        dataPointsProcessed: this.dataPointsProcessed
       },
       lastHealthCheck: Date.now()
     };
@@ -70,9 +80,15 @@ class AutonomousOperationService {
 
   recordSignal(successful: boolean = true): void {
     this.signalsGenerated++;
+    this.dataPointsProcessed += 10; // Simulate data points processed per signal
     if (successful) {
       this.successfulSignals++;
     }
+  }
+
+  recordLearningIteration(): void {
+    this.learningIterations++;
+    this.dataPointsProcessed += 50; // Simulate data points processed during learning
   }
 }
 
