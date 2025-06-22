@@ -11,7 +11,7 @@ import {
   Clock, 
   RefreshCw,
   ExternalLink,
-  Whale,
+  Radar,
   Activity
 } from 'lucide-react';
 import { newsAggregationService, NewsItem, NewsArticle, OnChainAlert } from '@/services/news/newsAggregationService';
@@ -147,7 +147,7 @@ const LiveNewsFeed: React.FC = () => {
               Market News ({news.length})
             </TabsTrigger>
             <TabsTrigger value="alerts" className="flex items-center gap-2">
-              <Whale className="h-4 w-4" />
+              <Radar className="h-4 w-4" />
               On-Chain Alerts ({onChainAlerts.length})
             </TabsTrigger>
           </TabsList>
@@ -248,7 +248,7 @@ const LiveNewsFeed: React.FC = () => {
               </div>
             ) : (
               <div className="text-center py-8">
-                <Whale className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <Radar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">No on-chain alerts available</p>
                 <p className="text-sm text-muted-foreground">Monitoring whale movements and large transactions</p>
               </div>
