@@ -9,13 +9,13 @@ export interface SentimentAnalysis {
 
 export class SentimentAnalyzer {
   static async getSentimentScore(symbol: string): Promise<SentimentAnalysis> {
-    const news = newsAggregationService.getLatestNews(5);
+    const news = await newsAggregationService.getLatestNews(5);
     let score = 0.5;
     let positiveCount = 0;
     let negativeCount = 0;
     
     news.forEach(item => {
-      // FIXED: Use item.impact for comparison with 'positive'/'negative'
+      // Use item.impact for comparison with 'positive'/'negative'
       if (item.impact === 'positive') {
         score += 0.15;
         positiveCount++;

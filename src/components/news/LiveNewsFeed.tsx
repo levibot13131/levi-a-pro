@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -53,7 +52,7 @@ const LiveNewsFeed: React.FC = () => {
       }
 
       // Get latest news and convert to proper format
-      const latestNews = newsAggregationService.getLatestNews(10);
+      const latestNews = await newsAggregationService.getLatestNews(10);
       const convertedNews = latestNews.map(convertNewsItemToArticle);
       setNews(convertedNews);
 

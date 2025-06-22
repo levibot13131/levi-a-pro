@@ -1,3 +1,4 @@
+import { supabase } from '@/integrations/supabase/client';
 import { liveMarketDataService } from './liveMarketDataService';
 import { SignalScoring } from './signalScoring';
 import { SentimentAnalyzer } from './sentimentAnalysis';
