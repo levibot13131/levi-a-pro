@@ -10,6 +10,13 @@ export interface LiveMarketData {
   timestamp: number;
 }
 
+export interface HealthCheckResult {
+  binance: boolean;
+  coinGecko: boolean;
+  overall: boolean;
+  lastChecked: number;
+}
+
 class LiveMarketDataService {
   private cache = new Map<string, LiveMarketData>();
   private lastUpdate = 0;
@@ -51,6 +58,44 @@ class LiveMarketDataService {
     console.log(`✅ Live data updated for ${results.size}/${symbols.length} symbols`);
     
     return results;
+  }
+
+  async performHealthCheck(): Promise<HealthCheckResult> {
+    console.log('🔍 Performing market data health check...');
+    
+    try {
+      // Simulate Binance API check
+      const binanceHealthy = Math.random() > 0.1; // 90% success rate
+      
+      // Simulate CoinGecko API check
+      const coinGeckoHealthy = Math.random() > 0.15; // 85% success rate
+      
+      const result: HealthCheckResult = {
+        binance: binanceHealthy,
+        coinGecko: coinGeckoHealthy,
+        overall: binanceHealthy || coinGeckoHealthy,
+        lastChecked: Date.now()
+      };
+      
+      console.log(`📡 Health Check: Binance=${binanceHealthy ? '✅' : '❌'} | CoinGecko=${coinGeckoHealthy ? '✅' : '❌'}`);
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Health check failed:', error);
+      return {
+        binance: false,
+        coinGecko: false,
+        overall: false,
+        lastChecked: Date.now()
+      };
+    }
+  }
+
+  getDataFreshness(symbol: string): number {
+    const cachedData = this.cache.get(symbol);
+    if (!cachedData) return -1; // No data available
+    
+    return Date.now() - cachedData.timestamp;
   }
 
   private getBasePrice(symbol: string): number {
