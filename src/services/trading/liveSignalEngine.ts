@@ -180,7 +180,7 @@ class LiveSignalEngine {
       reasoning.push('Normal volume levels');
     }
     
-    // FIXED: Correct sentiment analysis using proper properties
+    // FIXED: Correct sentiment analysis logic
     if (sentiment.impact === 'positive') {
       if (sentiment.strength === 'high') {
         confidence += 25;
