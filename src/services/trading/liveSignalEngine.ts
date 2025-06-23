@@ -10,6 +10,7 @@ interface SignalRejection {
   confidence: number;
   riskReward: number;
   timestamp: number;
+  details?: string;
 }
 
 class LiveSignalEngine {
@@ -18,6 +19,7 @@ class LiveSignalEngine {
   private lastAnalysis = 0;
   private analysisCount = 0;
   private totalSignals = 0;
+  private totalRejections = 0;
   private lastAnalysisReport = '';
   private recentRejections: SignalRejection[] = [];
   
@@ -70,6 +72,56 @@ class LiveSignalEngine {
     }
   }
 
+  async sendTestSignal(): Promise<void> {
+    console.log('🧪 Sending test signal...');
+    
+    const testMessage = `🧪 *LeviPro Test Signal*
+
+💰 *BTCUSDT*
+📈 קנייה: $67,250
+🎯 מטרה: $69,500  
+🛡️ סטופ: $65,800
+
+🧠 *LeviScore: 95%* ✅
+📊 ביטחון כולל: 88% ✅
+
+אישור משולש: 📰 חדשות + ⛓️ אונצ'יין + 📊 מחיר (85%)
+אישור מולטי-מסגרת: 15m ✅ | 1h ✅ | 4h ✅ | 1d ✅ (100%)
+
+📝 *נימוקים מתקדמים:*
+• פריצת התנגדות חזקה עם נפח גבוה
+• אישור RSI בולי על כל המסגרות
+• זרימת כספים חיובית מוולים
+• סנטימנט חיובי בחדשות
+
+⏰ ${new Date().toLocaleString('he-IL')}
+
+_LeviPro Enhanced AI v3.0 - מבוסס למידה (TEST MODE)_`;
+
+    try {
+      await telegramBot.sendMessage(testMessage);
+      console.log('✅ Test signal sent successfully');
+      
+      // Log as test signal
+      await this.logSignalToDatabase('BTCUSDT', {
+        action: 'BUY',
+        confidence: 88,
+        leviScore: 95,
+        explanation: {
+          price: 67250,
+          targetPrice: 69500,
+          stopLoss: 65800
+        },
+        reasoning: ['Test signal - all systems operational'],
+        riskReward: 1.75
+      }, true);
+      
+    } catch (error) {
+      console.error('❌ Test signal failed:', error);
+      throw error;
+    }
+  }
+
   private async performAnalysis(): Promise<void> {
     if (!this.isRunning) return;
 
@@ -116,8 +168,11 @@ class LiveSignalEngine {
             reason: result.rejection || 'Unknown reason',
             confidence: result.confidence || 0,
             riskReward: result.riskReward || 0,
-            timestamp: Date.now()
+            timestamp: Date.now(),
+            details: result.details || ''
           });
+          
+          this.totalRejections++;
           
           // Keep only last 50 rejections
           if (this.recentRejections.length > 50) {
@@ -133,7 +188,7 @@ class LiveSignalEngine {
       }
 
       const analysisTime = Date.now() - startTime;
-      this.lastAnalysisReport = `Analyzed ${symbolsAnalyzed} symbols in ${analysisTime}ms. Best candidate: ${bestCandidate?.symbol || 'None'} (${bestScore.toFixed(0)}%)`;
+      this.lastAnalysisReport = `Analyzed ${symbolsAnalyzed} symbols in ${analysisTime}ms. Best candidate: ${bestCandidate?.symbol || 'None'} (${bestScore.toFixed(0)}%). Total rejections: ${this.totalRejections}`;
       
       console.log(`✅ Analysis complete: ${this.lastAnalysisReport}`);
 
@@ -160,7 +215,8 @@ class LiveSignalEngine {
           shouldSignal: false,
           confidence: 0,
           rejection: `Market too cold (${heatData.heatIndex.toFixed(0)}% heat)`,
-          riskReward: 0
+          riskReward: 0,
+          details: `Heat index below threshold: ${heatData.heatIndex.toFixed(1)}%`
         };
       }
       
@@ -169,7 +225,8 @@ class LiveSignalEngine {
           shouldSignal: false,
           confidence: 0,
           rejection: 'Symbol flagged as dangerous',
-          riskReward: 0
+          riskReward: 0,
+          details: 'High volatility or low volume detected'
         };
       }
 
@@ -207,7 +264,8 @@ class LiveSignalEngine {
           shouldSignal: false,
           confidence: enhancedResult.confidence,
           rejection: enhancedResult.reasoning.join('; '),
-          riskReward: 1.75
+          riskReward: 1.75,
+          details: `LeviScore: ${enhancedResult.leviScore}% | Correlation: ${enhancedResult.correlationReport}`
         };
       }
 
@@ -217,7 +275,8 @@ class LiveSignalEngine {
         shouldSignal: false,
         confidence: 0,
         rejection: `Analysis error: ${error}`,
-        riskReward: 0
+        riskReward: 0,
+        details: `System error during analysis`
       };
     }
   }
@@ -267,12 +326,12 @@ _LeviPro Enhanced AI v3.0 - מבוסס למידה_`;
     }
   }
 
-  private async logSignalToDatabase(symbol: string, result: any): Promise<void> {
+  private async logSignalToDatabase(symbol: string, result: any, isTestSignal: boolean = false): Promise<void> {
     try {
       const { error } = await supabase
         .from('signal_history')
         .insert({
-          signal_id: `enhanced_${Date.now()}_${symbol}`,
+          signal_id: `${isTestSignal ? 'test_' : 'enhanced_'}${Date.now()}_${symbol}`,
           symbol,
           action: result.action,
           entry_price: result.explanation?.price || 0,
@@ -280,19 +339,20 @@ _LeviPro Enhanced AI v3.0 - מבוסס למידה_`;
           stop_loss: result.explanation?.stopLoss || 0,
           confidence: result.confidence,
           risk_reward_ratio: result.riskReward,
-          strategy: 'enhanced-ai',
-          reasoning: result.reasoning.join('; '),
+          strategy: isTestSignal ? 'test-signal' : 'enhanced-ai',
+          reasoning: Array.isArray(result.reasoning) ? result.reasoning.join('; ') : (result.reasoning || 'No reasoning provided'),
           market_conditions: {
             leviScore: result.leviScore,
             correlationReport: result.correlationReport,
-            timeframeReport: result.timeframeReport
+            timeframeReport: result.timeframeReport,
+            isTestSignal
           }
         });
 
       if (error) {
         console.error('❌ Failed to log signal to database:', error);
       } else {
-        console.log('✅ Signal logged to database');
+        console.log(`✅ Signal logged to database${isTestSignal ? ' (TEST)' : ''}`);
       }
     } catch (error) {
       console.error('❌ Database logging error:', error);
@@ -322,6 +382,7 @@ _LeviPro Enhanced AI v3.0 - מבוסס למידה_`;
       lastAnalysis: this.lastAnalysis,
       analysisCount: this.analysisCount,
       totalSignals: this.totalSignals,
+      totalRejections: this.totalRejections,
       lastAnalysisReport: this.lastAnalysisReport
     };
   }

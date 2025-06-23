@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,7 +31,9 @@ const TradingEngine: React.FC = () => {
     isRunning: false,
     totalSignals: 0,
     totalRejections: 0,
-    lastAnalysis: ''
+    lastAnalysis: 0,
+    analysisCount: 0,
+    lastAnalysisReport: ''
   });
   const [backgroundStatus, setBackgroundStatus] = useState({
     isRunning: false,
@@ -262,28 +265,28 @@ const TradingEngine: React.FC = () => {
                   <div className="flex justify-between">
                     <span>Filter Success Rate:</span>
                     <span className="text-green-500 font-bold">
-                      {engineStatus.totalSignals > 0 ? '85%' : 'N/A'}
+                      {engineStatus.totalSignals > 0 ? Math.round((engineStatus.totalSignals / (engineStatus.totalSignals + engineStatus.totalRejections)) * 100) : 0}%
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Avg Confidence:</span>
-                    <span className="font-bold">
-                      {engineStatus.totalSignals > 0 ? '87%' : 'N/A'}
+                    <span>Signals Sent:</span>
+                    <span className="font-bold text-green-600">
+                      {engineStatus.totalSignals}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Avg R/R Ratio:</span>
-                    <span className="font-bold">
-                      {engineStatus.totalSignals > 0 ? '2.1:1' : 'N/A'}
+                    <span>Signals Rejected:</span>
+                    <span className="font-bold text-red-600">
+                      {engineStatus.totalRejections}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Minimum Confidence:</span>
-                    <span className="text-orange-600 font-bold">80%</span>
+                    <span className="text-orange-600 font-bold">70%</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Minimum R/R:</span>
-                    <span className="text-orange-600 font-bold">1.5:1</span>
+                    <span className="text-orange-600 font-bold">1.2:1</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Last Analysis:</span>
