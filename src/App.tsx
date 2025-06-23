@@ -14,6 +14,7 @@ import UserManagement from './components/admin/UserManagement';
 import Admin from './pages/Admin';
 import ErrorBoundary from './components/ErrorBoundary';
 import TechnicalAnalysis from './pages/TechnicalAnalysis';
+import TradingSignals from './pages/TradingSignals';
 
 function App() {
   return (
@@ -38,6 +39,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <TechnicalAnalysis />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/trading-signals" 
+                element={
+                  <ProtectedRoute>
+                    <TradingSignals />
                   </ProtectedRoute>
                 } 
               />

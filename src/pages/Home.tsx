@@ -1,88 +1,126 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
-import { Activity, LineChart, Wallet, Newspaper, AlertTriangle, History, Users } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { 
+  BarChart3, 
+  Bot, 
+  Zap, 
+  Shield,
+  TrendingUp,
+  Activity
+} from 'lucide-react';
 
-const Home = () => {
-  const featureCards = [
-    {
-      title: 'נתוני שוק',
-      description: 'צפה בנתוני שוק עדכניים, מחירים, ומידע על מטבעות קריפטו',
-      icon: <LineChart className="h-6 w-6" />,
-      href: '/market-data'
-    },
-    {
-      title: 'מטבעות חמים',
-      description: 'גלה מטבעות קריפטו מובילים ומגמות עכשוויות',
-      icon: <Activity className="h-6 w-6" />,
-      href: '/trending-coins'
-    },
-    {
-      title: 'מעקב נכסים',
-      description: 'עקוב אחר תיק ההשקעות שלך וקבל התראות בזמן אמת',
-      icon: <Wallet className="h-6 w-6" />,
-      href: '/asset-tracker'
-    },
-    {
-      title: 'חדשות השוק',
-      description: 'התעדכן בחדשות ובמידע העדכני ביותר בשוק הקריפטו',
-      icon: <Newspaper className="h-6 w-6" />,
-      href: '/market-news'
-    },
-    {
-      title: 'איתותי מסחר',
-      description: 'קבל איתותי מסחר מבוססי ניתוח טכני ופונדמנטלי',
-      icon: <AlertTriangle className="h-6 w-6" />,
-      href: '/trading-signals'
-    },
-    {
-      title: 'ניתוח היסטורי',
-      description: 'בצע בדיקות היסטוריות וניתוח מגמות קודמות',
-      icon: <History className="h-6 w-6" />,
-      href: '/backtesting'
-    }
-  ];
-
+const Home: React.FC = () => {
   return (
-    <div className="container mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-8 text-center">ברוכים הבאים למערכת הניתוח והמסחר</h1>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {featureCards.map((card, index) => (
-          <Card key={index} className="transition-all hover:shadow-lg">
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-gray-900 to-gray-800">
+      <div className="container mx-auto px-4 py-12">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="flex justify-center mb-6">
+            <Shield className="h-16 w-16 text-blue-400" />
+          </div>
+          <h1 className="text-4xl font-bold text-white mb-4">
+            LeviPro Elite
+          </h1>
+          <p className="text-xl text-gray-300 mb-8">
+            מערכת בינה מלאכותית מתקדמת למסחר בקריפטו
+          </p>
+          <Badge variant="default" className="bg-green-600 text-lg px-4 py-2">
+            <Activity className="h-4 w-4 mr-2" />
+            מערכת פעילה
+          </Badge>
+        </div>
+
+        {/* Features Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+          <Card className="bg-gray-800 border-gray-700">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {card.icon}
-                {card.title}
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Bot className="h-6 w-6 text-blue-400" />
+                AI Trading Engine
               </CardTitle>
-              <CardDescription>{card.description}</CardDescription>
             </CardHeader>
-            <CardFooter>
-              <Button asChild className="w-full">
-                <Link to={card.href}>כניסה</Link>
-              </Button>
-            </CardFooter>
+            <CardContent>
+              <p className="text-gray-300">
+                מנוע מסחר חכם עם בינה מלאכותית מתקדמת לזיהוי הזדמנויות מסחר
+              </p>
+            </CardContent>
           </Card>
-        ))}
-      </div>
-      
-      <div className="mt-12">
-        <Card>
-          <CardHeader>
-            <CardTitle>אינטגרציית Binance</CardTitle>
-            <CardDescription>התחבר לחשבון הבינאנס שלך לקבלת נתונים בזמן אמת</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>עקוב אחר מחירים, חדשות ואיתותים ישירות מחשבון הבינאנס שלך. המידע מתעדכן בזמן אמת.</p>
-          </CardContent>
-          <CardFooter>
-            <Button asChild>
-              <Link to="/binance-integration">התחבר לבינאנס</Link>
-            </Button>
-          </CardFooter>
-        </Card>
+
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-white">
+                <Zap className="h-6 w-6 text-yellow-400" />
+                Real-Time Signals
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-300">
+                איתותי מסחר בזמן אמת עם ניתוח טכני מתקדם ואישור רב-מסגרות זמן
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gray-800 border-gray-700">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-white">
+                <BarChart3 className="h-6 w-6 text-green-400" />
+                Technical Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-300">
+                ניתוח טכני מקיף עם אינדיקטורים מתקדמים וזיהוי תבניות
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* CTA Section */}
+        <div className="text-center">
+          <Card className="bg-gray-800 border-gray-700 max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle className="text-white">התחל עכשיו</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col gap-3">
+                <Button asChild className="w-full">
+                  <Link to="/login">
+                    התחברות
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/signup">
+                    הרשמה
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Stats */}
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="text-center">
+            <div className="text-3xl font-bold text-green-400">24/7</div>
+            <div className="text-gray-300">פעילות רציפה</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-blue-400">AI</div>
+            <div className="text-gray-300">בינה מלאכותית</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-yellow-400">⚡</div>
+            <div className="text-gray-300">זמן אמת</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-purple-400">📱</div>
+            <div className="text-gray-300">טלגרם</div>
+          </div>
+        </div>
       </div>
     </div>
   );

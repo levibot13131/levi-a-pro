@@ -1,125 +1,141 @@
 
 import React from 'react';
-import { Container } from '@/components/ui/container';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { User, Mail, Calendar, Settings, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import Navbar from '@/components/layout/Navbar';
 
-const Profile = () => {
-  const { user } = useAuth();
-  const [name, setName] = React.useState(user?.user_metadata?.display_name || user?.email?.split('@')[0] || '');
-  const [email, setEmail] = React.useState(user?.email || '');
-  
-  const handleSave = () => {
-    toast.success('פרטי הפרופיל נשמרו בהצלחה');
+const Profile: React.FC = () => {
+  const { user, signOut, isAdmin } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success('התנתקת בהצלחה');
+    } catch (error) {
+      toast.error('שגיאה בהתנתקות');
+    }
   };
-  
-  const handleProxyUrl = () => {
-    // Set the proxy URL from the ngrok URL you provided
-    const proxyConfig = {
-      baseUrl: 'https://6813-46-116-195-122.ngrok-free.app',
-      isEnabled: true
-    };
-    
-    // Store in local storage for persistence
-    localStorage.setItem('levi_bot_proxy_url', JSON.stringify(proxyConfig));
-    toast.success('כתובת הפרוקסי נשמרה בהצלחה');
-    
-    // Trigger an event to notify other components
-    window.dispatchEvent(new CustomEvent('proxy-config-changed', {
-      detail: proxyConfig
-    }));
-  };
-  
+
   return (
-    <Container className="py-6">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">פרופיל אישי</h1>
-        <Button onClick={handleProxyUrl} variant="outline">
-          הגדר פרוקסי אוטומטית
-        </Button>
-      </div>
-      
-      <div className="grid gap-6 md:grid-cols-[1fr_250px]">
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right">פרטי משתמש</CardTitle>
-              <CardDescription className="text-right">
-                עדכן את הפרטים האישיים שלך
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-right block">שם מלא</label>
-                <Input 
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="text-right"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-right block">אימייל</label>
-                <Input 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  type="email"
-                  className="text-right"
-                  disabled
-                />
-              </div>
-              
-              <Button onClick={handleSave} className="w-full">שמור שינויים</Button>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-right">פרטי הגדרה</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">עברית</span>
-                <span className="font-medium">שפת ממשק:</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between items-center">
-                <span className="text-sm">אסיה/ירושלים (GMT+3)</span>
-                <span className="font-medium">אזור זמן:</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex flex-col items-center">
-                <Avatar className="w-24 h-24 mb-4">
-                  <AvatarImage src={user?.user_metadata?.avatar_url || ''} />
-                  <AvatarFallback className="text-xl">
-                    {name.charAt(0) || user?.email?.charAt(0) || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-                <h3 className="text-xl font-medium">{name || 'משתמש'}</h3>
-                <p className="text-muted-foreground">{email || 'אימייל לא מוגדר'}</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <Navbar />
+      <div className="container mx-auto px-4 py-6 space-y-6">
+        {/* Profile Header */}
+        <Card className="border-2 border-blue-500">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-6 w-6 text-blue-500" />
+              פרופיל משתמש
+              {isAdmin && (
+                <Badge variant="default" className="bg-red-600">
+                  מנהל
+                </Badge>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Mail className="h-5 w-5 text-gray-500" />
+                  <div>
+                    <div className="font-semibold">אימייל</div>
+                    <div className="text-muted-foreground">{user?.email || 'לא זמין'}</div>
+                  </div>
+                </div>
                 
-                <div className="w-full mt-6">
-                  <Button variant="outline" className="w-full">
-                    שנה תמונת פרופיל
-                  </Button>
+                <div className="flex items-center gap-3">
+                  <Calendar className="h-5 w-5 text-gray-500" />
+                  <div>
+                    <div className="font-semibold">תאריך הצטרפות</div>
+                    <div className="text-muted-foreground">
+                      {user?.created_at ? new Date(user.created_at).toLocaleDateString('he-IL') : 'לא זמין'}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <Settings className="h-5 w-5 text-gray-500" />
+                  <div>
+                    <div className="font-semibold">סטטוס חשבון</div>
+                    <Badge variant="outline" className="text-green-600">
+                      פעיל
+                    </Badge>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+              
+              <div className="space-y-4">
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <h4 className="font-semibold mb-2">גישה למערכת</h4>
+                  <div className="space-y-2 text-sm">
+                    <div>✅ מנוע מסחר AI</div>
+                    <div>✅ איתותים בזמן אמת</div>
+                    <div>✅ ניתוח טכני מתקדם</div>
+                    <div>✅ יומן מסחר</div>
+                    {isAdmin && <div>✅ פאנל ניהול</div>}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Actions */}
+        <Card>
+          <CardHeader>
+            <CardTitle>פעולות</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-4">
+              <Button variant="outline">
+                <Settings className="h-4 w-4 mr-2" />
+                הגדרות חשבון
+              </Button>
+              
+              <Button 
+                variant="destructive" 
+                onClick={handleLogout}
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                התנתק
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Stats */}
+        <Card>
+          <CardHeader>
+            <CardTitle>סטטיסטיקות</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-green-50 rounded">
+                <div className="text-2xl font-bold text-green-600">0</div>
+                <div className="text-sm text-muted-foreground">איתותים מוצלחים</div>
+              </div>
+              <div className="text-center p-4 bg-blue-50 rounded">
+                <div className="text-2xl font-bold text-blue-600">0</div>
+                <div className="text-sm text-muted-foreground">ניתוחים</div>
+              </div>
+              <div className="text-center p-4 bg-purple-50 rounded">
+                <div className="text-2xl font-bold text-purple-600">0%</div>
+                <div className="text-sm text-muted-foreground">דיוק</div>
+              </div>
+              <div className="text-center p-4 bg-orange-50 rounded">
+                <div className="text-2xl font-bold text-orange-600">0</div>
+                <div className="text-sm text-muted-foreground">ימי פעילות</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    </Container>
+    </div>
   );
 };
 
