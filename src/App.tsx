@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
 import Home from './pages/Home';
 import TradingEngine from './pages/TradingEngine';
 import TradingJournal from './pages/TradingJournal';
@@ -16,65 +17,67 @@ import TechnicalAnalysis from './pages/TechnicalAnalysis';
 
 function App() {
   return (
-    <ErrorBoundary>
-      <BrowserRouter>
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route 
-              path="/trading-engine" 
-              element={
-                <ProtectedRoute>
-                  <TradingEngine />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/technical-analysis" 
-              element={
-                <ProtectedRoute>
-                  <TechnicalAnalysis />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/trading-journal" 
-              element={
-                <ProtectedRoute>
-                  <TradingJournal />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/profile" 
-              element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/user-management" 
-              element={
-                <ProtectedRoute>
-                  <UserManagement />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/admin" 
-              element={
-                <ProtectedRoute>
-                  <Admin />
-                </ProtectedRoute>
-              } 
-            />
-          </Routes>
-        </div>
-      </BrowserRouter>
-    </ErrorBoundary>
+    <AuthProvider>
+      <ErrorBoundary>
+        <BrowserRouter>
+          <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route 
+                path="/trading-engine" 
+                element={
+                  <ProtectedRoute>
+                    <TradingEngine />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/technical-analysis" 
+                element={
+                  <ProtectedRoute>
+                    <TechnicalAnalysis />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/trading-journal" 
+                element={
+                  <ProtectedRoute>
+                    <TradingJournal />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/profile" 
+                element={
+                  <ProtectedRoute>
+                    <Profile />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/user-management" 
+                element={
+                  <ProtectedRoute>
+                    <UserManagement />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin" 
+                element={
+                  <ProtectedRoute>
+                    <Admin />
+                  </ProtectedRoute>
+                } 
+              />
+            </Routes>
+          </div>
+        </BrowserRouter>
+      </ErrorBoundary>
+    </AuthProvider>
   );
 }
 
