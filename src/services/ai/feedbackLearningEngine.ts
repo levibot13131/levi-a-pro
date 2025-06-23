@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 interface LearningData {
@@ -96,6 +97,14 @@ export class FeedbackLearningEngine {
 
   private static async logLearningIteration(data: LearningData, adjustments: StrategyAdjustment[]): Promise<void> {
     try {
+      // Convert adjustments to JSON-compatible format
+      const adjustmentsJson = adjustments.map(adj => ({
+        strategy: adj.strategy,
+        oldWeight: adj.oldWeight,
+        newWeight: adj.newWeight,
+        reason: adj.reason
+      }));
+
       const { error } = await supabase
         .from('learning_iterations')
         .insert({
@@ -116,7 +125,7 @@ export class FeedbackLearningEngine {
             outcome: data.outcome,
             profit_percent: data.profitPercent,
             time_to_target: data.timeToTarget,
-            adjustments_made: adjustments
+            adjustments_made: adjustmentsJson
           }
         });
 
