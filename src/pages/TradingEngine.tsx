@@ -23,6 +23,7 @@ import ImprovedLiveCandlestickChart from '@/components/charts/ImprovedLiveCandle
 import TradingJournalDashboard from '@/components/journal/TradingJournalDashboard';
 import WhyNoSignalBanner from '@/components/trading-engine/WhyNoSignalBanner';
 import SignalEngineDebugPanel from '@/components/diagnostics/SignalEngineDebugPanel';
+import AIIntelligenceDashboard from '@/components/ai/AIIntelligenceDashboard';
 
 const TradingEngine: React.FC = () => {
   const [engineStatus, setEngineStatus] = useState({
@@ -91,6 +92,9 @@ const TradingEngine: React.FC = () => {
 
       {/* Enhanced Debug Panel - NEW */}
       <SignalEngineDebugPanel />
+
+      {/* AI Intelligence Dashboard - NEW */}
+      <AIIntelligenceDashboard />
 
       {/* Engine Control Header */}
       <Card className="border-2 border-blue-500">
@@ -181,6 +185,10 @@ const TradingEngine: React.FC = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full">
           <TabsTrigger value="control">Engine Control</TabsTrigger>
+          <TabsTrigger value="ai" className="flex items-center gap-2">
+            <Zap className="h-4 w-4" />
+            AI Intelligence
+          </TabsTrigger>
           <TabsTrigger value="debug" className="flex items-center gap-2">
             <Eye className="h-4 w-4" />
             Signal Debug
@@ -308,6 +316,10 @@ const TradingEngine: React.FC = () => {
           </Card>
         </TabsContent>
         
+        <TabsContent value="ai" className="space-y-4">
+          <AIIntelligenceDashboard />
+        </TabsContent>
+        
         <TabsContent value="debug" className="space-y-4">
           <div className="grid grid-cols-1 gap-6">
             <Card>
@@ -388,16 +400,16 @@ const TradingEngine: React.FC = () => {
               <p className="text-sm text-muted-foreground">Historical performance analysis</p>
             </div>
             <div className="p-4 border rounded-lg">
-              <h3 className="font-semibold">Paid Signal Distribution</h3>
-              <p className="text-sm text-muted-foreground">Premium signal channels</p>
+              <h3 className="font-semibold">Behavioral AI Filters</h3>
+              <p className="text-sm text-muted-foreground">Anti-manipulation detection</p>
             </div>
             <div className="p-4 border rounded-lg">
               <h3 className="font-semibold">Custom AI Personas</h3>
               <p className="text-sm text-muted-foreground">Personalized trading styles</p>
             </div>
             <div className="p-4 border rounded-lg">
-              <h3 className="font-semibold">Advanced Performance Analytics</h3>
-              <p className="text-sm text-muted-foreground">Deep learning insights</p>
+              <h3 className="font-semibold">Signal Performance Reports</h3>
+              <p className="text-sm text-muted-foreground">Weekly AI insights</p>
             </div>
           </div>
         </CardContent>
