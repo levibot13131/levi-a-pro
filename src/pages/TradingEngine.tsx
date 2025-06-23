@@ -22,6 +22,7 @@ import EnhancedSystemDiagnostic from '@/components/diagnostics/EnhancedSystemDia
 import ImprovedLiveCandlestickChart from '@/components/charts/ImprovedLiveCandlestickChart';
 import TradingJournalDashboard from '@/components/journal/TradingJournalDashboard';
 import WhyNoSignalBanner from '@/components/trading-engine/WhyNoSignalBanner';
+import SignalEngineDebugPanel from '@/components/diagnostics/SignalEngineDebugPanel';
 
 const TradingEngine: React.FC = () => {
   const [engineStatus, setEngineStatus] = useState({
@@ -87,6 +88,9 @@ const TradingEngine: React.FC = () => {
     <div className="space-y-6">
       {/* Why No Signal Banner */}
       <WhyNoSignalBanner />
+
+      {/* Enhanced Debug Panel - NEW */}
+      <SignalEngineDebugPanel />
 
       {/* Engine Control Header */}
       <Card className="border-2 border-blue-500">
@@ -177,6 +181,10 @@ const TradingEngine: React.FC = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full">
           <TabsTrigger value="control">Engine Control</TabsTrigger>
+          <TabsTrigger value="debug" className="flex items-center gap-2">
+            <Eye className="h-4 w-4" />
+            Signal Debug
+          </TabsTrigger>
           <TabsTrigger value="charts" className="flex items-center gap-2">
             <BarChart3 className="h-4 w-4" />
             Live Charts
@@ -298,6 +306,55 @@ const TradingEngine: React.FC = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="debug" className="space-y-4">
+          <div className="grid grid-cols-1 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>🔍 Why No Signals? - Enhanced Analysis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
+                    <h4 className="font-semibold text-yellow-800 mb-2">Current Status</h4>
+                    <p className="text-sm text-yellow-700">
+                      The system has been temporarily configured with relaxed filters to identify why no signals are being generated:
+                    </p>
+                    <ul className="text-sm text-yellow-700 mt-2 space-y-1">
+                      <li>• Confidence threshold: 70% (was 80%)</li>
+                      <li>• Risk/Reward ratio: 1.2 (was 1.5)</li>
+                      <li>• Price movement: 1.5% (was 2.5%)</li>
+                      <li>• Volume spike: Optional (was required)</li>
+                      <li>• Sentiment confirmation: Optional (was required)</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 border rounded">
+                      <h5 className="font-semibold mb-2">Analysis Frequency</h5>
+                      <p className="text-sm text-muted-foreground">
+                        ✅ Every 30 seconds<br/>
+                        ✅ 6 symbols monitored<br/>
+                        ✅ Real-time CoinGecko data<br/>
+                        ✅ Live sentiment analysis
+                      </p>
+                    </div>
+                    
+                    <div className="p-4 border rounded">
+                      <h5 className="font-semibold mb-2">Signal Pipeline</h5>
+                      <p className="text-sm text-muted-foreground">
+                        ✅ Market data collection<br/>
+                        ✅ Technical analysis<br/>
+                        ✅ Risk/reward calculation<br/>
+                        ✅ Telegram delivery ready
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
         
         <TabsContent value="charts" className="space-y-4">

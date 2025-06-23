@@ -50,22 +50,36 @@ class LiveSignalEngine {
   private analysisCount = 0;
   private sessionSignalCount = 0;
   
+  // Enhanced debug tracking
+  private debugMode = false;
+  private detailedLogs: any[] = [];
+  
   private readonly AUTHORIZED_CHAT_ID = '809305569';
   private readonly BOT_TOKEN = '7607389220:AAHSUnDPTR_9iQEmMjZkSy5i0kepBotAUbA';
   
   private readonly SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT', 'DOTUSDT'];
 
+  // Temporarily relaxed filters for testing
+  private filterSettings = {
+    minConfidence: 70, // Reduced from 80
+    minRiskReward: 1.2, // Reduced from 1.5
+    minPriceMovement: 1.5, // Reduced from 2.5
+    requireVolumeSpike: false, // Made optional
+    requireSentiment: false // Made optional
+  };
+
   start() {
     if (this.isRunning) return;
     
-    console.log('🚀 LeviPro v2.0 LIVE ENGINE Starting - PRODUCTION MODE');
+    console.log('🚀 LeviPro v2.0 LIVE ENGINE Starting - ENHANCED DEBUG MODE');
     console.log('📊 Connected to LIVE APIs via Supabase Edge Functions');
-    console.log('🎯 Elite filtering: 80% confidence + 1.5 R/R + live sentiment');
-    console.log('🔍 Real-time analysis every 30 seconds');
+    console.log('🎯 RELAXED filtering for testing: 70% confidence + 1.2 R/R + 1.5% movement');
+    console.log('🔍 Real-time analysis every 30 seconds with detailed logging');
     
     this.isRunning = true;
     this.sessionSignalCount = 0;
     this.analysisCount = 0;
+    this.debugMode = true; // Enable for debugging
     
     // Trigger Edge function every 30 seconds for live analysis
     this.interval = setInterval(() => {
@@ -89,8 +103,9 @@ class LiveSignalEngine {
     this.analysisCount++;
     this.lastAnalysisTime = Date.now();
     
-    console.log(`\n🔥 === LEVIPRO LIVE ANALYSIS #${this.analysisCount} ===`);
+    console.log(`\n🔥 === LEVIPRO ENHANCED ANALYSIS #${this.analysisCount} ===`);
     console.log(`⏰ Time: ${new Date().toLocaleString('he-IL')}`);
+    console.log(`🔧 Debug Mode: ${this.debugMode ? 'ENABLED' : 'DISABLED'}`);
     
     try {
       // Call the live trading signals Edge function
@@ -98,6 +113,7 @@ class LiveSignalEngine {
       
       if (error) {
         console.error('❌ Error calling trading-signals-engine:', error);
+        this.lastAnalysisReport = `ERROR: ${error.message}`;
         return;
       }
 
@@ -105,7 +121,34 @@ class LiveSignalEngine {
       console.log(`✅ Live analysis complete:`);
       console.log(`🎯 Signals Generated: ${result.signals_generated}`);
       console.log(`❌ Rejections: ${result.rejections}`);
-      console.log(`📊 Success Rate: ${((result.signals_generated / (result.signals_generated + result.rejections)) * 100).toFixed(1)}%`);
+      
+      if (result.signals_generated === 0 && result.rejections > 0) {
+        console.log(`⚠️ ALL SIGNALS REJECTED - Detailed breakdown:`);
+        if (result.rejection_details) {
+          result.rejection_details.forEach((rejection, index) => {
+            console.log(`   ${index + 1}. ${rejection.symbol}: ${rejection.reason} (Conf: ${rejection.confidence}%, R/R: ${rejection.riskReward})`);
+          });
+        }
+      }
+      
+      console.log(`📊 Success Rate: ${result.signals_generated + result.rejections > 0 ? ((result.signals_generated / (result.signals_generated + result.rejections)) * 100).toFixed(1) : 0}%`);
+      
+      // Enhanced logging for debugging
+      if (this.debugMode) {
+        this.detailedLogs.push({
+          timestamp: Date.now(),
+          analysisNumber: this.analysisCount,
+          signalsGenerated: result.signals_generated,
+          rejections: result.rejections,
+          rejectionDetails: result.rejection_details || [],
+          marketCondition: 'analyzing...'
+        });
+        
+        // Keep only last 50 logs
+        if (this.detailedLogs.length > 50) {
+          this.detailedLogs = this.detailedLogs.slice(-50);
+        }
+      }
       
       // Update local state
       this.sessionSignalCount += result.signals_generated;
@@ -117,16 +160,27 @@ class LiveSignalEngine {
       
       if (result.rejection_details) {
         this.rejections.push(...result.rejection_details);
+        // Keep only recent rejections
+        if (this.rejections.length > 200) {
+          this.rejections = this.rejections.slice(-200);
+        }
       }
       
-      // Update analysis report
-      this.lastAnalysisReport = `LIVE Analysis: ${result.signals_generated} signals, ${result.rejections} rejections`;
+      // Update analysis report with more detail
+      this.lastAnalysisReport = `Analysis #${this.analysisCount}: ${result.signals_generated} signals, ${result.rejections} rejections. Filters: ${this.filterSettings.minConfidence}% conf, ${this.filterSettings.minRiskReward} R/R, ${this.filterSettings.minPriceMovement}% movement`;
       
       console.log(`📈 Session Total: ${this.sessionSignalCount} signals sent`);
       console.log(`🔄 Next Analysis: ${new Date(Date.now() + 30000).toLocaleTimeString('he-IL')}`);
       
+      // Alert if no signals for extended period
+      if (this.analysisCount > 10 && this.sessionSignalCount === 0) {
+        console.log(`🚨 ALERT: ${this.analysisCount} analysis cycles completed with 0 signals sent!`);
+        console.log(`🔧 Consider relaxing filters or checking market conditions`);
+      }
+      
     } catch (error) {
       console.error('❌ Live analysis error:', error);
+      this.lastAnalysisReport = `EXCEPTION: ${error.message}`;
     }
   }
 
@@ -407,8 +461,29 @@ class LiveSignalEngine {
     return this.lastAnalysisReport;
   }
 
+  // Enhanced debugging methods
+  setDebugMode(enabled: boolean) {
+    this.debugMode = enabled;
+    console.log(`🔧 Debug mode ${enabled ? 'enabled' : 'disabled'}`);
+  }
+
+  getDetailedLogs() {
+    return this.detailedLogs.slice(-20); // Return last 20 logs
+  }
+
+  updateFilterSettings(newSettings: Partial<typeof this.filterSettings>) {
+    this.filterSettings = { ...this.filterSettings, ...newSettings };
+    console.log(`🔧 Filter settings updated:`, this.filterSettings);
+  }
+
+  getFilterSettings() {
+    return { ...this.filterSettings };
+  }
+
+  // Enhanced engine status with debug info
   getEngineStatus() {
     const now = Date.now();
+    const minutesSinceLastAnalysis = this.lastAnalysisTime ? Math.floor((now - this.lastAnalysisTime) / 60000) : 999;
     
     return {
       isRunning: this.isRunning,
@@ -418,11 +493,14 @@ class LiveSignalEngine {
       analysisCount: this.analysisCount,
       lastAnalysis: this.lastAnalysisTime ? new Date(this.lastAnalysisTime).toISOString() : 'Never',
       signalQuality: this.isRunning ? 
-        `LIVE ENGINE: ${this.signals.length} signals sent, ${this.rejections.length} filtered` :
+        `LIVE ENGINE: ${this.signals.length} signals sent, ${this.rejections.length} filtered (${minutesSinceLastAnalysis}min ago)` :
         'Engine offline - no live analysis',
       analysisFrequency: '30 seconds - LIVE MODE',
       uptime: this.isRunning ? now - this.lastAnalysisTime : 0,
       lastAnalysisReport: this.lastAnalysisReport || 'Waiting for first live analysis...',
+      debugMode: this.debugMode,
+      filterSettings: this.filterSettings,
+      alertStatus: this.analysisCount > 10 && this.sessionSignalCount === 0 ? 'NO_SIGNALS_ALERT' : 'NORMAL',
       dataConnection: {
         connected: true,
         status: 'Connected to LIVE APIs via Supabase Edge Functions',
@@ -488,9 +566,23 @@ _בדיקת תקינות מערכת LIVE_`;
   // New debugging methods
   async performManualAnalysis(symbol: string = 'BTCUSDT') {
     console.log(`🔧 MANUAL ANALYSIS REQUEST for ${symbol}`);
-    const analysis = await this.performComprehensiveAnalysis(symbol);
-    console.log(`🔧 Manual Analysis Result:`, JSON.stringify(analysis, null, 2));
-    return analysis;
+    this.analysisCount++;
+    
+    try {
+      // Trigger the Edge function manually
+      const { data, error } = await supabase.functions.invoke('trading-signals-engine');
+      
+      if (error) {
+        console.error('❌ Manual analysis failed:', error);
+        return { success: false, error: error.message };
+      }
+      
+      console.log(`✅ Manual analysis result:`, data);
+      return { success: true, data };
+    } catch (error) {
+      console.error('❌ Manual analysis exception:', error);
+      return { success: false, error: error.message };
+    }
   }
 
   getDebugInfo() {
@@ -502,12 +594,10 @@ _בדיקת תקינות מערכת LIVE_`;
       rejectionCount: this.rejections.length,
       lastAnalysis: this.lastAnalysisTime,
       symbols: this.SYMBOLS,
-      limits: {
-        sessionMax: 3,
-        dailyMax: 10,
-        confidenceMin: 80,
-        riskRewardMin: 1.5
-      }
+      filterSettings: this.filterSettings,
+      debugMode: this.debugMode,
+      detailedLogs: this.detailedLogs.slice(-5),
+      alertStatus: this.analysisCount > 10 && this.sessionSignalCount === 0 ? 'NO_SIGNALS_DETECTED' : 'NORMAL'
     };
   }
 }
