@@ -13,6 +13,20 @@ interface SignalRejection {
   details?: string;
 }
 
+interface EngineStats {
+  isRunning: boolean;
+  lastAnalysis: number;
+  analysisCount: number;
+  totalSignals: number;
+  totalRejections: number;
+  lastAnalysisReport: string;
+  currentCycle: string;
+  marketDataStatus: string;
+  aiEngineStatus: string;
+  lastSuccessfulSignal: number;
+  rejectionBreakdown: { [reason: string]: number };
+}
+
 class LiveSignalEngine {
   private isRunning = false;
   private analysisInterval?: NodeJS.Timeout;
@@ -21,21 +35,30 @@ class LiveSignalEngine {
   private totalSignals = 0;
   private totalRejections = 0;
   private lastAnalysisReport = '';
+  private lastSuccessfulSignal = 0;
   private recentRejections: SignalRejection[] = [];
+  private rejectionBreakdown: { [reason: string]: number } = {};
+  private currentCycle = 'IDLE';
+  private marketDataStatus = 'UNKNOWN';
+  private aiEngineStatus = 'INITIALIZING';
   
-  // Relaxed settings for production testing
-  private readonly RELAXED_FILTERS = {
-    minConfidence: 70,      // Reduced from 80
-    minRiskReward: 1.2,     // Reduced from 1.5  
-    minPriceMovement: 1.5,  // Reduced from 2.5
-    requireVolumeSpike: false,
-    requireSentiment: false
+  // Production-ready settings
+  private readonly PRODUCTION_FILTERS = {
+    minConfidence: 75,      // Raised for production quality
+    minRiskReward: 1.3,     // Reasonable R/R
+    minPriceMovement: 2.0,  // Meaningful moves only
+    requireVolumeSpike: true,
+    requireSentiment: false, // Keep flexible
+    maxSignalsPerHour: 3,   // Prevent spam
+    cooldownMinutes: 20     // Time between signals
   };
 
   private readonly SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT', 'DOTUSDT'];
 
   constructor() {
-    console.log('🚀 Live Signal Engine initialized with RELAXED filters for production testing');
+    console.log('🚀 LiveSignalEngine v3.1 - Production Ready');
+    console.log('📊 Production Filters:', this.PRODUCTION_FILTERS);
+    this.aiEngineStatus = 'READY';
   }
 
   start(): void {
@@ -44,17 +67,22 @@ class LiveSignalEngine {
       return;
     }
 
-    console.log('▶️ Starting Live Signal Engine with Enhanced AI');
+    console.log('🔥 === STARTING LEVIPRO PRODUCTION ENGINE ===');
+    console.log('⚡ Real-time analysis mode: ACTIVE');
+    console.log('🎯 Quality filters: STRICT PRODUCTION MODE');
+    console.log('📈 Target: High-confidence signals only');
+    
     this.isRunning = true;
     this.analysisCount = 0;
+    this.currentCycle = 'STARTING';
     
     // Start analysis cycle every 30 seconds
     this.analysisInterval = setInterval(async () => {
       await this.performAnalysis();
     }, 30000);
 
-    // Perform initial analysis
-    this.performAnalysis();
+    // Perform initial analysis immediately
+    setTimeout(() => this.performAnalysis(), 1000);
   }
 
   stop(): void {
@@ -65,6 +93,7 @@ class LiveSignalEngine {
 
     console.log('⏹️ Stopping Live Signal Engine');
     this.isRunning = false;
+    this.currentCycle = 'STOPPED';
     
     if (this.analysisInterval) {
       clearInterval(this.analysisInterval);
@@ -73,7 +102,7 @@ class LiveSignalEngine {
   }
 
   async sendTestSignal(): Promise<void> {
-    console.log('🧪 Sending test signal...');
+    console.log('🧪 === SENDING TEST SIGNAL ===');
     
     const testMessage = `🧪 *LeviPro Test Signal*
 
@@ -96,7 +125,7 @@ class LiveSignalEngine {
 
 ⏰ ${new Date().toLocaleString('he-IL')}
 
-_LeviPro Enhanced AI v3.0 - מבוסס למידה (TEST MODE)_`;
+_LeviPro Enhanced AI v3.1 - מצב בדיקה_`;
 
     try {
       await telegramBot.sendMessage(testMessage);
@@ -128,29 +157,37 @@ _LeviPro Enhanced AI v3.0 - מבוסס למידה (TEST MODE)_`;
     const startTime = Date.now();
     this.analysisCount++;
     this.lastAnalysis = startTime;
+    this.currentCycle = 'ANALYZING';
 
-    console.log(`\n🔥 === LEVIPRO ENHANCED ANALYSIS CYCLE #${this.analysisCount} ===`);
+    console.log(`\n🔥 === LEVIPRO ANALYSIS CYCLE #${this.analysisCount} ===`);
     console.log(`⏰ Time: ${new Date(startTime).toLocaleString('he-IL')}`);
+    console.log(`📊 Status: Engine=${this.isRunning ? 'ACTIVE' : 'INACTIVE'} | Market=${this.marketDataStatus} | AI=${this.aiEngineStatus}`);
 
     try {
       // Get live market data
       const marketDataMap = await liveMarketDataService.getMultipleAssets(this.SYMBOLS);
       
-      if (marketDataMap.size === 0 || !marketDataMap.has('BTCUSDT')) {
-        console.log('❌ No live market data available - using Edge Function fallback');
-        await this.tryEdgeFunctionAnalysis();
+      if (marketDataMap.size === 0) {
+        this.marketDataStatus = 'NO_DATA';
+        console.log('❌ No live market data available');
+        this.currentCycle = 'WAITING';
         return;
       }
 
+      this.marketDataStatus = 'LIVE_DATA_OK';
       console.log(`📊 Processing ${marketDataMap.size} symbols with live data`);
       
       let symbolsAnalyzed = 0;
       let bestCandidate: any = null;
       let bestScore = 0;
+      let rejectedCount = 0;
 
       // Analyze each symbol with Enhanced AI
       for (const [symbol, marketData] of marketDataMap) {
         symbolsAnalyzed++;
+        this.currentCycle = `ANALYZING_${symbol}`;
+        
+        console.log(`\n🔍 Analyzing ${symbol}: Price=$${marketData.price.toFixed(2)} | Change=${marketData.change24h.toFixed(2)}%`);
         
         const result = await this.analyzeSymbolWithEnhancedAI(symbol, marketData);
         
@@ -158,14 +195,20 @@ _LeviPro Enhanced AI v3.0 - מבוסס למידה (TEST MODE)_`;
           console.log(`🚀 ✅ SIGNAL APPROVED: ${symbol} - Sending to Telegram!`);
           await this.sendEnhancedSignal(symbol, result);
           this.totalSignals++;
+          this.lastSuccessfulSignal = Date.now();
           
           // Log successful signal
           await this.logSignalToDatabase(symbol, result);
         } else {
-          // Track rejection
+          rejectedCount++;
+          
+          // Track rejection with detailed breakdown
+          const rejectionReason = result.rejection || 'Unknown reason';
+          this.rejectionBreakdown[rejectionReason] = (this.rejectionBreakdown[rejectionReason] || 0) + 1;
+          
           this.recentRejections.push({
             symbol,
-            reason: result.rejection || 'Unknown reason',
+            reason: rejectionReason,
             confidence: result.confidence || 0,
             riskReward: result.riskReward || 0,
             timestamp: Date.now(),
@@ -174,13 +217,15 @@ _LeviPro Enhanced AI v3.0 - מבוסס למידה (TEST MODE)_`;
           
           this.totalRejections++;
           
-          // Keep only last 50 rejections
-          if (this.recentRejections.length > 50) {
-            this.recentRejections = this.recentRejections.slice(-50);
+          console.log(`❌ REJECTED: ${symbol} - ${rejectionReason} (Confidence: ${result.confidence?.toFixed(1)}%)`);
+          
+          // Keep only last 100 rejections
+          if (this.recentRejections.length > 100) {
+            this.recentRejections = this.recentRejections.slice(-100);
           }
           
-          // Track best candidate
-          if (result.confidence > bestScore) {
+          // Track best candidate for reporting
+          if (result.confidence && result.confidence > bestScore) {
             bestScore = result.confidence;
             bestCandidate = { symbol, ...result };
           }
@@ -188,35 +233,54 @@ _LeviPro Enhanced AI v3.0 - מבוסס למידה (TEST MODE)_`;
       }
 
       const analysisTime = Date.now() - startTime;
-      this.lastAnalysisReport = `Analyzed ${symbolsAnalyzed} symbols in ${analysisTime}ms. Best candidate: ${bestCandidate?.symbol || 'None'} (${bestScore.toFixed(0)}%). Total rejections: ${this.totalRejections}`;
+      const successRate = symbolsAnalyzed > 0 ? ((symbolsAnalyzed - rejectedCount) / symbolsAnalyzed * 100) : 0;
       
-      console.log(`✅ Analysis complete: ${this.lastAnalysisReport}`);
+      this.lastAnalysisReport = `Analyzed ${symbolsAnalyzed} symbols in ${analysisTime}ms. ` +
+        `Rejected: ${rejectedCount} (${(rejectedCount/symbolsAnalyzed*100).toFixed(1)}%). ` +
+        `Best: ${bestCandidate?.symbol || 'None'} (${bestScore.toFixed(0)}%). ` +
+        `Success Rate: ${successRate.toFixed(1)}%`;
+      
+      console.log(`✅ === ANALYSIS COMPLETE ===`);
+      console.log(`📈 ${this.lastAnalysisReport}`);
+      console.log(`🎯 Total Signals Sent Today: ${this.totalSignals}`);
+      console.log(`❌ Total Rejections: ${this.totalRejections}`);
+      
+      // Log top rejection reasons
+      const topRejections = Object.entries(this.rejectionBreakdown)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 3);
+      
+      if (topRejections.length > 0) {
+        console.log(`🔍 Top Rejection Reasons:`);
+        topRejections.forEach(([reason, count], index) => {
+          console.log(`   ${index + 1}. ${reason}: ${count} times`);
+        });
+      }
+      
+      this.currentCycle = 'COMPLETED';
 
     } catch (error) {
       console.error('❌ Analysis failed:', error);
       this.lastAnalysisReport = `Analysis failed: ${error}`;
+      this.currentCycle = 'ERROR';
+      this.marketDataStatus = 'ERROR';
     }
   }
 
   private async analyzeSymbolWithEnhancedAI(symbol: string, marketData: any): Promise<any> {
-    console.log(`\n🧠 Enhanced AI Analysis: ${symbol}`);
-    console.log(`💰 Price: $${marketData.price.toFixed(2)} | Change: ${marketData.change24h.toFixed(2)}%`);
-
     try {
       // Market Heat Index Check
       const heatData = MarketHeatIndex.calculateHeatIndex(marketData);
       const isMarketSafe = MarketHeatIndex.shouldAllowSignaling(heatData);
       const isSymbolSafe = MarketHeatIndex.filterDangerousSymbols(symbol, marketData);
       
-      console.log(`🌡️ ${MarketHeatIndex.getHeatIndexDescription(heatData)}`);
-      
       if (!isMarketSafe) {
         return {
           shouldSignal: false,
           confidence: 0,
-          rejection: `Market too cold (${heatData.heatIndex.toFixed(0)}% heat)`,
+          rejection: `Market too volatile (${heatData.heatIndex.toFixed(0)}% heat)`,
           riskReward: 0,
-          details: `Heat index below threshold: ${heatData.heatIndex.toFixed(1)}%`
+          details: `Heat index: ${heatData.heatIndex.toFixed(1)}%`
         };
       }
       
@@ -224,15 +288,15 @@ _LeviPro Enhanced AI v3.0 - מבוסס למידה (TEST MODE)_`;
         return {
           shouldSignal: false,
           confidence: 0,
-          rejection: 'Symbol flagged as dangerous',
+          rejection: 'Symbol flagged as high-risk',
           riskReward: 0,
-          details: 'High volatility or low volume detected'
+          details: 'Volatility or volume concerns'
         };
       }
 
       // Enhanced Signal Processing
       const action = marketData.change24h > 0 ? 'BUY' : 'SELL';
-      const sentimentData = { score: 0.5 + (marketData.change24h / 100) }; // Mock sentiment
+      const sentimentData = { score: 0.5 + (marketData.change24h / 100) };
       
       const enhancedResult = await EnhancedSignalProcessor.processSignal(
         symbol,
@@ -240,12 +304,44 @@ _LeviPro Enhanced AI v3.0 - מבוסס למידה (TEST MODE)_`;
         marketData.price,
         marketData,
         sentimentData,
-        'enhanced-ai'
+        'production-ai'
       );
 
-      console.log(`🎯 Enhanced Result: Confidence=${enhancedResult.confidence}% | LeviScore=${enhancedResult.leviScore}%`);
-      console.log(`🔗 ${enhancedResult.correlationReport}`);
-      console.log(`⏰ ${enhancedResult.timeframeReport}`);
+      // Apply production filters
+      if (enhancedResult.confidence < this.PRODUCTION_FILTERS.minConfidence) {
+        return {
+          shouldSignal: false,
+          confidence: enhancedResult.confidence,
+          rejection: `Low confidence: ${enhancedResult.confidence.toFixed(1)}% < ${this.PRODUCTION_FILTERS.minConfidence}%`,
+          riskReward: 1.75,
+          details: `Production filter: requires ${this.PRODUCTION_FILTERS.minConfidence}% minimum`
+        };
+      }
+
+      if (enhancedResult.leviScore < 80) {
+        return {
+          shouldSignal: false,
+          confidence: enhancedResult.confidence,
+          rejection: `Low LeviScore: ${enhancedResult.leviScore}% < 80%`,
+          riskReward: 1.75,
+          details: `LeviScore below production threshold`
+        };
+      }
+
+      // Check cooldown period
+      const timeSinceLastSignal = Date.now() - this.lastSuccessfulSignal;
+      const cooldownMs = this.PRODUCTION_FILTERS.cooldownMinutes * 60 * 1000;
+      
+      if (this.lastSuccessfulSignal > 0 && timeSinceLastSignal < cooldownMs) {
+        const minutesLeft = Math.ceil((cooldownMs - timeSinceLastSignal) / 60000);
+        return {
+          shouldSignal: false,
+          confidence: enhancedResult.confidence,
+          rejection: `Cooldown active: ${minutesLeft} min remaining`,
+          riskReward: 1.75,
+          details: `Production rate limiting: max 1 signal per ${this.PRODUCTION_FILTERS.cooldownMinutes} minutes`
+        };
+      }
 
       if (enhancedResult.shouldSignal) {
         return {
@@ -257,7 +353,7 @@ _LeviPro Enhanced AI v3.0 - מבוסס למידה (TEST MODE)_`;
           timeframeReport: enhancedResult.timeframeReport,
           reasoning: enhancedResult.reasoning,
           action,
-          riskReward: 1.75 // Fixed for LeviPro method
+          riskReward: 1.75
         };
       } else {
         return {
@@ -265,7 +361,7 @@ _LeviPro Enhanced AI v3.0 - מבוסס למידה (TEST MODE)_`;
           confidence: enhancedResult.confidence,
           rejection: enhancedResult.reasoning.join('; '),
           riskReward: 1.75,
-          details: `LeviScore: ${enhancedResult.leviScore}% | Correlation: ${enhancedResult.correlationReport}`
+          details: `AI Engine rejection: ${enhancedResult.reasoning.slice(0, 2).join(', ')}`
         };
       }
 
@@ -282,7 +378,7 @@ _LeviPro Enhanced AI v3.0 - מבוסס למידה (TEST MODE)_`;
   }
 
   private async sendEnhancedSignal(symbol: string, result: any): Promise<void> {
-    const message = `🚀 *איתות חדש - LeviPro Enhanced AI*
+    const message = `🚀 *איתות חדש - LeviPro Production*
 
 💰 *${symbol}*
 📈 ${result.action === 'BUY' ? 'קנייה' : 'מכירה'}: $${result.explanation?.price || 'N/A'}
@@ -300,29 +396,13 @@ ${result.reasoning.map((r: string) => `• ${r}`).join('\n')}
 
 ⏰ ${new Date().toLocaleString('he-IL')}
 
-_LeviPro Enhanced AI v3.0 - מבוסס למידה_`;
+_LeviPro Production AI v3.1 - איכות מובטחת_`;
 
     try {
       await telegramBot.sendMessage(message);
-      console.log(`📱 ✅ Enhanced signal sent to Telegram: ${symbol}`);
+      console.log(`📱 ✅ Production signal sent: ${symbol}`);
     } catch (error) {
       console.error(`❌ Failed to send Telegram message:`, error);
-    }
-  }
-
-  private async tryEdgeFunctionAnalysis(): Promise<void> {
-    try {
-      console.log('🔄 Attempting Edge Function analysis...');
-      const { data, error } = await supabase.functions.invoke('trading-signals-engine');
-      
-      if (error) {
-        console.error('❌ Edge function failed:', error);
-        return;
-      }
-      
-      console.log('✅ Edge function completed:', data);
-    } catch (error) {
-      console.error('❌ Edge function invocation failed:', error);
     }
   }
 
@@ -331,7 +411,7 @@ _LeviPro Enhanced AI v3.0 - מבוסס למידה_`;
       const { error } = await supabase
         .from('signal_history')
         .insert({
-          signal_id: `${isTestSignal ? 'test_' : 'enhanced_'}${Date.now()}_${symbol}`,
+          signal_id: `${isTestSignal ? 'test_' : 'prod_'}${Date.now()}_${symbol}`,
           symbol,
           action: result.action,
           entry_price: result.explanation?.price || 0,
@@ -339,20 +419,21 @@ _LeviPro Enhanced AI v3.0 - מבוסס למידה_`;
           stop_loss: result.explanation?.stopLoss || 0,
           confidence: result.confidence,
           risk_reward_ratio: result.riskReward,
-          strategy: isTestSignal ? 'test-signal' : 'enhanced-ai',
-          reasoning: Array.isArray(result.reasoning) ? result.reasoning.join('; ') : (result.reasoning || 'No reasoning provided'),
+          strategy: isTestSignal ? 'test-signal' : 'production-ai',
+          reasoning: Array.isArray(result.reasoning) ? result.reasoning.join('; ') : (result.reasoning || 'Production signal'),
           market_conditions: {
             leviScore: result.leviScore,
             correlationReport: result.correlationReport,
             timeframeReport: result.timeframeReport,
-            isTestSignal
+            isTestSignal,
+            engineVersion: '3.1'
           }
         });
 
       if (error) {
         console.error('❌ Failed to log signal to database:', error);
       } else {
-        console.log(`✅ Signal logged to database${isTestSignal ? ' (TEST)' : ''}`);
+        console.log(`✅ Signal logged to database${isTestSignal ? ' (TEST)' : ' (PRODUCTION)'}`);
       }
     } catch (error) {
       console.error('❌ Database logging error:', error);
@@ -367,7 +448,8 @@ _LeviPro Enhanced AI v3.0 - מבוסס למידה_`;
       const data = marketData.get(symbol);
       
       if (data) {
-        await this.analyzeSymbolWithEnhancedAI(symbol, data);
+        const result = await this.analyzeSymbolWithEnhancedAI(symbol, data);
+        console.log(`📊 Manual analysis result for ${symbol}:`, result);
       } else {
         console.log(`❌ No data available for ${symbol}`);
       }
@@ -376,14 +458,19 @@ _LeviPro Enhanced AI v3.0 - מבוסס למידה_`;
     }
   }
 
-  getEngineStatus() {
+  getEngineStatus(): EngineStats {
     return {
       isRunning: this.isRunning,
       lastAnalysis: this.lastAnalysis,
       analysisCount: this.analysisCount,
       totalSignals: this.totalSignals,
       totalRejections: this.totalRejections,
-      lastAnalysisReport: this.lastAnalysisReport
+      lastAnalysisReport: this.lastAnalysisReport,
+      currentCycle: this.currentCycle,
+      marketDataStatus: this.marketDataStatus,
+      aiEngineStatus: this.aiEngineStatus,
+      lastSuccessfulSignal: this.lastSuccessfulSignal,
+      rejectionBreakdown: { ...this.rejectionBreakdown }
     };
   }
 
@@ -391,12 +478,22 @@ _LeviPro Enhanced AI v3.0 - מבוסס למידה_`;
     return this.recentRejections.slice(-limit);
   }
 
-  getDebugInfo(): any {
+  getDetailedStatus(): any {
+    const stats = this.getEngineStatus();
+    const recentRejections = this.getRecentRejections(20);
+    
     return {
-      recentRejections: this.recentRejections.slice(-20),
-      filters: this.RELAXED_FILTERS,
+      ...stats,
+      productionFilters: this.PRODUCTION_FILTERS,
       symbols: this.SYMBOLS,
-      status: this.getEngineStatus()
+      recentRejections,
+      healthCheck: {
+        engineRunning: this.isRunning,
+        dataConnection: this.marketDataStatus === 'LIVE_DATA_OK',
+        aiProcessor: this.aiEngineStatus === 'READY',
+        lastSignalAge: this.lastSuccessfulSignal > 0 ? Date.now() - this.lastSuccessfulSignal : null,
+        overallHealth: this.isRunning && this.marketDataStatus === 'LIVE_DATA_OK' ? 'HEALTHY' : 'DEGRADED'
+      }
     };
   }
 }

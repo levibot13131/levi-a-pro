@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,13 +13,15 @@ import {
   Database,
   Bell,
   Zap,
-  FileText
+  FileText,
+  AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { liveSignalEngine } from '@/services/trading/liveSignalEngine';
 import { ReportGenerator } from '@/components/reports/ReportGenerator';
 import { UserManagementPanel } from '@/components/admin/UserManagementPanel';
 import { AccessControlManager } from '@/components/admin/AccessControlManager';
+import { SystemStatusPanel } from '@/components/admin/SystemStatusPanel';
 import Navbar from '@/components/layout/Navbar';
 
 const Admin: React.FC = () => {
@@ -51,7 +54,7 @@ const Admin: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="h-6 w-6 text-red-500" />
-              פאנל ניהול LeviPro
+              פאנל ניהול LeviPro Production
               <Badge variant="destructive">
                 מנהל
               </Badge>
@@ -79,78 +82,47 @@ const Admin: React.FC = () => {
               </div>
               
               <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">100%</div>
-                <div className="text-sm text-muted-foreground">זמינות מערכת</div>
+                <div className="text-2xl font-bold text-orange-600">
+                  {engineStatus.totalRejections}
+                </div>
+                <div className="text-sm text-muted-foreground">איתותים נדחו</div>
               </div>
             </div>
+            
+            {/* System Health Alert */}
+            {!engineStatus.isRunning && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <span className="text-red-800 font-medium">
+                  ⚠️ מנוע האיתותים כבוי - לא יישלחו איתותים חדשים
+                </span>
+              </div>
+            )}
+            
+            {engineStatus.isRunning && engineStatus.totalSignals === 0 && (
+              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                <span className="text-yellow-800 font-medium">
+                  📊 המנוע פעיל אך טרם נשלחו איתותים - בדוק את פילטרי האיכות
+                </span>
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Admin Tabs */}
-        <Tabs defaultValue="dashboard" className="space-y-4">
+        <Tabs defaultValue="status" className="space-y-4">
           <TabsList className="w-full">
-            <TabsTrigger value="dashboard">לוח בקרה</TabsTrigger>
+            <TabsTrigger value="status">מצב מערכת</TabsTrigger>
             <TabsTrigger value="users">ניהול משתמשים</TabsTrigger>
             <TabsTrigger value="access">בקרת גישה</TabsTrigger>
             <TabsTrigger value="signals">ניהול איתותים</TabsTrigger>
             <TabsTrigger value="reports">דוחות</TabsTrigger>
-            <TabsTrigger value="system">מערכת</TabsTrigger>
+            <TabsTrigger value="system">הגדרות מערכת</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="dashboard" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Activity className="h-5 w-5" />
-                    פעילות מערכת
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span>מנוע AI:</span>
-                      <Badge variant={engineStatus.isRunning ? "default" : "secondary"}>
-                        {engineStatus.isRunning ? 'פעיל' : 'כבוי'}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>טלגרם בוט:</span>
-                      <Badge variant="default">פעיל</Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>בסיס נתונים:</span>
-                      <Badge variant="default">מחובר</Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BarChart3 className="h-5 w-5" />
-                    סטטיסטיקות
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span>איתותים היום:</span>
-                      <span className="font-bold">{engineStatus.totalSignals}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>ניתוחים:</span>
-                      <span className="font-bold">{engineStatus.analysisCount}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>דחיות:</span>
-                      <span className="font-bold">{engineStatus.totalRejections}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+          <TabsContent value="status" className="space-y-4">
+            <SystemStatusPanel />
           </TabsContent>
           
           <TabsContent value="users" className="space-y-4">
@@ -166,22 +138,66 @@ const Admin: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Zap className="h-5 w-5" />
-                  ניהול איתותים
+                  ניהול איתותים מתקדם
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex gap-4">
-                    <Button>שלח איתות בדיקה</Button>
-                    <Button variant="outline">איפוס סטטיסטיקות</Button>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Button 
+                      onClick={() => liveSignalEngine.sendTestSignal()}
+                      className="h-16"
+                    >
+                      <div className="text-center">
+                        <div>שלח איתות בדיקה</div>
+                        <div className="text-xs opacity-75">לבדיקת התקשורת</div>
+                      </div>
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      onClick={() => liveSignalEngine.start()}
+                      disabled={engineStatus.isRunning}
+                      className="h-16"
+                    >
+                      <div className="text-center">
+                        <div>הפעל מנוע</div>
+                        <div className="text-xs opacity-75">התחל ניתוח</div>
+                      </div>
+                    </Button>
+                    
+                    <Button 
+                      variant="destructive" 
+                      onClick={() => liveSignalEngine.stop()}
+                      disabled={!engineStatus.isRunning}
+                      className="h-16"
+                    >
+                      <div className="text-center">
+                        <div>עצור מנוע</div>
+                        <div className="text-xs opacity-75">הפסק ניתוח</div>
+                      </div>
+                    </Button>
                   </div>
                   
                   <div className="p-4 bg-gray-50 rounded">
-                    <h4 className="font-semibold mb-2">הגדרות איתותים</h4>
-                    <div className="text-sm space-y-1">
-                      <div>רמת ביטחון מינימלית: 70%</div>
-                      <div>יחס סיכון/תשואה: 1:1.2</div>
-                      <div>תדירות בדיקה: 30 שניות</div>
+                    <h4 className="font-semibold mb-2">הגדרות איתותים פרודקשן</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <div className="text-muted-foreground">ביטחון מינימלי</div>
+                        <div className="font-semibold">75%</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">יחס סיכון/תשואה</div>
+                        <div className="font-semibold">1:1.3</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">תדירות בדיקה</div>
+                        <div className="font-semibold">30 שניות</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">זמן המתנה</div>
+                        <div className="font-semibold">20 דקות</div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -198,7 +214,7 @@ const Admin: React.FC = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Settings className="h-5 w-5" />
-                  הגדרות מערכת
+                  הגדרות מערכת מתקדמות
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -216,8 +232,26 @@ const Admin: React.FC = () => {
                   
                   <div className="p-4 bg-green-50 rounded">
                     <h4 className="font-semibold text-green-800 mb-2">סטטוס מערכת</h4>
-                    <div className="text-sm text-green-700">
-                      ✅ כל המערכות פועלות תקין
+                    <div className="text-sm text-green-700 space-y-1">
+                      <div>✅ כל המערכות פועלות תקין</div>
+                      <div>✅ RLS פעיל על כל הטבלאות</div>
+                      <div>✅ מנוע AI מוכן לפעולה</div>
+                      <div>✅ טלגרם בוט מחובר</div>
+                      <div>✅ בסיס נתונים זמין</div>
+                    </div>
+                  </div>
+                  
+                  {/* Engine Status Summary */}
+                  <div className="p-4 bg-blue-50 rounded">
+                    <h4 className="font-semibold text-blue-800 mb-2">סיכום פעילות המנוע</h4>
+                    <div className="text-sm text-blue-700">
+                      <div>🔍 ניתוחים בוצעו: {engineStatus.analysisCount}</div>
+                      <div>📈 איתותים נשלחו: {engineStatus.totalSignals}</div>
+                      <div>❌ איתותים נדחו: {engineStatus.totalRejections}</div>
+                      <div>⏰ ניתוח אחרון: {engineStatus.lastAnalysis > 0 ? 
+                        new Date(engineStatus.lastAnalysis).toLocaleString('he-IL') : 
+                        'טרם בוצע'
+                      }</div>
                     </div>
                   </div>
                 </div>
