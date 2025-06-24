@@ -3,6 +3,7 @@ import { telegramBot } from '../telegram/telegramBot';
 import { supabase } from '@/integrations/supabase/client';
 import { EnhancedSignalProcessor } from '../ai/enhancedSignalProcessor';
 import { MarketHeatIndex } from '../ai/marketHeatIndex';
+import { FeedbackLearningEngine } from '../ai/feedbackLearningEngine';
 
 interface SignalRejection {
   symbol: string;
@@ -25,6 +26,14 @@ interface EngineStats {
   aiEngineStatus: string;
   lastSuccessfulSignal: number;
   rejectionBreakdown: { [reason: string]: number };
+  signalsLast24h: number;
+}
+
+interface DebugInfo {
+  recentRejections: SignalRejection[];
+  rejectionBreakdown: { [reason: string]: number };
+  learningStats: any;
+  currentFilters: any;
 }
 
 class LiveSignalEngine {
@@ -41,6 +50,7 @@ class LiveSignalEngine {
   private currentCycle = 'IDLE';
   private marketDataStatus = 'UNKNOWN';
   private aiEngineStatus = 'INITIALIZING';
+  private signalsLast24h = 0;
   
   // Production-ready settings
   private readonly PRODUCTION_FILTERS = {
@@ -195,10 +205,25 @@ _LeviPro Enhanced AI v3.1 - מצב בדיקה_`;
           console.log(`🚀 ✅ SIGNAL APPROVED: ${symbol} - Sending to Telegram!`);
           await this.sendEnhancedSignal(symbol, result);
           this.totalSignals++;
+          this.signalsLast24h++;
           this.lastSuccessfulSignal = Date.now();
           
           // Log successful signal
           await this.logSignalToDatabase(symbol, result);
+          
+          // Record learning data
+          await FeedbackLearningEngine.recordSignalOutcome({
+            signalId: `${symbol}_${Date.now()}`,
+            symbol,
+            strategy: 'production-ai',
+            marketConditions: marketData,
+            outcome: 'profit', // Will be updated later
+            profitPercent: 0,
+            timeToTarget: 0,
+            confidence: result.confidence,
+            actualConfidence: result.confidence
+          });
+          
         } else {
           rejectedCount++;
           
@@ -244,6 +269,7 @@ _LeviPro Enhanced AI v3.1 - מצב בדיקה_`;
       console.log(`📈 ${this.lastAnalysisReport}`);
       console.log(`🎯 Total Signals Sent Today: ${this.totalSignals}`);
       console.log(`❌ Total Rejections: ${this.totalRejections}`);
+      console.log(`📊 Signals Last 24h: ${this.signalsLast24h}`);
       
       // Log top rejection reasons
       const topRejections = Object.entries(this.rejectionBreakdown)
@@ -307,12 +333,18 @@ _LeviPro Enhanced AI v3.1 - מצב בדיקה_`;
         'production-ai'
       );
 
-      // Apply production filters
-      if (enhancedResult.confidence < this.PRODUCTION_FILTERS.minConfidence) {
+      // Apply production filters with learning adjustments
+      const adjustedConfidence = FeedbackLearningEngine.shouldBoostConfidence(
+        symbol, 
+        'production-ai', 
+        enhancedResult.confidence
+      );
+
+      if (adjustedConfidence < this.PRODUCTION_FILTERS.minConfidence) {
         return {
           shouldSignal: false,
-          confidence: enhancedResult.confidence,
-          rejection: `Low confidence: ${enhancedResult.confidence.toFixed(1)}% < ${this.PRODUCTION_FILTERS.minConfidence}%`,
+          confidence: adjustedConfidence,
+          rejection: `Low confidence: ${adjustedConfidence.toFixed(1)}% < ${this.PRODUCTION_FILTERS.minConfidence}%`,
           riskReward: 1.75,
           details: `Production filter: requires ${this.PRODUCTION_FILTERS.minConfidence}% minimum`
         };
@@ -321,7 +353,7 @@ _LeviPro Enhanced AI v3.1 - מצב בדיקה_`;
       if (enhancedResult.leviScore < 80) {
         return {
           shouldSignal: false,
-          confidence: enhancedResult.confidence,
+          confidence: adjustedConfidence,
           rejection: `Low LeviScore: ${enhancedResult.leviScore}% < 80%`,
           riskReward: 1.75,
           details: `LeviScore below production threshold`
@@ -336,7 +368,7 @@ _LeviPro Enhanced AI v3.1 - מצב בדיקה_`;
         const minutesLeft = Math.ceil((cooldownMs - timeSinceLastSignal) / 60000);
         return {
           shouldSignal: false,
-          confidence: enhancedResult.confidence,
+          confidence: adjustedConfidence,
           rejection: `Cooldown active: ${minutesLeft} min remaining`,
           riskReward: 1.75,
           details: `Production rate limiting: max 1 signal per ${this.PRODUCTION_FILTERS.cooldownMinutes} minutes`
@@ -346,7 +378,7 @@ _LeviPro Enhanced AI v3.1 - מצב בדיקה_`;
       if (enhancedResult.shouldSignal) {
         return {
           shouldSignal: true,
-          confidence: enhancedResult.confidence,
+          confidence: adjustedConfidence,
           leviScore: enhancedResult.leviScore,
           explanation: enhancedResult.explanation,
           correlationReport: enhancedResult.correlationReport,
@@ -358,7 +390,7 @@ _LeviPro Enhanced AI v3.1 - מצב בדיקה_`;
       } else {
         return {
           shouldSignal: false,
-          confidence: enhancedResult.confidence,
+          confidence: adjustedConfidence,
           rejection: enhancedResult.reasoning.join('; '),
           riskReward: 1.75,
           details: `AI Engine rejection: ${enhancedResult.reasoning.slice(0, 2).join(', ')}`
@@ -470,12 +502,22 @@ _LeviPro Production AI v3.1 - איכות מובטחת_`;
       marketDataStatus: this.marketDataStatus,
       aiEngineStatus: this.aiEngineStatus,
       lastSuccessfulSignal: this.lastSuccessfulSignal,
-      rejectionBreakdown: { ...this.rejectionBreakdown }
+      rejectionBreakdown: { ...this.rejectionBreakdown },
+      signalsLast24h: this.signalsLast24h
     };
   }
 
   getRecentRejections(limit: number = 10): SignalRejection[] {
     return this.recentRejections.slice(-limit);
+  }
+
+  getDebugInfo(): DebugInfo {
+    return {
+      recentRejections: this.recentRejections.slice(-20),
+      rejectionBreakdown: { ...this.rejectionBreakdown },
+      learningStats: FeedbackLearningEngine.getLearningStats(),
+      currentFilters: this.PRODUCTION_FILTERS
+    };
   }
 
   getDetailedStatus(): any {

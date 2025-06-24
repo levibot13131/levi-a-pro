@@ -23,12 +23,13 @@ export const useUserManagement = () => {
 
   const loadUsers = async () => {
     try {
-      // Using direct SQL query since types are not synced yet
-      const { data, error } = await supabase
-        .rpc('get_user_access_control_data');
+      // Direct query to user_access_control table
+      const { data: accessData, error: accessError } = await supabase
+        .from('user_access_control')
+        .select('*');
 
-      if (error) {
-        console.log('RPC not available, using fallback data structure');
+      if (accessError) {
+        console.log('user_access_control table not available, using fallback');
         // Fallback to user_profiles for now
         const { data: profileData, error: profileError } = await supabase
           .from('user_profiles')
@@ -53,12 +54,11 @@ export const useUserManagement = () => {
         
         setUsers(transformedData);
       } else {
-        setUsers(data || []);
+        setUsers(accessData || []);
       }
     } catch (error) {
       console.error('Error loading users:', error);
       toast.error('שגיאה בטעינת רשימת משתמשים');
-      // Set empty array as fallback
       setUsers([]);
     } finally {
       setLoading(false);
@@ -74,39 +74,41 @@ export const useUserManagement = () => {
     try {
       console.log('Adding user:', userData);
       
-      // For now, add to user_profiles as a fallback
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: `${userData.telegram_username}@telegram.user`,
-        password: 'temp_password_123',
-        user_metadata: {
-          telegram_id: userData.telegram_id,
-          telegram_username: userData.telegram_username
-        }
-      });
-
-      if (authError) {
-        console.log('Auth creation failed, proceeding with profile creation');
-      }
-
-      // Add to user_profiles for compatibility
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
+      // Try to add to user_access_control first
+      const { data: accessData, error: accessError } = await supabase
+        .from('user_access_control')
         .insert([{
-          user_id: authData?.user?.id || `telegram_${userData.telegram_id}`,
-          username: userData.telegram_username,
-          telegram_chat_id: userData.telegram_id
+          user_id: `telegram_${userData.telegram_id}`,
+          telegram_id: userData.telegram_id,
+          telegram_username: userData.telegram_username,
+          access_level: userData.access_level,
+          allowed_assets: userData.allowed_assets || [],
+          is_active: true,
+          signals_received: 0
         }])
         .select()
         .single();
 
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
+      if (accessError) {
+        console.log('user_access_control insert failed, using fallback');
+        // Fallback to user_profiles
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .insert([{
+            user_id: `telegram_${userData.telegram_id}`,
+            username: userData.telegram_username,
+            telegram_chat_id: userData.telegram_id
+          }])
+          .select()
+          .single();
+
+        if (profileError) throw profileError;
       }
 
       // Transform for display
       const newUser: UserAccessControl = {
-        id: profileData?.id || `temp_${Date.now()}`,
-        user_id: profileData?.user_id || `telegram_${userData.telegram_id}`,
+        id: accessData?.id || `temp_${Date.now()}`,
+        user_id: `telegram_${userData.telegram_id}`,
         telegram_id: userData.telegram_id,
         telegram_username: userData.telegram_username,
         access_level: userData.access_level,
@@ -132,6 +134,16 @@ export const useUserManagement = () => {
     try {
       console.log('Updating user:', userId, updates);
       
+      // Try to update in user_access_control
+      const { error: accessError } = await supabase
+        .from('user_access_control')
+        .update(updates)
+        .eq('id', userId);
+
+      if (accessError) {
+        console.log('user_access_control update failed, updating local state only');
+      }
+      
       setUsers(prev => prev.map(user => 
         user.id === userId ? { ...user, ...updates, updated_at: new Date().toISOString() } : user
       ));
@@ -148,6 +160,16 @@ export const useUserManagement = () => {
   const deleteUser = async (userId: string) => {
     try {
       console.log('Deleting user:', userId);
+      
+      // Try to delete from user_access_control
+      const { error: accessError } = await supabase
+        .from('user_access_control')
+        .delete()
+        .eq('id', userId);
+
+      if (accessError) {
+        console.log('user_access_control delete failed, updating local state only');
+      }
       
       setUsers(prev => prev.filter(user => user.id !== userId));
       toast.success('משתמש נמחק בהצלחה');

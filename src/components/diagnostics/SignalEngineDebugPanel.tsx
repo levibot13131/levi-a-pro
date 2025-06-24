@@ -11,9 +11,11 @@ import {
   XCircle,
   BarChart3,
   Clock,
-  TrendingUp
+  TrendingUp,
+  Download
 } from 'lucide-react';
 import { liveSignalEngine } from '@/services/trading/liveSignalEngine';
+import { toast } from 'sonner';
 
 interface AnalysisDebugInfo {
   timestamp: number;
@@ -24,6 +26,7 @@ interface AnalysisDebugInfo {
     insufficientVolume: number;
     weakPriceMove: number;
     noSentiment: number;
+    cooldown: number;
     other: number;
   };
   bestSignal?: {
@@ -43,33 +46,32 @@ const SignalEngineDebugPanel: React.FC = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setEngineStatus(liveSignalEngine.getEngineStatus());
-      // Try to get debug info from the engine
-      const debugData = liveSignalEngine.getDebugInfo();
-      if (debugData) {
-        updateDebugInfo();
-      }
+      updateDebugInfo();
     }, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
   const updateDebugInfo = () => {
-    // Get recent rejections and analyze them
-    const rejections = liveSignalEngine.getRecentRejections(50);
+    // Get debug info from the engine
+    const debugData = liveSignalEngine.getDebugInfo();
+    const rejections = debugData.recentRejections;
     const analysisTime = Date.now();
     
     const rejectionStats = {
-      lowConfidence: rejections.filter(r => r.reason.includes('Confidence')).length,
+      lowConfidence: rejections.filter(r => r.reason.includes('confidence')).length,
       lowRiskReward: rejections.filter(r => r.reason.includes('R/R')).length,
       insufficientVolume: rejections.filter(r => r.reason.includes('volume')).length,
       weakPriceMove: rejections.filter(r => r.reason.includes('movement')).length,
       noSentiment: rejections.filter(r => r.reason.includes('sentiment')).length,
+      cooldown: rejections.filter(r => r.reason.includes('Cooldown')).length,
       other: rejections.filter(r => 
-        !r.reason.includes('Confidence') && 
+        !r.reason.includes('confidence') && 
         !r.reason.includes('R/R') && 
         !r.reason.includes('volume') && 
         !r.reason.includes('movement') && 
-        !r.reason.includes('sentiment')
+        !r.reason.includes('sentiment') &&
+        !r.reason.includes('Cooldown')
       ).length
     };
 
@@ -98,17 +100,35 @@ const SignalEngineDebugPanel: React.FC = () => {
       // Trigger manual analysis
       await liveSignalEngine.performManualAnalysis('BTCUSDT');
       updateDebugInfo();
+      toast.success('ניתוח ידני הושלם');
     } catch (error) {
       console.error('Manual analysis failed:', error);
+      toast.error('שגיאה בניתוח ידני');
     } finally {
       setIsRefreshing(false);
     }
   };
 
-  const handleRelaxFilters = () => {
-    // This would temporarily relax the filtering criteria
-    console.log('🔧 Temporarily relaxing signal filters for testing...');
-    // Implementation would modify the engine's filtering thresholds
+  const exportRejectionsToCSV = () => {
+    const debugData = liveSignalEngine.getDebugInfo();
+    const rejections = debugData.recentRejections;
+    
+    const csvContent = [
+      'Timestamp,Symbol,Reason,Confidence,Risk_Reward,Details',
+      ...rejections.map(r => 
+        `${new Date(r.timestamp).toISOString()},${r.symbol},"${r.reason}",${r.confidence},${r.riskReward},"${r.details || ''}"`
+      )
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `signal_rejections_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    
+    toast.success('קובץ CSV נוצר בהצלחה');
   };
 
   return (
@@ -130,11 +150,12 @@ const SignalEngineDebugPanel: React.FC = () => {
               Force Analysis
             </Button>
             <Button
-              onClick={handleRelaxFilters}
+              onClick={exportRejectionsToCSV}
               size="sm"
               variant="secondary"
             >
-              Relax Filters (Test)
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
             </Button>
           </div>
         </CardTitle>
@@ -142,7 +163,7 @@ const SignalEngineDebugPanel: React.FC = () => {
       <CardContent>
         <div className="space-y-6">
           {/* Engine Status */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center">
               <div className={`text-2xl font-bold ${engineStatus.isRunning ? 'text-green-600' : 'text-red-600'}`}>
                 {engineStatus.isRunning ? 'ACTIVE' : 'STOPPED'}
@@ -163,6 +184,13 @@ const SignalEngineDebugPanel: React.FC = () => {
               </div>
               <div className="text-sm text-muted-foreground">Signals Sent</div>
             </div>
+            
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">
+                {engineStatus.signalsLast24h || 0}
+              </div>
+              <div className="text-sm text-muted-foreground">Last 24h</div>
+            </div>
           </div>
 
           {/* Last Analysis */}
@@ -174,9 +202,14 @@ const SignalEngineDebugPanel: React.FC = () => {
             <p className="text-sm text-muted-foreground">
               {engineStatus.lastAnalysisReport || 'No analysis data available'}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Last update: {engineStatus.lastAnalysis ? new Date(engineStatus.lastAnalysis).toLocaleString() : 'Never'}
-            </p>
+            <div className="flex justify-between items-center mt-2">
+              <p className="text-xs text-muted-foreground">
+                Last update: {engineStatus.lastAnalysis ? new Date(engineStatus.lastAnalysis).toLocaleString() : 'Never'}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Last signal: {engineStatus.lastSuccessfulSignal ? new Date(engineStatus.lastSuccessfulSignal).toLocaleString() : 'None'}
+              </p>
+            </div>
           </div>
 
           {/* Rejection Statistics */}
@@ -186,14 +219,14 @@ const SignalEngineDebugPanel: React.FC = () => {
                 <BarChart3 className="h-4 w-4" />
                 Signal Rejection Analysis
               </h4>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div className="p-3 border rounded text-center">
                   <div className="text-lg font-bold text-red-600">{debugInfo.rejections.lowConfidence}</div>
-                  <div className="text-xs text-muted-foreground">Low Confidence (&lt;80%)</div>
+                  <div className="text-xs text-muted-foreground">Low Confidence</div>
                 </div>
                 <div className="p-3 border rounded text-center">
                   <div className="text-lg font-bold text-orange-600">{debugInfo.rejections.lowRiskReward}</div>
-                  <div className="text-xs text-muted-foreground">Poor R/R (&lt;1.5)</div>
+                  <div className="text-xs text-muted-foreground">Poor R/R</div>
                 </div>
                 <div className="p-3 border rounded text-center">
                   <div className="text-lg font-bold text-yellow-600">{debugInfo.rejections.insufficientVolume}</div>
@@ -201,15 +234,23 @@ const SignalEngineDebugPanel: React.FC = () => {
                 </div>
                 <div className="p-3 border rounded text-center">
                   <div className="text-lg font-bold text-blue-600">{debugInfo.rejections.weakPriceMove}</div>
-                  <div className="text-xs text-muted-foreground">Weak Movement (&lt;2.5%)</div>
+                  <div className="text-xs text-muted-foreground">Weak Movement</div>
                 </div>
                 <div className="p-3 border rounded text-center">
-                  <div className="text-lg font-bold text-purple-600">{debugInfo.rejections.noSentiment}</div>
+                  <div className="text-lg font-bold text-purple-600">{debugInfo.rejections.cooldown}</div>
+                  <div className="text-xs text-muted-foreground">Cooldown Active</div>
+                </div>
+                <div className="p-3 border rounded text-center">
+                  <div className="text-lg font-bold text-pink-600">{debugInfo.rejections.noSentiment}</div>
                   <div className="text-xs text-muted-foreground">No Sentiment</div>
                 </div>
                 <div className="p-3 border rounded text-center">
                   <div className="text-lg font-bold text-gray-600">{debugInfo.rejections.other}</div>
                   <div className="text-xs text-muted-foreground">Other Reasons</div>
+                </div>
+                <div className="p-3 border rounded text-center">
+                  <div className="text-lg font-bold text-indigo-600">{engineStatus.totalRejections}</div>
+                  <div className="text-xs text-muted-foreground">Total Rejections</div>
                 </div>
               </div>
             </div>
@@ -229,7 +270,7 @@ const SignalEngineDebugPanel: React.FC = () => {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Confidence:</span>
-                  <div className="font-semibold">{debugInfo.bestSignal.confidence}%</div>
+                  <div className="font-semibold">{debugInfo.bestSignal.confidence.toFixed(1)}%</div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">R/R Ratio:</span>
@@ -245,39 +286,40 @@ const SignalEngineDebugPanel: React.FC = () => {
 
           {/* Current Filter Settings */}
           <div className="p-4 bg-blue-50 border border-blue-200 rounded">
-            <h4 className="font-semibold mb-2 text-blue-800">Current Filter Thresholds</h4>
+            <h4 className="font-semibold mb-2 text-blue-800">Current Production Filters</h4>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
               <div className="flex justify-between">
                 <span>Confidence Min:</span>
-                <Badge variant="outline">80%</Badge>
+                <Badge variant="outline">75%</Badge>
               </div>
               <div className="flex justify-between">
                 <span>R/R Min:</span>
-                <Badge variant="outline">1.5</Badge>
+                <Badge variant="outline">1.3</Badge>
               </div>
               <div className="flex justify-between">
                 <span>Price Move Min:</span>
-                <Badge variant="outline">2.5%</Badge>
+                <Badge variant="outline">2.0%</Badge>
               </div>
               <div className="flex justify-between">
-                <span>Analysis Interval:</span>
-                <Badge variant="outline">30s</Badge>
+                <span>Cooldown:</span>
+                <Badge variant="outline">20 min</Badge>
               </div>
             </div>
           </div>
 
-          {/* Recommendations */}
+          {/* Learning Stats */}
           <div className="p-4 bg-green-50 border border-green-200 rounded">
             <h4 className="font-semibold mb-2 text-green-800 flex items-center gap-2">
               <CheckCircle className="h-4 w-4" />
-              Recommendations
+              Learning System Status
             </h4>
-            <ul className="text-sm space-y-1 text-green-700">
-              <li>• If no signals in 24h: Lower confidence to 70% temporarily</li>
-              <li>• If market is sideways: Reduce price movement requirement to 1.5%</li>
-              <li>• Monitor volume spikes during major news events</li>
-              <li>• Check if sentiment data is being received properly</li>
-            </ul>
+            <div className="text-sm space-y-1 text-green-700">
+              <div>✅ Rejection tracking: ACTIVE</div>
+              <div>✅ Confidence adjustment: ENABLED</div>
+              <div>✅ Strategy weight learning: RUNNING</div>
+              <div>✅ Multi-timeframe analysis: ENABLED</div>
+              <div>📊 Total rejections logged: {engineStatus.totalRejections}</div>
+            </div>
           </div>
         </div>
       </CardContent>

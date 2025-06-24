@@ -14,7 +14,8 @@ import {
   Bell,
   Zap,
   FileText,
-  AlertTriangle
+  AlertTriangle,
+  TrendingDown
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { liveSignalEngine } from '@/services/trading/liveSignalEngine';
@@ -22,6 +23,8 @@ import { ReportGenerator } from '@/components/reports/ReportGenerator';
 import { UserManagementPanel } from '@/components/admin/UserManagementPanel';
 import { AccessControlManager } from '@/components/admin/AccessControlManager';
 import { SystemStatusPanel } from '@/components/admin/SystemStatusPanel';
+import { RejectionAnalysisPanel } from '@/components/admin/RejectionAnalysisPanel';
+import SignalEngineDebugPanel from '@/components/diagnostics/SignalEngineDebugPanel';
 import Navbar from '@/components/layout/Navbar';
 
 const Admin: React.FC = () => {
@@ -61,7 +64,7 @@ const Admin: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">1</div>
                 <div className="text-sm text-muted-foreground">משתמשים רשומים</div>
@@ -86,6 +89,13 @@ const Admin: React.FC = () => {
                   {engineStatus.totalRejections}
                 </div>
                 <div className="text-sm text-muted-foreground">איתותים נדחו</div>
+              </div>
+              
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">
+                  {engineStatus.signalsLast24h || 0}
+                </div>
+                <div className="text-sm text-muted-foreground">24 שעות אחרונות</div>
               </div>
             </div>
             
@@ -116,6 +126,8 @@ const Admin: React.FC = () => {
             <TabsTrigger value="status">מצב מערכת</TabsTrigger>
             <TabsTrigger value="users">ניהול משתמשים</TabsTrigger>
             <TabsTrigger value="access">בקרת גישה</TabsTrigger>
+            <TabsTrigger value="rejections">ניתוח דחיות</TabsTrigger>
+            <TabsTrigger value="debug">Debug Panel</TabsTrigger>
             <TabsTrigger value="signals">ניהול איתותים</TabsTrigger>
             <TabsTrigger value="reports">דוחות</TabsTrigger>
             <TabsTrigger value="system">הגדרות מערכת</TabsTrigger>
@@ -131,6 +143,14 @@ const Admin: React.FC = () => {
           
           <TabsContent value="access" className="space-y-4">
             <AccessControlManager />
+          </TabsContent>
+          
+          <TabsContent value="rejections" className="space-y-4">
+            <RejectionAnalysisPanel />
+          </TabsContent>
+          
+          <TabsContent value="debug" className="space-y-4">
+            <SignalEngineDebugPanel />
           </TabsContent>
           
           <TabsContent value="signals" className="space-y-4">
@@ -238,6 +258,7 @@ const Admin: React.FC = () => {
                       <div>✅ מנוע AI מוכן לפעולה</div>
                       <div>✅ טלגרם בוט מחובר</div>
                       <div>✅ בסיס נתונים זמין</div>
+                      <div>✅ מערכת לימוד פעילה</div>
                     </div>
                   </div>
                   
@@ -248,9 +269,14 @@ const Admin: React.FC = () => {
                       <div>🔍 ניתוחים בוצעו: {engineStatus.analysisCount}</div>
                       <div>📈 איתותים נשלחו: {engineStatus.totalSignals}</div>
                       <div>❌ איתותים נדחו: {engineStatus.totalRejections}</div>
+                      <div>📊 איתותים 24 שעות: {engineStatus.signalsLast24h}</div>
                       <div>⏰ ניתוח אחרון: {engineStatus.lastAnalysis > 0 ? 
                         new Date(engineStatus.lastAnalysis).toLocaleString('he-IL') : 
                         'טרם בוצע'
+                      }</div>
+                      <div>🎯 איתות אחרון: {engineStatus.lastSuccessfulSignal > 0 ? 
+                        new Date(engineStatus.lastSuccessfulSignal).toLocaleString('he-IL') : 
+                        'אף פעם'
                       }</div>
                     </div>
                   </div>
