@@ -7,7 +7,6 @@ import TradingEngine from './pages/TradingEngine';
 import TradingJournal from './pages/TradingJournal';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import Auth from './pages/Auth';
 import Profile from './pages/Profile';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import Navbar from './components/layout/Navbar';
@@ -27,7 +26,6 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
-              <Route path="/auth" element={<Auth />} />
               <Route 
                 path="/trading-engine" 
                 element={
