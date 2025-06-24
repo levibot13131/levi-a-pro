@@ -12,10 +12,12 @@ import {
   Settings,
   Database,
   Bell,
-  Zap
+  Zap,
+  FileText
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { liveSignalEngine } from '@/services/trading/liveSignalEngine';
+import { ReportGenerator } from '@/components/reports/ReportGenerator';
 import Navbar from '@/components/layout/Navbar';
 
 const Admin: React.FC = () => {
@@ -89,6 +91,7 @@ const Admin: React.FC = () => {
             <TabsTrigger value="dashboard">לוח בקרה</TabsTrigger>
             <TabsTrigger value="users">ניהול משתמשים</TabsTrigger>
             <TabsTrigger value="signals">ניהול איתותים</TabsTrigger>
+            <TabsTrigger value="reports">דוחות</TabsTrigger>
             <TabsTrigger value="system">מערכת</TabsTrigger>
           </TabsList>
           
@@ -196,6 +199,10 @@ const Admin: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+          
+          <TabsContent value="reports" className="space-y-4">
+            <ReportGenerator />
           </TabsContent>
           
           <TabsContent value="system" className="space-y-4">
