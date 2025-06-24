@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +17,8 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { liveSignalEngine } from '@/services/trading/liveSignalEngine';
 import { ReportGenerator } from '@/components/reports/ReportGenerator';
+import { UserManagementPanel } from '@/components/admin/UserManagementPanel';
+import { AccessControlManager } from '@/components/admin/AccessControlManager';
 import Navbar from '@/components/layout/Navbar';
 
 const Admin: React.FC = () => {
@@ -90,6 +91,7 @@ const Admin: React.FC = () => {
           <TabsList className="w-full">
             <TabsTrigger value="dashboard">לוח בקרה</TabsTrigger>
             <TabsTrigger value="users">ניהול משתמשים</TabsTrigger>
+            <TabsTrigger value="access">בקרת גישה</TabsTrigger>
             <TabsTrigger value="signals">ניהול איתותים</TabsTrigger>
             <TabsTrigger value="reports">דוחות</TabsTrigger>
             <TabsTrigger value="system">מערכת</TabsTrigger>
@@ -152,25 +154,11 @@ const Admin: React.FC = () => {
           </TabsContent>
           
           <TabsContent value="users" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  ניהול משתמשים
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 border rounded">
-                    <div>
-                      <div className="font-semibold">{user?.email}</div>
-                      <div className="text-sm text-muted-foreground">מנהל מערכת</div>
-                    </div>
-                    <Badge variant="destructive">מנהל</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <UserManagementPanel />
+          </TabsContent>
+          
+          <TabsContent value="access" className="space-y-4">
+            <AccessControlManager />
           </TabsContent>
           
           <TabsContent value="signals" className="space-y-4">
