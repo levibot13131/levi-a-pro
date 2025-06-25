@@ -409,7 +409,7 @@ _LeviPro Enhanced AI v3.1 - מצב בדיקה_`;
       this.recentRejections = this.recentRejections.slice(-100);
     }
 
-    // Store in database for learning
+    // Store in database for learning - with user_id added
     try {
       await supabase.from('signal_feedback').insert({
         signal_id: `rejected_${symbol}_${Date.now()}`,
@@ -417,7 +417,8 @@ _LeviPro Enhanced AI v3.1 - מצב בדיקה_`;
         outcome: 'rejected',
         profit_loss_percentage: 0,
         execution_time: new Date().toISOString(),
-        market_conditions: `${reason} - ${details || ''}`
+        market_conditions: `${reason} - ${details || ''}`,
+        user_id: 'system' // Adding required user_id field
       });
     } catch (error) {
       console.error('Failed to log rejection to database:', error);
@@ -513,7 +514,7 @@ _LeviPro Production AI v3.1 - איכות מובטחת_`;
       const data = marketData.get(symbol);
       
       if (data) {
-        const result = await this.analyzeSymbolWithEnhancedAI(symbol, data);
+        const result = await this.analyzeSymbolWithMultiTimeframeAI(symbol, data);
         console.log(`📊 Manual analysis result for ${symbol}:`, result);
       } else {
         console.log(`❌ No data available for ${symbol}`);
