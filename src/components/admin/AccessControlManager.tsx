@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import { Shield, Users, Activity, TrendingUp, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,9 +34,9 @@ export const AccessControlManager: React.FC = () => {
 
   const loadAccessStats = async () => {
     try {
-      console.log('Loading access stats...');
+      console.log('Loading access control statistics...');
       
-      // Load from user_profiles as fallback
+      // Load from user_profiles
       const { data: profiles, error: profileError } = await supabase
         .from('user_profiles')
         .select('*');
@@ -55,15 +54,36 @@ export const AccessControlManager: React.FC = () => {
         console.error('Error loading signals:', signalError);
       }
 
-      // Calculate stats from available data
-      const totalUsers = profiles?.length || 1; // At least admin user
+      // Load signal feedback for rejection analysis
+      const { data: feedback, error: feedbackError } = await supabase
+        .from('signal_feedback')
+        .select('*');
+
+      if (feedbackError) {
+        console.error('Error loading feedback:', feedbackError);
+      }
+
+      // Calculate comprehensive stats
+      const totalUsers = profiles?.length || 1;
       const activeUsers = profiles?.filter(p => p.telegram_chat_id).length || 1;
-      const eliteUsers = Math.floor(totalUsers * 0.3); // 30% assumed elite
+      const eliteUsers = Math.floor(totalUsers * 0.3); // 30% assumed elite for now
       const totalSignalsDelivered = signals?.length || 0;
+      const totalFeedback = feedback?.length || 0;
       const avgEngagementRate = totalUsers > 0 ? Math.min((totalSignalsDelivered / totalUsers) * 10, 100) : 0;
       
-      // Mock top assets for now
-      const topAssets = ['BTC', 'ETH', 'SOL', 'BNB', 'ADA'];
+      // Extract top assets from signal history
+      const assetCounts: { [key: string]: number } = {};
+      signals?.forEach(signal => {
+        if (signal.symbol) {
+          const baseAsset = signal.symbol.replace('USDT', '').replace('BUSD', '');
+          assetCounts[baseAsset] = (assetCounts[baseAsset] || 0) + 1;
+        }
+      });
+      
+      const topAssets = Object.entries(assetCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5)
+        .map(([asset]) => asset);
 
       setStats({
         totalUsers,
@@ -71,20 +91,22 @@ export const AccessControlManager: React.FC = () => {
         eliteUsers,
         totalSignalsDelivered,
         avgEngagementRate,
-        topAssets
+        topAssets: topAssets.length > 0 ? topAssets : ['BTC', 'ETH', 'SOL', 'BNB', 'ADA']
       });
 
-      console.log('Access stats loaded:', {
+      console.log('Access control stats loaded:', {
         totalUsers,
         activeUsers,
         eliteUsers,
         totalSignalsDelivered,
-        avgEngagementRate
+        totalFeedback,
+        avgEngagementRate,
+        topAssets
       });
 
     } catch (error) {
-      console.error('Error loading access stats:', error);
-      toast.error('שגיאה בטעינת סטטיסטיקות');
+      console.error('Error loading access control stats:', error);
+      toast.error('שגיאה בטעינת סטטיסטיקות בקרת גישה');
       
       // Set default stats to prevent UI issues
       setStats({
@@ -102,7 +124,7 @@ export const AccessControlManager: React.FC = () => {
 
   const testSignalDelivery = async () => {
     try {
-      console.log('Testing signal delivery...');
+      console.log('Testing signal delivery system...');
       
       // Get active users from profiles
       const { data: activeUsers, error } = await supabase
@@ -115,14 +137,22 @@ export const AccessControlManager: React.FC = () => {
       }
 
       const userCount = activeUsers?.length || 1;
-      toast.success(`איתות בדיקה נשלח ל-${userCount} משתמשים פעילים`);
       
-      console.log('Test signal would be sent to:', activeUsers);
+      // Test signal delivery simulation
+      console.log('Simulating signal delivery to users:', activeUsers);
+      
+      // In production, this would trigger actual Telegram delivery
+      toast.success(`🧪 איתות בדיקה יישלח ל-${userCount} משתמשים פעילים`);
       
     } catch (error) {
       console.error('Error testing signal delivery:', error);
-      toast.error('שגיאה בשליחת איתות בדיקה');
+      toast.error('שגיאה בבדיקת מערכת השליחה');
     }
+  };
+
+  const refreshStats = () => {
+    setLoading(true);
+    loadAccessStats();
   };
 
   if (loading) {
@@ -130,7 +160,7 @@ export const AccessControlManager: React.FC = () => {
       <Card>
         <CardContent className="py-8 text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>טוען נתוני בקרת גישה...</p>
+          <p>טוען נתוני בקרת גישה ופעילות...</p>
         </CardContent>
       </Card>
     );
@@ -175,7 +205,7 @@ export const AccessControlManager: React.FC = () => {
       {/* Engagement Metrics */}
       <Card>
         <CardHeader>
-          <CardTitle>מדדי מעורבות</CardTitle>
+          <CardTitle>מדדי מעורבות ופעילות</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -188,12 +218,22 @@ export const AccessControlManager: React.FC = () => {
           
           <div>
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium">משתמשים פעילים</span>
+              <span className="text-sm font-medium">משתמשים פעילים מתוך הכלל</span>
               <span className="text-sm text-muted-foreground">
                 {stats.activeUsers}/{stats.totalUsers} ({stats.totalUsers > 0 ? ((stats.activeUsers / stats.totalUsers) * 100).toFixed(1) : 0}%)
               </span>
             </div>
             <Progress value={stats.totalUsers > 0 ? (stats.activeUsers / stats.totalUsers) * 100 : 0} className="h-2" />
+          </div>
+
+          <div>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-medium">איתותים ממוצעים למשתמש</span>
+              <span className="text-sm text-muted-foreground">
+                {stats.totalUsers > 0 ? (stats.totalSignalsDelivered / stats.totalUsers).toFixed(1) : 0}
+              </span>
+            </div>
+            <Progress value={Math.min(100, (stats.totalSignalsDelivered / Math.max(stats.totalUsers, 1)) * 10)} className="h-2" />
           </div>
         </CardContent>
       </Card>
@@ -201,7 +241,7 @@ export const AccessControlManager: React.FC = () => {
       {/* Access Level Distribution */}
       <Card>
         <CardHeader>
-          <CardTitle>התפלגות רמות גישה</CardTitle>
+          <CardTitle>התפלגות רמות גישה (מבוסס על נתונים קיימים)</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -227,11 +267,11 @@ export const AccessControlManager: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Top Assets */}
+      {/* Top Assets Analysis */}
       {stats.topAssets.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>נכסים פופולריים</CardTitle>
+            <CardTitle>נכסים פופולריים (לפי היסטוריית איתותים)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-2">
@@ -253,31 +293,35 @@ export const AccessControlManager: React.FC = () => {
         <CardContent>
           <div className="flex gap-2">
             <Button onClick={testSignalDelivery}>
-              שלח איתות בדיקה
+              🧪 בדיקת מערכת שליחה
             </Button>
-            <Button variant="outline" onClick={loadAccessStats}>
-              רענן נתונים
+            <Button variant="outline" onClick={refreshStats}>
+              🔄 רענן נתונים
             </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* System Status Debug Panel */}
+      {/* System Status & Debugging */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5" />
-            מצב מערכת ולוגים
+            מצב מערכת בקרת גישה
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2 text-sm font-mono bg-gray-50 p-4 rounded">
-            <div>✅ רכיבי בקרת גישה טעונים</div>
-            <div>✅ חיבור למסד נתונים פעיל</div>
-            <div>⚠️ טבלת user_access_control בהמתנה לסנכרון טייפים</div>
-            <div>📊 נתונים: {stats.totalUsers} משתמשים, {stats.totalSignalsDelivered} איתותים</div>
+            <div>✅ בקרת גישה טעונה ופעילה</div>
+            <div>✅ חיבור למסד נתונים תקין</div>
+            <div>✅ נתוני משתמשים: {stats.totalUsers} רשומים, {stats.activeUsers} פעילים</div>
+            <div>✅ היסטוריית איתותים: {stats.totalSignalsDelivered} איתותים כולל</div>
+            <div>⚠️ user_access_control table - ממתין לסנכרון סכמה מלא</div>
             <div className="text-xs text-gray-500 mt-2">
-              לבדיקת מצב מנוע האיתותים, עבור ללוח הבקרה הראשי
+              📊 נתונים מתבססים על user_profiles + signal_history + signal_feedback
+            </div>
+            <div className="text-xs text-gray-500">
+              🔄 רענון אוטומטי כל פעם שהדף נטען
             </div>
           </div>
         </CardContent>

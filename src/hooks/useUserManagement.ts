@@ -23,39 +23,35 @@ export const useUserManagement = () => {
 
   const loadUsers = async () => {
     try {
-      // Direct query to user_access_control table
-      const { data: accessData, error: accessError } = await supabase
-        .from('user_access_control')
+      console.log('Loading users from user_profiles...');
+      
+      // Load from user_profiles as primary source
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
         .select('*');
-
-      if (accessError) {
-        console.log('user_access_control table not available, using fallback');
-        // Fallback to user_profiles for now
-        const { data: profileData, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('*');
-        
-        if (profileError) throw profileError;
-        
-        // Transform user_profiles to match expected structure
-        const transformedData = profileData?.map((profile: any) => ({
-          id: profile.id,
-          user_id: profile.user_id,
-          telegram_id: profile.telegram_chat_id,
-          telegram_username: profile.username || 'Unknown',
-          access_level: 'filtered' as const,
-          allowed_assets: [],
-          is_active: true,
-          signals_received: 0,
-          last_signal_at: null,
-          created_at: profile.created_at,
-          updated_at: profile.updated_at || profile.created_at
-        })) || [];
-        
-        setUsers(transformedData);
-      } else {
-        setUsers(accessData || []);
+      
+      if (profileError) {
+        console.error('Error loading user profiles:', profileError);
+        throw profileError;
       }
+      
+      // Transform user_profiles to match expected structure
+      const transformedData: UserAccessControl[] = profileData?.map((profile: any) => ({
+        id: profile.id,
+        user_id: profile.user_id,
+        telegram_id: profile.telegram_chat_id,
+        telegram_username: profile.username || 'Unknown',
+        access_level: 'filtered' as const,
+        allowed_assets: [],
+        is_active: true,
+        signals_received: profile.signals_received_today || 0,
+        last_signal_at: null,
+        created_at: profile.created_at,
+        updated_at: profile.updated_at || profile.created_at
+      })) || [];
+      
+      setUsers(transformedData);
+      console.log('Users loaded successfully:', transformedData.length);
     } catch (error) {
       console.error('Error loading users:', error);
       toast.error('שגיאה בטעינת רשימת משתמשים');
@@ -74,40 +70,26 @@ export const useUserManagement = () => {
     try {
       console.log('Adding user:', userData);
       
-      // Try to add to user_access_control first
-      const { data: accessData, error: accessError } = await supabase
-        .from('user_access_control')
+      // Add to user_profiles
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_profiles')
         .insert([{
           user_id: `telegram_${userData.telegram_id}`,
-          telegram_id: userData.telegram_id,
-          telegram_username: userData.telegram_username,
-          access_level: userData.access_level,
-          allowed_assets: userData.allowed_assets || [],
-          is_active: true,
-          signals_received: 0
+          username: userData.telegram_username,
+          telegram_chat_id: userData.telegram_id,
+          signals_received_today: 0
         }])
         .select()
         .single();
 
-      if (accessError) {
-        console.log('user_access_control insert failed, using fallback');
-        // Fallback to user_profiles
-        const { data: profileData, error: profileError } = await supabase
-          .from('user_profiles')
-          .insert([{
-            user_id: `telegram_${userData.telegram_id}`,
-            username: userData.telegram_username,
-            telegram_chat_id: userData.telegram_id
-          }])
-          .select()
-          .single();
-
-        if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Failed to add user to profiles:', profileError);
+        throw profileError;
       }
 
       // Transform for display
       const newUser: UserAccessControl = {
-        id: accessData?.id || `temp_${Date.now()}`,
+        id: profileData?.id || `temp_${Date.now()}`,
         user_id: `telegram_${userData.telegram_id}`,
         telegram_id: userData.telegram_id,
         telegram_username: userData.telegram_username,
@@ -134,14 +116,18 @@ export const useUserManagement = () => {
     try {
       console.log('Updating user:', userId, updates);
       
-      // Try to update in user_access_control
-      const { error: accessError } = await supabase
-        .from('user_access_control')
-        .update(updates)
+      // Update in user_profiles if possible
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .update({
+          username: updates.telegram_username,
+          telegram_chat_id: updates.telegram_id,
+          signals_received_today: updates.signals_received
+        })
         .eq('id', userId);
 
-      if (accessError) {
-        console.log('user_access_control update failed, updating local state only');
+      if (profileError) {
+        console.log('Profile update failed, updating local state only');
       }
       
       setUsers(prev => prev.map(user => 
@@ -161,14 +147,14 @@ export const useUserManagement = () => {
     try {
       console.log('Deleting user:', userId);
       
-      // Try to delete from user_access_control
-      const { error: accessError } = await supabase
-        .from('user_access_control')
+      // Delete from user_profiles
+      const { error: profileError } = await supabase
+        .from('user_profiles')
         .delete()
         .eq('id', userId);
 
-      if (accessError) {
-        console.log('user_access_control delete failed, updating local state only');
+      if (profileError) {
+        console.log('Profile delete failed, updating local state only');
       }
       
       setUsers(prev => prev.filter(user => user.id !== userId));

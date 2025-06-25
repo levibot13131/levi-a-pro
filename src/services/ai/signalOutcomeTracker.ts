@@ -91,9 +91,9 @@ export class SignalOutcomeTracker {
       weights[strategy] = performance.weight;
     }
     
-    // Ensure personal method always has minimum weight
-    if (!weights['almog-personal-method']) {
-      weights['almog-personal-method'] = 0.8;
+    // Ensure multi-timeframe method always has minimum weight
+    if (!weights['multi-timeframe-ai']) {
+      weights['multi-timeframe-ai'] = 0.8;
     }
     
     return weights;
@@ -113,16 +113,16 @@ export class SignalOutcomeTracker {
 
   // Method to simulate some initial data for demonstration
   public initializeDemoData() {
-    // Add some demo outcomes for the personal method
+    // Add some demo outcomes for the multi-timeframe method
     this.trackOutcome('demo-1', {
-      strategy: 'almog-personal-method',
+      strategy: 'multi-timeframe-ai',
       success: true,
       profitPercent: 2.5,
       duration: 120
     });
     
     this.trackOutcome('demo-2', {
-      strategy: 'almog-personal-method',
+      strategy: 'multi-timeframe-ai',
       success: true,
       profitPercent: 1.8,
       duration: 90
