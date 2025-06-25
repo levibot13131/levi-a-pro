@@ -2,20 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-interface UserAccessControl {
-  id: string;
-  user_id: string;
-  telegram_id: string | null;
-  telegram_username: string | null;
-  access_level: 'all' | 'elite' | 'filtered' | 'specific';
-  allowed_assets: string[];
-  is_active: boolean;
-  signals_received: number;
-  last_signal_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
+import { UserAccessControl, UserProfile } from '@/types/user';
 
 export const useUserManagement = () => {
   const [users, setUsers] = useState<UserAccessControl[]>([]);
@@ -35,14 +22,14 @@ export const useUserManagement = () => {
         throw profileError;
       }
       
-      // Transform user_profiles to match expected structure
-      const transformedData: UserAccessControl[] = profileData?.map((profile: any) => ({
+      // Transform user_profiles to match expected UserAccessControl structure
+      const transformedData: UserAccessControl[] = profileData?.map((profile: UserProfile) => ({
         id: profile.id,
         user_id: profile.user_id,
         telegram_id: profile.telegram_chat_id,
         telegram_username: profile.username || 'Unknown',
         access_level: 'filtered' as const,
-        allowed_assets: [],
+        allowed_assets: ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'], // Default assets
         is_active: true,
         signals_received: profile.signals_received_today || 0,
         last_signal_at: null,
@@ -77,7 +64,8 @@ export const useUserManagement = () => {
           user_id: `telegram_${userData.telegram_id}`,
           username: userData.telegram_username,
           telegram_chat_id: userData.telegram_id,
-          signals_received_today: 0
+          signals_received_today: 0,
+          subscription_tier: userData.access_level === 'elite' ? 'premium' : 'free'
         }])
         .select()
         .single();
@@ -94,7 +82,7 @@ export const useUserManagement = () => {
         telegram_id: userData.telegram_id,
         telegram_username: userData.telegram_username,
         access_level: userData.access_level,
-        allowed_assets: userData.allowed_assets || [],
+        allowed_assets: userData.allowed_assets || ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'],
         is_active: true,
         signals_received: 0,
         last_signal_at: null,
@@ -122,7 +110,8 @@ export const useUserManagement = () => {
         .update({
           username: updates.telegram_username,
           telegram_chat_id: updates.telegram_id,
-          signals_received_today: updates.signals_received
+          signals_received_today: updates.signals_received,
+          subscription_tier: updates.access_level === 'elite' ? 'premium' : 'free'
         })
         .eq('id', userId);
 

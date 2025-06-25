@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,15 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Shield, Users, Activity, TrendingUp, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-interface AccessStats {
-  totalUsers: number;
-  activeUsers: number;
-  eliteUsers: number;
-  totalSignalsDelivered: number;
-  avgEngagementRate: number;
-  topAssets: string[];
-}
+import { AccessStats } from '@/types/user';
 
 export const AccessControlManager: React.FC = () => {
   const [stats, setStats] = useState<AccessStats>({
@@ -66,9 +57,8 @@ export const AccessControlManager: React.FC = () => {
       // Calculate comprehensive stats
       const totalUsers = profiles?.length || 1;
       const activeUsers = profiles?.filter(p => p.telegram_chat_id).length || 1;
-      const eliteUsers = Math.floor(totalUsers * 0.3); // 30% assumed elite for now
+      const eliteUsers = profiles?.filter(p => p.subscription_tier === 'premium').length || 0;
       const totalSignalsDelivered = signals?.length || 0;
-      const totalFeedback = feedback?.length || 0;
       const avgEngagementRate = totalUsers > 0 ? Math.min((totalSignalsDelivered / totalUsers) * 10, 100) : 0;
       
       // Extract top assets from signal history
@@ -99,7 +89,6 @@ export const AccessControlManager: React.FC = () => {
         activeUsers,
         eliteUsers,
         totalSignalsDelivered,
-        totalFeedback,
         avgEngagementRate,
         topAssets
       });
@@ -139,10 +128,10 @@ export const AccessControlManager: React.FC = () => {
       const userCount = activeUsers?.length || 1;
       
       // Test signal delivery simulation
-      console.log('Simulating signal delivery to users:', activeUsers);
+      console.log('Simulating AGGRESSIVE signal delivery to users:', activeUsers);
       
       // In production, this would trigger actual Telegram delivery
-      toast.success(`🧪 איתות בדיקה יישלח ל-${userCount} משתמשים פעילים`);
+      toast.success(`🔥 איתות AGGRESSIVE יישלח ל-${userCount} משתמשים פעילים`);
       
     } catch (error) {
       console.error('Error testing signal delivery:', error);
@@ -173,7 +162,10 @@ export const AccessControlManager: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Shield className="h-5 w-5" />
-            בקרת גישה ופעילות משתמשים
+            בקרת גישה ופעילות משתמשים - AGGRESSIVE MODE
+            <Badge className="bg-red-100 text-red-800">
+              🔥 LIVE
+            </Badge>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -193,10 +185,44 @@ export const AccessControlManager: React.FC = () => {
               <div className="text-2xl font-bold text-purple-600">{stats.eliteUsers}</div>
               <div className="text-sm text-muted-foreground">משתמשי עלית</div>
             </div>
-            <div className="text-center p-4 bg-orange-50 rounded">
-              <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-orange-600" />
-              <div className="text-2xl font-bold text-orange-600">{stats.totalSignalsDelivered}</div>
+            <div className="text-center p-4 bg-red-50 rounded">
+              <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-red-600" />
+              <div className="text-2xl font-bold text-red-600">{stats.totalSignalsDelivered}</div>
               <div className="text-sm text-muted-foreground">איתותים נשלחו</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AGGRESSIVE Mode Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-red-800">🔥 AGGRESSIVE Production Status</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <h4 className="font-semibold text-red-800 mb-2">Current AGGRESSIVE Settings</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <div className="text-muted-foreground">Confidence Min</div>
+                <div className="font-semibold text-red-600">65% (reduced)</div>
+              </div>
+              <div>
+                <div className="text-muted-foreground">R/R Min</div>
+                <div className="font-semibold text-red-600">1.2 (reduced)</div>
+              </div>
+              <div>
+                <div className="text-muted-foreground">Price Movement</div>
+                <div className="font-semibold text-red-600">1.5% (reduced)</div>
+              </div>
+              <div>
+                <div className="text-muted-foreground">Cooldown</div>
+                <div className="font-semibold text-red-600">15 min (reduced)</div>
+              </div>
+            </div>
+            <div className="mt-4 text-sm text-red-700">
+              <div>🎯 Target: Generate qualified signals within 24 hours</div>
+              <div>🔥 Mode: Maximum signal generation with acceptable risk</div>
             </div>
           </div>
         </CardContent>
@@ -288,12 +314,12 @@ export const AccessControlManager: React.FC = () => {
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>פעולות מהירות</CardTitle>
+          <CardTitle>פעולות מהירות AGGRESSIVE</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex gap-2">
-            <Button onClick={testSignalDelivery}>
-              🧪 בדיקת מערכת שליחה
+            <Button onClick={testSignalDelivery} className="bg-red-600 hover:bg-red-700">
+              🔥 בדיקת מערכת AGGRESSIVE
             </Button>
             <Button variant="outline" onClick={refreshStats}>
               🔄 רענן נתונים
@@ -307,21 +333,21 @@ export const AccessControlManager: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5" />
-            מצב מערכת בקרת גישה
+            מצב מערכת בקרת גישה AGGRESSIVE
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-2 text-sm font-mono bg-gray-50 p-4 rounded">
-            <div>✅ בקרת גישה טעונה ופעילה</div>
+            <div>🔥 בקרת גישה AGGRESSIVE טעונה ופעילה</div>
             <div>✅ חיבור למסד נתונים תקין</div>
             <div>✅ נתוני משתמשים: {stats.totalUsers} רשומים, {stats.activeUsers} פעילים</div>
             <div>✅ היסטוריית איתותים: {stats.totalSignalsDelivered} איתותים כולל</div>
-            <div>⚠️ user_access_control table - ממתין לסנכרון סכמה מלא</div>
+            <div>🔥 AGGRESSIVE mode: פילטרים מקלים לייצור איתותים מהיר</div>
             <div className="text-xs text-gray-500 mt-2">
               📊 נתונים מתבססים על user_profiles + signal_history + signal_feedback
             </div>
-            <div className="text-xs text-gray-500">
-              🔄 רענון אוטומטי כל פעם שהדף נטען
+            <div className="text-xs text-red-600">
+              🚨 מצב AGGRESSIVE: מטרה ליצור איתות ראשון תוך 24 שעות
             </div>
           </div>
         </CardContent>
