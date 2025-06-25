@@ -80,19 +80,18 @@ class LiveSignalEngine {
   }
 
   private async initializeFundamentalDataCheck() {
-    // Check if we have recent fundamental data
+    // Check if we have recent fundamental data - fix column name
     try {
       const { data: recentNews } = await supabase
         .from('market_intelligence')
-        .select('created_at')
-        .order('created_at', { ascending: false })
+        .select('id') // Use 'id' instead of 'created_at' since that column doesn't exist
+        .order('id', { ascending: false })
         .limit(1);
 
       if (!recentNews || recentNews.length === 0) {
         console.log('⚠️ No fundamental data found - will operate on technical analysis only');
       } else {
-        const dataAge = Date.now() - new Date(recentNews[0].created_at).getTime();
-        console.log(`📰 Latest fundamental data: ${Math.round(dataAge / 60000)} minutes old`);
+        console.log(`📰 Latest fundamental data found`);
       }
     } catch (error) {
       console.error('Failed to check fundamental data:', error);
@@ -376,7 +375,7 @@ _LeviPro Aggressive AI v3.2 - מצב ייצור אגרסיבי_`;
             `Analysis across ${this.TIMEFRAMES.length} timeframes with 60% threshold`
           ],
           action,
-          riskReward: Math.max(1.2, enhancedResult.riskRewardRatio || 1.5)
+          riskReward: Math.max(1.2, enhancedResult.riskReward || 1.5) // Fix: use riskReward instead of riskRewardRatio
         };
       } else {
         return {
