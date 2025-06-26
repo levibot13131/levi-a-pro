@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -15,8 +14,20 @@ import Admin from './pages/Admin';
 import ErrorBoundary from './components/ErrorBoundary';
 import TechnicalAnalysis from './pages/TechnicalAnalysis';
 import TradingSignals from './pages/TradingSignals';
+import { useEffect } from 'react';
+import { fundamentalsIngestion } from '@/services/fundamentals/fundamentalsIngestion';
 
 function App() {
+  useEffect(() => {
+    // Start fundamentals ingestion service on app load
+    console.log('🚀 Starting LeviPro fundamentals ingestion...');
+    fundamentalsIngestion.start();
+    
+    return () => {
+      fundamentalsIngestion.stop();
+    };
+  }, []);
+
   return (
     <AuthProvider>
       <ErrorBoundary>

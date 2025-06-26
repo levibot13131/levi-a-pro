@@ -1,214 +1,330 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TrendingUp, TrendingDown, RefreshCw, Activity } from 'lucide-react';
-import { liveMarketDataService } from '@/services/trading/liveMarketDataService';
+import { Badge } from '@/components/ui/badge';
+import { 
+  RefreshCw, 
+  TrendingUp, 
+  TrendingDown, 
+  Activity,
+  Eye,
+  AlertTriangle
+} from 'lucide-react';
+import LiveTradingChart from '@/components/charts/LiveTradingChart';
+import { binanceSocket } from '@/services/binance/binanceSocket';
+import { fundamentalsIngestion } from '@/services/fundamentals/fundamentalsIngestion';
+import { EnhancedTimeframeAI } from '@/services/ai/enhancedTimeframeAI';
 
 interface HotCoin {
   symbol: string;
   price: number;
   change24h: number;
   volume24h: number;
+  volumeChange: number;
+  socialMentions: number;
   heatScore: number;
-  signals: number;
-  lastSignal?: string;
-  pnl?: number;
+  lastSignalAttempt?: Date;
+  rejectionReason?: string;
 }
 
-export const HotCoinsDashboard: React.FC = () => {
+interface RejectionBadge {
+  type: 'heat' | 'confidence' | 'riskReward' | 'volume' | 'sentiment';
+  reason: string;
+  value: number;
+  threshold: number;
+  severity: 'low' | 'medium' | 'high';
+}
+
+const HotCoinsDashboard: React.FC = () => {
   const [hotCoins, setHotCoins] = useState<HotCoin[]>([]);
   const [selectedSymbol, setSelectedSymbol] = useState<string>('BTCUSDT');
-  const [loading, setLoading] = useState(true);
+  const [rejectionBadges, setRejectionBadges] = useState<RejectionBadge[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT', 'DOTUSDT', 'AVAXUSDT', 'MATICUSDT'];
-
+  // Mock hot coins data
   useEffect(() => {
     loadHotCoins();
-    const interval = setInterval(loadHotCoins, 60000); // Update every 60s
+    startFundamentalsIngestion();
+    
+    const interval = setInterval(() => {
+      loadHotCoins();
+    }, 60000); // Update every minute
+
     return () => clearInterval(interval);
   }, []);
 
   const loadHotCoins = async () => {
-    try {
-      console.log('🔥 Loading hot coins data...');
-      const marketDataMap = await liveMarketDataService.getMultipleAssets(SYMBOLS);
-      
-      const coins: HotCoin[] = [];
-      for (const [symbol, data] of marketDataMap) {
-        const heatScore = Math.abs(data.change24h) * 2 + (data.volume24h / 1000000000) * 10;
-        
-        coins.push({
-          symbol,
-          price: data.price,
-          change24h: data.change24h,
-          volume24h: data.volume24h,
-          heatScore: Math.min(100, heatScore),
-          signals: Math.floor(Math.random() * 5), // Mock for now
-          pnl: (Math.random() - 0.5) * 10 // Mock P/L
-        });
+    console.log('🔥 Loading hot coins data...');
+    
+    const mockCoins: HotCoin[] = [
+      {
+        symbol: 'BTCUSDT',
+        price: 67250,
+        change24h: 2.34,
+        volume24h: 1500000000,
+        volumeChange: 15.6,
+        socialMentions: 1250,
+        heatScore: 85,
+        lastSignalAttempt: new Date(Date.now() - 10 * 60 * 1000),
+        rejectionReason: 'R/R Below Threshold'
+      },
+      {
+        symbol: 'ETHUSDT',
+        price: 2650,
+        change24h: 1.89,
+        volume24h: 890000000,
+        volumeChange: 22.3,
+        socialMentions: 980,
+        heatScore: 78
+      },
+      {
+        symbol: 'SOLUSDT',
+        price: 125.40,
+        change24h: 4.56,
+        volume24h: 340000000,
+        volumeChange: 45.2,
+        socialMentions: 456,
+        heatScore: 92
+      },
+      {
+        symbol: 'BNBUSDT',
+        price: 315.80,
+        change24h: -1.23,
+        volume24h: 180000000,
+        volumeChange: -8.4,
+        socialMentions: 234,
+        heatScore: 45
+      },
+      {
+        symbol: 'ADAUSDT',
+        price: 0.52,
+        change24h: 3.21,
+        volume24h: 120000000,
+        volumeChange: 18.7,
+        socialMentions: 345,
+        heatScore: 67
       }
+    ];
 
-      // Sort by heat score descending
-      coins.sort((a, b) => b.heatScore - a.heatScore);
-      setHotCoins(coins);
-      setLastUpdate(new Date());
-      setLoading(false);
-      
-      console.log(`🔥 Hot coins updated: ${coins.length} symbols`);
-    } catch (error) {
-      console.error('❌ Failed to load hot coins:', error);
-      setLoading(false);
+    setHotCoins(mockCoins);
+    setLastUpdate(new Date());
+
+    // Generate mock rejection badges for selected symbol
+    if (selectedSymbol === 'BTCUSDT') {
+      setRejectionBadges([
+        {
+          type: 'heat',
+          reason: 'Market Heat',
+          value: 85,
+          threshold: 70,
+          severity: 'high'
+        },
+        {
+          type: 'riskReward',
+          reason: 'R/R Ratio',
+          value: 1.1,
+          threshold: 1.3,
+          severity: 'medium'
+        },
+        {
+          type: 'confidence',
+          reason: 'AI Confidence',
+          value: 68,
+          threshold: 70,
+          severity: 'low'
+        }
+      ]);
+    } else {
+      setRejectionBadges([]);
     }
   };
 
-  const getHeatColor = (score: number) => {
-    if (score >= 80) return 'bg-red-500';
-    if (score >= 60) return 'bg-orange-500';
-    if (score >= 40) return 'bg-yellow-500';
-    return 'bg-green-500';
+  const startFundamentalsIngestion = () => {
+    if (!fundamentalsIngestion.getIngestionStatus().isRunning) {
+      fundamentalsIngestion.start();
+      console.log('📰 Started fundamentals ingestion service');
+    }
   };
 
-  const getPnLColor = (pnl?: number) => {
-    if (!pnl) return 'text-gray-500';
-    return pnl > 0 ? 'text-green-600' : 'text-red-600';
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await loadHotCoins();
+    setTimeout(() => setIsRefreshing(false), 1000);
   };
+
+  const getHeatScoreColor = (score: number) => {
+    if (score >= 80) return 'text-red-600';
+    if (score >= 60) return 'text-orange-600';
+    if (score >= 40) return 'text-yellow-600';
+    return 'text-green-600';
+  };
+
+  const getHeatScoreBg = (score: number) => {
+    if (score >= 80) return 'bg-red-100';
+    if (score >= 60) return 'bg-orange-100';
+    if (score >= 40) return 'bg-yellow-100';
+    return 'bg-green-100';
+  };
+
+  const sortedCoins = hotCoins.sort((a, b) => {
+    // Sort by heat score and volume change
+    const aScore = a.heatScore + (a.volumeChange * 0.1);
+    const bScore = b.heatScore + (b.volumeChange * 0.1);
+    return bScore - aScore;
+  });
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">🔥 דשבורד מטבעות חמים</h1>
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-right">לוח מטבעות חמים</h1>
+          <p className="text-muted-foreground text-right">ניתוח בזמן אמת של הזדמנויות טריידינג</p>
+        </div>
         <div className="flex items-center gap-2">
           <Badge variant="outline">
-            עדכון אחרון: {lastUpdate.toLocaleTimeString('he-IL')}
+            עדכון אחרון: {lastUpdate.toLocaleTimeString()}
           </Badge>
-          <Button onClick={loadHotCoins} disabled={loading} size="sm">
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          <Button onClick={handleRefresh} disabled={isRefreshing} size="sm">
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Hot Coins Table */}
-        <Card className="lg:col-span-2">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Watchlist Table */}
+        <Card className="xl:col-span-1">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              רשימת מעקב - מטבעות פעילים
-            </CardTitle>
+            <CardTitle className="text-right">רשימת צפייה - TOP 20</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              {hotCoins.map((coin, index) => (
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {sortedCoins.map((coin, index) => (
                 <div
                   key={coin.symbol}
-                  className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                    selectedSymbol === coin.symbol ? 'bg-blue-50 border-blue-200' : 'hover:bg-gray-50'
-                  }`}
+                  className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
+                    selectedSymbol === coin.symbol ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                  } ${index === 0 ? 'border-green-400 bg-green-50' : ''}`}
                   onClick={() => setSelectedSymbol(coin.symbol)}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Badge className="text-xs">#{index + 1}</Badge>
-                      <div>
-                        <div className="font-semibold">{coin.symbol}</div>
-                        <div className="text-sm text-gray-500">
-                          ${coin.price.toLocaleString()}
-                        </div>
-                      </div>
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="text-right">
+                      <div className="font-semibold">{coin.symbol.replace('USDT', '')}</div>
+                      <div className="text-sm text-gray-500">${coin.price.toLocaleString()}</div>
                     </div>
-                    
-                    <div className="flex items-center gap-4">
-                      <div className="text-center">
-                        <div className={`flex items-center gap-1 ${coin.change24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {coin.change24h >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                          {Math.abs(coin.change24h).toFixed(2)}%
-                        </div>
-                        <div className="text-xs text-gray-500">24ש</div>
-                      </div>
-                      
-                      <div className="text-center">
-                        <Badge className={`${getHeatColor(coin.heatScore)} text-white text-xs`}>
-                          {coin.heatScore.toFixed(0)}
-                        </Badge>
-                        <div className="text-xs text-gray-500">חום</div>
-                      </div>
-                      
-                      <div className="text-center">
-                        <div className={getPnLColor(coin.pnl)}>
-                          {coin.pnl ? `${coin.pnl > 0 ? '+' : ''}${coin.pnl.toFixed(1)}%` : '--'}
-                        </div>
-                        <div className="text-xs text-gray-500">P/L</div>
-                      </div>
+                    <div className="text-left">
+                      <Badge className={`${getHeatScoreBg(coin.heatScore)} ${getHeatScoreColor(coin.heatScore)} border-0`}>
+                        🔥 {coin.heatScore}
+                      </Badge>
                     </div>
                   </div>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="text-right">
+                      <div className={coin.change24h >= 0 ? 'text-green-600' : 'text-red-600'}>
+                        {coin.change24h >= 0 ? '+' : ''}{coin.change24h.toFixed(2)}%
+                      </div>
+                      <div className="text-gray-500">24שע</div>
+                    </div>
+                    <div className="text-right">
+                      <div className={coin.volumeChange >= 0 ? 'text-green-600' : 'text-red-600'}>
+                        {coin.volumeChange >= 0 ? '+' : ''}{coin.volumeChange.toFixed(1)}%
+                      </div>
+                      <div className="text-gray-500">נפח</div>
+                    </div>
+                  </div>
+
+                  {coin.lastSignalAttempt && (
+                    <div className="mt-2 pt-2 border-t">
+                      <div className="flex items-center justify-between text-xs">
+                        <Badge variant="outline" className="text-xs">
+                          <Eye className="h-3 w-3 mr-1" />
+                          {coin.rejectionReason}
+                        </Badge>
+                        <span className="text-gray-500">
+                          {Math.floor((Date.now() - coin.lastSignalAttempt.getTime()) / 60000)}ד' אחרון
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
 
-        {/* TradingView Chart & Signal Info */}
-        <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>גרף זמן אמת - {selectedSymbol}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64 bg-gray-100 rounded flex items-center justify-center">
-                <div className="text-center">
-                  <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm text-gray-500">
-                    TradingView Chart<br />
-                    {selectedSymbol}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>מידע איתות אחרון</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span>כניסה:</span>
-                  <span className="font-mono">$67,250</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>יעד:</span>
-                  <span className="font-mono text-green-600">$69,500</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>סטופ:</span>
-                  <span className="font-mono text-red-600">$65,800</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>P/L נוכחי:</span>
-                  <span className="font-mono text-green-600">+2.1%</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>סיבות דחייה</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Badge variant="outline" className="mr-2">חום גבוה</Badge>
-                <Badge variant="outline" className="mr-2">R/R נמוך</Badge>
-                <Badge variant="outline" className="mr-2">ביטחון נמוך</Badge>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Main Chart */}
+        <div className="xl:col-span-2">
+          <LiveTradingChart
+            symbol={selectedSymbol}
+            height={600}
+            showOverlays={true}
+            rejectionBadges={rejectionBadges}
+            tradingOverlay={selectedSymbol === 'BTCUSDT' ? {
+              entry: 66800,
+              target: 69500,
+              stopLoss: 65200,
+              profitPercent: 0.67,
+              isActive: true
+            } : undefined}
+          />
         </div>
+      </div>
+
+      {/* Statistics Row */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="text-right">
+                <div className="text-2xl font-bold text-green-600">3</div>
+                <div className="text-sm text-gray-600">איתותים פעילים</div>
+              </div>
+              <TrendingUp className="h-8 w-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="text-right">
+                <div className="text-2xl font-bold text-blue-600">12</div>
+                <div className="text-sm text-gray-600">ניתוחים 24שע</div>
+              </div>
+              <Activity className="h-8 w-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="text-right">
+                <div className="text-2xl font-bold text-red-600">8</div>
+                <div className="text-sm text-gray-600">דחיות באיכות</div>
+              </div>
+              <AlertTriangle className="h-8 w-8 text-red-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="text-right">
+                <div className="text-2xl font-bold text-purple-600">75%</div>
+                <div className="text-sm text-gray-600">דיוק מערכת</div>
+              </div>
+              <Eye className="h-8 w-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 };
+
+export default HotCoinsDashboard;
