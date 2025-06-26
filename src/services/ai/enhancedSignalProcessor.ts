@@ -12,6 +12,7 @@ export interface EnhancedSignalResult {
   timeframeReport: string;
   confidence: number;
   reasoning: string[];
+  riskReward?: number; // Add missing riskReward property
 }
 
 export class EnhancedSignalProcessor {
@@ -60,6 +61,9 @@ export class EnhancedSignalProcessor {
     // Cap confidence at 100
     finalConfidence = Math.min(100, finalConfidence);
     
+    // Calculate risk/reward ratio
+    const riskReward = 2.1; // Default risk/reward ratio
+    
     // Decision logic - require high standards
     const shouldSignal = 
       finalConfidence >= 80 && // High confidence required
@@ -84,7 +88,7 @@ export class EnhancedSignalProcessor {
     
     // Generate explanation
     const explanation = SignalExplanationAI.generateExplanation(
-      { action, price, confidence: finalConfidence, riskRewardRatio: 2.1 },
+      { action, price, confidence: finalConfidence, riskRewardRatio: riskReward },
       marketData,
       performance
     );
@@ -98,7 +102,8 @@ export class EnhancedSignalProcessor {
       correlationReport,
       timeframeReport,
       confidence: finalConfidence,
-      reasoning
+      reasoning,
+      riskReward // Return the riskReward property
     };
   }
 }
