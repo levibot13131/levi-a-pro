@@ -10,7 +10,7 @@ import {
   AlertTriangle, 
   Calendar,
   RefreshCw,
-  Whale,
+  Fish,
   Brain
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -229,7 +229,7 @@ export const FundamentalPanel: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Whale className="h-5 w-5" />
+                <Fish className="h-5 w-5" />
                 התראות לוויתן
               </CardTitle>
             </CardHeader>

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +23,7 @@ import { UserManagementPanel } from '@/components/admin/UserManagementPanel';
 import { AccessControlManager } from '@/components/admin/AccessControlManager';
 import { SystemStatusPanel } from '@/components/admin/SystemStatusPanel';
 import { RejectionAnalysisPanel } from '@/components/admin/RejectionAnalysisPanel';
-import SignalEngineDebugPanel from '@/components/diagnostics/SignalEngineDebugPanel';
+import { SignalEngineDebugPanel } from '@/components/diagnostics/SignalEngineDebugPanel';
 import Navbar from '@/components/layout/Navbar';
 
 const Admin: React.FC = () => {

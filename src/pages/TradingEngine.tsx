@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,7 +22,7 @@ import EnhancedSystemDiagnostic from '@/components/diagnostics/EnhancedSystemDia
 import ImprovedLiveCandlestickChart from '@/components/charts/ImprovedLiveCandlestickChart';
 import TradingJournalDashboard from '@/components/journal/TradingJournalDashboard';
 import WhyNoSignalBanner from '@/components/trading-engine/WhyNoSignalBanner';
-import SignalEngineDebugPanel from '@/components/diagnostics/SignalEngineDebugPanel';
+import { SignalEngineDebugPanel } from '@/components/diagnostics/SignalEngineDebugPanel';
 import AIIntelligenceDashboard from '@/components/ai/AIIntelligenceDashboard';
 
 const TradingEngine: React.FC = () => {
