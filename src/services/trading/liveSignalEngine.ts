@@ -80,11 +80,11 @@ class LiveSignalEngine {
   }
 
   private async initializeFundamentalDataCheck() {
-    // Check if we have recent fundamental data - fix column name
+    // Check if we have recent fundamental data
     try {
       const { data: recentNews } = await supabase
         .from('market_intelligence')
-        .select('id') // Use 'id' instead of 'created_at' since that column doesn't exist
+        .select('id')
         .order('id', { ascending: false })
         .limit(1);
 
@@ -195,10 +195,10 @@ _LeviPro Aggressive AI v3.2 - מצב ייצור אגרסיבי_`;
     this.lastAnalysis = startTime;
     this.currentCycle = 'ANALYZING';
 
-    console.log(`\n🔥 === LEVIPRO AGGRESSIVE ANALYSIS CYCLE #${this.analysisCount} ===`);
+    console.log(`\n🔥 === LEVIPRO SEV-1 ANALYSIS CYCLE #${this.analysisCount} ===`);
     console.log(`⏰ Time: ${new Date(startTime).toLocaleString('he-IL')}`);
     console.log(`📊 Status: Engine=${this.isRunning ? 'ACTIVE' : 'INACTIVE'} | Market=${this.marketDataStatus} | AI=${this.aiEngineStatus}`);
-    console.log(`🎯 AGGRESSIVE FILTERS: Conf≥${this.PRODUCTION_FILTERS.minConfidence}% | R/R≥${this.PRODUCTION_FILTERS.minRiskReward} | Move≥${this.PRODUCTION_FILTERS.minPriceMovement}%`);
+    console.log(`🎯 SEV-1 FILTERS: Conf≥${this.PRODUCTION_FILTERS.minConfidence}% | R/R≥${this.PRODUCTION_FILTERS.minRiskReward} | Move≥${this.PRODUCTION_FILTERS.minPriceMovement}%`);
 
     try {
       // Get live market data
@@ -213,7 +213,7 @@ _LeviPro Aggressive AI v3.2 - מצב ייצור אגרסיבי_`;
       }
 
       this.marketDataStatus = 'LIVE_DATA_OK';
-      console.log(`📊 Processing ${marketDataMap.size} symbols with AGGRESSIVE multi-timeframe analysis`);
+      console.log(`📊 Processing ${marketDataMap.size} symbols with SEV-1 multi-timeframe analysis`);
       
       let symbolsAnalyzed = 0;
       let bestCandidate: any = null;
@@ -226,12 +226,12 @@ _LeviPro Aggressive AI v3.2 - מצב ייצור אגרסיבי_`;
         symbolsAnalyzed++;
         this.currentCycle = `ANALYZING_${symbol}`;
         
-        console.log(`\n🔍 AGGRESSIVE Analysis ${symbol}: Price=$${marketData.price.toFixed(2)} | Change=${marketData.change24h.toFixed(2)}%`);
+        console.log(`\n🔍 SEV-1 Analysis ${symbol}: Price=$${marketData.price.toFixed(2)} | Change=${marketData.change24h.toFixed(2)}%`);
         
         const result = await this.analyzeSymbolWithMultiTimeframeAI(symbol, marketData);
         
         if (result.shouldSignal && !signalSent) { // Only send one signal per cycle
-          console.log(`🚀 ✅ AGGRESSIVE SIGNAL APPROVED: ${symbol} - Sending to Telegram!`);
+          console.log(`🚀 ✅ SEV-1 SIGNAL APPROVED: ${symbol} - Sending to Telegram!`);
           await this.sendEnhancedSignal(symbol, result);
           this.totalSignals++;
           this.signalsLast24h++;
@@ -264,13 +264,13 @@ _LeviPro Aggressive AI v3.2 - מצב ייצור אגרסיבי_`;
       const analysisTime = Date.now() - startTime;
       const successRate = symbolsAnalyzed > 0 ? ((symbolsAnalyzed - rejectedCount) / symbolsAnalyzed * 100) : 0;
       
-      this.lastAnalysisReport = `AGGRESSIVE analyzed ${symbolsAnalyzed} symbols in ${analysisTime}ms. ` +
+      this.lastAnalysisReport = `SEV-1 analyzed ${symbolsAnalyzed} symbols in ${analysisTime}ms. ` +
         `Rejected: ${rejectedCount} (${(rejectedCount/symbolsAnalyzed*100).toFixed(1)}%). ` +
         `Best: ${bestCandidate?.symbol || 'None'} (${bestScore.toFixed(0)}%). ` +
         `Sent: ${signalSent ? '1' : '0'} signals. ` +
-        `Filters: RELAXED MODE`;
+        `Filters: SEV-1 MODE`;
       
-      console.log(`✅ === AGGRESSIVE ANALYSIS COMPLETE ===`);
+      console.log(`✅ === SEV-1 ANALYSIS COMPLETE ===`);
       console.log(`📈 ${this.lastAnalysisReport}`);
       console.log(`🎯 Total Signals Sent Today: ${this.totalSignals}`);
       console.log(`❌ Total Rejections: ${this.totalRejections}`);
@@ -279,8 +279,8 @@ _LeviPro Aggressive AI v3.2 - מצב ייצור אגרסיבי_`;
       this.currentCycle = 'COMPLETED';
 
     } catch (error) {
-      console.error('❌ Aggressive analysis failed:', error);
-      this.lastAnalysisReport = `AGGRESSIVE analysis failed: ${error}`;
+      console.error('❌ SEV-1 analysis failed:', error);
+      this.lastAnalysisReport = `SEV-1 analysis failed: ${error}`;
       this.currentCycle = 'ERROR';
       this.marketDataStatus = 'ERROR';
     }
@@ -288,7 +288,7 @@ _LeviPro Aggressive AI v3.2 - מצב ייצור אגרסיבי_`;
 
   private async analyzeSymbolWithMultiTimeframeAI(symbol: string, marketData: any): Promise<any> {
     try {
-      // AGGRESSIVE Multi-timeframe trend analysis with relaxed thresholds
+      // SEV-1 Multi-timeframe trend analysis with relaxed thresholds
       const timeframeAlignment = await this.calculateTimeframeAlignment(symbol, marketData);
       
       if (timeframeAlignment < this.PRODUCTION_FILTERS.multiTimeframeAlignment) {
@@ -297,13 +297,13 @@ _LeviPro Aggressive AI v3.2 - מצב ייצור אגרסיבי_`;
           confidence: timeframeAlignment * 100,
           rejection: `Multi-timeframe misalignment: ${(timeframeAlignment * 100).toFixed(1)}% < ${(this.PRODUCTION_FILTERS.multiTimeframeAlignment * 100)}%`,
           riskReward: 1.5,
-          details: `AGGRESSIVE: TF alignment: ${this.TIMEFRAMES.map(tf => `${tf}: ${Math.random() > 0.4 ? '✅' : '❌'}`).join(', ')}`
+          details: `SEV-1: TF alignment: ${this.TIMEFRAMES.map(tf => `${tf}: ${Math.random() > 0.4 ? '✅' : '❌'}`).join(', ')}`
         };
       }
 
-      // Market Heat Index Check - RELAXED
+      // Market Heat Index Check - SEV-1 RELAXED
       const heatData = MarketHeatIndex.calculateHeatIndex(marketData);
-      const isMarketSafe = heatData.heatIndex < 40; // Relaxed from previous threshold
+      const isMarketSafe = MarketHeatIndex.isMarketSafe(marketData, true); // Force aggressive mode
       
       if (!isMarketSafe) {
         return {
@@ -311,11 +311,11 @@ _LeviPro Aggressive AI v3.2 - מצב ייצור אגרסיבי_`;
           confidence: 0,
           rejection: `Market too volatile (${heatData.heatIndex.toFixed(0)}% heat)`,
           riskReward: 0,
-          details: `AGGRESSIVE: Heat index: ${heatData.heatIndex.toFixed(1)}% (threshold: 40%)`
+          details: `SEV-1: Heat index: ${heatData.heatIndex.toFixed(1)}% (threshold: 70% AGGRESSIVE)`
         };
       }
 
-      // Enhanced Signal Processing with aggressive multi-timeframe context
+      // Enhanced Signal Processing with SEV-1 multi-timeframe context
       const action = marketData.change24h > 0 ? 'BUY' : 'SELL';
       const sentimentData = { score: 0.5 + (marketData.change24h / 100) };
       
@@ -325,27 +325,27 @@ _LeviPro Aggressive AI v3.2 - מצב ייצור אגרסיבי_`;
         marketData.price,
         marketData,
         sentimentData,
-        'aggressive-multi-timeframe-ai'
+        'sev1-multi-timeframe-ai'
       );
 
-      // Apply AGGRESSIVE production filters with learning adjustments
+      // Apply SEV-1 production filters with learning adjustments
       const adjustedConfidence = FeedbackLearningEngine.shouldBoostConfidence(
         symbol, 
-        'aggressive-multi-timeframe-ai', 
-        enhancedResult.confidence * timeframeAlignment * 1.1 // 10% boost for aggressive mode
+        'sev1-multi-timeframe-ai', 
+        enhancedResult.confidence * timeframeAlignment * 1.15 // 15% boost for SEV-1
       );
 
       if (adjustedConfidence < this.PRODUCTION_FILTERS.minConfidence) {
         return {
           shouldSignal: false,
           confidence: adjustedConfidence,
-          rejection: `AGGRESSIVE: Low confidence: ${adjustedConfidence.toFixed(1)}% < ${this.PRODUCTION_FILTERS.minConfidence}%`,
+          rejection: `SEV-1: Low confidence: ${adjustedConfidence.toFixed(1)}% < ${this.PRODUCTION_FILTERS.minConfidence}%`,
           riskReward: 1.5,
-          details: `AGGRESSIVE boost applied. Base: ${enhancedResult.confidence}%, TF: ${timeframeAlignment.toFixed(2)}, Boost: 10%`
+          details: `SEV-1 boost applied. Base: ${enhancedResult.confidence}%, TF: ${timeframeAlignment.toFixed(2)}, Boost: 15%`
         };
       }
 
-      // Check cooldown with AGGRESSIVE symbol-specific logic
+      // Check cooldown with SEV-1 symbol-specific logic
       const timeSinceLastSignal = Date.now() - this.lastSuccessfulSignal;
       const cooldownMs = this.PRODUCTION_FILTERS.cooldownMinutes * 60 * 1000;
       
@@ -354,9 +354,9 @@ _LeviPro Aggressive AI v3.2 - מצב ייצור אגרסיבי_`;
         return {
           shouldSignal: false,
           confidence: adjustedConfidence,
-          rejection: `AGGRESSIVE cooldown: ${minutesLeft} min remaining (${this.PRODUCTION_FILTERS.cooldownMinutes} min total)`,
+          rejection: `SEV-1 cooldown: ${minutesLeft} min remaining (${this.PRODUCTION_FILTERS.cooldownMinutes} min total)`,
           riskReward: 1.5,
-          details: `AGGRESSIVE mode - reduced cooldown from 20 to ${this.PRODUCTION_FILTERS.cooldownMinutes} minutes`
+          details: `SEV-1 mode - reduced cooldown to ${this.PRODUCTION_FILTERS.cooldownMinutes} minutes`
         };
       }
 
@@ -364,37 +364,37 @@ _LeviPro Aggressive AI v3.2 - מצב ייצור אגרסיבי_`;
         return {
           shouldSignal: true,
           confidence: adjustedConfidence,
-          leviScore: Math.min(95, enhancedResult.leviScore * timeframeAlignment * 1.05), // 5% boost
+          leviScore: Math.min(95, enhancedResult.leviScore * timeframeAlignment * 1.1), // 10% boost
           explanation: enhancedResult.explanation,
-          correlationReport: `AGGRESSIVE Multi-TF: ${(timeframeAlignment * 100).toFixed(1)}% (${Math.floor(timeframeAlignment * this.TIMEFRAMES.length)}/${this.TIMEFRAMES.length} TFs)`,
-          timeframeReport: `Timeframes: ${this.TIMEFRAMES.join(' | ')} - AGGRESSIVE Trend: ${(timeframeAlignment * 100).toFixed(1)}%`,
+          correlationReport: `SEV-1 Multi-TF: ${(timeframeAlignment * 100).toFixed(1)}% (${Math.floor(timeframeAlignment * this.TIMEFRAMES.length)}/${this.TIMEFRAMES.length} TFs)`,
+          timeframeReport: `Timeframes: ${this.TIMEFRAMES.join(' | ')} - SEV-1 Trend: ${(timeframeAlignment * 100).toFixed(1)}%`,
           reasoning: [
             ...enhancedResult.reasoning,
-            `AGGRESSIVE multi-timeframe confirmation: ${(timeframeAlignment * 100).toFixed(1)}%`,
-            `AGGRESSIVE mode: Relaxed filters for immediate signal generation`,
+            `SEV-1 multi-timeframe confirmation: ${(timeframeAlignment * 100).toFixed(1)}%`,
+            `SEV-1 mode: Emergency signal generation - relaxed filters active`,
             `Analysis across ${this.TIMEFRAMES.length} timeframes with 60% threshold`
           ],
           action,
-          riskReward: Math.max(1.2, enhancedResult.riskReward || 1.5) // Fix: use riskReward instead of riskRewardRatio
+          riskReward: Math.max(1.2, enhancedResult.riskReward || 1.5)
         };
       } else {
         return {
           shouldSignal: false,
           confidence: adjustedConfidence,
-          rejection: `AGGRESSIVE AI rejection: ${enhancedResult.reasoning.join('; ')}`,
+          rejection: `SEV-1 AI rejection: ${enhancedResult.reasoning.join('; ')}`,
           riskReward: 1.5,
-          details: `AGGRESSIVE Enhanced AI with relaxed multi-timeframe context. Alignment: ${(timeframeAlignment * 100).toFixed(1)}%`
+          details: `SEV-1 Enhanced AI with emergency multi-timeframe context. Alignment: ${(timeframeAlignment * 100).toFixed(1)}%`
         };
       }
 
     } catch (error) {
-      console.error(`❌ AGGRESSIVE multi-timeframe AI analysis failed for ${symbol}:`, error);
+      console.error(`❌ SEV-1 multi-timeframe AI analysis failed for ${symbol}:`, error);
       return {
         shouldSignal: false,
         confidence: 0,
-        rejection: `AGGRESSIVE analysis error: ${error}`,
+        rejection: `SEV-1 analysis error: ${error}`,
         riskReward: 0,
-        details: `System error during AGGRESSIVE multi-timeframe analysis`
+        details: `System error during SEV-1 multi-timeframe analysis`
       };
     }
   }
@@ -442,7 +442,7 @@ _LeviPro Aggressive AI v3.2 - מצב ייצור אגרסיבי_`;
     try {
       await supabase.from('signal_feedback').insert({
         signal_id: `rejected_${symbol}_${Date.now()}`,
-        strategy_used: 'aggressive-multi-timeframe-ai',
+        strategy_used: 'sev1-multi-timeframe-ai',
         outcome: 'rejected',
         profit_loss_percentage: 0,
         execution_time: new Date().toISOString(),
@@ -459,7 +459,7 @@ _LeviPro Aggressive AI v3.2 - מצב ייצור אגרסיבי_`;
       await FeedbackLearningEngine.recordSignalOutcome({
         signalId: `${symbol}_${Date.now()}`,
         symbol,
-        strategy: 'aggressive-multi-timeframe-ai',
+        strategy: 'sev1-multi-timeframe-ai',
         marketConditions: result,
         outcome: outcome === 'approved' ? 'profit' : 'loss',
         profitPercent: 0,
@@ -473,7 +473,7 @@ _LeviPro Aggressive AI v3.2 - מצב ייצור אגרסיבי_`;
   }
 
   private async sendEnhancedSignal(symbol: string, result: any): Promise<void> {
-    const message = `🚀 *איתות LIVE - LeviPro AGGRESSIVE*
+    const message = `🚨 *איתות LIVE - LeviPro SEV-1*
 
 💰 *${symbol}*
 📈 ${result.action === 'BUY' ? 'קנייה' : 'מכירה'}: $${result.explanation?.price || 'N/A'}
@@ -486,18 +486,18 @@ _LeviPro Aggressive AI v3.2 - מצב ייצור אגרסיבי_`;
 ${result.correlationReport}
 ${result.timeframeReport}
 
-📝 *נימוקים מתקדמים AGGRESSIVE:*
+📝 *נימוקים SEV-1:*
 ${result.reasoning.map((r: string) => `• ${r}`).join('\n')}
 
-⚠️ *מצב אגרסיבי: סינון מקל לייצור איתותים*
+🚨 *מצב חירום SEV-1: מסננים מותאמים לייצור איתותים מהיר*
 
 ⏰ ${new Date().toLocaleString('he-IL')}
 
-_LeviPro AGGRESSIVE AI v3.2 - מצב ייצור אגרסיבי_`;
+_LeviPro SEV-1 Emergency v3.3 - מצב חירום תפעולי_`;
 
     try {
       await telegramBot.sendMessage(message);
-      console.log(`📱 ✅ AGGRESSIVE production signal sent: ${symbol}`);
+      console.log(`📱 ✅ SEV-1 emergency signal sent: ${symbol}`);
     } catch (error) {
       console.error(`❌ Failed to send Telegram message:`, error);
     }
@@ -508,7 +508,7 @@ _LeviPro AGGRESSIVE AI v3.2 - מצב ייצור אגרסיבי_`;
       const { error } = await supabase
         .from('signal_history')
         .insert({
-          signal_id: `${isTestSignal ? 'test_' : 'aggressive_'}${Date.now()}_${symbol}`,
+          signal_id: `${isTestSignal ? 'test_' : 'sev1_'}${Date.now()}_${symbol}`,
           symbol,
           action: result.action,
           entry_price: result.explanation?.price || 0,
@@ -516,22 +516,22 @@ _LeviPro AGGRESSIVE AI v3.2 - מצב ייצור אגרסיבי_`;
           stop_loss: result.explanation?.stopLoss || 0,
           confidence: result.confidence,
           risk_reward_ratio: result.riskReward,
-          strategy: isTestSignal ? 'test-signal' : 'aggressive-production-ai',
-          reasoning: Array.isArray(result.reasoning) ? result.reasoning.join('; ') : (result.reasoning || 'AGGRESSIVE production signal'),
+          strategy: isTestSignal ? 'test-signal' : 'sev1-emergency-ai',
+          reasoning: Array.isArray(result.reasoning) ? result.reasoning.join('; ') : (result.reasoning || 'SEV-1 emergency signal'),
           market_conditions: {
             leviScore: result.leviScore,
             correlationReport: result.correlationReport,
             timeframeReport: result.timeframeReport,
             isTestSignal,
-            isAggressive: true,
-            engineVersion: '3.2'
+            isSev1: true,
+            engineVersion: '3.3'
           }
         });
 
       if (error) {
         console.error('❌ Failed to log signal to database:', error);
       } else {
-        console.log(`✅ Signal logged to database${isTestSignal ? ' (TEST)' : ' (AGGRESSIVE PRODUCTION)'}`);
+        console.log(`✅ Signal logged to database${isTestSignal ? ' (TEST)' : ' (SEV-1 EMERGENCY)'}`);
       }
     } catch (error) {
       console.error('❌ Database logging error:', error);
@@ -577,7 +577,6 @@ _LeviPro AGGRESSIVE AI v3.2 - מצב ייצור אגרסיבי_`;
     return this.recentRejections.slice(-limit);
   }
 
-  // IMPLEMENT MISSING getDebugInfo METHOD
   getDebugInfo(): DebugInfo {
     const totalAnalysed = this.analysisCount * 6; // 6 symbols per cycle
     const fundamentalDataAge = this.getFundamentalDataAge();
@@ -610,7 +609,7 @@ _LeviPro AGGRESSIVE AI v3.2 - מצב ייצור אגרסיבי_`;
       productionFilters: this.PRODUCTION_FILTERS,
       symbols: this.SYMBOLS,
       recentRejections,
-      mode: 'AGGRESSIVE_PRODUCTION',
+      mode: 'SEV-1_EMERGENCY',
       healthCheck: {
         engineRunning: this.isRunning,
         dataConnection: this.marketDataStatus === 'LIVE_DATA_OK',
@@ -618,7 +617,7 @@ _LeviPro AGGRESSIVE AI v3.2 - מצב ייצור אגרסיבי_`;
         lastSignalAge: this.lastSuccessfulSignal > 0 ? Date.now() - this.lastSuccessfulSignal : null,
         overallHealth: this.isRunning && this.marketDataStatus === 'LIVE_DATA_OK' ? 'HEALTHY' : 'DEGRADED',
         fundamentalDataStatus: 'CHECKING', // Will be enhanced
-        aggressiveMode: true
+        sev1Mode: true
       }
     };
   }

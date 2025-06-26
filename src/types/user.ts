@@ -1,4 +1,3 @@
-
 export interface UserAccessControl {
   id: string;
   user_id: string;

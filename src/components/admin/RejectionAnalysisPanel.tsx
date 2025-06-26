@@ -3,17 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { 
   Download, 
-  RefreshCw, 
-  TrendingUp, 
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
+  Search, 
+  AlertTriangle, 
+  TrendingDown,
   Filter
 } from 'lucide-react';
 import { liveSignalEngine } from '@/services/trading/liveSignalEngine';
-import { toast } from 'sonner';
 
 interface RejectionData {
   symbol: string;
@@ -21,198 +19,178 @@ interface RejectionData {
   confidence: number;
   riskReward: number;
   timestamp: number;
-  details: string;
-  canOverride: boolean;
+  details?: string;
 }
 
 export const RejectionAnalysisPanel: React.FC = () => {
   const [rejections, setRejections] = useState<RejectionData[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [filteredRejections, setFilteredRejections] = useState<RejectionData[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedReason, setSelectedReason] = useState<string>('all');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadRejections();
+    const interval = setInterval(loadRejections, 30000); // Update every 30 seconds
+    return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    filterRejections();
+  }, [rejections, searchTerm, selectedReason]);
+
   const loadRejections = () => {
-    setLoading(true);
     try {
-      const debugInfo = liveSignalEngine.getDebugInfo();
-      const rejectionsData = debugInfo.recentRejections.map(r => ({
-        symbol: r.symbol,
-        reason: r.reason,
-        confidence: r.confidence,
-        riskReward: r.riskReward,
-        timestamp: r.timestamp,
-        details: r.details || '',
-        canOverride: r.confidence > 65 && r.riskReward > 1.2 // Allow override for borderline cases
-      }));
-      
-      setRejections(rejectionsData);
-      console.log('📊 Loaded rejections:', rejectionsData.length);
+      const recentRejections = liveSignalEngine.getRecentRejections(100);
+      setRejections(recentRejections);
+      setLoading(false);
     } catch (error) {
-      console.error('Error loading rejections:', error);
-      toast.error('שגיאה בטעינת נתוני דחיות');
-    } finally {
+      console.error('Failed to load rejections:', error);
       setLoading(false);
     }
   };
 
+  const filterRejections = () => {
+    let filtered = rejections;
+
+    if (searchTerm) {
+      filtered = filtered.filter(r => 
+        r.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        r.reason.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (selectedReason !== 'all') {
+      filtered = filtered.filter(r => r.reason.includes(selectedReason));
+    }
+
+    setFilteredRejections(filtered);
+  };
+
   const exportToCSV = () => {
     const csvContent = [
-      'Timestamp,Symbol,Reason,Confidence,Risk_Reward,Details,Can_Override',
-      ...rejections.map(r => 
-        `${new Date(r.timestamp).toISOString()},${r.symbol},"${r.reason}",${r.confidence},${r.riskReward},"${r.details}",${r.canOverride}`
+      'Symbol,Reason,Confidence,Risk/Reward,Timestamp,Details',
+      ...filteredRejections.map(r => 
+        `${r.symbol},"${r.reason}",${r.confidence},${r.riskReward},${new Date(r.timestamp).toISOString()},"${r.details || ''}"`
       )
     ].join('\n');
-    
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `signal_rejections_${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-    
-    toast.success('קובץ CSV נוצר בהצלחה');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `signal_rejections_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
   };
 
-  const overrideRejection = (index: number) => {
-    const rejection = rejections[index];
-    console.log('🔄 Overriding rejection:', rejection);
-    
-    // This would trigger a manual signal approval
-    toast.success(`איתות ${rejection.symbol} אושר לשליחה`);
-    
-    // Update the rejection to show it was overridden
-    setRejections(prev => prev.map((r, i) => 
-      i === index ? { ...r, canOverride: false, reason: `${r.reason} (OVERRIDDEN)` } : r
-    ));
+  const getReasonColor = (reason: string) => {
+    if (reason.includes('confidence') || reason.includes('ביטחון')) return 'bg-red-100 text-red-800';
+    if (reason.includes('heat') || reason.includes('חום')) return 'bg-orange-100 text-orange-800';
+    if (reason.includes('cooldown') || reason.includes('קול-דאון')) return 'bg-blue-100 text-blue-800';
+    if (reason.includes('timeframe') || reason.includes('מסגרת')) return 'bg-purple-100 text-purple-800';
+    return 'bg-gray-100 text-gray-800';
   };
 
-  const uniqueReasons = [...new Set(rejections.map(r => r.reason.split(' ')[0]))];
-  const filteredRejections = selectedReason === 'all' 
-    ? rejections 
-    : rejections.filter(r => r.reason.toLowerCase().includes(selectedReason.toLowerCase()));
+  const uniqueReasons = Array.from(new Set(rejections.map(r => {
+    if (r.reason.includes('confidence') || r.reason.includes('ביטחון')) return 'confidence';
+    if (r.reason.includes('heat') || r.reason.includes('חום')) return 'heat';
+    if (r.reason.includes('cooldown') || r.reason.includes('קול-דאון')) return 'cooldown';
+    if (r.reason.includes('timeframe') || r.reason.includes('מסגרת')) return 'timeframe';
+    return 'other';
+  })));
 
-  const rejectionStats = {
-    total: rejections.length,
-    canOverride: rejections.filter(r => r.canOverride).length,
-    avgConfidence: rejections.reduce((acc, r) => acc + r.confidence, 0) / rejections.length || 0,
-    avgRiskReward: rejections.reduce((acc, r) => acc + r.riskReward, 0) / rejections.length || 0
-  };
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>טוען נתוני דחיות...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-orange-500" />
-            ניתוח דחיות איתותים
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={loadRejections} disabled={loading} size="sm" variant="outline">
-              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-              רענן
-            </Button>
-            <Button onClick={exportToCSV} size="sm" variant="secondary">
-              <Download className="h-4 w-4 mr-2" />
-              ייצא CSV
-            </Button>
-          </div>
+          <span className="flex items-center gap-2">
+            <TrendingDown className="h-5 w-5" />
+            ניתוח דחיות איתותים ({filteredRejections.length})
+          </span>
+          <Button onClick={exportToCSV} size="sm">
+            <Download className="h-4 w-4 mr-2" />
+            ייצא CSV
+          </Button>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-6">
-          {/* Statistics Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-red-50 rounded">
-              <div className="text-2xl font-bold text-red-600">{rejectionStats.total}</div>
-              <div className="text-sm text-muted-foreground">סה"כ דחיות</div>
+        <div className="space-y-4">
+          {/* Filters */}
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="חיפוש לפי סמל או סיבה..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
-            <div className="text-center p-4 bg-yellow-50 rounded">
-              <div className="text-2xl font-bold text-yellow-600">{rejectionStats.canOverride}</div>
-              <div className="text-sm text-muted-foreground">ניתן לאישור</div>
+            <div className="w-48">
+              <select
+                value={selectedReason}
+                onChange={(e) => setSelectedReason(e.target.value)}
+                className="w-full p-2 border rounded-md"
+              >
+                <option value="all">כל הסיבות</option>
+                {uniqueReasons.map(reason => (
+                  <option key={reason} value={reason}>
+                    {reason === 'confidence' ? 'ביטחון נמוך' :
+                     reason === 'heat' ? 'חום גבוה' :
+                     reason === 'cooldown' ? 'קול-דאון' :
+                     reason === 'timeframe' ? 'מסגרת זמן' : 'אחר'}
+                  </option>
+                ))}
+              </select>
             </div>
-            <div className="text-center p-4 bg-blue-50 rounded">
-              <div className="text-2xl font-bold text-blue-600">{rejectionStats.avgConfidence.toFixed(1)}%</div>
-              <div className="text-sm text-muted-foreground">ביטחון ממוצע</div>
-            </div>
-            <div className="text-center p-4 bg-green-50 rounded">
-              <div className="text-2xl font-bold text-green-600">{rejectionStats.avgRiskReward.toFixed(2)}</div>
-              <div className="text-sm text-muted-foreground">R/R ממוצע</div>
-            </div>
-          </div>
-
-          {/* Filter Controls */}
-          <div className="flex items-center gap-4">
-            <Filter className="h-4 w-4" />
-            <select 
-              value={selectedReason} 
-              onChange={(e) => setSelectedReason(e.target.value)}
-              className="border rounded px-3 py-1"
-            >
-              <option value="all">כל הסיבות</option>
-              {uniqueReasons.map(reason => (
-                <option key={reason} value={reason}>{reason}</option>
-              ))}
-            </select>
-            <Badge variant="outline">
-              {filteredRejections.length} מתוך {rejections.length}
-            </Badge>
           </div>
 
           {/* Rejections Table */}
           <div className="border rounded-lg overflow-hidden">
             <div className="max-h-96 overflow-y-auto">
-              <table className="w-full">
+              <table className="w-full text-sm">
                 <thead className="bg-gray-50 sticky top-0">
                   <tr>
-                    <th className="px-4 py-2 text-right">זמן</th>
-                    <th className="px-4 py-2 text-right">נכס</th>
-                    <th className="px-4 py-2 text-right">סיבת דחייה</th>
-                    <th className="px-4 py-2 text-right">ביטחון</th>
-                    <th className="px-4 py-2 text-right">R/R</th>
-                    <th className="px-4 py-2 text-right">פעולות</th>
+                    <th className="p-3 text-right">זמן</th>
+                    <th className="p-3 text-right">סמל</th>
+                    <th className="p-3 text-right">סיבת דחייה</th>
+                    <th className="p-3 text-right">ביטחון</th>
+                    <th className="p-3 text-right">R/R</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredRejections.map((rejection, index) => (
                     <tr key={index} className="border-t hover:bg-gray-50">
-                      <td className="px-4 py-2 text-sm">
-                        {new Date(rejection.timestamp).toLocaleString('he-IL')}
+                      <td className="p-3">
+                        {new Date(rejection.timestamp).toLocaleTimeString('he-IL')}
                       </td>
-                      <td className="px-4 py-2 font-medium">{rejection.symbol}</td>
-                      <td className="px-4 py-2 text-sm">
-                        <span className="text-red-600">{rejection.reason}</span>
-                        {rejection.details && (
-                          <div className="text-xs text-gray-500 mt-1">{rejection.details}</div>
-                        )}
+                      <td className="p-3">
+                        <Badge variant="outline">{rejection.symbol}</Badge>
                       </td>
-                      <td className="px-4 py-2">
-                        <Badge variant={rejection.confidence > 70 ? "default" : "secondary"}>
-                          {rejection.confidence.toFixed(1)}%
+                      <td className="p-3">
+                        <Badge className={getReasonColor(rejection.reason)}>
+                          {rejection.reason.length > 50 ? 
+                            rejection.reason.substring(0, 50) + '...' : 
+                            rejection.reason}
                         </Badge>
                       </td>
-                      <td className="px-4 py-2">
-                        <Badge variant={rejection.riskReward > 1.5 ? "default" : "secondary"}>
-                          {rejection.riskReward.toFixed(2)}
-                        </Badge>
+                      <td className="p-3 font-mono">
+                        {rejection.confidence.toFixed(1)}%
                       </td>
-                      <td className="px-4 py-2">
-                        {rejection.canOverride ? (
-                          <Button 
-                            onClick={() => overrideRejection(index)}
-                            size="sm" 
-                            variant="outline"
-                            className="text-green-600 hover:text-green-700"
-                          >
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            אשר
-                          </Button>
-                        ) : (
-                          <XCircle className="h-4 w-4 text-gray-400" />
-                        )}
+                      <td className="p-3 font-mono">
+                        {rejection.riskReward.toFixed(2)}
                       </td>
                     </tr>
                   ))}
@@ -222,25 +200,37 @@ export const RejectionAnalysisPanel: React.FC = () => {
           </div>
 
           {filteredRejections.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              אין דחיות להצגה
+            <div className="text-center py-8">
+              <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p className="text-gray-500">אין דחיות המתאימות לחיפוש</p>
             </div>
           )}
 
-          {/* Learning Recommendations */}
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded">
-            <h4 className="font-semibold mb-2 text-blue-800">המלצות מערכת הלמידה</h4>
-            <div className="text-sm text-blue-700 space-y-1">
-              {rejectionStats.avgConfidence > 70 && (
-                <div>• רמת הביטחון הממוצעת גבוהה - שקול להוריד את הסף ל-70%</div>
-              )}
-              {rejectionStats.avgRiskReward > 1.4 && (
-                <div>• יחס R/R טוב - שקול להוריד את הסף ל-1.2</div>
-              )}
-              {rejectionStats.canOverride > 5 && (
-                <div>• יש {rejectionStats.canOverride} איתותים שניתן לאשר ידנית</div>
-              )}
-              <div>• סה"כ {rejectionStats.total} דחיות נרשמו למערכת הלמידה</div>
+          {/* Summary Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t">
+            <div className="text-center p-3 bg-red-50 rounded">
+              <div className="text-lg font-bold text-red-600">
+                {rejections.filter(r => r.reason.includes('confidence') || r.reason.includes('ביטחון')).length}
+              </div>
+              <div className="text-xs text-gray-600">ביטחון נמוך</div>
+            </div>
+            <div className="text-center p-3 bg-orange-50 rounded">
+              <div className="text-lg font-bold text-orange-600">
+                {rejections.filter(r => r.reason.includes('heat') || r.reason.includes('חום')).length}
+              </div>
+              <div className="text-xs text-gray-600">חום גבוה</div>
+            </div>
+            <div className="text-center p-3 bg-blue-50 rounded">
+              <div className="text-lg font-bold text-blue-600">
+                {rejections.filter(r => r.reason.includes('cooldown') || r.reason.includes('קול-דאון')).length}
+              </div>
+              <div className="text-xs text-gray-600">קול-דאון</div>
+            </div>
+            <div className="text-center p-3 bg-purple-50 rounded">
+              <div className="text-lg font-bold text-purple-600">
+                {rejections.filter(r => r.reason.includes('timeframe') || r.reason.includes('מסגרת')).length}
+              </div>
+              <div className="text-xs text-gray-600">מסגרת זמן</div>
             </div>
           </div>
         </div>
