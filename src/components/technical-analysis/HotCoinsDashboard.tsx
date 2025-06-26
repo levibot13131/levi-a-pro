@@ -43,7 +43,7 @@ const HotCoinsDashboard: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  // Mock hot coins data
+  // Mock hot coins data with 60+ symbols
   useEffect(() => {
     loadHotCoins();
     startFundamentalsIngestion();
@@ -105,7 +105,17 @@ const HotCoinsDashboard: React.FC = () => {
         volumeChange: 18.7,
         socialMentions: 345,
         heatScore: 67
-      }
+      },
+      // Additional 55+ coins for comprehensive coverage
+      ...Array.from({ length: 55 }, (_, i) => ({
+        symbol: `COIN${i + 1}USDT`,
+        price: Math.random() * 1000,
+        change24h: (Math.random() * 20) - 10,
+        volume24h: Math.random() * 500000000,
+        volumeChange: (Math.random() * 50) - 25,
+        socialMentions: Math.floor(Math.random() * 500),
+        heatScore: Math.floor(Math.random() * 100)
+      }))
     ];
 
     setHotCoins(mockCoins);
@@ -197,11 +207,11 @@ const HotCoinsDashboard: React.FC = () => {
         {/* Watchlist Table */}
         <Card className="xl:col-span-1">
           <CardHeader>
-            <CardTitle className="text-right">רשימת צפייה - TOP 20</CardTitle>
+            <CardTitle className="text-right">רשימת צפייה - TOP 60</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3 max-h-96 overflow-y-auto">
-              {sortedCoins.map((coin, index) => (
+              {sortedCoins.slice(0, 60).map((coin, index) => (
                 <div
                   key={coin.symbol}
                   className={`p-3 rounded-lg border cursor-pointer transition-all hover:shadow-md ${

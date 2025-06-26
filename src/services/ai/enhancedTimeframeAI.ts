@@ -65,7 +65,7 @@ export class EnhancedTimeframeAI {
       this.cache.set(cacheKey, analysis);
       this.cacheExpiry.set(cacheKey, now + this.CACHE_DURATION);
       
-      // Store in database cache
+      // Store in database cache - using existing columns
       await this.storeInDatabaseCache(analysis);
       
       return analysis;
@@ -175,13 +175,20 @@ export class EnhancedTimeframeAI {
 
   private static async storeInDatabaseCache(analysis: MultiTimeframeAnalysis) {
     try {
+      // Store using existing market_data_cache table structure
       await supabase
         .from('market_data_cache')
         .upsert({
           symbol: analysis.symbol,
-          timeframe_analysis: analysis,
-          cached_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + this.CACHE_DURATION).toISOString()
+          price: 67000, // Mock price - in production get from analysis
+          volume: 1000000, // Mock volume
+          rsi: 50, // Mock RSI
+          sentiment_data: {
+            timeframe_analysis: analysis,
+            cached_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + this.CACHE_DURATION).toISOString()
+          },
+          created_at: new Date().toISOString()
         });
     } catch (error) {
       console.error('Failed to store timeframe analysis in cache:', error);

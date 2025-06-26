@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { HotCoinsDashboard } from '@/components/technical-analysis/HotCoinsDashboard';
+import HotCoinsDashboard from '@/components/technical-analysis/HotCoinsDashboard';
 
 const TechnicalAnalysis = () => {
   return (
