@@ -35,6 +35,19 @@ export class MarketHeatIndex {
     };
   }
 
+  static async getCurrentHeatLevel(): Promise<number> {
+    // Mock implementation for now - in production this would fetch real market data
+    const mockMarketData = {
+      change24h: (Math.random() * 10) - 5, // -5% to +5%
+      volume24h: Math.random() * 2000000000, // 0 to 2B
+      sentiment: Math.random(), // 0 to 1
+      marketCap: 1000000000000 // 1T market cap
+    };
+
+    const heatData = this.calculateHeatIndex(mockMarketData);
+    return heatData.heatIndex;
+  }
+
   static isMarketSafe(marketData: any, aggressiveMode: boolean = true): boolean {
     const heatData = this.calculateHeatIndex(marketData);
     const threshold = aggressiveMode ? this.AGGRESSIVE_THRESHOLD : this.NORMAL_THRESHOLD;

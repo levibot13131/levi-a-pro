@@ -176,6 +176,21 @@ export class EnhancedTimeframeAI {
   private static async storeInDatabaseCache(analysis: MultiTimeframeAnalysis) {
     try {
       // Store using existing market_data_cache table structure
+      // Convert analysis to JSON-compatible format
+      const analysisData = {
+        timeframe_analysis: {
+          symbol: analysis.symbol,
+          alignment: analysis.alignment,
+          confidence: analysis.confidence,
+          overallTrend: analysis.overallTrend,
+          timeframes: analysis.timeframes,
+          conflictingSignals: analysis.conflictingSignals,
+          reasoning: analysis.reasoning
+        },
+        cached_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + this.CACHE_DURATION).toISOString()
+      };
+
       await supabase
         .from('market_data_cache')
         .upsert({
@@ -183,11 +198,7 @@ export class EnhancedTimeframeAI {
           price: 67000, // Mock price - in production get from analysis
           volume: 1000000, // Mock volume
           rsi: 50, // Mock RSI
-          sentiment_data: {
-            timeframe_analysis: analysis,
-            cached_at: new Date().toISOString(),
-            expires_at: new Date(Date.now() + this.CACHE_DURATION).toISOString()
-          },
+          sentiment_data: analysisData,
           created_at: new Date().toISOString()
         });
     } catch (error) {

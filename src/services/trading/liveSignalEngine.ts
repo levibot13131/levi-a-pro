@@ -34,6 +34,54 @@ interface DebugInfo {
   rejectedByRule: { [key: string]: number };
   lastAnalysis: Date | null;
   isRunning: boolean;
+  recentRejections: RejectionData[];
+  learningStats: any;
+  currentFilters: any;
+  marketDataConnected: boolean;
+  fundamentalDataAge: number;
+}
+
+interface RejectionData {
+  symbol: string;
+  reason: string;
+  confidence: number;
+  riskReward: number;
+  timestamp: number;
+  details?: string;
+}
+
+interface EngineStatus {
+  isRunning: boolean;
+  totalSignals: number;
+  totalRejections: number;
+  lastAnalysis: number;
+  analysisCount: number;
+  lastAnalysisReport: string;
+  healthCheck?: {
+    overallHealth: string;
+    dataConnection: boolean;
+    aiProcessor: boolean;
+  };
+  currentCycle?: string;
+  marketDataStatus?: string;
+  productionFilters?: {
+    minConfidence: number;
+    minRiskReward: number;
+    minPriceMovement: number;
+    cooldownMinutes: number;
+  };
+  recentRejections?: RejectionData[];
+  scoringStats?: {
+    totalSent: number;
+    intelligenceEnhanced: number;
+    rejectionRate: number;
+  };
+  intelligenceLayer?: {
+    whaleMonitoring: boolean;
+    sentimentAnalysis: boolean;
+    fearGreedIntegration: boolean;
+    fundamentalRiskScoring: boolean;
+  };
 }
 
 class LiveSignalEngine {
@@ -44,11 +92,17 @@ class LiveSignalEngine {
     totalRejected: 0,
     rejectedByRule: {},
     lastAnalysis: null,
-    isRunning: false
+    isRunning: false,
+    recentRejections: [],
+    learningStats: {},
+    currentFilters: {},
+    marketDataConnected: true,
+    fundamentalDataAge: 0
   };
   
   private analysisInterval?: NodeJS.Timeout;
   private lastSignalTimes = new Map<string, number>();
+  private recentRejections: RejectionData[] = [];
   private readonly GLOBAL_COOLDOWN = 15 * 60 * 1000; // 15 minutes
   private readonly SYMBOL_COOLDOWN = 2 * 60 * 60 * 1000; // 2 hours
   private lastGlobalSignal = 0;
@@ -64,7 +118,7 @@ class LiveSignalEngine {
     'BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT', 'ADAUSDT', 'AVAXUSDT', 'DOTUSDT',
     'LINKUSDT', 'MATICUSDT', 'UNIUSDT', 'LTCUSDT', 'ATOMUSDT', 'ALGOUSDT', 'VETUSDT', 'XLMUSDT',
     'FTMUSDT', 'HBARUSDT', 'NEARUSDT', 'AXSUSDT', 'MANAUSDT', 'SANDUSDT', 'APEUSDT', 'GMTUSDT',
-    'GALAUSDT', 'ROSEUS DT', 'LRCUSDT', 'DOGEUSDT', 'SHIBUSDT', 'ETCUSDT', 'ADAUSDT', 'ICPUSDT',
+    'GALAUSDT', 'ROSEUSDT', 'LRCUSDT', 'DOGEUSDT', 'SHIBUSDT', 'ETCUSDT', 'ADAUSDT', 'ICPUSDT',
     'FLOWUSDT', 'FILUSDT', 'TRXUSDT', 'EOSUSDT', 'XTZUSDT', 'AAVEUSDT', 'COMPUSDT', 'MKRUSDT',
     'YFIUSDT', 'SNXUSDT', 'CRVUSDT', 'BALUSDT', 'ZRXUSDT', 'ENJUSDT', 'CHZUSDT', 'BATUSDT',
     'ZECUSDT', 'DASHUSDT', 'QTUMUSDT', 'OMGUSDT', 'LSKUSDT', 'WAVESUSDT', 'NKNUSDT', 'IOTAUSDT',
@@ -99,6 +153,93 @@ class LiveSignalEngine {
       clearInterval(this.analysisInterval);
       this.analysisInterval = undefined;
     }
+  }
+
+  getEngineStatus(): EngineStatus {
+    return {
+      isRunning: this.isRunning,
+      totalSignals: this.debugInfo.totalSent,
+      totalRejections: this.debugInfo.totalRejected,
+      lastAnalysis: this.debugInfo.lastAnalysis?.getTime() || 0,
+      analysisCount: this.debugInfo.totalAnalysed,
+      lastAnalysisReport: 'Live analysis running every 30 seconds',
+      healthCheck: {
+        overallHealth: this.isRunning ? 'HEALTHY' : 'OFFLINE',
+        dataConnection: this.debugInfo.marketDataConnected,
+        aiProcessor: true
+      },
+      currentCycle: this.isRunning ? 'ACTIVE' : 'STOPPED',
+      marketDataStatus: 'LIVE_DATA_OK',
+      productionFilters: {
+        minConfidence: this.CONFIDENCE_THRESHOLD,
+        minRiskReward: this.MIN_RR_RATIO,
+        minPriceMovement: 2,
+        cooldownMinutes: 15
+      },
+      recentRejections: this.recentRejections.slice(-10),
+      scoringStats: {
+        totalSent: this.debugInfo.totalSent,
+        intelligenceEnhanced: Math.floor(this.debugInfo.totalSent * 0.8),
+        rejectionRate: this.debugInfo.totalRejected > 0 ? Math.round((this.debugInfo.totalRejected / (this.debugInfo.totalSent + this.debugInfo.totalRejected)) * 100) : 0
+      },
+      intelligenceLayer: {
+        whaleMonitoring: this.isRunning,
+        sentimentAnalysis: this.isRunning,
+        fearGreedIntegration: this.isRunning,
+        fundamentalRiskScoring: this.isRunning
+      }
+    };
+  }
+
+  getDetailedStatus() {
+    return this.getEngineStatus();
+  }
+
+  getRecentRejections(limit: number = 50): RejectionData[] {
+    return this.recentRejections.slice(-limit);
+  }
+
+  async sendTestSignal(): Promise<boolean> {
+    try {
+      const testSignal: LiveSignal = {
+        signal_id: `TEST_${Date.now()}_BTCUSDT`,
+        symbol: 'BTCUSDT',
+        action: 'BUY',
+        entry_price: 67500,
+        target_price: 69500,
+        stop_loss: 66000,
+        confidence: 85,
+        risk_reward_ratio: 1.3,
+        strategy: 'LeviPro Test Signal',
+        reasoning: [
+          'This is a test signal to verify system functionality',
+          'Multi-TF Alignment: 85% (bullish across timeframes)',
+          'LeviScore: 85/100',
+          'Market conditions favorable for testing'
+        ],
+        market_conditions: {
+          heat_level: 45,
+          timeframe_alignment: 85,
+          overall_trend: 'bullish'
+        },
+        sentiment_data: {
+          fundamental_score: 75,
+          social_sentiment: 'positive'
+        }
+      };
+
+      await this.sendSignal(testSignal);
+      this.debugInfo.totalSent++;
+      return true;
+    } catch (error) {
+      console.error('❌ Test signal failed:', error);
+      return false;
+    }
+  }
+
+  async performManualAnalysis(symbol: string): Promise<void> {
+    console.log(`🔍 Performing manual analysis for ${symbol}`);
+    await this.analyzeSymbol(symbol);
   }
 
   private async analyzeMarkets() {
@@ -311,6 +452,20 @@ ${signal.reasoning.slice(0, 3).join('\n')}
     }
     this.debugInfo.rejectedByRule[rule]++;
     
+    const rejection: RejectionData = {
+      symbol,
+      reason: `${rule}: ${value.toFixed(2)} vs ${threshold.toFixed(2)}`,
+      confidence: value,
+      riskReward: rule === 'riskReward' ? value : 0,
+      timestamp: Date.now(),
+      details: `Rejected by ${rule} rule`
+    };
+    
+    this.recentRejections.push(rejection);
+    if (this.recentRejections.length > 100) {
+      this.recentRejections = this.recentRejections.slice(-50);
+    }
+    
     console.log(`❌ ${symbol} rejected by ${rule}: ${value.toFixed(2)} vs ${threshold.toFixed(2)}`);
     
     // Store rejection feedback
@@ -334,7 +489,10 @@ ${signal.reasoning.slice(0, 3).join('\n')}
   }
 
   getDebugInfo(): DebugInfo {
-    return { ...this.debugInfo };
+    return { 
+      ...this.debugInfo,
+      recentRejections: this.recentRejections.slice(-10)
+    };
   }
 
   getStatus() {

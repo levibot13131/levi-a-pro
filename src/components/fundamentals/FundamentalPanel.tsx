@@ -84,7 +84,9 @@ export const FundamentalPanel: React.FC = () => {
           published_at: item.published_at || item.processed_at || new Date().toISOString(),
           symbols: item.symbols || [],
           impact_level: (item.impact_level as 'high' | 'medium' | 'low') || 'medium',
-          url: item.metadata?.url || '#'
+          url: typeof item.metadata === 'object' && item.metadata !== null && 'url' in item.metadata 
+            ? String(item.metadata.url) 
+            : '#'
         }));
         setNews(formattedNews);
       }
