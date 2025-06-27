@@ -1,3 +1,4 @@
+
 export interface TradingSignal {
   id: string;
   symbol: string;
