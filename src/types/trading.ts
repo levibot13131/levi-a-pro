@@ -155,7 +155,6 @@ export interface EngineStatus {
     fearGreedIntegration: boolean;
     fundamentalRiskScoring: boolean;
   };
-  lastAnalysis?: string;
   healthCheck?: {
     overallHealth: string;
     dataConnection: boolean;
