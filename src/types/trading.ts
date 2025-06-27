@@ -141,6 +141,13 @@ export interface RiskData {
 export interface EngineStatus {
   isRunning: boolean;
   signalQuality: string;
+  totalSignals: number;
+  totalRejections: number;
+  lastAnalysis: number;
+  analysisCount: number;
+  lastAnalysisReport: string;
+  signalsLast24h?: number;
+  lastSuccessfulSignal?: number;
   scoringStats: SignalScoringStats;
   intelligenceLayer: {
     whaleMonitoring: boolean;
@@ -149,4 +156,18 @@ export interface EngineStatus {
     fundamentalRiskScoring: boolean;
   };
   lastAnalysis?: string;
+  healthCheck?: {
+    overallHealth: string;
+    dataConnection: boolean;
+    aiProcessor: boolean;
+  };
+  currentCycle?: string;
+  marketDataStatus?: string;
+  productionFilters?: {
+    minConfidence: number;
+    minRiskReward: number;
+    minPriceMovement: number;
+    cooldownMinutes: number;
+  };
+  recentRejections?: any[];
 }

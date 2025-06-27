@@ -176,8 +176,8 @@ export class EnhancedTimeframeAI {
   private static async storeInDatabaseCache(analysis: MultiTimeframeAnalysis) {
     try {
       // Store using existing market_data_cache table structure
-      // Convert analysis to JSON-compatible format
-      const analysisData = {
+      // Convert analysis to JSON-compatible format and store in sentiment_data
+      const analysisData = JSON.parse(JSON.stringify({
         timeframe_analysis: {
           symbol: analysis.symbol,
           alignment: analysis.alignment,
@@ -189,7 +189,7 @@ export class EnhancedTimeframeAI {
         },
         cached_at: new Date().toISOString(),
         expires_at: new Date(Date.now() + this.CACHE_DURATION).toISOString()
-      };
+      }));
 
       await supabase
         .from('market_data_cache')

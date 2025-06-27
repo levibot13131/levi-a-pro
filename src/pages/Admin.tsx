@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -203,11 +204,11 @@ const Admin: React.FC = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <div className="text-muted-foreground">ביטחון מינימלי</div>
-                        <div className="font-semibold">75%</div>
+                        <div className="font-semibold">70%</div>
                       </div>
                       <div>
                         <div className="text-muted-foreground">יחס סיכון/תשואה</div>
-                        <div className="font-semibold">1:1.3</div>
+                        <div className="font-semibold">1:1.2</div>
                       </div>
                       <div>
                         <div className="text-muted-foreground">תדירות בדיקה</div>
@@ -215,7 +216,7 @@ const Admin: React.FC = () => {
                       </div>
                       <div>
                         <div className="text-muted-foreground">זמן המתנה</div>
-                        <div className="font-semibold">20 דקות</div>
+                        <div className="font-semibold">15 דקות</div>
                       </div>
                     </div>
                   </div>
@@ -268,12 +269,12 @@ const Admin: React.FC = () => {
                       <div>🔍 ניתוחים בוצעו: {engineStatus.analysisCount}</div>
                       <div>📈 איתותים נשלחו: {engineStatus.totalSignals}</div>
                       <div>❌ איתותים נדחו: {engineStatus.totalRejections}</div>
-                      <div>📊 איתותים 24 שעות: {engineStatus.signalsLast24h}</div>
+                      <div>📊 איתותים 24 שעות: {engineStatus.signalsLast24h || 0}</div>
                       <div>⏰ ניתוח אחרון: {engineStatus.lastAnalysis > 0 ? 
                         new Date(engineStatus.lastAnalysis).toLocaleString('he-IL') : 
                         'טרם בוצע'
                       }</div>
-                      <div>🎯 איתות אחרון: {engineStatus.lastSuccessfulSignal > 0 ? 
+                      <div>🎯 איתות אחרון: {engineStatus.lastSuccessfulSignal && engineStatus.lastSuccessfulSignal > 0 ? 
                         new Date(engineStatus.lastSuccessfulSignal).toLocaleString('he-IL') : 
                         'אף פעם'
                       }</div>
