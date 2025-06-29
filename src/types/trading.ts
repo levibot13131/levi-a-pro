@@ -1,3 +1,4 @@
+
 export interface TradingSignal {
   id: string;
   symbol: string;
@@ -144,8 +145,8 @@ export interface EngineStatus {
   lastAnalysis: number;
   analysisCount: number;
   lastAnalysisReport: string;
-  signalsLast24h?: number;
-  lastSuccessfulSignal?: number;
+  signalsLast24h: number;
+  lastSuccessfulSignal: number;
   healthCheck?: {
     overallHealth: string;
     dataConnection: boolean;
