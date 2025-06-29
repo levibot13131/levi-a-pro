@@ -93,7 +93,7 @@ const Admin: React.FC = () => {
               
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">
-                  {engineStatus.signalsLast24h || 0}
+                  {engineStatus.signalsLast24h ?? 0}
                 </div>
                 <div className="text-sm text-muted-foreground">24 שעות אחרונות</div>
               </div>
@@ -269,7 +269,7 @@ const Admin: React.FC = () => {
                       <div>🔍 ניתוחים בוצעו: {engineStatus.analysisCount}</div>
                       <div>📈 איתותים נשלחו: {engineStatus.totalSignals}</div>
                       <div>❌ איתותים נדחו: {engineStatus.totalRejections}</div>
-                      <div>📊 איתותים 24 שעות: {engineStatus.signalsLast24h || 0}</div>
+                      <div>📊 איתותים 24 שעות: {engineStatus.signalsLast24h ?? 0}</div>
                       <div>⏰ ניתוח אחרון: {engineStatus.lastAnalysis > 0 ? 
                         new Date(engineStatus.lastAnalysis).toLocaleString('he-IL') : 
                         'טרם בוצע'

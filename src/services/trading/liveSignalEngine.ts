@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { MarketHeatIndex } from '@/services/ai/marketHeatIndex';
 import { EnhancedTimeframeAI } from '@/services/ai/enhancedTimeframeAI';
@@ -57,6 +56,8 @@ interface EngineStatus {
   lastAnalysis: number;
   analysisCount: number;
   lastAnalysisReport: string;
+  signalsLast24h: number;
+  lastSuccessfulSignal: number;
   healthCheck?: {
     overallHealth: string;
     dataConnection: boolean;
@@ -106,6 +107,8 @@ class LiveSignalEngine {
   private readonly GLOBAL_COOLDOWN = 15 * 60 * 1000; // 15 minutes
   private readonly SYMBOL_COOLDOWN = 2 * 60 * 60 * 1000; // 2 hours
   private lastGlobalSignal = 0;
+  private lastSuccessfulSignalTime = 0; // Track last successful signal timestamp
+  private signalTimes: number[] = []; // Track all signal times for 24h calculation
 
   // Relaxed thresholds for emergency go-live
   private readonly CONFIDENCE_THRESHOLD = 70; // Lowered from 75
@@ -156,6 +159,11 @@ class LiveSignalEngine {
   }
 
   getEngineStatus(): EngineStatus {
+    // Calculate signals in last 24 hours
+    const now = Date.now();
+    const last24h = now - (24 * 60 * 60 * 1000);
+    const signalsLast24h = this.signalTimes.filter(time => time > last24h).length;
+
     return {
       isRunning: this.isRunning,
       totalSignals: this.debugInfo.totalSent,
@@ -163,6 +171,8 @@ class LiveSignalEngine {
       lastAnalysis: this.debugInfo.lastAnalysis?.getTime() || 0,
       analysisCount: this.debugInfo.totalAnalysed,
       lastAnalysisReport: 'Live analysis running every 30 seconds',
+      signalsLast24h: signalsLast24h,
+      lastSuccessfulSignal: this.lastSuccessfulSignalTime,
       healthCheck: {
         overallHealth: this.isRunning ? 'HEALTHY' : 'OFFLINE',
         dataConnection: this.debugInfo.marketDataConnected,
@@ -404,6 +414,15 @@ class LiveSignalEngine {
 
       // Send to Telegram (admin chat)
       await this.sendTelegramAlert(signal);
+      
+      // Update tracking for 24h calculations
+      const now = Date.now();
+      this.signalTimes.push(now);
+      this.lastSuccessfulSignalTime = now;
+      
+      // Clean up old signal times (keep only last 24h + buffer)
+      const cutoff = now - (25 * 60 * 60 * 1000); // 25 hours buffer
+      this.signalTimes = this.signalTimes.filter(time => time > cutoff);
       
       console.log(`📨 Signal ${signal.signal_id} sent successfully`);
       
