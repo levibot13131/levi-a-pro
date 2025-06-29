@@ -1,5 +1,3 @@
-
-
 export interface TradingSignal {
   id: string;
   symbol: string;
@@ -141,7 +139,6 @@ export interface RiskData {
 
 export interface EngineStatus {
   isRunning: boolean;
-  signalQuality: string;
   totalSignals: number;
   totalRejections: number;
   lastAnalysis: number;
@@ -149,13 +146,6 @@ export interface EngineStatus {
   lastAnalysisReport: string;
   signalsLast24h?: number;
   lastSuccessfulSignal?: number;
-  scoringStats: SignalScoringStats;
-  intelligenceLayer: {
-    whaleMonitoring: boolean;
-    sentimentAnalysis: boolean;
-    fearGreedIntegration: boolean;
-    fundamentalRiskScoring: boolean;
-  };
   healthCheck?: {
     overallHealth: string;
     dataConnection: boolean;
