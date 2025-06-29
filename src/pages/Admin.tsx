@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,10 +14,14 @@ import {
   Zap,
   FileText,
   AlertTriangle,
-  TrendingDown
+  TrendingDown,
+  MessageSquare,
+  Send
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { liveSignalEngine } from '@/services/trading/liveSignalEngine';
+import { sendTestMessage, testTelegramBot } from '@/services/telegram/telegramService';
+import { toast } from 'sonner';
 import { ReportGenerator } from '@/components/reports/ReportGenerator';
 import { UserManagementPanel } from '@/components/admin/UserManagementPanel';
 import { AccessControlManager } from '@/components/admin/AccessControlManager';
@@ -30,6 +33,34 @@ import Navbar from '@/components/layout/Navbar';
 const Admin: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const engineStatus = liveSignalEngine.getEngineStatus();
+
+  const handleTestTelegram = async () => {
+    try {
+      const success = await sendTestMessage();
+      if (success) {
+        toast.success('הודעת בדיקה נשלחה לטלגרם בהצלחה');
+      } else {
+        toast.error('שליחת הודעת בדיקה נכשלה');
+      }
+    } catch (error) {
+      console.error('Test message failed:', error);
+      toast.error('שגיאה בשליחת הודעת בדיקה');
+    }
+  };
+
+  const handleTestBot = async () => {
+    try {
+      const isValid = await testTelegramBot();
+      if (isValid) {
+        toast.success('בוט טלגרם תקין ומחובר');
+      } else {
+        toast.error('בוט טלגרם לא תקין');
+      }
+    } catch (error) {
+      console.error('Bot test failed:', error);
+      toast.error('שגיאה בבדיקת בוט טלגרם');
+    }
+  };
 
   if (!isAdmin) {
     return (
@@ -64,7 +95,7 @@ const Admin: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">1</div>
                 <div className="text-sm text-muted-foreground">משתמשים רשומים</div>
@@ -97,6 +128,13 @@ const Admin: React.FC = () => {
                 </div>
                 <div className="text-sm text-muted-foreground">24 שעות אחרונות</div>
               </div>
+
+              <div className="text-center">
+                <div className={`text-2xl font-bold ${engineStatus.failedTelegram > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                  {engineStatus.failedTelegram}
+                </div>
+                <div className="text-sm text-muted-foreground">כשלי טלגרם</div>
+              </div>
             </div>
             
             {/* System Health Alert */}
@@ -105,6 +143,15 @@ const Admin: React.FC = () => {
                 <AlertTriangle className="h-5 w-5 text-red-600" />
                 <span className="text-red-800 font-medium">
                   ⚠️ מנוע האיתותים כבוי - לא יישלחו איתותים חדשים
+                </span>
+              </div>
+            )}
+
+            {engineStatus.failedTelegram > 0 && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-red-600" />
+                <span className="text-red-800 font-medium">
+                  ⚠️ {engineStatus.failedTelegram} כשלים בשליחת הודעות טלגרם
                 </span>
               </div>
             )}
@@ -124,6 +171,7 @@ const Admin: React.FC = () => {
         <Tabs defaultValue="status" className="space-y-4">
           <TabsList className="w-full">
             <TabsTrigger value="status">מצב מערכת</TabsTrigger>
+            <TabsTrigger value="telegram">טלגרם</TabsTrigger>
             <TabsTrigger value="users">ניהול משתמשים</TabsTrigger>
             <TabsTrigger value="access">בקרת גישה</TabsTrigger>
             <TabsTrigger value="rejections">ניתוח דחיות</TabsTrigger>
@@ -135,6 +183,66 @@ const Admin: React.FC = () => {
           
           <TabsContent value="status" className="space-y-4">
             <SystemStatusPanel />
+          </TabsContent>
+
+          <TabsContent value="telegram" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5" />
+                  בדיקת טלגרם
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Button onClick={handleTestBot} variant="outline" className="h-16">
+                      <div className="text-center">
+                        <div>בדיקת בוט</div>
+                        <div className="text-xs opacity-75">אימות חיבור לבוט</div>
+                      </div>
+                    </Button>
+                    
+                    <Button onClick={handleTestTelegram} className="h-16">
+                      <div className="text-center">
+                        <Send className="h-4 w-4 mx-auto mb-1" />
+                        <div>שלח בדיקה</div>
+                        <div className="text-xs opacity-75">הודעת בדיקה מלאה</div>
+                      </div>
+                    </Button>
+                  </div>
+                  
+                  <div className="p-4 bg-gray-50 rounded">
+                    <h4 className="font-semibold mb-2">סטטוס טלגרם</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <div className="text-muted-foreground">הודעות נשלחו</div>
+                        <div className="font-semibold">{engineStatus.totalSignals}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">כשלים</div>
+                        <div className={`font-semibold ${engineStatus.failedTelegram > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          {engineStatus.failedTelegram}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">הודעה אחרונה</div>
+                        <div className="font-semibold">
+                          {engineStatus.lastSuccessfulSignal > 0 ? 
+                            new Date(engineStatus.lastSuccessfulSignal).toLocaleString('he-IL') : 
+                            'אף פעם'
+                          }
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">24 שעות</div>
+                        <div className="font-semibold">{engineStatus.signalsLast24h ?? 0}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
           
           <TabsContent value="users" className="space-y-4">
@@ -270,6 +378,7 @@ const Admin: React.FC = () => {
                       <div>📈 איתותים נשלחו: {engineStatus.totalSignals}</div>
                       <div>❌ איתותים נדחו: {engineStatus.totalRejections}</div>
                       <div>📊 איתותים 24 שעות: {engineStatus.signalsLast24h ?? 0}</div>
+                      <div>📱 כשלי טלגרם: {engineStatus.failedTelegram}</div>
                       <div>⏰ ניתוח אחרון: {engineStatus.lastAnalysis > 0 ? 
                         new Date(engineStatus.lastAnalysis).toLocaleString('he-IL') : 
                         'טרם בוצע'

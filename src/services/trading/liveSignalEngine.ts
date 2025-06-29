@@ -1,6 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { MarketHeatIndex } from '@/services/ai/marketHeatIndex';
 import { EnhancedTimeframeAI } from '@/services/ai/enhancedTimeframeAI';
+import { sendTelegramMessage } from '@/services/telegram/telegramService';
 
 interface SignalCriteria {
   symbol: string;
@@ -58,6 +59,7 @@ interface EngineStatus {
   lastAnalysisReport: string;
   signalsLast24h: number;
   lastSuccessfulSignal: number;
+  failedTelegram: number;
   healthCheck?: {
     overallHealth: string;
     dataConnection: boolean;
@@ -107,8 +109,9 @@ class LiveSignalEngine {
   private readonly GLOBAL_COOLDOWN = 15 * 60 * 1000; // 15 minutes
   private readonly SYMBOL_COOLDOWN = 2 * 60 * 60 * 1000; // 2 hours
   private lastGlobalSignal = 0;
-  private lastSuccessfulSignalTime = 0; // Track last successful signal timestamp
-  private signalTimes: number[] = []; // Track all signal times for 24h calculation
+  private lastSuccessfulSignalTime = 0;
+  private signalTimes: number[] = [];
+  private failedTelegramCount = 0;
 
   // Relaxed thresholds for emergency go-live
   private readonly CONFIDENCE_THRESHOLD = 70; // Lowered from 75
@@ -173,6 +176,7 @@ class LiveSignalEngine {
       lastAnalysisReport: 'Live analysis running every 30 seconds',
       signalsLast24h: signalsLast24h,
       lastSuccessfulSignal: this.lastSuccessfulSignalTime,
+      failedTelegram: this.failedTelegramCount,
       healthCheck: {
         overallHealth: this.isRunning ? 'HEALTHY' : 'OFFLINE',
         dataConnection: this.debugInfo.marketDataConnected,
@@ -239,7 +243,6 @@ class LiveSignalEngine {
       };
 
       await this.sendSignal(testSignal);
-      this.debugInfo.totalSent++;
       return true;
     } catch (error) {
       console.error('❌ Test signal failed:', error);
@@ -412,13 +415,14 @@ class LiveSignalEngine {
         sentiment_data: signal.sentiment_data
       });
 
-      // Send to Telegram (admin chat)
+      // Send to Telegram with proper error handling
       await this.sendTelegramAlert(signal);
       
       // Update tracking for 24h calculations
       const now = Date.now();
       this.signalTimes.push(now);
       this.lastSuccessfulSignalTime = now;
+      this.debugInfo.totalSent++;
       
       // Clean up old signal times (keep only last 24h + buffer)
       const cutoff = now - (25 * 60 * 60 * 1000); // 25 hours buffer
@@ -436,31 +440,31 @@ class LiveSignalEngine {
     try {
       const leviScore = Math.round((signal.confidence + (signal.sentiment_data?.fundamental_score || 50)) / 2);
       const message = `
-🚀 *LeviPro Trading Signal*
+🚀 <b>LeviPro Trading Signal</b>
 
-💰 *${signal.symbol}* 
-📈 *${signal.action}* at $${signal.entry_price.toFixed(2)}
+💰 <b>${signal.symbol}</b> 
+📈 <b>${signal.action}</b> at $${signal.entry_price.toFixed(2)}
 
-🎯 *Target:* $${signal.target_price.toFixed(2)}
-⛔ *Stop Loss:* $${signal.stop_loss.toFixed(2)}
-📊 *R/R:* ${signal.risk_reward_ratio.toFixed(2)}:1
+🎯 <b>Target:</b> $${signal.target_price.toFixed(2)}
+⛔ <b>Stop Loss:</b> $${signal.stop_loss.toFixed(2)}
+📊 <b>R/R:</b> ${signal.risk_reward_ratio.toFixed(2)}:1
 
-🧠 *LeviScore:* ${leviScore}/100
-🔥 *Confidence:* ${signal.confidence.toFixed(0)}%
+🧠 <b>LeviScore:</b> ${leviScore}/100
+🔥 <b>Confidence:</b> ${signal.confidence.toFixed(0)}%
 
-📋 *Analysis:*
+📋 <b>Analysis:</b>
 ${signal.reasoning.slice(0, 3).join('\n')}
 
 ⏰ ${new Date().toLocaleString('he-IL')}
 `;
 
-      // Mock Telegram send (replace with actual API call)
-      console.log('📱 Telegram message:', message);
-      
-      // In production, would call Telegram Bot API here
+      await sendTelegramMessage(message, true);
+      console.log('✅ Telegram alert sent successfully');
       
     } catch (error) {
+      this.failedTelegramCount++;
       console.error('❌ Failed to send Telegram alert:', error);
+      throw error;
     }
   }
 

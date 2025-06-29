@@ -1,4 +1,3 @@
-
 export interface TradingSignal {
   id: string;
   symbol: string;
@@ -147,6 +146,7 @@ export interface EngineStatus {
   lastAnalysisReport: string;
   signalsLast24h: number;
   lastSuccessfulSignal: number;
+  failedTelegram: number; // NEW: track Telegram failures
   healthCheck?: {
     overallHealth: string;
     dataConnection: boolean;
