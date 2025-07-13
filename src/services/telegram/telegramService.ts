@@ -1,51 +1,34 @@
 
-import { TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID } from '@/config/telegram';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface TelegramResponse {
   ok: boolean;
   result?: any;
   error_code?: number;
   description?: string;
+  error?: string;
 }
 
 export async function sendTelegramMessage(text: string, html = false): Promise<TelegramResponse> {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
-  
-  console.log(`📤 Sending Telegram message to chat ${TELEGRAM_CHAT_ID}`);
+  console.log(`📤 Sending Telegram message via Edge Function`);
   console.log(`📝 Message content: ${text.substring(0, 100)}...`);
   
   try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
-        text,
-        parse_mode: html ? 'HTML' : undefined,
-        disable_web_page_preview: true
-      })
+    const { data, error } = await supabase.functions.invoke('send-telegram-message', {
+      body: { text, html }
     });
 
-    const data: TelegramResponse = await response.json();
-
-    if (!data.ok) {
-      console.error('❌ Telegram API error:', {
-        error_code: data.error_code,
-        description: data.description,
-        response_status: response.status
-      });
-      throw new Error(`TelegramError: ${data.description || 'Unknown error'}`);
+    if (error) {
+      console.error('❌ Edge Function error:', error);
+      throw new Error(`EdgeFunctionError: ${error.message}`);
     }
 
-    console.log('✅ Telegram message sent successfully:', {
-      message_id: data.result?.message_id,
-      chat_id: data.result?.chat?.id,
-      date: new Date(data.result?.date * 1000).toISOString()
-    });
+    if (!data.ok) {
+      console.error('❌ Telegram API error via Edge Function:', data);
+      throw new Error(`TelegramError: ${data.error || 'Unknown error'}`);
+    }
 
+    console.log('✅ Telegram message sent successfully via Edge Function');
     return data;
   } catch (error) {
     console.error('❌ Telegram send failed:', error);
@@ -54,25 +37,11 @@ export async function sendTelegramMessage(text: string, html = false): Promise<T
 }
 
 export async function testTelegramBot(): Promise<boolean> {
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getMe`;
-  
   try {
-    const response = await fetch(url);
-    const data = await response.json();
-    
-    if (data.ok) {
-      console.log('✅ Bot validated:', {
-        username: data.result.username,
-        first_name: data.result.first_name,
-        id: data.result.id
-      });
-      return true;
-    } else {
-      console.error('❌ Bot validation failed:', data);
-      return false;
-    }
+    const response = await sendTelegramMessage('🧪 Bot connection test', false);
+    return response.ok;
   } catch (error) {
-    console.error('❌ Bot validation error:', error);
+    console.error('❌ Bot test failed:', error);
     return false;
   }
 }

@@ -1,15 +1,8 @@
 
 // Telegram Bot Configuration
-export const TELEGRAM_BOT_TOKEN = import.meta.env.VITE_TG_TOKEN;
-export const TELEGRAM_CHAT_ID = import.meta.env.VITE_TG_CHAT;
+// Note: These will be loaded from Supabase Edge Functions using secrets
+// For frontend usage, we'll need to call an edge function to send messages
 
-// Validate environment variables at build time
-if (!TELEGRAM_BOT_TOKEN) {
-  throw new Error('VITE_TG_TOKEN environment variable is required');
-}
-
-if (!TELEGRAM_CHAT_ID) {
-  throw new Error('VITE_TG_CHAT environment variable is required');
-}
+export const TELEGRAM_API_URL = 'https://api.telegram.org/bot';
 
 console.log('✅ Telegram configuration loaded successfully');
