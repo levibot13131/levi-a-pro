@@ -5,6 +5,8 @@ import { isBinanceConnected } from './binance/binanceService';
 import { startPriceSimulator } from './priceSimulator';
 import { startAssetTracking } from './assetTracking/realTimeSync';
 import { initializeTradingViewServices } from './tradingView/startup';
+import { liveSignalEngine } from './trading/liveSignalEngine';
+import { testTelegramBot } from './telegram/telegramService';
 
 // מצב האתחול
 let isInitialized = false;
@@ -26,6 +28,10 @@ export const initializeAllServices = async (): Promise<boolean> => {
     
     console.log(`External connections: TradingView=${hasTradingView}, Binance=${hasBinance}`);
     
+    // בדיקת חיבור טלגרם
+    const telegramConnected = await testTelegramBot();
+    console.log(`Telegram connection: ${telegramConnected}`);
+    
     // אתחול שירות מעקב נכסים
     const trackingStarted = startAssetTracking();
     console.log(`Asset tracking initialized: ${trackingStarted}`);
@@ -36,10 +42,21 @@ export const initializeAllServices = async (): Promise<boolean> => {
       console.log(`TradingView services initialized: ${tvInitialized}`);
     }
     
+    // הפעלת מנוע האיתותים הלייב
+    await liveSignalEngine.start();
+    console.log('Live signal engine started');
+    
     // אם אין חיבורים חיצוניים, הפעל את הסימולטור
     if (!hasTradingView && !hasBinance) {
       console.log('No external connections, starting price simulator');
       startPriceSimulator('medium');
+    }
+    
+    // הודעה על מעבר למצב לייב
+    if (telegramConnected) {
+      toast.success('המערכת עברה למצב לייב! 🚀', {
+        description: 'כל השירותים פעילים ומוכנים למסחר'
+      });
     }
     
     // סימון שהמערכת אותחלה
