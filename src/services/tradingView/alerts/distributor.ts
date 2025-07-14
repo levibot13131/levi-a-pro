@@ -2,6 +2,7 @@
 import { TradingViewAlert, AlertDestination } from './types';
 import { formatAlertMessage } from './formatters';
 import { toast } from 'sonner';
+import { sendTelegramMessage } from '@/services/telegram/telegramService';
 
 /**
  * Send an alert to multiple destinations
@@ -68,12 +69,21 @@ export async function sendAlertToDestinations(
  */
 async function sendToTelegram(message: string, destination: AlertDestination): Promise<boolean> {
   try {
-    // Telegram implementation would go here
-    // For now it's a stub that just logs
-    console.log(`[TELEGRAM] Would send: ${message}`);
-    return true;
+    console.log(`[TELEGRAM] Sending to destination: ${destination.name}`);
+    console.log(`[TELEGRAM] Message: ${message.substring(0, 100)}...`);
+    
+    // Use the actual Telegram service
+    const result = await sendTelegramMessage(message, true);
+    
+    if (result && result.ok) {
+      console.log('✅ Telegram message sent successfully');
+      return true;
+    } else {
+      console.error('❌ Telegram message failed:', result);
+      return false;
+    }
   } catch (error) {
-    console.error('Error sending to Telegram:', error);
+    console.error('❌ Error sending to Telegram:', error);
     return false;
   }
 }

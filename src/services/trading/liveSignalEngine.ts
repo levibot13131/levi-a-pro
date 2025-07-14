@@ -117,7 +117,7 @@ class LiveSignalEngine {
   private readonly CONFIDENCE_THRESHOLD = 70; // Lowered from 75
   private readonly HEAT_THRESHOLD = 70; // Keep at 70 for aggressive mode
   private readonly MIN_RR_RATIO = 1.2; // Lowered from 1.3
-  private readonly TIMEFRAME_ALIGNMENT_THRESHOLD = 75; // Keep at 75%
+  private readonly TIMEFRAME_ALIGNMENT_THRESHOLD = 60; // Lowered from 75% to allow more signals
 
   // Expanded symbol list (60 top-volume pairs)
   private readonly SYMBOLS = [
@@ -458,7 +458,8 @@ ${signal.reasoning.slice(0, 3).join('\n')}
 ⏰ ${new Date().toLocaleString('he-IL')}
 `;
 
-      await sendTelegramMessage(message, true);
+      const result = await sendTelegramMessage(message, true);
+      console.log('📤 Telegram response:', result);
       console.log('✅ Telegram alert sent successfully');
       
     } catch (error) {
