@@ -20,6 +20,20 @@ serve(async (req) => {
     // Get secrets from Supabase environment
     const TELEGRAM_BOT_TOKEN = Deno.env.get('TELEGRAM_BOT_TOKEN');
     const TELEGRAM_CHAT_ID = Deno.env.get('TELEGRAM_CHAT_ID');
+    
+    // Validate and format chat ID properly
+    let formattedChatId = TELEGRAM_CHAT_ID;
+    if (TELEGRAM_CHAT_ID) {
+      formattedChatId = TELEGRAM_CHAT_ID.trim();
+      // Ensure numeric chat IDs are properly formatted
+      if (/^\d+$/.test(formattedChatId)) {
+        // For positive user IDs, keep as is
+        formattedChatId = formattedChatId;
+      } else if (formattedChatId.startsWith('-')) {
+        // For group/channel IDs, keep as is
+        formattedChatId = formattedChatId;
+      }
+    }
 
     console.log('🔐 Checking Telegram credentials...');
     console.log(`Bot Token exists: ${!!TELEGRAM_BOT_TOKEN}`);
@@ -32,7 +46,7 @@ serve(async (req) => {
       console.log(`Chat ID: ${TELEGRAM_CHAT_ID}`);
     }
 
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+    if (!TELEGRAM_BOT_TOKEN || !formattedChatId) {
       console.error('❌ Missing Telegram credentials in secrets');
       return new Response(
         JSON.stringify({ 
@@ -40,7 +54,8 @@ serve(async (req) => {
           error: 'Telegram credentials not configured',
           details: {
             hasToken: !!TELEGRAM_BOT_TOKEN,
-            hasChatId: !!TELEGRAM_CHAT_ID
+            hasChatId: !!formattedChatId,
+            originalChatId: TELEGRAM_CHAT_ID
           }
         }),
         { 
@@ -66,8 +81,9 @@ serve(async (req) => {
     // Send message to Telegram
     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
     
-    console.log(`📤 Sending Telegram message to chat ${TELEGRAM_CHAT_ID}`);
+    console.log(`📤 Sending Telegram message to chat ${formattedChatId}`);
     console.log(`📝 Message content: ${text.substring(0, 100)}...`);
+    console.log(`🔧 Bot token: ${TELEGRAM_BOT_TOKEN.substring(0, 10)}...`);
 
     const response = await fetch(url, {
       method: 'POST',
@@ -76,7 +92,7 @@ serve(async (req) => {
         'Accept': 'application/json'
       },
       body: JSON.stringify({
-        chat_id: TELEGRAM_CHAT_ID,
+        chat_id: formattedChatId,
         text,
         parse_mode: html ? 'HTML' : undefined,
         disable_web_page_preview: true

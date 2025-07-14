@@ -15,52 +15,23 @@ import {
   FileText,
   AlertTriangle,
   TrendingDown,
-  MessageSquare,
-  Send
+  MessageSquare
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { liveSignalEngine } from '@/services/trading/liveSignalEngine';
-import { sendTestMessage, testTelegramBot } from '@/services/telegram/telegramService';
-import { toast } from 'sonner';
 import { ReportGenerator } from '@/components/reports/ReportGenerator';
 import { UserManagementPanel } from '@/components/admin/UserManagementPanel';
 import { AccessControlManager } from '@/components/admin/AccessControlManager';
 import { SystemStatusPanel } from '@/components/admin/SystemStatusPanel';
 import { RejectionAnalysisPanel } from '@/components/admin/RejectionAnalysisPanel';
 import { SignalEngineDebugPanel } from '@/components/diagnostics/SignalEngineDebugPanel';
+import TelegramTestPanel from '@/components/admin/TelegramTestPanel';
 import Navbar from '@/components/layout/Navbar';
 
 const Admin: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const engineStatus = liveSignalEngine.getEngineStatus();
 
-  const handleTestTelegram = async () => {
-    try {
-      const success = await sendTestMessage();
-      if (success) {
-        toast.success('הודעת בדיקה נשלחה לטלגרם בהצלחה');
-      } else {
-        toast.error('שליחת הודעת בדיקה נכשלה');
-      }
-    } catch (error) {
-      console.error('Test message failed:', error);
-      toast.error('שגיאה בשליחת הודעת בדיקה');
-    }
-  };
-
-  const handleTestBot = async () => {
-    try {
-      const isValid = await testTelegramBot();
-      if (isValid) {
-        toast.success('בוט טלגרם תקין ומחובר');
-      } else {
-        toast.error('בוט טלגרם לא תקין');
-      }
-    } catch (error) {
-      console.error('Bot test failed:', error);
-      toast.error('שגיאה בבדיקת בוט טלגרם');
-    }
-  };
 
   if (!isAdmin) {
     return (
@@ -186,58 +157,41 @@ const Admin: React.FC = () => {
           </TabsContent>
 
           <TabsContent value="telegram" className="space-y-4">
+            <TelegramTestPanel />
+            
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
-                  בדיקת טלגרם
+                  סטטוס טלגרם מפורט
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Button onClick={handleTestBot} variant="outline" className="h-16">
-                      <div className="text-center">
-                        <div>בדיקת בוט</div>
-                        <div className="text-xs opacity-75">אימות חיבור לבוט</div>
+                <div className="p-4 bg-gray-50 rounded">
+                  <h4 className="font-semibold mb-2">סטטוס טלגרם</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <div className="text-muted-foreground">הודעות נשלחו</div>
+                      <div className="font-semibold">{engineStatus.totalSignals}</div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">כשלים</div>
+                      <div className={`font-semibold ${engineStatus.failedTelegram > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        {engineStatus.failedTelegram}
                       </div>
-                    </Button>
-                    
-                    <Button onClick={handleTestTelegram} className="h-16">
-                      <div className="text-center">
-                        <Send className="h-4 w-4 mx-auto mb-1" />
-                        <div>שלח בדיקה</div>
-                        <div className="text-xs opacity-75">הודעת בדיקה מלאה</div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">הודעה אחרונה</div>
+                      <div className="font-semibold">
+                        {engineStatus.lastSuccessfulSignal > 0 ? 
+                          new Date(engineStatus.lastSuccessfulSignal).toLocaleString('he-IL') : 
+                          'אף פעם'
+                        }
                       </div>
-                    </Button>
-                  </div>
-                  
-                  <div className="p-4 bg-gray-50 rounded">
-                    <h4 className="font-semibold mb-2">סטטוס טלגרם</h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                      <div>
-                        <div className="text-muted-foreground">הודעות נשלחו</div>
-                        <div className="font-semibold">{engineStatus.totalSignals}</div>
-                      </div>
-                      <div>
-                        <div className="text-muted-foreground">כשלים</div>
-                        <div className={`font-semibold ${engineStatus.failedTelegram > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                          {engineStatus.failedTelegram}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-muted-foreground">הודעה אחרונה</div>
-                        <div className="font-semibold">
-                          {engineStatus.lastSuccessfulSignal > 0 ? 
-                            new Date(engineStatus.lastSuccessfulSignal).toLocaleString('he-IL') : 
-                            'אף פעם'
-                          }
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-muted-foreground">24 שעות</div>
-                        <div className="font-semibold">{engineStatus.signalsLast24h ?? 0}</div>
-                      </div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">24 שעות</div>
+                      <div className="font-semibold">{engineStatus.signalsLast24h ?? 0}</div>
                     </div>
                   </div>
                 </div>
@@ -312,7 +266,7 @@ const Admin: React.FC = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                       <div>
                         <div className="text-muted-foreground">ביטחון מינימלי</div>
-                        <div className="font-semibold">70%</div>
+                        <div className="font-semibold">65% (Learning)</div>
                       </div>
                       <div>
                         <div className="text-muted-foreground">יחס סיכון/תשואה</div>

@@ -6,7 +6,20 @@ interface EngineStatus {
   isRunning: boolean;
   lastSignalTime: Date | null;
   totalSignals: number;
+  totalRejections: number;
+  lastAnalysis: number;
+  analysisCount: number;
+  lastAnalysisReport: string;
+  signalsLast24h: number;
+  lastSuccessfulSignal: number;
+  failedTelegram: number;
   activeStrategies: any[];
+  healthCheck?: {
+    overallHealth: string;
+    dataConnection: boolean;
+    telegramConnection: boolean;
+    apiConnections: boolean;
+  };
 }
 
 export const useEngineStatus = () => {
@@ -14,16 +27,31 @@ export const useEngineStatus = () => {
     isRunning: false,
     lastSignalTime: null,
     totalSignals: 0,
+    totalRejections: 0,
+    lastAnalysis: 0,
+    analysisCount: 0,
+    lastAnalysisReport: '',
+    signalsLast24h: 0,
+    lastSuccessfulSignal: 0,
+    failedTelegram: 0,
     activeStrategies: []
   });
 
   useEffect(() => {
     const updateStatus = (newStatus: any) => {
       setStatus({
-        isRunning: newStatus.isRunning,
+        isRunning: newStatus.isRunning || false,
         lastSignalTime: newStatus.lastSignalTime ? new Date(newStatus.lastSignalTime) : null,
         totalSignals: newStatus.totalSignals || 0,
-        activeStrategies: newStatus.activeStrategies || []
+        totalRejections: newStatus.totalRejections || 0,
+        lastAnalysis: newStatus.lastAnalysis || 0,
+        analysisCount: newStatus.analysisCount || 0,
+        lastAnalysisReport: newStatus.lastAnalysisReport || '',
+        signalsLast24h: newStatus.signalsLast24h || 0,
+        lastSuccessfulSignal: newStatus.lastSuccessfulSignal || 0,
+        failedTelegram: newStatus.failedTelegram || 0,
+        activeStrategies: newStatus.activeStrategies || [],
+        healthCheck: newStatus.healthCheck
       });
     };
 
