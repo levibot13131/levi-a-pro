@@ -68,6 +68,8 @@ class AILearningEngine {
   private signalOutcomes: SignalOutcome[] = [];
   private strategyPerformances: Map<string, StrategyPerformance> = new Map();
   private marketConditionLearning: Map<string, MarketConditionLearning> = new Map();
+  private symbolPerformance: Map<string, { wins: number; losses: number }> = new Map();
+  private feedbackQueue: { signalId: string; outcome: string; confidence: number; timestamp: number }[] = [];
   private readonly LEARNING_HISTORY_DAYS = 90;
 
   constructor() {
@@ -700,6 +702,47 @@ class AILearningEngine {
       recommendedAdjustments: [],
       nextLearningGoals: []
     };
+  }
+
+  /**
+   * Get symbol performance score for confidence adjustment
+   */
+  public async getSymbolPerformanceScore(symbol: string): Promise<number> {
+    try {
+      const performance = this.symbolPerformance.get(symbol);
+      if (!performance) return 0; // No historical data
+      
+      const winRate = performance.wins / (performance.wins + performance.losses);
+      const adjustmentFactor = winRate > 0.6 ? 5 : winRate < 0.4 ? -5 : 0;
+      
+      return adjustmentFactor;
+    } catch (error) {
+      console.error('❌ Error getting symbol performance score:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Process signal feedback for learning
+   */
+  public async processSignalFeedback(
+    signalId: string, 
+    outcome: string, 
+    confidence: number
+  ): Promise<void> {
+    try {
+      // Add to feedback queue for processing
+      this.feedbackQueue.push({
+        signalId,
+        outcome,
+        confidence,
+        timestamp: Date.now()
+      });
+      
+      console.log(`📝 Signal feedback logged: ${signalId} - ${outcome}`);
+    } catch (error) {
+      console.error('❌ Error processing signal feedback:', error);
+    }
   }
 }
 

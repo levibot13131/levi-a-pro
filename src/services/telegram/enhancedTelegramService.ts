@@ -109,6 +109,35 @@ ${signal.reasoning.slice(0, 3).map(reason => `• ${this.translateReason(reason)
   }
 
   /**
+   * Send elite signal (method expected by production trading engine)
+   */
+  public async sendEliteSignal(signal: any): Promise<boolean> {
+    try {
+      const formattedSignal: SignalFormatting = {
+        symbol: signal.symbol,
+        action: signal.action,
+        entry: signal.entry_price,
+        stopLoss: signal.stop_loss,
+        targets: [signal.target_price],
+        confidence: signal.confidence,
+        riskReward: signal.risk_reward_ratio,
+        timeframes: signal.timeframe_analysis?.map((t: any) => t.timeframe) || ['1h'],
+        methods: signal.confluences || [],
+        marketSentiment: signal.fundamental_boost || 50,
+        fundamentalEvents: [],
+        volume: 'High',
+        leviScore: Math.round(signal.learning_score || signal.confidence),
+        reasoning: signal.reasoning || []
+      };
+
+      return await this.sendTradingSignal(formattedSignal);
+    } catch (error) {
+      console.error('❌ Error sending elite signal:', error);
+      return false;
+    }
+  }
+
+  /**
    * Send market analysis summary
    */
   public async sendMarketAnalysis(analysis: {

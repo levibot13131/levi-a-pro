@@ -127,6 +127,51 @@ export class MagicTriangleStrategy {
   }
 
   /**
+   * Generate Elite Signal using Magic Triangle analysis
+   */
+  public async generateEliteSignal(
+    symbol: string,
+    priceData: PricePoint[], 
+    volumeData: { time: number; value: number }[],
+    timeframe: string
+  ): Promise<{
+    isValid: boolean;
+    direction: 'long' | 'short' | 'none';
+    confidence: number;
+    entry: number;
+    stopLoss: number;
+    target: number;
+    riskReward: number;
+    reasoning: string[];
+  }> {
+    const setup = this.analyzeMagicTriangle(priceData, volumeData, symbol, timeframe);
+    
+    if (!setup.isValid) {
+      return {
+        isValid: false,
+        direction: 'none',
+        confidence: 0,
+        entry: 0,
+        stopLoss: 0,
+        target: 0,
+        riskReward: 0,
+        reasoning: setup.reasoning
+      };
+    }
+    
+    return {
+      isValid: true,
+      direction: setup.direction,
+      confidence: setup.confidence,
+      entry: setup.entry,
+      stopLoss: setup.stopLoss,
+      target: setup.target1,
+      riskReward: setup.riskRewardRatio,
+      reasoning: setup.reasoning
+    };
+  }
+
+  /**
    * Emotional Pressure Zones - Multi-timeframe analysis with volume context
    */
   private analyzeEmotionalPressureZones(

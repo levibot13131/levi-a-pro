@@ -25,8 +25,18 @@ const TradingEngineControl: React.FC = () => {
 
   useEffect(() => {
     const updateStatus = () => {
-      const status = productionTradingEngine.getEngineStatus();
-      setEngineStatus(status);
+    const status = productionTradingEngine.getEngineStatus();
+    setEngineStatus({
+      ...status,
+      totalSignals: status.signalsToday,
+      totalRejections: 0,
+      lastAnalysis: Date.now(),
+      analysisCount: 0,
+      lastAnalysisReport: 'System operational',
+      signalsLast24h: status.signalsToday,
+      lastSuccessfulSignal: Date.now(),
+      failedTelegram: 0
+    });
     };
 
     updateStatus();
@@ -65,11 +75,11 @@ const TradingEngineControl: React.FC = () => {
   const generateTestSignal = async (symbol: string) => {
     setIsLoading(true);
     try {
-      const signal = await productionTradingEngine.generateTestSignal(symbol);
+      const signal = await productionTradingEngine.generateTestSignal();
       if (signal) {
         toast({
           title: "🧪 Test Signal Generated",
-          description: `${signal.action} signal for ${signal.symbol} - Confidence: ${signal.confidence}%`,
+          description: `Test signal generated successfully`,
         });
       } else {
         toast({

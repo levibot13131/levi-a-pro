@@ -309,6 +309,41 @@ export class AdvancedStrategies {
     };
   }
 
+  /**
+   * Generate Multi-Strategy Signal
+   */
+  public async generateMultiStrategySignal(
+    symbol: string,
+    priceData: PricePoint[],
+    volumeData: number[]
+  ): Promise<{
+    isValid: boolean;
+    confidence: number;
+    direction: 'bullish' | 'bearish' | 'neutral';
+    methods: string[];
+    confluenceScore: number;
+    keyLevels: number[];
+  }> {
+    // Analyze all methods
+    const wyckoff = this.analyzeWyckoff(priceData, volumeData);
+    const smc = this.analyzeSMC(priceData);
+    const elliott = this.analyzeElliottWave(priceData);
+    const fibonacci = this.analyzeFibonacci(priceData);
+    const volumeProfile = this.analyzeVolumeProfile(priceData, volumeData);
+    
+    // Calculate confluence
+    const confluence = this.analyzeConfluence(wyckoff, smc, elliott, fibonacci, volumeProfile);
+    
+    return {
+      isValid: confluence.confluenceScore > 60,
+      confidence: confluence.confluenceScore,
+      direction: confluence.direction,
+      methods: confluence.methods,
+      confluenceScore: confluence.confluenceScore,
+      keyLevels: confluence.keyLevels
+    };
+  }
+
   // Helper methods implementation
   private identifyWyckoffPhase(prices: PricePoint[], volumes: number[]): WyckoffAnalysis['phase'] {
     // Simplified Wyckoff phase identification
