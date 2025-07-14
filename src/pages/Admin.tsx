@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { liveSignalEngine } from '@/services/trading/liveSignalEngine';
+import { eliteSignalEngine } from '@/services/trading/eliteSignalEngine';
 import { ReportGenerator } from '@/components/reports/ReportGenerator';
 import { UserManagementPanel } from '@/components/admin/UserManagementPanel';
 import { AccessControlManager } from '@/components/admin/AccessControlManager';
@@ -31,6 +32,7 @@ import Navbar from '@/components/layout/Navbar';
 const Admin: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const engineStatus = liveSignalEngine.getEngineStatus();
+  const eliteStatus = eliteSignalEngine.getEliteStatus();
 
 
   if (!isAdmin) {
@@ -139,8 +141,9 @@ const Admin: React.FC = () => {
         </Card>
 
         {/* Admin Tabs */}
-        <Tabs defaultValue="status" className="space-y-4">
+        <Tabs defaultValue="elite" className="space-y-4">
           <TabsList className="w-full">
+            <TabsTrigger value="elite">Elite Engine V2</TabsTrigger>
             <TabsTrigger value="status">מצב מערכת</TabsTrigger>
             <TabsTrigger value="telegram">טלגרם</TabsTrigger>
             <TabsTrigger value="users">ניהול משתמשים</TabsTrigger>
@@ -151,6 +154,150 @@ const Admin: React.FC = () => {
             <TabsTrigger value="reports">דוחות</TabsTrigger>
             <TabsTrigger value="system">הגדרות מערכת</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="elite" className="space-y-4">
+            <Card className="border-2 border-purple-500">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Zap className="h-6 w-6 text-purple-600" />
+                  LeviPro Elite Intelligence Engine V2
+                  <Badge variant="outline" className="bg-purple-50 text-purple-700">
+                    Quality Over Quantity
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                  <div className="text-center">
+                    <div className={`text-2xl font-bold ${eliteStatus.isRunning ? 'text-green-600' : 'text-red-600'}`}>
+                      {eliteStatus.isRunning ? 'ACTIVE' : 'OFFLINE'}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Elite Engine</div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-purple-600">
+                      {eliteStatus.dailySignalCount}/{eliteStatus.targetDailySignals}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Daily Elite Signals</div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {eliteStatus.eliteConfidenceThreshold}%
+                    </div>
+                    <div className="text-sm text-muted-foreground">Min Elite Confidence</div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-orange-600">
+                      {eliteStatus.minConfluences}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Min Confluences</div>
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Button 
+                      onClick={() => eliteSignalEngine.sendTestEliteSignal()}
+                      className="h-16 bg-purple-600 hover:bg-purple-700"
+                    >
+                      <div className="text-center">
+                        <div>🧪 Test Elite Signal</div>
+                        <div className="text-xs opacity-75">Multi-factor analysis</div>
+                      </div>
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      onClick={() => eliteSignalEngine.start()}
+                      disabled={eliteStatus.isRunning}
+                      className="h-16 border-purple-500 text-purple-700"
+                    >
+                      <div className="text-center">
+                        <div>🚀 Start Elite Engine</div>
+                        <div className="text-xs opacity-75">Quality signals only</div>
+                      </div>
+                    </Button>
+                    
+                    <Button 
+                      variant="destructive" 
+                      onClick={() => eliteSignalEngine.stop()}
+                      disabled={!eliteStatus.isRunning}
+                      className="h-16"
+                    >
+                      <div className="text-center">
+                        <div>⏹️ Stop Elite Engine</div>
+                        <div className="text-xs opacity-75">Pause analysis</div>
+                      </div>
+                    </Button>
+                  </div>
+                  
+                  <div className="p-4 bg-purple-50 rounded-lg">
+                    <h4 className="font-semibold text-purple-800 mb-2">Elite Engine Configuration</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div>
+                        <div className="text-muted-foreground">Target Daily Signals</div>
+                        <div className="font-semibold text-purple-700">{eliteStatus.targetDailySignals} max</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Elite Confidence</div>
+                        <div className="font-semibold text-purple-700">{eliteStatus.eliteConfidenceThreshold}% minimum</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Required Confluences</div>
+                        <div className="font-semibold text-purple-700">{eliteStatus.minConfluences} minimum</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Analysis Frequency</div>
+                        <div className="font-semibold text-purple-700">2 minutes</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <h4 className="font-semibold text-blue-800 mb-2">Multi-Factor Analysis Methods</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span>Wyckoff Analysis</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span>Smart Money Concepts</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span>Fibonacci Retracements</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span>Volume Profile</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span>RSI Divergences</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span>Fundamental Catalysts</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {eliteStatus.isRunning && eliteStatus.dailySignalCount >= eliteStatus.targetDailySignals && (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+                      <AlertTriangle className="h-5 w-5 text-green-600" />
+                      <span className="text-green-800 font-medium">
+                        🎯 Daily elite signal target reached ({eliteStatus.dailySignalCount}/{eliteStatus.targetDailySignals})
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
           
           <TabsContent value="status" className="space-y-4">
             <SystemStatusPanel />
