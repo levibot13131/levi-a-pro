@@ -56,12 +56,48 @@ export class RiskManagementEngine {
   }
 
   public shouldAllowSignal(signal: TradingSignal): { allowed: boolean; reason?: string; riskInfo?: RiskData } {
-    // Check risk/reward ratio
-    if (signal.riskRewardRatio < this.riskLimits.minRiskReward) {
+    // Critical fix: Check minimum R/R ratio of 1.8:1
+    const MIN_RR_RATIO = 1.8;
+    if (signal.riskRewardRatio < MIN_RR_RATIO) {
+      this.dailyRejectedCount++;
+      console.log(`🚫 Signal rejected: R/R ${signal.riskRewardRatio.toFixed(2)} below minimum ${MIN_RR_RATIO}`);
+      return {
+        allowed: false,
+        reason: `Risk/Reward ratio ${signal.riskRewardRatio.toFixed(2)} below minimum ${MIN_RR_RATIO} (LeviPro requirement)`
+      };
+    }
+
+    // Validate SL/TP direction logic
+    if (signal.action === 'buy' && signal.stopLoss >= signal.price) {
       this.dailyRejectedCount++;
       return {
         allowed: false,
-        reason: `Risk/Reward ratio ${signal.riskRewardRatio.toFixed(2)} below minimum ${this.riskLimits.minRiskReward}`
+        reason: `Invalid BUY signal: Stop Loss ($${signal.stopLoss.toFixed(2)}) must be below Entry ($${signal.price.toFixed(2)})`
+      };
+    }
+
+    if (signal.action === 'sell' && signal.stopLoss <= signal.price) {
+      this.dailyRejectedCount++;
+      return {
+        allowed: false,
+        reason: `Invalid SELL signal: Stop Loss ($${signal.stopLoss.toFixed(2)}) must be above Entry ($${signal.price.toFixed(2)})`
+      };
+    }
+
+    // Validate target direction
+    if (signal.action === 'buy' && signal.targetPrice <= signal.price) {
+      this.dailyRejectedCount++;
+      return {
+        allowed: false,
+        reason: `Invalid BUY signal: Target ($${signal.targetPrice.toFixed(2)}) must be above Entry ($${signal.price.toFixed(2)})`
+      };
+    }
+
+    if (signal.action === 'sell' && signal.targetPrice >= signal.price) {
+      this.dailyRejectedCount++;
+      return {
+        allowed: false,
+        reason: `Invalid SELL signal: Target ($${signal.targetPrice.toFixed(2)}) must be below Entry ($${signal.price.toFixed(2)})`
       };
     }
 

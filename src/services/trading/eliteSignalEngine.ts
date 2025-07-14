@@ -351,7 +351,21 @@ export class EliteSignalEngine {
 
   private async getFundamentalIntelligence(symbol: string): Promise<number> {
     // Get fundamental boost from intelligence scanner
-    return fundamentalScanner.getEventsForConfidenceBoost(symbol);
+    try {
+      return await fundamentalScanner.getEventsForConfidenceBoost(symbol);
+    } catch (error) {
+      console.warn(`⚠️ Fundamental intelligence unavailable for ${symbol}`);
+      return 0;
+    }
+  }
+
+  private async getFundamentalSentiment(symbol: string): Promise<number> {
+    try {
+      return await fundamentalScanner.getSentimentScore(symbol);
+    } catch (error) {
+      console.warn(`⚠️ Sentiment data unavailable for ${symbol}`);
+      return 50; // Neutral sentiment as fallback
+    }
   }
 
   private getSymbolLearningData(symbol: string) {
@@ -433,11 +447,26 @@ export class EliteSignalEngine {
     const bullishTimeframes = timeframeAnalyses.filter(t => t.trend === 'bullish').length;
     const bearishTimeframes = timeframeAnalyses.filter(t => t.trend === 'bearish').length;
     
+    // Get fundamental sentiment to validate direction
+    const fundamentalSentiment = await this.getFundamentalSentiment(symbol);
+    
     let action: 'BUY' | 'SELL';
     if (magicTriangleAnalysis.isValid && magicTriangleAnalysis.direction !== 'none') {
       action = magicTriangleAnalysis.direction === 'long' ? 'BUY' : 'SELL';
+      console.log(`🔺 Magic Triangle direction: ${magicTriangleAnalysis.direction} -> ${action}`);
     } else {
+      // Check for sentiment contradiction
+      if (fundamentalSentiment > 70 && bearishTimeframes > bullishTimeframes) {
+        console.log(`⚠️ Sentiment-TA mismatch: ${fundamentalSentiment}% bullish sentiment vs bearish TA`);
+        throw new Error(`Signal direction conflict: ${fundamentalSentiment}% bullish sentiment contradicts bearish technical analysis`);
+      }
+      if (fundamentalSentiment < 30 && bullishTimeframes > bearishTimeframes) {
+        console.log(`⚠️ Sentiment-TA mismatch: ${fundamentalSentiment}% bearish sentiment vs bullish TA`);
+        throw new Error(`Signal direction conflict: ${fundamentalSentiment}% bearish sentiment contradicts bullish technical analysis`);
+      }
+      
       action = bullishTimeframes > bearishTimeframes ? 'BUY' : 'SELL';
+      console.log(`📊 TA Direction: ${bullishTimeframes} bullish vs ${bearishTimeframes} bearish -> ${action}`);
     }
     
     // Calculate ATR for proper SL/TP placement
@@ -488,7 +517,10 @@ export class EliteSignalEngine {
     const rewardAmount = Math.abs(target_price - entry_price);
     const risk_reward_ratio = rewardAmount / riskAmount;
     
+    console.log(`💰 Risk/Reward Analysis: Risk: $${riskAmount.toFixed(2)}, Reward: $${rewardAmount.toFixed(2)}, R/R: ${risk_reward_ratio.toFixed(2)}`);
+    
     if (risk_reward_ratio < 1.8) {
+      await this.logEliteRejection(symbol, finalConfidence, confluences, `Poor Risk/Reward ratio: ${risk_reward_ratio.toFixed(2)} (minimum 1.8 required)`);
       throw new Error(`Poor Risk/Reward ratio: ${risk_reward_ratio.toFixed(2)} (minimum 1.8 required)`);
     }
     

@@ -323,6 +323,48 @@ class FundamentalScanner {
     
     return Math.min(15, avgScore * 0.15 + highImpactBonus); // Max 15% boost
   }
+
+  public getSentimentScore(symbol: string): number {
+    const relevantEvents = this.events.filter(event => 
+      event.symbols.includes(symbol) || event.symbols.includes('CRYPTO_GENERAL')
+    );
+
+    if (relevantEvents.length === 0) return 50; // Neutral
+
+    let sentimentSum = 0;
+    let weightSum = 0;
+
+    relevantEvents.forEach(event => {
+      let sentiment = 50; // Neutral baseline
+      let weight = 1;
+
+      // Convert sentiment to score
+      switch(event.sentiment) {
+        case 'Bullish': sentiment = 75; break;
+        case 'Bearish': sentiment = 25; break;
+        case 'Neutral': sentiment = 50; break;
+      }
+
+      // Weight by impact and recency
+      switch(event.impact) {
+        case 'High': weight = 3; break;
+        case 'Medium': weight = 2; break;
+        case 'Low': weight = 1; break;
+      }
+
+      // Reduce weight for older events
+      const ageHours = (Date.now() - event.timestamp) / (1000 * 60 * 60);
+      if (ageHours > 24) weight *= 0.3;
+      else if (ageHours > 12) weight *= 0.6;
+      else if (ageHours > 6) weight *= 0.8;
+
+      sentimentSum += sentiment * weight;
+      weightSum += weight;
+    });
+
+    const avgSentiment = weightSum > 0 ? sentimentSum / weightSum : 50;
+    return Math.max(0, Math.min(100, avgSentiment));
+  }
 }
 
 // Export singleton instance
