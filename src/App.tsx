@@ -15,6 +15,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import TechnicalAnalysis from './pages/TechnicalAnalysis';
 import Calculators from './pages/Calculators';
 import TradingSignals from './pages/TradingSignals';
+import FundamentalReports from './pages/FundamentalReports';
 import { useEffect } from 'react';
 import { fundamentalsIngestion } from '@/services/fundamentals/fundamentalsIngestion';
 
@@ -94,7 +95,15 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-              <Route 
+                <Route 
+                path="/fundamental-reports" 
+                element={
+                  <ProtectedRoute>
+                    <FundamentalReports />
+                  </ProtectedRoute>
+                } 
+              />
+                <Route 
                 path="/admin" 
                 element={
                   <ProtectedRoute>

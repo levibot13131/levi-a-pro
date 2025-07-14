@@ -61,15 +61,24 @@ const Navbar = () => {
             })}
           </div>
 
-          {/* Admin Link - Only show for authenticated users */}
+          {/* Admin & Intelligence Links - Only show for authenticated users */}
           {user && (
-            <Link
-              to="/admin"
-              className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2"
-            >
-              <Shield className="h-4 w-4" />
-              Admin
-            </Link>
+            <div className="flex items-center space-x-4">
+              <Link
+                to="/fundamental-reports"
+                className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2"
+              >
+                <TrendingUp className="h-4 w-4" />
+                Intelligence
+              </Link>
+              <Link
+                to="/admin"
+                className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2"
+              >
+                <Shield className="h-4 w-4" />
+                Admin
+              </Link>
+            </div>
           )}
 
           {/* User Menu */}

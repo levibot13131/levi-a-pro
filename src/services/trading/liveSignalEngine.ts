@@ -2,6 +2,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { MarketHeatIndex } from '@/services/ai/marketHeatIndex';
 import { EnhancedTimeframeAI } from '@/services/ai/enhancedTimeframeAI';
 import { sendTelegramMessage } from '@/services/telegram/telegramService';
+import { FeedbackLearningEngine } from '@/services/ai/feedbackLearningEngine';
+import { signalOutcomeTracker } from '@/services/ai/signalOutcomeTracker';
+import { fundamentalScanner } from '@/services/intelligence/fundamentalScanner';
+import { rejectionLogger } from '@/services/rejection/rejectionLogger';
 
 interface SignalCriteria {
   symbol: string;
