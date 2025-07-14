@@ -84,6 +84,7 @@ export class MagicTriangleStrategy {
   
   /**
    * Main analysis function - performs complete Magic Triangle analysis
+   * Based on comprehensive uploaded training materials
    */
   public analyzeMagicTriangle(
     priceData: PricePoint[], 
@@ -96,10 +97,12 @@ export class MagicTriangleStrategy {
       return this.createEmptySetup('Insufficient data for analysis');
     }
 
-    // 1. Emotional Pressure Zone Analysis (Multi-timeframe + Volume)
+    console.log(`🔺 Magic Triangle Analysis: ${symbol} ${timeframe}`);
+
+    // 1. Emotional Pressure Zone Analysis (Multi-timeframe + Volume Context)
     const emotionalPressure = this.analyzeEmotionalPressureZones(priceData, volumeData, timeframe);
     
-    // 2. Comprehensive Candle Behavior Analysis
+    // 2. Full Candle Behavior Analysis and Volume Logic
     const candleAnalysis = this.analyzeCandleBehavior(priceData, volumeData);
     
     // 3. Psychological Stop Zone Identification
@@ -108,7 +111,7 @@ export class MagicTriangleStrategy {
     // 4. Pattern Confirmation and Invalidation Logic
     const patternConfirmation = this.analyzePatternConfirmation(priceData, emotionalPressure, candleAnalysis);
     
-    // 5. Entry/Exit Rules Implementation
+    // 5. Complete Entry/Exit Rules Implementation
     const setup = this.generateMagicTriangleSetup(
       priceData,
       emotionalPressure,
@@ -117,6 +120,8 @@ export class MagicTriangleStrategy {
       patternConfirmation,
       timeframe
     );
+    
+    console.log(`🔺 Magic Triangle Result: ${setup.isValid ? `${setup.direction} - ${setup.confidence.toFixed(1)}%` : 'No Setup'}`);
     
     return setup;
   }
