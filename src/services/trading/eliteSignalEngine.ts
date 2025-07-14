@@ -65,8 +65,8 @@ export class EliteSignalEngine {
   private isRunning = false;
   private analysisInterval?: NodeJS.Timeout;
   
-  // Elite Signal Settings - Quality over Quantity
-  private readonly TARGET_DAILY_SIGNALS = 4; // Maximum 4 elite signals per day
+    // Elite Signal Settings - Quality over Quantity
+    private readonly TARGET_DAILY_SIGNALS = 10; // Maximum 10 elite signals per day
   private readonly MIN_CONFLUENCES = 3; // Minimum 3 strong confluences required
   private readonly MIN_ELITE_CONFIDENCE = 75; // Minimum 75% confidence for elite signals
   private readonly TIMEFRAMES = ['1m', '5m', '15m', '1h', '4h', '1d'];
