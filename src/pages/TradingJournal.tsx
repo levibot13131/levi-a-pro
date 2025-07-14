@@ -1,319 +1,324 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { 
-  BarChart3, 
+  BookOpen, 
   TrendingUp, 
   TrendingDown, 
-  Clock,
-  Download,
-  FileText,
-  Target
+  Clock, 
+  DollarSign,
+  Target,
+  Shield,
+  Plus,
+  Filter
 } from 'lucide-react';
-import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import Navbar from '@/components/layout/Navbar';
 
-interface SignalEntry {
+interface JournalEntry {
   id: string;
+  signal_id: string;
   symbol: string;
-  action: string;
+  action: 'BUY' | 'SELL';
   entry_price: number;
   target_price: number;
   stop_loss: number;
+  exit_price?: number;
+  outcome?: 'profit' | 'loss' | 'breakeven';
   confidence: number;
-  outcome?: string;
-  actual_profit_loss?: number;
+  notes: string;
   created_at: string;
   closed_at?: string;
-  strategy: string;
-  reasoning: string;
+  profit_loss_percentage?: number;
 }
 
 const TradingJournal: React.FC = () => {
-  const [signals, setSignals] = useState<SignalEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalSignals: 0,
-    successfulSignals: 0,
-    successRate: 0,
-    totalProfitLoss: 0,
-    activeSignals: 0
-  });
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [newNote, setNewNote] = useState('');
+  const [selectedEntry, setSelectedEntry] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'profit' | 'loss' | 'open'>('all');
 
   useEffect(() => {
-    loadSignalHistory();
+    loadJournalEntries();
   }, []);
 
-  const loadSignalHistory = async () => {
+  const loadJournalEntries = async () => {
     try {
       const { data, error } = await supabase
         .from('signal_history')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(50);
 
       if (error) throw error;
 
-      if (data) {
-        setSignals(data);
-        calculateStats(data);
-      }
+      const formattedEntries: JournalEntry[] = data.map(signal => ({
+        id: signal.id,
+        signal_id: signal.signal_id,
+        symbol: signal.symbol,
+        action: signal.action as 'BUY' | 'SELL',
+        entry_price: signal.entry_price,
+        target_price: signal.target_price,
+        stop_loss: signal.stop_loss,
+        exit_price: signal.exit_price,
+        outcome: signal.outcome as 'profit' | 'loss' | 'breakeven',
+        confidence: signal.confidence,
+        notes: signal.reasoning || '',
+        created_at: signal.created_at,
+        closed_at: signal.closed_at,
+        profit_loss_percentage: signal.actual_profit_loss
+      }));
+
+      setEntries(formattedEntries);
     } catch (error) {
-      console.error('Error loading signal history:', error);
-      toast.error('שגיאה בטעינת היסטוריית איתותים');
-    } finally {
-      setLoading(false);
+      console.error('Error loading journal entries:', error);
+      toast.error('שגיאה בטעינת היומן');
     }
   };
 
-  const calculateStats = (signalData: SignalEntry[]) => {
-    const totalSignals = signalData.length;
-    const successfulSignals = signalData.filter(s => s.outcome === 'profit').length;
-    const successRate = totalSignals > 0 ? (successfulSignals / totalSignals) * 100 : 0;
-    const totalProfitLoss = signalData.reduce((sum, s) => sum + (s.actual_profit_loss || 0), 0);
-    const activeSignals = signalData.filter(s => !s.outcome || s.outcome === 'active').length;
+  const addNote = async (entryId: string) => {
+    if (!newNote.trim()) return;
 
-    setStats({
-      totalSignals,
-      successfulSignals,
-      successRate,
-      totalProfitLoss,
-      activeSignals
-    });
+    try {
+      const { error } = await supabase
+        .from('signal_history')
+        .update({ 
+          reasoning: newNote 
+        })
+        .eq('id', entryId);
+
+      if (error) throw error;
+
+      setEntries(prev => 
+        prev.map(entry => 
+          entry.id === entryId 
+            ? { ...entry, notes: newNote }
+            : entry
+        )
+      );
+
+      setNewNote('');
+      setSelectedEntry(null);
+      toast.success('הערה נוספה בהצלחה');
+    } catch (error) {
+      console.error('Error adding note:', error);
+      toast.error('שגיאה בהוספת הערה');
+    }
   };
 
-  const exportToCsv = () => {
-    const headers = ['תאריך', 'נכס', 'פעולה', 'מחיר כניסה', 'מחיר יעד', 'עצירת הפסד', 'ביטחון', 'תוצאה', 'רווח/הפסד %'];
-    const csvContent = [
-      headers.join(','),
-      ...signals.map(signal => [
-        new Date(signal.created_at).toLocaleDateString('he-IL'),
-        signal.symbol,
-        signal.action === 'buy' ? 'קנייה' : 'מכירה',
-        signal.entry_price,
-        signal.target_price,
-        signal.stop_loss,
-        `${signal.confidence}%`,
-        signal.outcome === 'profit' ? 'רווח' : signal.outcome === 'loss' ? 'הפסד' : 'פעיל',
-        signal.actual_profit_loss || 'N/A'
-      ].join(','))
-    ].join('\n');
+  const filteredEntries = entries.filter(entry => {
+    if (filter === 'all') return true;
+    if (filter === 'open') return !entry.closed_at;
+    return entry.outcome === filter;
+  });
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `levipro-journal-${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    
-    toast.success('יומן יוצא בהצלחה');
+  const stats = {
+    total: entries.length,
+    profitable: entries.filter(e => e.outcome === 'profit').length,
+    losses: entries.filter(e => e.outcome === 'loss').length,
+    winRate: entries.length > 0 ? (entries.filter(e => e.outcome === 'profit').length / entries.filter(e => e.closed_at).length * 100) : 0,
+    avgProfit: entries.filter(e => e.profit_loss_percentage).reduce((acc, e) => acc + (e.profit_loss_percentage || 0), 0) / Math.max(1, entries.filter(e => e.profit_loss_percentage).length)
   };
-
-  const getOutcomeColor = (outcome?: string, profitLoss?: number) => {
-    if (!outcome || outcome === 'active') return 'bg-blue-50 text-blue-800';
-    if (outcome === 'profit' || (profitLoss && profitLoss > 0)) return 'bg-green-50 text-green-800';
-    return 'bg-red-50 text-red-800';
-  };
-
-  const getOutcomeText = (outcome?: string, profitLoss?: number) => {
-    if (!outcome || outcome === 'active') return 'פעיל';
-    if (outcome === 'profit' || (profitLoss && profitLoss > 0)) return 'רווח';
-    return 'הפסד';
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        <Navbar />
-        <div className="container mx-auto px-4 py-6">
-          <div className="text-center">טוען יומן מסחר...</div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <Navbar />
-      <div className="container mx-auto px-4 py-6 space-y-6">
-        {/* Header */}
-        <Card className="border-2 border-blue-500">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <BarChart3 className="h-6 w-6 text-blue-500" />
-                יומן מסחר LeviPro
-                <Badge variant="outline" className="text-blue-600">
-                  מעקב ביצועים
-                </Badge>
-              </div>
-              <Button onClick={exportToCsv} variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                ייצוא ל-CSV
-              </Button>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded">
-                <div className="text-2xl font-bold text-blue-600">{stats.totalSignals}</div>
-                <div className="text-sm text-muted-foreground">סה"כ איתותים</div>
-              </div>
-              <div className="text-center p-4 bg-green-50 rounded">
-                <div className="text-2xl font-bold text-green-600">{stats.successfulSignals}</div>
-                <div className="text-sm text-muted-foreground">איתותים מוצלחים</div>
-              </div>
-              <div className="text-center p-4 bg-purple-50 rounded">
-                <div className="text-2xl font-bold text-purple-600">{stats.successRate.toFixed(1)}%</div>
-                <div className="text-sm text-muted-foreground">אחוז הצלחה</div>
-              </div>
-              <div className="text-center p-4 bg-orange-50 rounded">
-                <div className={`text-2xl font-bold ${stats.totalProfitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {stats.totalProfitLoss >= 0 ? '+' : ''}{stats.totalProfitLoss.toFixed(2)}%
-                </div>
-                <div className="text-sm text-muted-foreground">רווח/הפסד כולל</div>
-              </div>
-              <div className="text-center p-4 bg-yellow-50 rounded">
-                <div className="text-2xl font-bold text-yellow-600">{stats.activeSignals}</div>
-                <div className="text-sm text-muted-foreground">איתותים פעילים</div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">יומן מסחר LeviPro</h1>
+            <p className="text-gray-600">מעקב מפורט אחר כל האיתותים והתוצאות</p>
+          </div>
 
-        {/* Signal History */}
-        <Tabs defaultValue="all" className="space-y-4">
-          <TabsList className="w-full">
-            <TabsTrigger value="all">כל האיתותים</TabsTrigger>
-            <TabsTrigger value="active">פעילים</TabsTrigger>
-            <TabsTrigger value="closed">סגורים</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="all" className="space-y-4">
-            {signals.length === 0 ? (
-              <Card>
-                <CardContent className="text-center py-8">
-                  <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-muted-foreground">אין איתותים קיימים בתקופה זו</p>
-                  <p className="text-sm text-muted-foreground">איתותים יופיעו כאן כאשר המערכת תזהה הזדמנויות מסחר</p>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-blue-600">{stats.total}</div>
+                <div className="text-sm text-gray-600">סה"כ איתותים</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-green-600">{stats.profitable}</div>
+                <div className="text-sm text-gray-600">איתותים רווחיים</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4 text-center">
+                <div className="text-2xl font-bold text-purple-600">{stats.winRate.toFixed(1)}%</div>
+                <div className="text-sm text-gray-600">אחוז הצלחה</div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardContent className="p-4 text-center">
+                <div className={`text-2xl font-bold ${stats.avgProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {stats.avgProfit.toFixed(2)}%
+                </div>
+                <div className="text-sm text-gray-600">רווח ממוצע</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Filters */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex gap-2 flex-wrap">
+                <Button 
+                  variant={filter === 'all' ? 'default' : 'outline'}
+                  onClick={() => setFilter('all')}
+                  size="sm"
+                >
+                  <Filter className="w-4 h-4 mr-1" />
+                  הכל
+                </Button>
+                <Button 
+                  variant={filter === 'open' ? 'default' : 'outline'}
+                  onClick={() => setFilter('open')}
+                  size="sm"
+                >
+                  <Clock className="w-4 h-4 mr-1" />
+                  פתוחים
+                </Button>
+                <Button 
+                  variant={filter === 'profit' ? 'default' : 'outline'}
+                  onClick={() => setFilter('profit')}
+                  size="sm"
+                >
+                  <TrendingUp className="w-4 h-4 mr-1" />
+                  רווחיים
+                </Button>
+                <Button 
+                  variant={filter === 'loss' ? 'default' : 'outline'}
+                  onClick={() => setFilter('loss')}
+                  size="sm"
+                >
+                  <TrendingDown className="w-4 h-4 mr-1" />
+                  הפסדיים
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Journal Entries */}
+          <div className="space-y-4">
+            {filteredEntries.map((entry) => (
+              <Card key={entry.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-3">
+                      <Badge variant={entry.action === 'BUY' ? 'default' : 'destructive'}>
+                        {entry.action}
+                      </Badge>
+                      <div className="font-bold text-lg">{entry.symbol}</div>
+                      {entry.outcome && (
+                        <Badge variant={entry.outcome === 'profit' ? 'default' : entry.outcome === 'loss' ? 'destructive' : 'secondary'}>
+                          {entry.outcome === 'profit' ? 'רווח' : entry.outcome === 'loss' ? 'הפסד' : 'ללא רווח'}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {new Date(entry.created_at).toLocaleString('he-IL')}
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <div className="text-gray-500">מחיר כניסה</div>
+                      <div className="font-semibold">${entry.entry_price.toFixed(2)}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">יעד</div>
+                      <div className="font-semibold text-green-600">${entry.target_price.toFixed(2)}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">סטופ לוס</div>
+                      <div className="font-semibold text-red-600">${entry.stop_loss.toFixed(2)}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500">ביטחון</div>
+                      <div className="font-semibold">{entry.confidence}%</div>
+                    </div>
+                  </div>
+
+                  {entry.exit_price && (
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <div className="text-gray-500">מחיר יציאה</div>
+                        <div className="font-semibold">${entry.exit_price.toFixed(2)}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500">רווח/הפסד</div>
+                        <div className={`font-semibold ${(entry.profit_loss_percentage || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {entry.profit_loss_percentage?.toFixed(2)}%
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {entry.notes && (
+                    <div className="bg-gray-50 p-3 rounded text-sm">
+                      <div className="text-gray-500 mb-1">הערות:</div>
+                      <div>{entry.notes}</div>
+                    </div>
+                  )}
+
+                  {selectedEntry === entry.id ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        placeholder="הוסף הערה..."
+                        value={newNote}
+                        onChange={(e) => setNewNote(e.target.value)}
+                        className="text-right"
+                      />
+                      <div className="flex gap-2">
+                        <Button onClick={() => addNote(entry.id)} size="sm">
+                          שמור
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setSelectedEntry(null)} 
+                          size="sm"
+                        >
+                          ביטול
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setSelectedEntry(entry.id)}
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      הוסף הערה
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
-            ) : (
-              <div className="grid gap-4">
-                {signals.map((signal) => (
-                  <Card key={signal.id}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <Badge className={getOutcomeColor(signal.outcome, signal.actual_profit_loss)}>
-                            {getOutcomeText(signal.outcome, signal.actual_profit_loss)}
-                          </Badge>
-                          <Badge variant="outline">
-                            {signal.action === 'buy' ? (
-                              <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                            ) : (
-                              <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
-                            )}
-                            {signal.action === 'buy' ? 'קנייה' : 'מכירה'}
-                          </Badge>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-bold text-lg">{signal.symbol}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {new Date(signal.created_at).toLocaleDateString('he-IL')} | 
-                            {new Date(signal.created_at).toLocaleTimeString('he-IL')}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <div className="text-muted-foreground">מחיר כניסה</div>
-                          <div className="font-semibold">${signal.entry_price}</div>
-                        </div>
-                        <div>
-                          <div className="text-muted-foreground">יעד</div>
-                          <div className="font-semibold text-green-600">${signal.target_price}</div>
-                        </div>
-                        <div>
-                          <div className="text-muted-foreground">עצירת הפסד</div>
-                          <div className="font-semibold text-red-600">${signal.stop_loss}</div>
-                        </div>
-                        <div>
-                          <div className="text-muted-foreground">ביטחון</div>
-                          <div className="font-semibold">{signal.confidence}%</div>
-                        </div>
-                      </div>
-                      
-                      {signal.reasoning && (
-                        <div className="mt-3 p-3 bg-gray-50 rounded">
-                          <div className="text-sm font-medium mb-1">נימוק:</div>
-                          <div className="text-sm text-muted-foreground">{signal.reasoning}</div>
-                        </div>
-                      )}
-                      
-                      {signal.actual_profit_loss && (
-                        <div className="mt-3 flex justify-between items-center">
-                          <div className="text-sm text-muted-foreground">
-                            נסגר: {signal.closed_at ? new Date(signal.closed_at).toLocaleDateString('he-IL') : 'N/A'}
-                          </div>
-                          <div className={`font-bold ${signal.actual_profit_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                            {signal.actual_profit_loss >= 0 ? '+' : ''}{signal.actual_profit_loss.toFixed(2)}%
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="active">
-            <div className="grid gap-4">
-              {signals.filter(s => !s.outcome || s.outcome === 'active').map((signal) => (
-                <Card key={signal.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <Badge className="bg-blue-50 text-blue-800">פעיל</Badge>
-                      <div className="text-right">
-                        <div className="font-bold">{signal.symbol}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {signal.action === 'buy' ? 'קנייה' : 'מכירה'} ב-${signal.entry_price}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="closed">
-            <div className="grid gap-4">
-              {signals.filter(s => s.outcome && s.outcome !== 'active').map((signal) => (
-                <Card key={signal.id}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <Badge className={getOutcomeColor(signal.outcome, signal.actual_profit_loss)}>
-                        {getOutcomeText(signal.outcome, signal.actual_profit_loss)}
-                      </Badge>
-                      <div className="text-right">
-                        <div className="font-bold">{signal.symbol}</div>
-                        <div className={`text-sm font-semibold ${signal.actual_profit_loss && signal.actual_profit_loss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {signal.actual_profit_loss ? `${signal.actual_profit_loss >= 0 ? '+' : ''}${signal.actual_profit_loss.toFixed(2)}%` : 'N/A'}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-        </Tabs>
+            ))}
+          </div>
+
+          {filteredEntries.length === 0 && (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <BookOpen className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-semibold text-gray-600 mb-2">אין רשומות</h3>
+                <p className="text-gray-500">טרם נוצרו איתותים במערכת</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </div>
   );

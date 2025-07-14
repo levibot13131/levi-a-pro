@@ -13,6 +13,7 @@ import UserManagement from './components/admin/UserManagement';
 import Admin from './pages/Admin';
 import ErrorBoundary from './components/ErrorBoundary';
 import TechnicalAnalysis from './pages/TechnicalAnalysis';
+import Calculators from './pages/Calculators';
 import TradingSignals from './pages/TradingSignals';
 import { useEffect } from 'react';
 import { fundamentalsIngestion } from '@/services/fundamentals/fundamentalsIngestion';
@@ -70,6 +71,14 @@ function App() {
                 } 
               />
               <Route 
+                path="/calculators" 
+                element={
+                  <ProtectedRoute>
+                    <Calculators />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route
                 path="/profile" 
                 element={
                   <ProtectedRoute>

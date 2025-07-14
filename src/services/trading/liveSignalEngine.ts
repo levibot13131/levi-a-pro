@@ -113,11 +113,11 @@ class LiveSignalEngine {
   private signalTimes: number[] = [];
   private failedTelegramCount = 0;
 
-  // LEARNING PHASE: Ultra-relaxed thresholds for maximum signal generation
-  private readonly CONFIDENCE_THRESHOLD = 65; // Lowered from 70 for learning phase
-  private readonly HEAT_THRESHOLD = 65; // Lowered from 70 for learning phase  
-  private readonly MIN_RR_RATIO = 1.2; // Keep at 1.2 as requested
-  private readonly TIMEFRAME_ALIGNMENT_THRESHOLD = 50; // Lowered from 60% for more signals
+  // ULTRA-AGGRESSIVE LEARNING PHASE: Maximum signal generation
+  private readonly CONFIDENCE_THRESHOLD = 60; // Lowered to 60% for maximum signals
+  private readonly HEAT_THRESHOLD = 60; // Lowered to 60% for maximum signals  
+  private readonly MIN_RR_RATIO = 1.1; // Lowered to 1.1 for maximum signals
+  private readonly TIMEFRAME_ALIGNMENT_THRESHOLD = 40; // Lowered to 40% for maximum signals
 
   // Expanded symbol list (60 top-volume pairs)
   private readonly SYMBOLS = [
