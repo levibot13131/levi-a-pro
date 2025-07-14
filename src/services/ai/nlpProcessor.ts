@@ -177,17 +177,31 @@ class NLPProcessor {
   }
 
   private async callOpenAI(prompt: string): Promise<string> {
-    // This would be an edge function call to OpenAI
-    // For now, return mock analysis
-    return JSON.stringify({
-      marketRelevance: 'medium',
-      sentiment: 'bullish',
-      confidenceScore: 0.72,
-      affectedSymbols: ['BTC', 'ETH'],
-      timeframe: 'short',
-      impact: 'medium',
-      reasoning: ['technical analysis', 'market sentiment']
-    });
+    try {
+      const { supabase } = await import('@/integrations/supabase/client');
+      const { data, error } = await supabase.functions.invoke('openai-nlp-processor', {
+        body: {
+          type: 'headline_analysis',
+          data: { headline: prompt }
+        }
+      });
+
+      if (error) throw error;
+      
+      return JSON.stringify(data.result);
+    } catch (error) {
+      console.error('❌ OpenAI call failed:', error);
+      // Fallback analysis
+      return JSON.stringify({
+        marketRelevance: 'medium',
+        sentiment: 'neutral',
+        confidenceScore: 0.6,
+        affectedSymbols: ['BTC', 'ETH'],
+        timeframe: 'short',
+        impact: 'medium',
+        reasoning: ['fallback analysis']
+      });
+    }
   }
 
   private parseHeadlineAnalysis(analysis: string, headline: string, source: string): HeadlineAnalysis {
