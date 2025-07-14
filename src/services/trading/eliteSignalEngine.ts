@@ -422,12 +422,13 @@ export class EliteSignalEngine {
     
     // Calculate proper entry, target, and stop loss using real market structure
     const marketPrice = await this.getRealMarketPrice(symbol);
-    const atr = this.calculateATR(timeframeAnalyses); // Use Average True Range for proper volatility
+    const atrPercent = this.calculateATR(timeframeAnalyses); // Get ATR as percentage of price
+    const atr = marketPrice * atrPercent; // Convert to absolute price value
     
     // Proper entry price based on market structure
     const entry_price = marketPrice;
     
-    // Calculate proper SL and TP based on swing structure (2:1 minimum R/R)
+    // Calculate proper SL and TP based on swing structure with minimum 1.8:1 R/R
     let target_price: number;
     let stop_loss: number;
     
@@ -435,10 +436,26 @@ export class EliteSignalEngine {
       // For BUY: SL below entry, TP above entry
       stop_loss = entry_price - (atr * 1.5); // 1.5 ATR stop loss
       target_price = entry_price + (atr * 3.0); // 2:1 R/R minimum
+      
+      // Ensure SL is below entry and TP is above entry
+      if (stop_loss >= entry_price) {
+        throw new Error(`Invalid BUY signal: Stop Loss ($${stop_loss.toFixed(2)}) must be below Entry ($${entry_price.toFixed(2)})`);
+      }
+      if (target_price <= entry_price) {
+        throw new Error(`Invalid BUY signal: Target Price ($${target_price.toFixed(2)}) must be above Entry ($${entry_price.toFixed(2)})`);
+      }
     } else {
       // For SELL: SL above entry, TP below entry  
       stop_loss = entry_price + (atr * 1.5); // 1.5 ATR stop loss
       target_price = entry_price - (atr * 3.0); // 2:1 R/R minimum
+      
+      // Ensure SL is above entry and TP is below entry
+      if (stop_loss <= entry_price) {
+        throw new Error(`Invalid SELL signal: Stop Loss ($${stop_loss.toFixed(2)}) must be above Entry ($${entry_price.toFixed(2)})`);
+      }
+      if (target_price >= entry_price) {
+        throw new Error(`Invalid SELL signal: Target Price ($${target_price.toFixed(2)}) must be below Entry ($${entry_price.toFixed(2)})`);
+      }
     }
     
     // Ensure proper R/R calculation
@@ -450,6 +467,8 @@ export class EliteSignalEngine {
     if (risk_reward_ratio < 1.8) {
       throw new Error(`Poor Risk/Reward ratio: ${risk_reward_ratio.toFixed(2)} (minimum 1.8 required)`);
     }
+    
+    console.log(`✅ Signal validation passed: ${action} ${symbol} - Entry: $${entry_price.toFixed(2)}, SL: $${stop_loss.toFixed(2)}, TP: $${target_price.toFixed(2)}, R/R: ${risk_reward_ratio.toFixed(2)}:1`);
     
     // Generate comprehensive reasoning
     const reasoning = this.generateEliteReasoning(timeframeAnalyses, confluences, fundamentalBoost, symbolLearning);
@@ -501,35 +520,103 @@ export class EliteSignalEngine {
   }
 
   private async getRealMarketPrice(symbol: string): Promise<number> {
-    // Simulate real market price for now (in production, connect to Binance API)
-    const basePrices: Record<string, number> = {
-      'BTCUSDT': 67000,
-      'ETHUSDT': 3900,
-      'BNBUSDT': 650,
-      'SOLUSDT': 220,
-      'XRPUSDT': 2.45,
-      'ADAUSDT': 1.15,
-      'AVAXUSDT': 45,
-      'DOTUSDT': 8.5,
-      'LINKUSDT': 22,
-      'MATICUSDT': 1.2
-    };
-    
-    const basePrice = basePrices[symbol] || 100;
-    // Add realistic price movement (+/- 2%)
-    const movement = (Math.random() - 0.5) * 0.04;
-    return basePrice * (1 + movement);
+    try {
+      // Fetch real-time price from CoinGecko API
+      const coinGeckoIds: Record<string, string> = {
+        'BTCUSDT': 'bitcoin',
+        'ETHUSDT': 'ethereum',
+        'BNBUSDT': 'binancecoin',
+        'SOLUSDT': 'solana',
+        'XRPUSDT': 'ripple',
+        'ADAUSDT': 'cardano',
+        'AVAXUSDT': 'avalanche-2',
+        'DOTUSDT': 'polkadot',
+        'LINKUSDT': 'chainlink',
+        'MATICUSDT': 'matic-network'
+      };
+
+      const coinId = coinGeckoIds[symbol];
+      if (!coinId) {
+        console.warn(`Unknown symbol ${symbol}, using fallback price`);
+        return 100; // Fallback price
+      }
+
+      const response = await fetch(
+        `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`,
+        {
+          headers: {
+            'Accept': 'application/json',
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`CoinGecko API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const price = data[coinId]?.usd;
+
+      if (!price || typeof price !== 'number') {
+        throw new Error(`Invalid price data for ${symbol}`);
+      }
+
+      console.log(`📊 Real-time price for ${symbol}: $${price.toFixed(2)}`);
+      return price;
+
+    } catch (error) {
+      console.error(`❌ Failed to fetch real price for ${symbol}:`, error);
+      
+      // Fallback to approximate current market prices
+      const fallbackPrices: Record<string, number> = {
+        'BTCUSDT': 67000,
+        'ETHUSDT': 3900,
+        'BNBUSDT': 650,
+        'SOLUSDT': 220,
+        'XRPUSDT': 2.45,
+        'ADAUSDT': 1.15,
+        'AVAXUSDT': 45,
+        'DOTUSDT': 8.5,
+        'LINKUSDT': 22,
+        'MATICUSDT': 1.2
+      };
+      
+      const fallbackPrice = fallbackPrices[symbol] || 100;
+      console.log(`🔄 Using fallback price for ${symbol}: $${fallbackPrice.toFixed(2)}`);
+      return fallbackPrice;
+    }
   }
 
   private calculateATR(timeframeAnalyses: TimeframeAnalysis[]): number {
-    // Calculate Average True Range based on timeframe analysis
-    // Higher confluence count indicates higher volatility
+    // Calculate Average True Range based on timeframe analysis and symbol volatility
     const avgStrength = timeframeAnalyses.reduce((sum, t) => sum + t.strength, 0) / timeframeAnalyses.length;
     const confidenceRange = Math.max(...timeframeAnalyses.map(t => t.confidence)) - Math.min(...timeframeAnalyses.map(t => t.confidence));
     
-    // Base ATR as percentage of price (0.5% to 3%)
-    const baseATR = 0.005 + (avgStrength * 0.002) + (confidenceRange * 0.0001);
-    return Math.max(0.005, Math.min(0.03, baseATR));
+    // Symbol-specific ATR multipliers based on historical volatility
+    const symbolVolatility: Record<string, number> = {
+      'BTCUSDT': 0.015,  // 1.5% average
+      'ETHUSDT': 0.020,  // 2.0% average
+      'BNBUSDT': 0.025,  // 2.5% average
+      'SOLUSDT': 0.030,  // 3.0% average (higher volatility)
+      'XRPUSDT': 0.035,  // 3.5% average
+      'ADAUSDT': 0.030,  // 3.0% average
+      'AVAXUSDT': 0.035, // 3.5% average
+      'DOTUSDT': 0.030,  // 3.0% average
+      'LINKUSDT': 0.025, // 2.5% average
+      'MATICUSDT': 0.035 // 3.5% average
+    };
+    
+    // Get base volatility for the symbol (default 2%)
+    const baseVolatility = symbolVolatility['BTCUSDT'] || 0.02;
+    
+    // Adjust based on timeframe analysis strength and confidence spread
+    const strengthMultiplier = 1 + (avgStrength * 0.3); // Up to 30% increase
+    const confidenceMultiplier = 1 + (confidenceRange * 0.001); // Small confidence adjustment
+    
+    const finalATR = baseVolatility * strengthMultiplier * confidenceMultiplier;
+    
+    // Ensure ATR stays within reasonable bounds (0.8% to 5%)
+    return Math.max(0.008, Math.min(0.05, finalATR));
   }
 
   private calculateVolatility(timeframeAnalyses: TimeframeAnalysis[]): number {
