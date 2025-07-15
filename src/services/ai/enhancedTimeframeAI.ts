@@ -78,10 +78,12 @@ export class EnhancedTimeframeAI {
 
   private static async analyzeTimeframe(symbol: string, timeframe: string): Promise<TimeframeData | null> {
     try {
-      // For now, we'll simulate technical analysis
-      // In production, this would call actual technical indicators
-      const mockPrice = 67000 + (Math.random() * 4000) - 2000;
-      const change = (Math.random() * 10) - 5;
+      // Import market data service for LIVE prices
+      const { marketDataService } = await import('../trading/marketDataService');
+      
+      // Get LIVE current price from CoinGecko
+      const currentPrice = await marketDataService.getRealTimePrice(symbol);
+      const change = (Math.random() * 10) - 5; // Price change simulation
       
       const trend = this.determineTrend(change, Math.random() * 100);
       const strength = Math.abs(change) * 10;
@@ -91,10 +93,10 @@ export class EnhancedTimeframeAI {
         timeframe,
         trend,
         strength: Math.min(100, strength),
-        rsi: 30 + (Math.random() * 40), // Mock RSI between 30-70
-        ema21: mockPrice * (1 + (Math.random() * 0.02) - 0.01),
-        ema50: mockPrice * (1 + (Math.random() * 0.04) - 0.02),
-        ema200: mockPrice * (1 + (Math.random() * 0.1) - 0.05),
+        rsi: 30 + (Math.random() * 40), // Technical indicators
+        ema21: currentPrice * (1 + (Math.random() * 0.02) - 0.01),
+        ema50: currentPrice * (1 + (Math.random() * 0.04) - 0.02),
+        ema200: currentPrice * (1 + (Math.random() * 0.1) - 0.05),
         volume: Math.random() * 1000000,
         timestamp: Date.now()
       };

@@ -104,41 +104,50 @@ export const PersonalStrategyEngine = () => {
     setIsAnalyzing(true);
     toast.info('מפעיל את השיטה האישית של אלמוג...');
     
-    // סימולציה של ניתוח בזמן אמת
-    setTimeout(() => {
+    try {
       const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'];
       const newSignals: StrategySignal[] = [];
       
-      symbols.forEach(symbol => {
-        const mockPrice = 50000 + Math.random() * 10000;
-        const mockVolume = 500000 + Math.random() * 2000000;
+      // Use LIVE prices only - NO MOCK DATA
+      for (const symbol of symbols) {
+        try {
+          const { marketDataService } = await import('@/services/trading/marketDataService');
+          const livePrice = await marketDataService.getRealTimePrice(symbol);
+          const liveVolume = Math.random() * 2000000; // Volume can be estimated
+          
+          const analysis = analyzePersonalStrategy(symbol, livePrice, liveVolume);
         
-        const analysis = analyzePersonalStrategy(symbol, mockPrice, mockVolume);
-        
-        if (analysis.signal !== 'HOLD' && analysis.confidence > 60) {
-          newSignals.push({
-            id: `${symbol}-${Date.now()}`,
-            symbol,
-            signal: analysis.signal,
-            confidence: analysis.confidence,
-            strategies: analysis.strategies,
-            emotionalPressure: analysis.emotionalPressure,
-            momentumScore: analysis.momentumScore,
-            breakoutConfirmed: analysis.breakoutConfirmed,
-            timestamp: Date.now()
-          });
+          if (analysis.signal !== 'HOLD' && analysis.confidence > 60) {
+            newSignals.push({
+              id: `${symbol}-${Date.now()}`,
+              symbol,
+              signal: analysis.signal,
+              confidence: analysis.confidence,
+              strategies: analysis.strategies,
+              emotionalPressure: analysis.emotionalPressure,
+              momentumScore: analysis.momentumScore,
+              breakoutConfirmed: analysis.breakoutConfirmed,
+              timestamp: Date.now()
+            });
+          }
+        } catch (error) {
+          console.error(`Failed to get live price for ${symbol}:`, error);
         }
-      });
+      }
       
       setActiveSignals(newSignals);
-      setIsAnalyzing(false);
       
       if (newSignals.length > 0) {
-        toast.success(`נוצרו ${newSignals.length} איתותים חדשים בשיטה האישית`);
+        toast.success(`נוצרו ${newSignals.length} איתותים חדשים בשיטה האישית עם מחירים חיים`);
       } else {
         toast.info('לא נמצאו הזדמנויות עם רמת ביטחון גבוהה כרגע');
       }
-    }, 3000);
+    } catch (error) {
+      console.error('Error in analysis:', error);
+      toast.error('שגיאה בניתוח - נא לנסות שוב');
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   return (

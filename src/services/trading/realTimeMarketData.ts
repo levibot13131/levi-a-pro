@@ -218,20 +218,10 @@ export class RealTimeMarketDataService {
         source: 'coingecko'
       };
     } catch (error) {
-      console.error(`CoinGecko fetch failed for ${symbol}:`, error);
+      console.error(`❌ CRITICAL: CoinGecko fetch failed for ${symbol}:`, error);
       
-      // Fallback to estimated price with realistic variations
-      const basePrice = this.getEstimatedPrice(symbol);
-      const variation = 0.98 + (Math.random() * 0.04); // ±2% variation
-      
-      return {
-        symbol,
-        price: basePrice * variation,
-        volume24h: basePrice * 1000000,
-        priceChange24h: -3 + (Math.random() * 6), // -3% to +3%
-        timestamp: Date.now(),
-        source: 'coingecko'
-      };
+      // DO NOT USE FALLBACK - ENFORCE LIVE PRICES ONLY
+      throw new Error(`LIVE PRICE REQUIRED: Cannot fetch real-time data for ${symbol}. No fallback prices allowed in production.`);
     }
   }
 
