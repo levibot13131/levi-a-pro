@@ -64,17 +64,23 @@ interface StrategyWeight {
 export class EliteSignalEngine {
   private isRunning = false;
   private analysisInterval?: NodeJS.Timeout;
+  private startupTime = 0;
+  private lastGlobalSignalTime = 0;
   
-    // Elite Signal Settings - Quality over Quantity
-    private readonly TARGET_DAILY_SIGNALS = 10; // Maximum 10 elite signals per day
+  // Elite Signal Settings - Quality over Quantity
+  private readonly TARGET_DAILY_SIGNALS = 10; // Maximum 10 elite signals per day
   private readonly MIN_CONFLUENCES = 3; // Minimum 3 strong confluences required
   private readonly MIN_ELITE_CONFIDENCE = 75; // Minimum 75% confidence for elite signals
+  private readonly GLOBAL_SIGNAL_COOLDOWN = 10 * 60 * 1000; // 10 minutes between signals globally
+  private readonly SYMBOL_SIGNAL_COOLDOWN = 30 * 60 * 1000; // 30 minutes between signals per symbol
+  private readonly MINIMUM_RR_RATIO = 1.8; // Enforce minimum 1.8:1 risk/reward
   private readonly TIMEFRAMES = ['1m', '5m', '15m', '1h', '4h', '1d'];
   
   // Learning System
   private strategyWeights: Map<string, StrategyWeight> = new Map();
   private signalHistory: LearningData[] = [];
   private symbolPerformance: Map<string, { wins: number; losses: number; avgConfidence: number }> = new Map();
+  private lastSymbolSignalTime: Map<string, number> = new Map();
   
   // Elite Symbol Watchlist - High Volume & Liquidity Only
   private readonly ELITE_SYMBOLS = [
@@ -149,8 +155,10 @@ export class EliteSignalEngine {
     console.log('🔺 Magic Triangle: Integrated - emotional pressure zone analysis active');
     
     this.isRunning = true;
+    this.startupTime = Date.now();
+    this.lastGlobalSignalTime = 0; // Reset global cooldown
     
-    // Start real-time market data service
+    // Start real-time market data service and wait for stabilization
     const { realTimeMarketData } = await import('./realTimeMarketData');
     realTimeMarketData.start();
     
@@ -160,13 +168,22 @@ export class EliteSignalEngine {
     // Reset daily counter if new day
     this.resetDailyCounters();
     
-    // Start elite analysis every 2 minutes for deep analysis
-    this.analysisInterval = setInterval(() => {
-      this.performEliteAnalysis();
-    }, 120000); // 2 minutes for comprehensive analysis
+    console.log('⏳ Initializing market data feeds - 60 second stabilization period...');
     
-    // Immediate first analysis
-    await this.performEliteAnalysis();
+    // Wait 60 seconds for market data stabilization before starting analysis
+    setTimeout(async () => {
+      if (!this.isRunning) return;
+      
+      console.log('✅ Market data stabilized - starting elite analysis');
+      
+      // Start elite analysis every 2 minutes for deep analysis
+      this.analysisInterval = setInterval(() => {
+        this.performEliteAnalysis();
+      }, 120000); // 2 minutes for comprehensive analysis
+      
+      // Perform first analysis after stabilization
+      await this.performEliteAnalysis();
+    }, 60000); // 60 second stabilization period
   }
 
   public stop() {
@@ -194,7 +211,21 @@ export class EliteSignalEngine {
   private async performEliteAnalysis() {
     if (!this.isRunning) return;
     
-    console.log('🔍 Performing Elite Multi-Timeframe Analysis...');
+    const timeSinceStartup = Date.now() - this.startupTime;
+    if (timeSinceStartup < 60000) {
+      console.log('⏳ System stabilizing... skipping analysis');
+      return;
+    }
+    
+    // Global cooldown check
+    const timeSinceLastGlobalSignal = Date.now() - this.lastGlobalSignalTime;
+    if (timeSinceLastGlobalSignal < this.GLOBAL_SIGNAL_COOLDOWN) {
+      const remainingMinutes = Math.ceil((this.GLOBAL_SIGNAL_COOLDOWN - timeSinceLastGlobalSignal) / 60000);
+      console.log(`⏰ Global cooldown active. ${remainingMinutes} minutes remaining`);
+      return;
+    }
+    
+    console.log('🔍 Analyzing markets for signal opportunities...');
     
     // Check if we've reached daily limit
     if (this.dailySignalCount >= this.TARGET_DAILY_SIGNALS) {
@@ -210,6 +241,16 @@ export class EliteSignalEngine {
 
   private async analyzeSymbolElite(symbol: string) {
     try {
+      // Check symbol-specific cooldown
+      const lastSymbolSignal = this.lastSymbolSignalTime.get(symbol) || 0;
+      const timeSinceLastSymbolSignal = Date.now() - lastSymbolSignal;
+      
+      if (timeSinceLastSymbolSignal < this.SYMBOL_SIGNAL_COOLDOWN) {
+        const remainingMinutes = Math.ceil((this.SYMBOL_SIGNAL_COOLDOWN - timeSinceLastSymbolSignal) / 60000);
+        console.log(`⏱️ ${symbol}: Symbol cooldown active (${remainingMinutes}m remaining)`);
+        return;
+      }
+      
       console.log(`🧠 Deep Analysis: ${symbol}`);
       
       // 1. Multi-timeframe analysis
@@ -228,10 +269,13 @@ export class EliteSignalEngine {
       if (confluences.length >= this.MIN_CONFLUENCES) {
         const signal = await this.generateEliteSignal(symbol, timeframeAnalyses, confluences, fundamentalBoost, symbolLearning);
         
-        if (signal.confidence >= this.MIN_ELITE_CONFIDENCE) {
+        if (signal.confidence >= this.MIN_ELITE_CONFIDENCE && signal.risk_reward_ratio >= this.MINIMUM_RR_RATIO) {
           await this.sendEliteSignal(signal);
         } else {
-          await this.logEliteRejection(symbol, signal.confidence, confluences, 'Below elite confidence threshold');
+          const reason = signal.confidence < this.MIN_ELITE_CONFIDENCE 
+            ? `Low confidence: ${signal.confidence.toFixed(2)}% vs ${this.MIN_ELITE_CONFIDENCE}%`
+            : `Poor R/R: ${signal.risk_reward_ratio.toFixed(2)} vs ${this.MINIMUM_RR_RATIO}`;
+          await this.logEliteRejection(symbol, signal.confidence, confluences, reason);
         }
       } else {
         await this.logEliteRejection(symbol, 0, confluences, `Insufficient confluences: ${confluences.length}/${this.MIN_CONFLUENCES}`);
@@ -638,23 +682,9 @@ export class EliteSignalEngine {
     } catch (error) {
       console.error(`❌ CRITICAL: Failed to fetch LIVE price for ${symbol}:`, error);
       
-      // Fallback to approximate current market prices
-      const fallbackPrices: Record<string, number> = {
-        'BTCUSDT': 67000,
-        'ETHUSDT': 3900,
-        'BNBUSDT': 650,
-        'SOLUSDT': 220,
-        'XRPUSDT': 2.45,
-        'ADAUSDT': 1.15,
-        'AVAXUSDT': 45,
-        'DOTUSDT': 8.5,
-        'LINKUSDT': 22,
-        'MATICUSDT': 1.2
-      };
-      
-      const fallbackPrice = fallbackPrices[symbol] || 100;
-      console.log(`🔄 Using fallback price for ${symbol}: $${fallbackPrice.toFixed(2)}`);
-      return fallbackPrice;
+      // CRITICAL: Signal rejected - live price fetch failed
+      console.error(`🚨 SIGNAL REJECTED: Cannot use fallback prices for production signals`);
+      throw new Error(`Live price fetch failed for ${symbol} - production signals require real-time data`);
     }
   }
 
@@ -758,6 +788,10 @@ export class EliteSignalEngine {
   private async sendEliteSignal(signal: EliteSignal) {
     try {
       console.log(`🚀 ELITE SIGNAL GENERATED: ${signal.symbol} - Confidence: ${signal.confidence.toFixed(1)}%`);
+      
+      // Update global and symbol-specific timing
+      this.lastGlobalSignalTime = Date.now();
+      this.lastSymbolSignalTime.set(signal.symbol, Date.now());
       
       // Store in database
       await supabase.from('signal_history').insert({
