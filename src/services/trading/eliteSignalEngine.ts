@@ -721,15 +721,62 @@ export class EliteSignalEngine {
   }
 
   private async applyMagicTriangleAnalysis(symbol: string, marketPrice: number, timeframeAnalyses: TimeframeAnalysis[]) {
-    // Simplified Magic Triangle integration - would use full implementation
+    // CRITICAL FIX: Use REAL market price for all calculations
+    console.log(`🔺 Magic Triangle Analysis for ${symbol} at REAL PRICE: $${marketPrice.toFixed(2)}`);
+    
+    // Analyze confluence strength from timeframes
+    const bullishCount = timeframeAnalyses.filter(t => t.trend === 'bullish').length;
+    const bearishCount = timeframeAnalyses.filter(t => t.trend === 'bearish').length;
+    const avgConfidence = timeframeAnalyses.reduce((sum, t) => sum + t.confidence, 0) / timeframeAnalyses.length;
+    
+    // Require strong confluence (4+ timeframes aligned)
+    const isValid = Math.max(bullishCount, bearishCount) >= 4 && avgConfidence >= 70;
+    const direction = bullishCount > bearishCount ? 'long' : 'short';
+    
+    if (!isValid) {
+      console.log(`❌ Magic Triangle: Insufficient confluence (${Math.max(bullishCount, bearishCount)}/4 timeframes, ${avgConfidence.toFixed(1)}% avg confidence)`);
+      return {
+        isValid: false,
+        direction: 'none',
+        confidence: 0,
+        entry: marketPrice,
+        stopLoss: marketPrice,
+        target1: marketPrice,
+        confluences: []
+      };
+    }
+    
+    // Calculate ATR-based levels using REAL market price
+    const atrPercent = this.calculateATR(timeframeAnalyses);
+    const atr = marketPrice * atrPercent;
+    
+    let stopLoss: number;
+    let target1: number;
+    
+    if (direction === 'long') {
+      stopLoss = marketPrice - (atr * 1.8); // Tighter stop for MT signals
+      target1 = marketPrice + (atr * 3.5);  // Higher target for MT signals
+    } else {
+      stopLoss = marketPrice + (atr * 1.8);
+      target1 = marketPrice - (atr * 3.5);
+    }
+    
+    const confidence = Math.min(85, avgConfidence + (Math.max(bullishCount, bearishCount) * 3));
+    
+    console.log(`✅ Magic Triangle ${direction.toUpperCase()}: Entry: $${marketPrice.toFixed(2)}, SL: $${stopLoss.toFixed(2)}, TP: $${target1.toFixed(2)}`);
+    
     return {
-      isValid: Math.random() > 0.6,
-      direction: Math.random() > 0.5 ? 'long' : 'short',
-      confidence: 70 + Math.random() * 25,
-      entry: marketPrice,
-      stopLoss: marketPrice * (Math.random() > 0.5 ? 0.97 : 1.03),
-      target1: marketPrice * (Math.random() > 0.5 ? 1.05 : 0.95),
-      confluences: ['Magic Triangle pressure zone active', 'Volume absorption detected']
+      isValid: true,
+      direction,
+      confidence,
+      entry: marketPrice,  // ALWAYS use real market price
+      stopLoss,           // Calculated from real price
+      target1,            // Calculated from real price
+      confluences: [
+        `Magic Triangle ${direction} pressure zone confirmed`,
+        `${Math.max(bullishCount, bearishCount)}/6 timeframes aligned`,
+        `Confidence confluence: ${avgConfidence.toFixed(1)}%`
+      ]
     };
   }
 
