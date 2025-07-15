@@ -604,35 +604,39 @@ export class EliteSignalEngine {
 
       const coinId = coinGeckoIds[symbol];
       if (!coinId) {
-        console.warn(`Unknown symbol ${symbol}, using fallback price`);
-        return 100; // Fallback price
+        console.warn(`❌ Unknown symbol ${symbol}, cannot fetch real price - check symbol mapping`);
+        throw new Error(`Symbol ${symbol} not supported`);
       }
 
+      console.log(`🔄 Fetching LIVE price for ${symbol} (${coinId}) from CoinGecko...`);
+      
       const response = await fetch(
-        `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`,
+        `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true`,
         {
           headers: {
             'Accept': 'application/json',
+            'User-Agent': 'LeviPro/1.0'
           }
         }
       );
 
       if (!response.ok) {
-        throw new Error(`CoinGecko API error: ${response.status}`);
+        throw new Error(`CoinGecko API error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
       const price = data[coinId]?.usd;
+      const change24h = data[coinId]?.usd_24h_change;
 
       if (!price || typeof price !== 'number') {
-        throw new Error(`Invalid price data for ${symbol}`);
+        throw new Error(`Invalid price data received for ${symbol}: ${JSON.stringify(data)}`);
       }
 
-      console.log(`📊 Real-time price for ${symbol}: $${price.toFixed(2)}`);
+      console.log(`✅ LIVE PRICE FETCHED: ${symbol} = $${price.toFixed(2)} (${change24h ? change24h.toFixed(2) + '%' : 'N/A'} 24h)`);
       return price;
 
     } catch (error) {
-      console.error(`❌ Failed to fetch real price for ${symbol}:`, error);
+      console.error(`❌ CRITICAL: Failed to fetch LIVE price for ${symbol}:`, error);
       
       // Fallback to approximate current market prices
       const fallbackPrices: Record<string, number> = {
@@ -793,27 +797,35 @@ export class EliteSignalEngine {
   private async sendEliteTelegramAlert(signal: EliteSignal) {
     const confluenceList = signal.confluences.slice(0, 3).map(c => `• ${c}`).join('\n');
     
+    // Get fundamental sentiment summary for enhanced context
+    const fundamentalSummary = await this.getFundamentalSummaryForSignal(signal.symbol);
+    
     const message = `
 🏆 <b>ELITE LeviPro Signal</b>
 
 💎 <b>${signal.symbol}</b> | <b>${signal.action}</b>
-📍 <b>Entry:</b> $${signal.entry_price.toFixed(2)}
+📍 <b>Entry:</b> $${signal.entry_price.toFixed(2)} (LIVE)
 🎯 <b>Target:</b> $${signal.target_price.toFixed(2)}
 ⛔ <b>Stop:</b> $${signal.stop_loss.toFixed(2)}
 📊 <b>R/R:</b> ${signal.risk_reward_ratio.toFixed(2)}:1
 
 🧠 <b>Elite Confidence:</b> ${signal.confidence.toFixed(0)}%
 ⚡ <b>Confluences:</b> ${signal.confluences.length}/${this.MIN_CONFLUENCES}
+🎯 <b>Strategy Mix:</b> ${signal.strategy}
 
 🔍 <b>Key Confluences:</b>
 ${confluenceList}
 
+📰 <b>NLP Intelligence:</b>
+${fundamentalSummary}
+
 🎯 <b>Daily Signal:</b> ${this.dailySignalCount}/${this.TARGET_DAILY_SIGNALS}
 ⏰ ${new Date().toLocaleString('he-IL')}
 
-<i>Elite Quality • AI Learning Enabled</i>
+<i>Elite Quality • AI Learning Enabled • Real-Time Prices</i>
 `;
 
+    console.log(`📤 Sending Elite Telegram Signal - Entry: $${signal.entry_price.toFixed(2)} (LIVE PRICE)`);
     await sendTelegramMessage(message, true);
   }
 
@@ -979,6 +991,45 @@ ${confluenceList}
     
     await this.sendEliteSignal(testSignal);
     return true;
+  }
+
+  private async getFundamentalSummaryForSignal(symbol: string): Promise<string> {
+    try {
+      // Get market intelligence data
+      const marketIntel = fundamentalScanner.getMarketIntelligence();
+      
+      // Get symbol-specific events
+      const symbolEvents = fundamentalScanner.getEventsBySymbol(symbol);
+      
+      const summary: string[] = [];
+      
+      // Overall market sentiment
+      const sentimentEmoji = marketIntel.overallSentiment === 'Bullish' ? '📈' : 
+                            marketIntel.overallSentiment === 'Bearish' ? '📉' : '⚖️';
+      summary.push(`${sentimentEmoji} Market: ${marketIntel.overallSentiment} (${marketIntel.sentimentScore.toFixed(0)}%)`);
+      
+      // Fear & Greed
+      summary.push(`😱 Fear/Greed: ${marketIntel.fearGreedIndex}`);
+      
+      // Whale activity
+      if (marketIntel.whaleActivity !== 'Low') {
+        summary.push(`🐋 Whale Activity: ${marketIntel.whaleActivity}`);
+      }
+      
+      // Symbol-specific events
+      if (symbolEvents.length > 0) {
+        const recentEvent = symbolEvents[0];
+        const eventEmoji = recentEvent.sentiment === 'Bullish' ? '📈' : 
+                          recentEvent.sentiment === 'Bearish' ? '📉' : '⚖️';
+        summary.push(`${eventEmoji} ${recentEvent.category}: ${recentEvent.title.substring(0, 40)}...`);
+      }
+
+      return summary.slice(0, 3).join('\n');
+      
+    } catch (error) {
+      console.warn(`⚠️ Failed to get fundamental summary for ${symbol}:`, error);
+      return 'Fundamental analysis unavailable';
+    }
   }
 }
 
