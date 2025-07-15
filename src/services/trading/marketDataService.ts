@@ -9,8 +9,11 @@ export class MarketDataService {
 
   public async getCurrentMarketData() {
     try {
+      console.log('🔍 Getting LIVE market data from CoinGecko...');
       const btcPrice = await this.getRealTimePrice('BTCUSDT');
       const ethPrice = await this.getRealTimePrice('ETHUSDT');
+      
+      console.log(`✅ LIVE prices: BTC=$${btcPrice.toFixed(2)}, ETH=$${ethPrice.toFixed(2)}`);
       
       return {
         timestamp: Date.now(),
@@ -20,43 +23,62 @@ export class MarketDataService {
         volatility: 0.15
       };
     } catch (error) {
-      console.error('Failed to get current market data:', error);
-      return {
-        timestamp: Date.now(),
-        btcPrice: 67500,
-        ethPrice: 3520,
-        marketSentiment: 'neutral',
-        volatility: 0.15
-      };
+      console.error('❌ CRITICAL: Cannot get LIVE market data:', error);
+      // DO NOT USE FALLBACK DATA - ENFORCE REAL PRICES ONLY
+      throw new Error(`LIVE MARKET DATA REQUIRED: ${error.message}`);
     }
   }
 
   public async getMarketData(symbol: string) {
     try {
+      console.log(`🔍 Getting LIVE market data for ${symbol}...`);
       const price = await this.getRealTimePrice(symbol);
       const previousPrice = this.getPreviousPrice(symbol);
       const priceChange = previousPrice ? (price - previousPrice) / previousPrice : 0;
       
+      // Use live market data service for volume data
+      const liveData = await this.getLiveMarketVolume(symbol);
+      
+      console.log(`✅ LIVE data for ${symbol}: Price=$${price.toFixed(2)}, Change=${(priceChange*100).toFixed(2)}%`);
+      
       return {
         symbol,
         price,
-        volume: Math.random() * 1000000, // Mock volume for now
+        volume: liveData.volume || 0,
         priceChange,
         timestamp: Date.now(),
         wyckoffPhase: this.analyzeWyckoffPhase(symbol, price),
-        rsi: 45 + Math.random() * 20,
-        vwap: price * (0.98 + Math.random() * 0.04)
+        rsi: 45 + Math.random() * 20, // TODO: Connect to real RSI calculation
+        vwap: price * (0.98 + Math.random() * 0.04) // TODO: Connect to real VWAP
       };
     } catch (error) {
-      console.error(`Failed to get market data for ${symbol}:`, error);
-      return this.getFallbackMarketData(symbol);
+      console.error(`❌ CRITICAL: Failed to get LIVE market data for ${symbol}:`, error);
+      // DO NOT USE FALLBACK - ENFORCE REAL DATA ONLY
+      throw new Error(`LIVE MARKET DATA REQUIRED for ${symbol}: ${error.message}`);
     }
   }
 
-  private async getRealTimePrice(symbol: string): Promise<number> {
+  private async getLiveMarketVolume(symbol: string): Promise<{ volume: number }> {
+    try {
+      // Import here to avoid circular dependency
+      const { liveMarketDataService } = await import('./liveMarketDataService');
+      const liveData = await liveMarketDataService.getMultipleAssets([symbol]);
+      const symbolData = liveData.get(symbol);
+      
+      return {
+        volume: symbolData?.volume24h || 0
+      };
+    } catch (error) {
+      console.warn(`⚠️ Could not get live volume for ${symbol}, using 0`);
+      return { volume: 0 };
+    }
+  }
+
+  public async getRealTimePrice(symbol: string): Promise<number> {
     // Check cache first
     const cached = this.priceCache.get(symbol);
     if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
+      console.log(`📊 LIVE PRICE (cached): ${symbol} = $${cached.price.toFixed(2)}`);
       return cached.price;
     }
 
@@ -76,9 +98,11 @@ export class MarketDataService {
 
       const coinId = coinGeckoIds[symbol];
       if (!coinId) {
-        throw new Error(`Unknown symbol: ${symbol}`);
+        throw new Error(`❌ CRITICAL: Unknown symbol ${symbol} - cannot get real price`);
       }
 
+      console.log(`🔍 Fetching LIVE PRICE from CoinGecko: ${symbol} (${coinId})`);
+      
       const response = await fetch(
         `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd&include_24hr_change=true`,
         {
@@ -87,28 +111,32 @@ export class MarketDataService {
       );
 
       if (!response.ok) {
-        throw new Error(`CoinGecko API error: ${response.status}`);
+        throw new Error(`❌ CoinGecko API error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
       const price = data[coinId]?.usd;
 
-      if (!price || typeof price !== 'number') {
-        throw new Error(`Invalid price data for ${symbol}`);
+      if (!price || typeof price !== 'number' || price <= 0) {
+        throw new Error(`❌ CRITICAL: Invalid price data for ${symbol}: ${price}`);
       }
 
       // Cache the price
       this.priceCache.set(symbol, { price, timestamp: Date.now() });
+      console.log(`✅ LIVE PRICE SUCCESS: ${symbol} = $${price.toFixed(2)} from CoinGecko`);
       return price;
 
     } catch (error) {
-      console.error(`Failed to fetch real-time price for ${symbol}:`, error);
-      return this.getFallbackPrice(symbol);
+      console.error(`❌ CRITICAL: Failed to fetch LIVE price for ${symbol}:`, error);
+      // DO NOT USE FALLBACK - ENFORCE REAL PRICES ONLY
+      throw new Error(`LIVE PRICE REQUIRED: Cannot generate signal for ${symbol} without real-time price data. Error: ${error.message}`);
     }
   }
 
   public async getMultipleMarketData(symbols: string[]) {
     const results = new Map();
+    
+    console.log(`🔍 Getting LIVE market data for ${symbols.length} symbols: ${symbols.join(', ')}`);
     
     // Fetch all symbols in parallel for better performance
     const dataPromises = symbols.map(symbol => this.getMarketData(symbol));
@@ -118,12 +146,15 @@ export class MarketDataService {
       const result = dataResults[index];
       if (result.status === 'fulfilled') {
         results.set(symbol, result.value);
+        console.log(`✅ LIVE data success: ${symbol}`);
       } else {
-        console.error(`Failed to get data for ${symbol}:`, result.reason);
-        results.set(symbol, this.getFallbackMarketData(symbol));
+        console.error(`❌ CRITICAL: Failed to get LIVE data for ${symbol}:`, result.reason);
+        // DO NOT USE FALLBACK - SKIP SYMBOLS WITHOUT REAL DATA
+        console.log(`🚫 Skipping ${symbol} - real-time data required`);
       }
     });
     
+    console.log(`✅ LIVE data retrieved for ${results.size}/${symbols.length} symbols`);
     return results;
   }
 
@@ -132,35 +163,7 @@ export class MarketDataService {
     return cached ? cached.price : null;
   }
 
-  private getFallbackPrice(symbol: string): number {
-    const fallbackPrices: Record<string, number> = {
-      'BTCUSDT': 67000,
-      'ETHUSDT': 3900,
-      'BNBUSDT': 650,
-      'SOLUSDT': 220,
-      'XRPUSDT': 2.45,
-      'ADAUSDT': 1.15,
-      'AVAXUSDT': 45,
-      'DOTUSDT': 8.5,
-      'LINKUSDT': 22,
-      'MATICUSDT': 1.2
-    };
-    return fallbackPrices[symbol] || 100;
-  }
-
-  private getFallbackMarketData(symbol: string) {
-    const price = this.getFallbackPrice(symbol);
-    return {
-      symbol,
-      price,
-      volume: Math.random() * 1000000,
-      priceChange: (Math.random() - 0.5) * 0.05,
-      timestamp: Date.now(),
-      wyckoffPhase: 'Accumulation',
-      rsi: 45 + Math.random() * 20,
-      vwap: price * (0.98 + Math.random() * 0.04)
-    };
-  }
+  // FALLBACK FUNCTIONS REMOVED - REAL-TIME DATA ONLY
 
   private calculateMarketSentiment(btcPrice: number, ethPrice: number): 'bullish' | 'bearish' | 'neutral' {
     // Simple sentiment based on price movement (can be enhanced)

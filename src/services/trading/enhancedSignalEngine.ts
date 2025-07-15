@@ -1,16 +1,20 @@
 
 import { TradingSignal } from '@/types/trading';
 import { marketDataService } from './marketDataService';
+import { liveMarketDataService } from './liveMarketDataService';
 import { strategyEngine } from './strategyEngine';
 import { IntelligenceEnhancedScoring } from './intelligenceEnhancedScoring';
 import { unifiedTelegramService } from '../telegram/unifiedTelegramService';
 import { telegramBot } from '../telegram/telegramBot';
 import { SignalScoringEngine } from './signalScoringEngine';
 import { riskManagementEngine } from '../risk/riskManagementEngine';
+import { signalCooldownManager } from './signalCooldownManager';
 
 export class EnhancedSignalEngine {
   private isRunning = false;
   private debugMode = false;
+  private continuousMonitoring = false;
+  private monitoringInterval: NodeJS.Timeout | null = null;
   private rejectionStats = {
     total: 0,
     byReason: {} as { [key: string]: number }
@@ -22,6 +26,41 @@ export class EnhancedSignalEngine {
 
   private async initializeEngine() {
     console.log('🚀 LeviPro Enhanced Signal Engine initializing...');
+    
+    // Verify API connections
+    await this.verifyApiConnections();
+    
+    console.log('✅ Enhanced Signal Engine ready with:');
+    console.log('   📊 Live CoinGecko price data');
+    console.log('   🕒 Startup cooldown protection');
+    console.log('   🎯 Symbol-level signal spacing');
+    console.log('   🛡️ Risk management integration');
+  }
+
+  private async verifyApiConnections() {
+    try {
+      console.log('🔍 Verifying API connections...');
+      
+      // Test CoinGecko connection
+      const healthCheck = await liveMarketDataService.performHealthCheck();
+      
+      if (healthCheck.coinGecko) {
+        console.log('✅ CoinGecko API: Connected');
+      } else {
+        console.warn('⚠️ CoinGecko API: Connection issues');
+      }
+      
+      // Test market data service
+      try {
+        await marketDataService.getRealTimePrice('BTCUSDT');
+        console.log('✅ Market Data Service: Real-time prices working');
+      } catch (error) {
+        console.error('❌ Market Data Service: Real-time price fetch failed', error);
+      }
+      
+    } catch (error) {
+      console.error('❌ API connection verification failed:', error);
+    }
   }
 
   public async start() {
@@ -31,7 +70,118 @@ export class EnhancedSignalEngine {
     }
 
     console.log('▶️ Starting LeviPro Signal Engine with Enhanced Quality Scoring...');
+    
+    // Check startup cooldown status
+    const cooldownStatus = signalCooldownManager.getStatus();
+    if (!cooldownStatus.startupComplete) {
+      const remainingMinutes = Math.ceil((cooldownStatus.nextSignalAllowed - Date.now()) / 60000);
+      console.log(`⏳ STARTUP COOLDOWN: Engine starting but signals blocked for ${remainingMinutes} minutes`);
+      console.log('   This prevents signal bursts and ensures system stability');
+    }
+    
     this.isRunning = true;
+    
+    // Start continuous monitoring
+    this.startContinuousMonitoring();
+    
+    console.log('✅ Enhanced Signal Engine started successfully');
+  }
+
+  private startContinuousMonitoring() {
+    if (this.continuousMonitoring) return;
+    
+    this.continuousMonitoring = true;
+    console.log('🔄 Starting continuous market monitoring...');
+    
+    // Monitor every 2 minutes for new opportunities
+    this.monitoringInterval = setInterval(async () => {
+      if (!this.isRunning) return;
+      
+      try {
+        await this.scanMarketForSignals();
+      } catch (error) {
+        console.error('❌ Error in continuous monitoring:', error);
+      }
+    }, 2 * 60 * 1000); // 2 minutes
+  }
+
+  private async scanMarketForSignals() {
+    try {
+      console.log('🔍 Scanning market for new signal opportunities...');
+      
+      // Get live market data for all symbols
+      const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'ADAUSDT', 'DOTUSDT'];
+      const marketData = await liveMarketDataService.getMultipleAssets(symbols);
+      
+      for (const [symbol, data] of marketData) {
+        // Check cooldown before analyzing
+        const cooldownCheck = signalCooldownManager.canSendSignal(symbol);
+        if (!cooldownCheck.allowed) {
+          console.log(`🕒 ${symbol}: ${cooldownCheck.reason}`);
+          continue;
+        }
+        
+        // Analyze for potential signals
+        await this.analyzeSymbolForSignal(symbol, data);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error in market scan:', error);
+    }
+  }
+
+  private async analyzeSymbolForSignal(symbol: string, marketData: any) {
+    try {
+      // Generate base signal using enhanced analysis
+      const baseSignal = this.generateBaseSignal(marketData);
+      if (!baseSignal) return;
+      
+      // Apply intelligence scoring
+      const intelligenceSignal = await IntelligenceEnhancedScoring.scoreSignalWithIntelligence(baseSignal);
+      
+      // Apply risk management
+      const riskCheck = riskManagementEngine.shouldAllowSignal(intelligenceSignal.signal);
+      
+      if (!riskCheck.allowed) {
+        console.log(`🚫 ${symbol}: Risk management blocked - ${riskCheck.reason}`);
+        return;
+      }
+      
+      // If high quality and passes all checks, send signal
+      if (intelligenceSignal.shouldSend && intelligenceSignal.qualityRating === 'ELITE') {
+        await this.sendHighQualitySignal(intelligenceSignal, riskCheck);
+      }
+      
+    } catch (error) {
+      console.error(`❌ Error analyzing ${symbol}:`, error);
+    }
+  }
+
+  private async sendHighQualitySignal(intelligenceSignal: any, riskCheck: any) {
+    const signal = intelligenceSignal.signal;
+    const symbol = signal.symbol;
+    
+    // Final cooldown check
+    const cooldownCheck = signalCooldownManager.canSendSignal(symbol);
+    if (!cooldownCheck.allowed) {
+      console.log(`🕒 Last-minute cooldown block for ${symbol}: ${cooldownCheck.reason}`);
+      return;
+    }
+    
+    // Send the signal
+    const enhancedSignal = {
+      ...signal,
+      riskData: riskCheck.riskInfo,
+      riskSummary: riskManagementEngine.generateRiskSummaryForSignal(signal)
+    };
+    
+    const sent = await this.sendEnhancedSignal(enhancedSignal, intelligenceSignal);
+    
+    if (sent) {
+      // Record signal sent and activate cooldowns
+      signalCooldownManager.recordSignalSent(symbol);
+      console.log(`✅ HIGH-QUALITY SIGNAL SENT: ${symbol} ${signal.action} with cooldowns activated`);
+    }
   }
 
   public stop() {
@@ -42,6 +192,13 @@ export class EnhancedSignalEngine {
 
     console.log('⏹️ Stopping LeviPro Signal Engine');
     this.isRunning = false;
+    this.continuousMonitoring = false;
+    
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+      this.monitoringInterval = null;
+      console.log('🛑 Continuous monitoring stopped');
+    }
   }
 
   public getEngineStatus() {
@@ -72,23 +229,32 @@ export class EnhancedSignalEngine {
 
   public async sendTestSignal(): Promise<boolean> {
     try {
-      const mockSignal: TradingSignal = {
-        id: `test-${Date.now()}`,
+      console.log('🧪 Generating test signal with LIVE prices...');
+      
+      // Get real-time price for test signal
+      const currentPrice = await marketDataService.getRealTimePrice('BTCUSDT');
+      const targetPrice = currentPrice * 1.025; // 2.5% target
+      const stopLoss = currentPrice * 0.985; // 1.5% stop loss
+      
+      console.log(`🧪 Test signal prices: Entry=$${currentPrice.toFixed(2)}, Target=$${targetPrice.toFixed(2)}, SL=$${stopLoss.toFixed(2)}`);
+      
+      const testSignal: TradingSignal = {
+        id: `test-live-${Date.now()}`,
         symbol: 'BTCUSDT',
-        strategy: 'test-signal',
+        strategy: 'live-test-signal',
         action: 'buy',
-        price: 45000,
-        targetPrice: 46000,
-        stopLoss: 44000,
-        confidence: 0.9,
-        riskRewardRatio: 2.5,
-        reasoning: 'Test signal for demonstration',
+        price: currentPrice,
+        targetPrice: targetPrice,
+        stopLoss: stopLoss,
+        confidence: 0.85,
+        riskRewardRatio: 2.5 / 1.5,
+        reasoning: 'Test signal with LIVE CoinGecko prices',
         timestamp: Date.now(),
         status: 'active',
         telegramSent: false
       };
 
-      const intelligenceSignal = await IntelligenceEnhancedScoring.scoreSignalWithIntelligence(mockSignal);
+      const intelligenceSignal = await IntelligenceEnhancedScoring.scoreSignalWithIntelligence(testSignal);
       
       const riskCheck = riskManagementEngine.shouldAllowSignal(intelligenceSignal.signal);
       
@@ -203,28 +369,44 @@ export class EnhancedSignalEngine {
     const actionEmoji = signal.action === 'buy' ? '🟢 BUY' : '🔴 SELL';
     const qualityEmoji = this.getQualityEmoji(scoredSignal.qualityRating);
     
+    // Calculate potential profit/loss percentages
+    const profitPercent = signal.action === 'buy' 
+      ? ((signal.targetPrice - signal.price) / signal.price * 100)
+      : ((signal.price - signal.targetPrice) / signal.price * 100);
+      
+    const lossPercent = signal.action === 'buy'
+      ? ((signal.price - signal.stopLoss) / signal.price * 100)
+      : ((signal.stopLoss - signal.price) / signal.price * 100);
+    
     return `
-${qualityEmoji} <b>${actionEmoji}: ${signal.symbol}</b>
+🚀 <b>LeviPro LIVE Signal</b> ${qualityEmoji}
+
+${actionEmoji} <b>${signal.symbol}</b>
+📡 <b>Live Price Source:</b> CoinGecko API
 
 💰 <b>Entry:</b> $${signal.price.toFixed(2)}
-🎯 <b>Target:</b> $${signal.targetPrice.toFixed(2)}
-🛑 <b>Stop Loss:</b> $${signal.stopLoss.toFixed(2)}
-⚖️ <b>R/R:</b> ${signal.riskRewardRatio.toFixed(2)}:1
+🎯 <b>Target:</b> $${signal.targetPrice.toFixed(2)} (+${profitPercent.toFixed(1)}%)
+🛑 <b>Stop Loss:</b> $${signal.stopLoss.toFixed(2)} (-${lossPercent.toFixed(1)}%)
+⚖️ <b>R/R Ratio:</b> ${signal.riskRewardRatio.toFixed(2)}:1
 📊 <b>Confidence:</b> ${(signal.confidence * 100).toFixed(0)}%
 
 🧠 <b>Intelligence Analysis:</b>
-🐋 Whale Activity: ${intelligenceData.whaleActivity?.sentiment || 'Neutral'}
-📱 Sentiment: ${intelligenceData.sentiment?.overallSentiment || 'Neutral'}
-😰 Fear & Greed: ${intelligenceData.fearGreed?.classification || 'Unknown'}
-🚨 Risk Level: ${intelligenceData.fundamentalRisk}
+🐋 Whale Activity: ${intelligenceData?.whaleActivity?.sentiment || 'Neutral'}
+📱 Market Sentiment: ${intelligenceData?.sentiment?.overallSentiment || 'Neutral'}
+😰 Fear & Greed: ${intelligenceData?.fearGreed?.classification || 'Unknown'}
+🚨 Risk Level: ${intelligenceData?.fundamentalRisk || 'Low'}
 
-${signal.riskSummary}
+📈 <b>NLP Summary:</b>
+${intelligenceData?.nlpSummary || 'No major market events detected'}
+
+${signal.riskSummary || '⚠️ Standard risk management applied'}
 
 🎯 <b>Strategy:</b> ${signal.strategy}
-⏰ <b>Time:</b> ${new Date().toLocaleString('he-IL')}
+🕐 <b>Signal Time:</b> ${new Date(signal.timestamp).toLocaleString('he-IL')}
+🔄 <b>Generated:</b> ${new Date().toLocaleString('he-IL')}
 
-#LeviPro #${scoredSignal.qualityRating} #RiskManaged
-`;
+#LeviPro #${scoredSignal.qualityRating} #LivePrices #RiskManaged
+    `.trim();
   }
 
   private updateRiskTracking(signal: any) {
