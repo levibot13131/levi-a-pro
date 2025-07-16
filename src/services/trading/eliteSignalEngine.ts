@@ -3,6 +3,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { sendTelegramMessage } from '@/services/telegram/telegramService';
+import { signalTracker } from '@/services/learning/signalTrackingService';
 import { fundamentalScanner } from '@/services/intelligence/fundamentalScanner';
 import { rejectionLogger } from '@/services/rejection/rejectionLogger';
 
@@ -862,6 +863,19 @@ export class EliteSignalEngine {
       
       // Send to Telegram
       await this.sendEliteTelegramAlert(signal);
+      
+      // Add to learning tracking system
+      signalTracker.addSignalToTracking({
+        signal_id: signal.id,
+        symbol: signal.symbol,
+        strategy: signal.strategy,
+        action: signal.action,
+        entry_price: signal.entry_price,
+        target_price: signal.target_price,
+        stop_loss: signal.stop_loss,
+        confidence: signal.confidence,
+        risk_reward_ratio: signal.risk_reward_ratio
+      });
       
       // Update tracking
       this.dailySignalCount++;

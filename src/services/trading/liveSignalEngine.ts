@@ -4,6 +4,7 @@ import { EnhancedTimeframeAI } from '@/services/ai/enhancedTimeframeAI';
 import { sendTelegramMessage } from '@/services/telegram/telegramService';
 import { FeedbackLearningEngine } from '@/services/ai/feedbackLearningEngine';
 import { signalOutcomeTracker } from '@/services/ai/signalOutcomeTracker';
+import { signalTracker } from '@/services/learning/signalTrackingService';
 import { fundamentalScanner } from '@/services/intelligence/fundamentalScanner';
 import { rejectionLogger } from '@/services/rejection/rejectionLogger';
 
@@ -503,6 +504,9 @@ class LiveSignalEngine {
 
       // Send to Telegram with proper error handling
       await this.sendTelegramAlert(signal);
+      
+      // Add to learning tracking system
+      signalTracker.addSignalToTracking(signal);
       
       // Update tracking for 24h calculations
       const now = Date.now();
