@@ -5,6 +5,7 @@ import { sendTelegramMessage } from '@/services/telegram/telegramService';
 import { FeedbackLearningEngine } from '@/services/ai/feedbackLearningEngine';
 import { signalOutcomeTracker } from '@/services/ai/signalOutcomeTracker';
 import { signalTracker } from '@/services/learning/signalTrackingService';
+import { strategyTargetCalculator } from '@/services/strategy/strategyTargetCalculator';
 import { fundamentalScanner } from '@/services/intelligence/fundamentalScanner';
 import { rejectionLogger } from '@/services/rejection/rejectionLogger';
 
@@ -394,30 +395,30 @@ class LiveSignalEngine {
       console.log(`🎯 VALIDATED LIVE Signal for ${criteria.symbol}: Entry=$${entry_price} from ${priceValidation.source}`);
       
       const action = Math.random() > 0.5 ? 'BUY' : 'SELL';
-      const targetMultiplier = 1 + (criteria.riskRewardRatio * 0.015); // 1.5% per R/R unit
-      const stopMultiplier = action === 'BUY' ? 0.985 : 1.015; // 1.5% stop loss
       
-      // חישוב מטרות מפורטות
-      const prePrimaryMultiplier = action === 'BUY' ? 1.005 : 0.995;   // 0.5% מטרה טרום ראשונית
-      const primaryMultiplier = action === 'BUY' ? 1.015 : 0.985;      // 1.5% מטרה ראשונה
-      const mainMultiplier = action === 'BUY' ? 1.03 : 0.97;           // 3% מטרה עיקרית
+      // חישוב מטרות מפורטות לפי השיטה
+      const targetCalculation = strategyTargetCalculator.calculateTargetsByStrategy(
+        'multi-timeframe-ai', // ברירת מחדל למנוע זה
+        criteria.symbol,
+        action,
+        entry_price,
+        {
+          symbol: criteria.symbol,
+          price: entry_price,
+          volume: 1000000,
+          timestamp: Date.now(),
+          rsi: 45 + Math.random() * 20,
+          wyckoffPhase: Math.random() > 0.5 ? 'accumulation' : 'markup'
+        } as any
+      );
       
-      const prePrimaryTarget = action === 'BUY' 
-        ? entry_price * prePrimaryMultiplier 
-        : entry_price * prePrimaryMultiplier;
-      const primaryTarget = action === 'BUY' 
-        ? entry_price * primaryMultiplier 
-        : entry_price * primaryMultiplier;
-      const mainTarget = action === 'BUY' 
-        ? entry_price * mainMultiplier 
-        : entry_price * mainMultiplier;
-      
+      const prePrimaryTarget = targetCalculation.targets.prePrimary;
+      const primaryTarget = targetCalculation.targets.primary;
+      const mainTarget = targetCalculation.targets.main;
       const target_price = primaryTarget; // ברירת מחדל למטרה ראשונה
-      const stop_loss = action === 'BUY' 
-        ? entry_price * stopMultiplier 
-        : entry_price / stopMultiplier;
+      const stop_loss = targetCalculation.stopLoss;
       
-      // חישוב Kill Zone
+      // חישוב Kill Zone מתקדם
       const killZone = action === 'BUY' 
         ? entry_price * 0.97  // 3% מתחת למחיר הכניסה
         : entry_price * 1.03; // 3% מעל למחיר הכניסה
@@ -426,9 +427,10 @@ class LiveSignalEngine {
         `✅ VALIDATED LIVE PRICE: $${entry_price} from ${priceValidation.source}`,
         `Multi-TF Alignment: ${timeframeAnalysis.alignment.toFixed(0)}% (${timeframeAnalysis.overallTrend})`,
         `LeviScore: ${Math.round(criteria.confidence + criteria.fundamentalScore)/2}/100`,
-        `R/R Ratio: ${criteria.riskRewardRatio.toFixed(2)}:1`,
+        `R/R Ratio: ${targetCalculation.riskRewardRatio.toFixed(2)}:1`,
         `Market Heat: ${criteria.heatLevel.toFixed(0)}% (Safe)`,
-        ...timeframeAnalysis.reasoning
+        ...timeframeAnalysis.reasoning,
+        ...targetCalculation.reasoning
       ];
 
       // נתוני KSEM מפורטים
@@ -440,13 +442,11 @@ class LiveSignalEngine {
         ? `Break above resistance with volume confirmation`
         : `Break below support with volume confirmation`;
       
-      const managementRules = [
-        `Take 25% profit at pre-primary target ($${prePrimaryTarget.toFixed(2)})`,
-        `Take 50% profit at primary target ($${primaryTarget.toFixed(2)})`,
-        `Let 25% run to main target ($${mainTarget.toFixed(2)})`,
+      // כללי ניהול מפורטים מהמערכת
+      const managementRules = targetCalculation.managementRules.concat([
         `Move SL to breakeven after hitting pre-primary target`,
         `Trail stop after primary target hit`
-      ];
+      ]);
 
       return {
         signal_id: `LEVI_${Date.now()}_${criteria.symbol}`,
@@ -463,8 +463,8 @@ class LiveSignalEngine {
         entryLogic,
         managementRules,
         confidence: criteria.confidence,
-        risk_reward_ratio: criteria.riskRewardRatio,
-        strategy: 'LeviPro VALIDATED Multi-Timeframe AI + KSEM',
+        risk_reward_ratio: targetCalculation.riskRewardRatio,
+        strategy: `LeviPro VALIDATED Multi-Timeframe AI + KSEM (${targetCalculation.strategy})`,
         reasoning,
         market_conditions: {
           heat_level: criteria.heatLevel,

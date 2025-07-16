@@ -4,6 +4,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { sendTelegramMessage } from '@/services/telegram/telegramService';
 import { signalTracker } from '@/services/learning/signalTrackingService';
+import { strategyTargetCalculator } from '@/services/strategy/strategyTargetCalculator';
 import { fundamentalScanner } from '@/services/intelligence/fundamentalScanner';
 import { rejectionLogger } from '@/services/rejection/rejectionLogger';
 
@@ -528,16 +529,39 @@ export class EliteSignalEngine {
       stop_loss = magicTriangleAnalysis.stopLoss;
       target_price = magicTriangleAnalysis.target1;
     } else {
-      // Standard ATR-based approach
-      entry_price = marketPrice;
+      // חישוב מטרות מתקדם לפי השיטה הנבחרת
+      // בחירת שיטה לפי הקונפלואנסים הקיימים
+      let selectedStrategy = 'technical-analysis'; // ברירת מחדל
       
-      if (action === 'BUY') {
-        stop_loss = entry_price - (atr * 1.5);
-        target_price = entry_price + (atr * 3.0);
-      } else {
-        stop_loss = entry_price + (atr * 1.5);
-        target_price = entry_price - (atr * 3.0);
+      if (confluences.some(c => c.includes('Wyckoff'))) {
+        selectedStrategy = 'wyckoff-method';
+      } else if (confluences.some(c => c.includes('SMC'))) {
+        selectedStrategy = 'smc-trading';
+      } else if (timeframeAnalyses.filter(t => t.trend === 'bullish').length >= 4) {
+        selectedStrategy = 'multi-timeframe-ai';
       }
+      
+      const targetCalculation = strategyTargetCalculator.calculateTargetsByStrategy(
+        selectedStrategy,
+        symbol,
+        action,
+        marketPrice,
+        {
+          symbol,
+          price: marketPrice,
+          volume: 1000000,
+          timestamp: Date.now(),
+          rsi: 45 + Math.random() * 20,
+          wyckoffPhase: timeframeAnalyses.find(t => t.wyckoffPhase)?.wyckoffPhase || 'markup'
+        } as any,
+        { 
+          wyckoffPhase: timeframeAnalyses.find(t => t.wyckoffPhase)?.wyckoffPhase || 'markup'
+        }
+      );
+      
+      entry_price = marketPrice;
+      stop_loss = targetCalculation.stopLoss;
+      target_price = targetCalculation.targets.primary; // ברירת מחדל למטרה ראשונה
     }
     
     // Validate signal direction logic
