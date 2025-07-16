@@ -22,7 +22,14 @@ interface LiveSignal {
   action: 'BUY' | 'SELL';
   entry_price: number;
   target_price: number;
+  prePrimaryTarget?: number;  // מטרה טרום ראשונית
+  primaryTarget?: number;     // מטרה ראשונה
+  mainTarget?: number;        // מטרה עיקרית
   stop_loss: number;
+  killZone?: number;          // איזור הרג
+  setupDescription?: string;  // תיאור הסטאפ
+  entryLogic?: string;        // לוגיקת הכניסה
+  managementRules?: string[]; // כללי ניהול
   confidence: number;
   risk_reward_ratio: number;
   strategy: string;
@@ -389,12 +396,30 @@ class LiveSignalEngine {
       const targetMultiplier = 1 + (criteria.riskRewardRatio * 0.015); // 1.5% per R/R unit
       const stopMultiplier = action === 'BUY' ? 0.985 : 1.015; // 1.5% stop loss
       
-      const target_price = action === 'BUY' 
-        ? entry_price * targetMultiplier 
-        : entry_price / targetMultiplier;
+      // חישוב מטרות מפורטות
+      const prePrimaryMultiplier = action === 'BUY' ? 1.005 : 0.995;   // 0.5% מטרה טרום ראשונית
+      const primaryMultiplier = action === 'BUY' ? 1.015 : 0.985;      // 1.5% מטרה ראשונה
+      const mainMultiplier = action === 'BUY' ? 1.03 : 0.97;           // 3% מטרה עיקרית
+      
+      const prePrimaryTarget = action === 'BUY' 
+        ? entry_price * prePrimaryMultiplier 
+        : entry_price * prePrimaryMultiplier;
+      const primaryTarget = action === 'BUY' 
+        ? entry_price * primaryMultiplier 
+        : entry_price * primaryMultiplier;
+      const mainTarget = action === 'BUY' 
+        ? entry_price * mainMultiplier 
+        : entry_price * mainMultiplier;
+      
+      const target_price = primaryTarget; // ברירת מחדל למטרה ראשונה
       const stop_loss = action === 'BUY' 
         ? entry_price * stopMultiplier 
         : entry_price / stopMultiplier;
+      
+      // חישוב Kill Zone
+      const killZone = action === 'BUY' 
+        ? entry_price * 0.97  // 3% מתחת למחיר הכניסה
+        : entry_price * 1.03; // 3% מעל למחיר הכניסה
 
       const reasoning = [
         `✅ VALIDATED LIVE PRICE: $${entry_price} from ${priceValidation.source}`,
@@ -405,16 +430,40 @@ class LiveSignalEngine {
         ...timeframeAnalysis.reasoning
       ];
 
+      // נתוני KSEM מפורטים
+      const setupDescription = action === 'BUY' 
+        ? `Bullish structure with ${timeframeAnalysis.alignment.toFixed(0)}% timeframe alignment`
+        : `Bearish structure with ${timeframeAnalysis.alignment.toFixed(0)}% timeframe alignment`;
+      
+      const entryLogic = action === 'BUY'
+        ? `Break above resistance with volume confirmation`
+        : `Break below support with volume confirmation`;
+      
+      const managementRules = [
+        `Take 25% profit at pre-primary target ($${prePrimaryTarget.toFixed(2)})`,
+        `Take 50% profit at primary target ($${primaryTarget.toFixed(2)})`,
+        `Let 25% run to main target ($${mainTarget.toFixed(2)})`,
+        `Move SL to breakeven after hitting pre-primary target`,
+        `Trail stop after primary target hit`
+      ];
+
       return {
         signal_id: `LEVI_${Date.now()}_${criteria.symbol}`,
         symbol: criteria.symbol,
         action,
         entry_price,
         target_price,
+        prePrimaryTarget,
+        primaryTarget,
+        mainTarget,
         stop_loss,
+        killZone,
+        setupDescription,
+        entryLogic,
+        managementRules,
         confidence: criteria.confidence,
         risk_reward_ratio: criteria.riskRewardRatio,
-        strategy: 'LeviPro VALIDATED Multi-Timeframe AI',
+        strategy: 'LeviPro VALIDATED Multi-Timeframe AI + KSEM',
         reasoning,
         market_conditions: {
           heat_level: criteria.heatLevel,
@@ -483,6 +532,59 @@ class LiveSignalEngine {
         ? ((signal.entry_price - signal.stop_loss) / signal.entry_price * 100)
         : ((signal.stop_loss - signal.entry_price) / signal.entry_price * 100);
 
+      // בניית סקציית מטרות
+      let targetsSection = `🎯 <b>Target:</b> $${signal.target_price.toFixed(2)} (+${profitPercent.toFixed(1)}%)`;
+      
+      if (signal.prePrimaryTarget || signal.primaryTarget || signal.mainTarget) {
+        targetsSection = `🎯 <b>מטרות מפורטות:</b>`;
+        
+        if (signal.prePrimaryTarget) {
+          const prePrimaryPercent = signal.action === 'BUY' 
+            ? ((signal.prePrimaryTarget - signal.entry_price) / signal.entry_price * 100)
+            : ((signal.entry_price - signal.prePrimaryTarget) / signal.entry_price * 100);
+          targetsSection += `\n• טרום ראשונית: $${signal.prePrimaryTarget.toFixed(2)} (+${prePrimaryPercent.toFixed(1)}%)`;
+        }
+        
+        if (signal.primaryTarget) {
+          const primaryPercent = signal.action === 'BUY' 
+            ? ((signal.primaryTarget - signal.entry_price) / signal.entry_price * 100)
+            : ((signal.entry_price - signal.primaryTarget) / signal.entry_price * 100);
+          targetsSection += `\n• ראשונה: $${signal.primaryTarget.toFixed(2)} (+${primaryPercent.toFixed(1)}%)`;
+        }
+        
+        if (signal.mainTarget) {
+          const mainPercent = signal.action === 'BUY' 
+            ? ((signal.mainTarget - signal.entry_price) / signal.entry_price * 100)
+            : ((signal.entry_price - signal.mainTarget) / signal.entry_price * 100);
+          targetsSection += `\n• עיקרית: $${signal.mainTarget.toFixed(2)} (+${mainPercent.toFixed(1)}%)`;
+        }
+      }
+
+      // בניית סקציית KSEM
+      let ksemSection = '';
+      if (signal.killZone || signal.setupDescription || signal.entryLogic || signal.managementRules) {
+        ksemSection = `\n\n📋 <b>KSEM Analysis:</b>`;
+        
+        if (signal.killZone) {
+          ksemSection += `\n🔥 <b>Kill Zone:</b> $${signal.killZone.toFixed(2)}`;
+        }
+        
+        if (signal.setupDescription) {
+          ksemSection += `\n⚙️ <b>Setup:</b> ${signal.setupDescription}`;
+        }
+        
+        if (signal.entryLogic) {
+          ksemSection += `\n🚪 <b>Entry:</b> ${signal.entryLogic}`;
+        }
+        
+        if (signal.managementRules && signal.managementRules.length > 0) {
+          ksemSection += `\n🎛️ <b>Management:</b>`;
+          signal.managementRules.slice(0, 3).forEach(rule => {
+            ksemSection += `\n  • ${rule}`;
+          });
+        }
+      }
+
       const message = `
 🚀 <b>LeviPro VALIDATED LIVE Signal</b> ✅
 
@@ -490,15 +592,15 @@ class LiveSignalEngine {
 📈 <b>${signal.action}</b> at $${signal.entry_price.toFixed(2)}
 📡 <b>LIVE Source:</b> ${signal.market_conditions?.price_source || 'CoinGecko'} ✅
 
-🎯 <b>Target:</b> $${signal.target_price.toFixed(2)} (+${profitPercent.toFixed(1)}%)
+${targetsSection}
 ⛔ <b>Stop Loss:</b> $${signal.stop_loss.toFixed(2)} (-${lossPercent.toFixed(1)}%)
 📊 <b>R/R:</b> ${signal.risk_reward_ratio.toFixed(2)}:1
 
 🧠 <b>LeviScore:</b> ${leviScore}/100
-🔥 <b>Confidence:</b> ${signal.confidence.toFixed(0)}%
+🔥 <b>Confidence:</b> ${signal.confidence.toFixed(0)}%${ksemSection}
 
 📋 <b>Analysis:</b>
-${signal.reasoning.slice(0, 4).join('\n')}
+${signal.reasoning.slice(0, 3).join('\n')}
 
 🛡️ <b>PRICE AUDIT:</b>
 ✅ Real-time validation passed

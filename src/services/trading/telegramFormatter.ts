@@ -5,6 +5,9 @@ interface TradingSignal {
   action: 'BUY' | 'SELL';
   price: number;
   targetPrice: number;
+  prePrimaryTarget?: number;  // מטרה טרום ראשונית
+  primaryTarget?: number;     // מטרה ראשונה  
+  mainTarget?: number;        // מטרה עיקרית
   stopLoss: number;
   confidence: number;
   riskRewardRatio: number;
@@ -15,6 +18,10 @@ interface TradingSignal {
   sentimentScore?: number;
   whaleActivity?: boolean;
   volumeSpike?: boolean;
+  killZone?: number;          // איזור הרג
+  setupDescription?: string;   // תיאור הסטאפ
+  entryLogic?: string;        // לוגיקת הכניסה
+  managementRules?: string[]; // כללי ניהול
 }
 
 export class TelegramFormatter {
@@ -22,12 +29,67 @@ export class TelegramFormatter {
     const emoji = signal.action === 'BUY' ? '🟢' : '🔴';
     const action = signal.action === 'BUY' ? 'קנייה' : 'מכירה';
     
+    // בניית מטרות מפורטות
+    let targetsSection = '';
+    if (signal.prePrimaryTarget || signal.primaryTarget || signal.mainTarget) {
+      targetsSection = `
+🎯 *מטרות מפורטות:*`;
+      
+      if (signal.prePrimaryTarget) {
+        targetsSection += `
+• מטרה טרום ראשונית: $${signal.prePrimaryTarget.toFixed(2)}`;
+      }
+      
+      if (signal.primaryTarget) {
+        targetsSection += `
+• מטרה ראשונה: $${signal.primaryTarget.toFixed(2)}`;
+      }
+      
+      if (signal.mainTarget) {
+        targetsSection += `
+• מטרה עיקרית: $${signal.mainTarget.toFixed(2)}`;
+      }
+    } else {
+      targetsSection = `
+🎯 מטרה: $${signal.targetPrice.toFixed(2)}`;
+    }
+
+    // בניית תיאור הסטאפ והניהול
+    let ksemSection = '';
+    if (signal.killZone || signal.setupDescription || signal.entryLogic || signal.managementRules) {
+      ksemSection = `
+📋 *KSEM Analysis:*`;
+      
+      if (signal.killZone) {
+        ksemSection += `
+🔥 Kill Zone: $${signal.killZone.toFixed(2)}`;
+      }
+      
+      if (signal.setupDescription) {
+        ksemSection += `
+⚙️ Setup: ${signal.setupDescription}`;
+      }
+      
+      if (signal.entryLogic) {
+        ksemSection += `
+🚪 Entry: ${signal.entryLogic}`;
+      }
+      
+      if (signal.managementRules && signal.managementRules.length > 0) {
+        ksemSection += `
+🎛️ Management:`;
+        signal.managementRules.forEach(rule => {
+          ksemSection += `
+  • ${rule}`;
+        });
+      }
+    }
+    
     return `${emoji} *אות ${action} - LeviPro*
 
 💰 *${signal.symbol}*
-📈 מחיר כניסה: $${signal.price.toFixed(2)}
-🎯 מטרה: $${signal.targetPrice.toFixed(2)}
-🛡️ סטופ לוס: $${signal.stopLoss.toFixed(2)}
+📈 מחיר כניסה: $${signal.price.toFixed(2)}${targetsSection}
+🛡️ סטופ לוס: $${signal.stopLoss.toFixed(2)}${ksemSection}
 
 📊 *פרמטרים:*
 • רמת ביטחון: ${signal.confidence}%
