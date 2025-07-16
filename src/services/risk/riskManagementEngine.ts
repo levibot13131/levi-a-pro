@@ -21,6 +21,9 @@ export interface RiskParameters {
   maxPortfolioRisk: number; // Total portfolio risk
   maxPositionSize: number; // Per position limit
   maxDailyLoss: number; // Daily loss limit
+  maxDailyRisk: number; // Daily risk limit
+  maxDrawdown: number; // Maximum drawdown limit
+  maxConcurrentPositions: number; // Max concurrent positions
   correlationLimit: number; // Max correlated positions
 }
 
@@ -44,6 +47,9 @@ export class RiskManagementEngine {
     maxPortfolioRisk: 10.0, // 10% total portfolio risk
     maxPositionSize: 5.0, // 5% max position size
     maxDailyLoss: 5.0, // 5% daily loss limit
+    maxDailyRisk: 5.0, // 5% daily risk limit
+    maxDrawdown: 10.0, // 10% maximum drawdown
+    maxConcurrentPositions: 5, // Max 5 concurrent positions
     correlationLimit: 3 // Max 3 correlated positions
   };
 
@@ -287,6 +293,10 @@ export class RiskManagementEngine {
     
     return {
       portfolioRisk,
+      portfolioValue: 100000, // Default portfolio value for percentage calculations
+      currentDailyRisk: Math.abs(this.dailyPnL) * 1000, // Convert to dollar amount
+      currentDrawdown: Math.abs(this.dailyPnL) * 1000,
+      activePositions: this.openPositions.size,
       openPositions: this.openPositions.size,
       dailyPnL: this.dailyPnL,
       riskParameters: this.riskParams,
@@ -321,6 +331,9 @@ export class RiskManagementEngine {
       maxPortfolioRisk: 10.0,
       maxPositionSize: 5.0,
       maxDailyLoss: 5.0,
+      maxDailyRisk: 5.0,
+      maxDrawdown: 10.0,
+      maxConcurrentPositions: 5,
       correlationLimit: 3
     };
     console.log('🔄 Risk engine reset to defaults');
@@ -345,10 +358,18 @@ export class RiskManagementEngine {
   }
 
   public getDailyStats() {
+    const portfolioRisk = this.calculatePortfolioRisk();
+    const isWithinLimits = this.dailyPnL > -this.riskParams.maxDailyLoss && 
+                          portfolioRisk.currentRisk < this.riskParams.maxPortfolioRisk;
+    
     return {
       dailyPnL: this.dailyPnL,
+      dailyLoss: Math.abs(this.dailyPnL),
       tradesCount: this.openPositions.size,
-      riskUsed: this.calculatePortfolioRisk().currentRisk,
+      activePositions: this.openPositions.size,
+      riskUsed: portfolioRisk.currentRisk,
+      isWithinLimits,
+      emergencyPause: this.riskParams.maxRiskPerTrade === 0,
       status: this.dailyPnL <= -this.riskParams.maxDailyLoss ? 'BLOCKED' : 'ACTIVE'
     };
   }
