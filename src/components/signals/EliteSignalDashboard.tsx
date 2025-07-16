@@ -109,11 +109,11 @@ const EliteSignalDashboard: React.FC = () => {
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-blue-600">
-              {eliteStats.dailySignals}
+              {eliteStats.activeSignals}
             </div>
-            <div className="text-sm text-muted-foreground">איתותים היום</div>
+            <div className="text-sm text-muted-foreground">איתותים פעילים</div>
             <div className="text-xs text-muted-foreground">
-              נותרו: {eliteStats.config.maxSignalsPerDay - eliteStats.dailySignals}
+              מתוך {eliteStats.config.maxConcurrentSignals} מקסימום
             </div>
           </CardContent>
         </Card>
@@ -121,11 +121,11 @@ const EliteSignalDashboard: React.FC = () => {
         <Card>
           <CardContent className="p-4 text-center">
             <div className="text-2xl font-bold text-green-600">
-              {eliteStats.sessionSignals}
+              {eliteStats.qualityRate.toFixed(1)}%
             </div>
-            <div className="text-sm text-muted-foreground">סשן נוכחי</div>
+            <div className="text-sm text-muted-foreground">שיעור איכות</div>
             <div className="text-xs text-muted-foreground">
-              נותרו: {eliteStats.config.maxSignalsPerSession - eliteStats.sessionSignals}
+              {eliteStats.totalAnalyzed} נותחו סה"כ
             </div>
           </CardContent>
         </Card>
@@ -168,12 +168,12 @@ const EliteSignalDashboard: React.FC = () => {
             </div>
             
             <div className="space-y-2">
-              <h4 className="font-semibold text-sm">מגבלות בטיחות:</h4>
+              <h4 className="font-semibold text-sm">ניתוח רציף:</h4>
               <ul className="text-sm space-y-1 text-muted-foreground">
-                <li>• מקסימום {eliteStats.config.maxSignalsPerSession} איתותים לסשן</li>
-                <li>• מניעת קונפליקטים (5 דקות)</li>
-                <li>• לחץ רגשי + מומנטום + פריצה</li>
-                <li>• הודעות טלגרם מקצועיות</li>
+                <li>• מקסימום {eliteStats.config.maxConcurrentSignals} איתותים פעילים</li>
+                <li>• ניתוח 24/7 ללא הפסקה</li>
+                <li>• למידת שוק בזמן אמת</li>
+                <li>• איכות על פני כמות</li>
               </ul>
             </div>
           </div>

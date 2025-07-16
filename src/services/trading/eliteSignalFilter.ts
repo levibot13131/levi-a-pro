@@ -2,14 +2,16 @@
 export class EliteSignalFilter {
   private static instance: EliteSignalFilter;
   private config = {
-    maxSignalsPerDay: 5,
-    maxSignalsPerSession: 3,
-    requiredConfidence: 0.85,
-    requiredRiskReward: 2.5
+    maxConcurrentSignals: 10, // Maximum concurrent elite signals
+    requiredConfidence: 0.90, // Increased for elite quality
+    requiredRiskReward: 3.0, // Higher R/R for premium signals
+    minStrategyScore: 85, // Minimum combined strategy score
+    requiredTimeframeAlignment: 3 // At least 3 timeframes must align
   };
   
-  private dailySignals = 0;
-  private sessionSignals = 0;
+  private activeSignals = 0;
+  private totalAnalyzed = 0;
+  private lastResetTime = Date.now();
 
   public static getInstance(): EliteSignalFilter {
     if (!EliteSignalFilter.instance) {
@@ -20,22 +22,35 @@ export class EliteSignalFilter {
 
   public getEliteStats() {
     return {
-      dailySignals: this.dailySignals,
-      sessionSignals: this.sessionSignals,
-      config: this.config
+      activeSignals: this.activeSignals,
+      totalAnalyzed: this.totalAnalyzed,
+      config: this.config,
+      qualityRate: this.totalAnalyzed > 0 ? (this.activeSignals / this.totalAnalyzed) * 100 : 0
     };
   }
 
-  public shouldAllowSignal(confidence: number, riskReward: number): boolean {
+  public shouldAllowSignal(confidence: number, riskReward: number, strategyScore: number = 0, timeframeAlignment: number = 0): boolean {
+    this.totalAnalyzed++;
+    
+    // Quality-first approach - no daily limits, focus on excellence
     return confidence >= this.config.requiredConfidence && 
            riskReward >= this.config.requiredRiskReward &&
-           this.dailySignals < this.config.maxSignalsPerDay &&
-           this.sessionSignals < this.config.maxSignalsPerSession;
+           strategyScore >= this.config.minStrategyScore &&
+           timeframeAlignment >= this.config.requiredTimeframeAlignment &&
+           this.activeSignals < this.config.maxConcurrentSignals;
   }
 
   public recordSignal() {
-    this.dailySignals++;
-    this.sessionSignals++;
+    this.activeSignals++;
+  }
+
+  public signalClosed() {
+    this.activeSignals = Math.max(0, this.activeSignals - 1);
+  }
+
+  // Continuous learning and analysis - never stops
+  public getContinuousAnalysisMode(): boolean {
+    return true; // Always analyze and learn
   }
 }
 
