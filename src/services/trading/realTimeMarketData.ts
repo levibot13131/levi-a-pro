@@ -87,8 +87,8 @@ export class RealTimeMarketDataService {
         return cached.price;
       }
       
-      // Last resort: estimate based on symbol
-      return this.getEstimatedPrice(symbol);
+      // NO FALLBACK PRICES ALLOWED IN PRODUCTION
+      throw new Error(`LIVE PRICE REQUIRED: Cannot get real-time price for ${symbol}. No fallback prices allowed.`);
     }
   }
 
@@ -226,21 +226,8 @@ export class RealTimeMarketDataService {
   }
 
   private getEstimatedPrice(symbol: string): number {
-    // Realistic price estimates based on current market levels
-    const estimates = {
-      'BTCUSDT': 43000,
-      'ETHUSDT': 2600,
-      'BNBUSDT': 310,
-      'SOLUSDT': 105,
-      'XRPUSDT': 0.62,
-      'ADAUSDT': 0.45,
-      'AVAXUSDT': 37,
-      'DOTUSDT': 7.2,
-      'LINKUSDT': 14.5,
-      'MATICUSDT': 0.85
-    };
-    
-    return estimates[symbol as keyof typeof estimates] || 1000;
+    // DEPRECATED: NO ESTIMATED PRICES ALLOWED IN PRODUCTION
+    throw new Error(`ESTIMATED PRICES FORBIDDEN: ${symbol} requires real-time market data only. No fallback estimates allowed.`);
   }
 
   private generateRealisticHistoricalData(currentPrice: number, timeframe: string, limit: number): HistoricalData {
