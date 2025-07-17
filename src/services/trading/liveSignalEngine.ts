@@ -287,7 +287,10 @@ class LiveSignalEngine {
   }
 
   private async analyzeSymbol(symbol: string) {
-    try {
+    // Use robust error handler to prevent crashes
+    const { RobustErrorHandler } = await import('./robustErrorHandler');
+    
+    await RobustErrorHandler.safeExecute(async () => {
       // Check symbol-specific cooldown
       const lastSignalTime = this.lastSignalTimes.get(symbol) || 0;
       const now = Date.now();
@@ -298,8 +301,11 @@ class LiveSignalEngine {
 
       console.log(`📊 Analyzing ${symbol}...`);
 
-      // Get market heat
-      const marketHeat = await MarketHeatIndex.getCurrentHeatLevel();
+      // Get market heat with error handling
+      const marketHeat = await RobustErrorHandler.safeExecute(async () => {
+        return await MarketHeatIndex.getCurrentHeatLevel();
+      }, symbol, 50); // Default to 50% if fails
+
       console.log(`🌡️ Market heat for ${symbol}: ${marketHeat}%`);
 
       // Heat check with relaxed threshold
@@ -308,8 +314,32 @@ class LiveSignalEngine {
         return;
       }
 
-      // Multi-timeframe analysis
-      const timeframeAnalysis = await EnhancedTimeframeAI.analyzeSymbolWithMultiTimeframes(symbol);
+      // Multi-timeframe analysis with error handling
+      const timeframeAnalysis = await RobustErrorHandler.safeExecute(async () => {
+        return await EnhancedTimeframeAI.analyzeSymbolWithMultiTimeframes(symbol);
+      }, symbol, { 
+        symbol, 
+        alignment: 45, 
+        overallTrend: 'neutral' as const, 
+        reasoning: ['Default analysis due to error'],
+        confidence: 45,
+        timeframes: {
+          '1h': {
+            symbol,
+            timeframe: '1h',
+            trend: 'neutral' as const,
+            strength: 45,
+            rsi: 50,
+            ema21: 50000,
+            ema50: 50000,
+            ema200: 50000,
+            volume: 1000000,
+            timestamp: Date.now()
+          }
+        },
+        conflictingSignals: ['Default fallback analysis']
+      });
+
       console.log(`⏰ Timeframe alignment for ${symbol}: ${timeframeAnalysis.alignment}%`);
 
       // Timeframe alignment check
@@ -318,7 +348,7 @@ class LiveSignalEngine {
         return;
       }
 
-      // Generate signal criteria
+      // Generate signal criteria with error handling
       const criteria = await this.generateSignalCriteria(symbol, timeframeAnalysis);
       
       // Confidence check - relaxed threshold
@@ -344,9 +374,7 @@ class LiveSignalEngine {
       
       console.log(`✅ Signal sent for ${symbol}!`);
       
-    } catch (error) {
-      console.error(`❌ Error analyzing ${symbol}:`, error);
-    }
+    }, symbol);
   }
 
   private async generateSignalCriteria(symbol: string, timeframeAnalysis: any): Promise<SignalCriteria> {

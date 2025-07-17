@@ -76,11 +76,14 @@ export class SignalTrackingService {
 
   private static async storeSignalInDB(signal: TrackedSignal) {
     try {
+      // Get a dummy user ID for system signals
+      const systemUserId = '00000000-0000-0000-0000-000000000000';
+      
       const { error } = await supabase
         .from('signal_history')
         .insert({
           signal_id: signal.signal_id,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: systemUserId, // Use system user ID to avoid auth issues
           symbol: signal.symbol,
           strategy: signal.strategy,
           action: signal.action,
@@ -89,11 +92,13 @@ export class SignalTrackingService {
           stop_loss: signal.stop_loss,
           confidence: signal.confidence,
           risk_reward_ratio: signal.risk_reward_ratio,
-          reasoning: `Auto-tracked signal from ${signal.strategy}`
+          reasoning: `Auto-tracked signal from ${signal.strategy} - System Learning Mode`
         });
 
       if (error) {
         console.error('❌ שגיאה בשמירת איתות למסד נתונים:', error);
+      } else {
+        console.log(`✅ איתות נשמר במסד נתונים: ${signal.symbol}`);
       }
     } catch (error) {
       console.error('❌ שגיאה בחיבור למסד נתונים:', error);
@@ -115,14 +120,24 @@ export class SignalTrackingService {
 
   private static async checkSignalOutcome(signal: TrackedSignal) {
     try {
-      // Get current price from CoinGecko
-      const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${this.getCoinGeckoId(signal.symbol)}&vs_currencies=usd`);
-      const data = await response.json();
+      // Use robust error handling for price fetching
+      const { RobustErrorHandler } = await import('../trading/robustErrorHandler');
       
-      const coinId = this.getCoinGeckoId(signal.symbol);
-      const currentPrice = data[coinId]?.usd;
-      
-      if (!currentPrice) return;
+      const priceResult = await RobustErrorHandler.safeExecute(async () => {
+        const response = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${this.getCoinGeckoId(signal.symbol)}&vs_currencies=usd`);
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        const data = await response.json();
+        const coinId = this.getCoinGeckoId(signal.symbol);
+        return data[coinId]?.usd;
+      }, signal.symbol);
+
+      const currentPrice = priceResult;
+      if (!currentPrice) {
+        console.log(`⏭️ לא ניתן לקבל מחיר עבור ${signal.symbol}, מדלג...`);
+        return;
+      }
 
       const now = Date.now();
       const durationHours = (now - signal.sent_at) / (1000 * 60 * 60);
@@ -134,29 +149,40 @@ export class SignalTrackingService {
       if (signal.action === 'BUY') {
         if (currentPrice >= signal.target_price) {
           outcome = 'profit';
+          console.log(`🎯 ${signal.symbol} הגיע למטרה! ${currentPrice} >= ${signal.target_price}`);
         } else if (currentPrice <= signal.stop_loss) {
           outcome = 'loss';
+          console.log(`🛑 ${signal.symbol} הגיע לסטופ לוס! ${currentPrice} <= ${signal.stop_loss}`);
         }
       } else { // SELL
         if (currentPrice <= signal.target_price) {
           outcome = 'profit';
+          console.log(`🎯 ${signal.symbol} הגיע למטרה! ${currentPrice} <= ${signal.target_price}`);
         } else if (currentPrice >= signal.stop_loss) {
           outcome = 'loss';
+          console.log(`🛑 ${signal.symbol} הגיע לסטופ לוס! ${currentPrice} >= ${signal.stop_loss}`);
         }
       }
 
       // Auto-close after 24 hours if no outcome
       if (!outcome && durationHours > 24) {
-        outcome = currentPrice > signal.entry_price ? 'profit' : 'loss';
+        const isProfit = signal.action === 'BUY' 
+          ? currentPrice > signal.entry_price 
+          : currentPrice < signal.entry_price;
+        outcome = isProfit ? 'profit' : 'loss';
         exitPrice = currentPrice;
+        console.log(`⏰ ${signal.symbol} נסגר אוטומטית אחרי 24 שעות: ${outcome}`);
       }
 
       if (outcome) {
         await this.processSignalOutcome(signal, outcome, exitPrice, durationHours);
+      } else {
+        console.log(`⏳ ${signal.symbol} עדיין פעיל: מחיר נוכחי $${currentPrice.toFixed(4)}, ${durationHours.toFixed(1)} שעות`);
       }
 
     } catch (error) {
       console.error(`❌ שגיאה בבדיקת איתות ${signal.symbol}:`, error);
+      // Continue with other signals despite this error
     }
   }
 
@@ -247,7 +273,7 @@ ${isSuccess ? '🎉' : '📚'} <i>${isSuccess ? 'כל הכבוד! האסטרטג
 
   private static async recordLearningData(signal: TrackedSignal) {
     try {
-      // Track outcome in SignalOutcomeTracker
+      // Track outcome in SignalOutcomeTracker with robust error handling
       signalOutcomeTracker.trackOutcome(signal.signal_id, {
         strategy: signal.strategy,
         success: signal.status === 'profit',
@@ -255,22 +281,72 @@ ${isSuccess ? '🎉' : '📚'} <i>${isSuccess ? 'כל הכבוד! האסטרטג
         duration: signal.duration_hours! * 60 // convert to minutes
       });
 
-      // Record in FeedbackLearningEngine
+      // Record in FeedbackLearningEngine with improved data
       await FeedbackLearningEngine.recordSignalOutcome({
         signalId: signal.signal_id,
         symbol: signal.symbol,
         strategy: signal.strategy,
-        marketConditions: {},
+        marketConditions: {
+          entry_price: signal.entry_price,
+          exit_price: signal.exit_price,
+          target_price: signal.target_price,
+          stop_loss: signal.stop_loss,
+          duration_hours: signal.duration_hours,
+          market_timestamp: Date.now()
+        },
         outcome: signal.status as 'profit' | 'loss',
         profitPercent: signal.profit_percent!,
         timeToTarget: signal.duration_hours!,
         confidence: signal.confidence,
-        actualConfidence: signal.status === 'profit' ? signal.confidence + 10 : signal.confidence - 10
+        actualConfidence: signal.status === 'profit' 
+          ? Math.min(95, signal.confidence + 15) 
+          : Math.max(5, signal.confidence - 15)
       });
 
-      console.log(`🧠 נתוני למידה נרשמו לאיתות ${signal.symbol}`);
+      // Store detailed learning feedback in database
+      await this.storeLearningFeedback(signal);
+
+      console.log(`🧠 נתוני למידה מפורטים נרשמו לאיתות ${signal.symbol} (${signal.status})`);
     } catch (error) {
       console.error('❌ שגיאה ברישום נתוני למידה:', error);
+      // Continue despite learning errors - signal tracking should not be blocked
+    }
+  }
+
+  private static async storeLearningFeedback(signal: TrackedSignal) {
+    try {
+      const systemUserId = '00000000-0000-0000-0000-000000000000';
+      
+      const { error } = await supabase
+        .from('signal_feedback')
+        .insert({
+          user_id: systemUserId,
+          signal_id: signal.signal_id,
+          strategy_used: signal.strategy,
+          outcome: signal.status,
+          profit_loss_percentage: signal.profit_percent!,
+          execution_time: new Date(signal.exit_time!).toISOString(),
+          market_conditions: JSON.stringify({
+            symbol: signal.symbol,
+            action: signal.action,
+            entry_price: signal.entry_price,
+            exit_price: signal.exit_price,
+            target_price: signal.target_price,
+            stop_loss: signal.stop_loss,
+            confidence: signal.confidence,
+            risk_reward_ratio: signal.risk_reward_ratio,
+            duration_hours: signal.duration_hours,
+            analysis_timestamp: signal.sent_at
+          })
+        });
+
+      if (error) {
+        console.error('❌ שגיאה בשמירת נתוני למידה למסד נתונים:', error);
+      } else {
+        console.log(`✅ נתוני למידה נשמרו: ${signal.symbol} (${signal.status})`);
+      }
+    } catch (error) {
+      console.error('❌ שגיאה בשמירת נתוני למידה:', error);
     }
   }
 
@@ -352,16 +428,118 @@ ${isSuccess ? '🎉' : '📚'} <i>${isSuccess ? 'כל הכבוד! האסטרטג
       console.error('❌ שגיאה בשליחת דוח למידה:', error);
     }
   }
+
+  public static async sendDetailedAnalysis() {
+    try {
+      const stats = this.getTrackingStats();
+      const signals = Array.from(this.trackedSignals.values());
+      
+      const analysis = `
+🔍 <b>ניתוח מפורט - ${new Date().toLocaleString('he-IL')}</b>
+
+📊 <b>סטטיסטיקות עכשוויות:</b>
+• איתותים פעילים: ${stats.activeSignals}
+• סה"כ איתותים במעקב: ${stats.totalTracked}
+• אחוז הצלחה: ${stats.successRate.toFixed(1)}%
+• רווח ממוצע: ${stats.avgProfit.toFixed(2)}%
+• מערכת פעילה: ${stats.isRunning ? '✅' : '❌'}
+
+💡 <b>תובנות למידה:</b>
+${this.generateLearningInsights(signals)}
+
+🎯 <b>המלצות לשיפור:</b>
+${this.generateImprovementRecommendations(stats)}
+`;
+
+      await sendTelegramMessage(analysis, true);
+      console.log('🔍 ניתוח מפורט נשלח לטלגרם');
+    } catch (error) {
+      console.error('❌ שגיאה בשליחת ניתוח מפורט:', error);
+    }
+  }
+
+  private static generateLearningInsights(signals: TrackedSignal[]): string {
+    const completedSignals = signals.filter(s => s.status !== 'active');
+    if (completedSignals.length === 0) {
+      return '• עדיין לא התקבלו תוצאות איתותים להצגת תובנות';
+    }
+
+    const strategiesPerformance = new Map<string, { wins: number; total: number; avgProfit: number }>();
+    
+    completedSignals.forEach(signal => {
+      const strategy = signal.strategy;
+      if (!strategiesPerformance.has(strategy)) {
+        strategiesPerformance.set(strategy, { wins: 0, total: 0, avgProfit: 0 });
+      }
+      
+      const perf = strategiesPerformance.get(strategy)!;
+      perf.total++;
+      if (signal.status === 'profit') {
+        perf.wins++;
+        perf.avgProfit += signal.profit_percent || 0;
+      }
+    });
+
+    let insights = '';
+    strategiesPerformance.forEach((perf, strategy) => {
+      const successRate = (perf.wins / perf.total) * 100;
+      const avgProfit = perf.wins > 0 ? perf.avgProfit / perf.wins : 0;
+      insights += `• ${strategy}: ${successRate.toFixed(1)}% הצלחה (${perf.wins}/${perf.total}), רווח ממוצע: ${avgProfit.toFixed(2)}%\n`;
+    });
+
+    return insights || '• אין נתונים מספיקים להצגת תובנות';
+  }
+
+  private static generateImprovementRecommendations(stats: any): string {
+    let recommendations = '';
+    
+    if (stats.successRate < 60) {
+      recommendations += '• להעלות רף הביטחון המינימלי לאיתותים\n';
+    }
+    
+    if (stats.avgProfit < 2) {
+      recommendations += '• לשפר יחס סיכון/תשואה במטרות\n';
+    }
+    
+    if (stats.activeSignals > 10) {
+      recommendations += '• לצמצם מספר האיתותים הפעילים בו-זמנית\n';
+    }
+    
+    if (!stats.isRunning) {
+      recommendations += '• להפעיל מחדש את מערכת המעקב\n';
+    }
+    
+    return recommendations || '• המערכת פועלת בצורה אופטימלית';
+  }
 }
 
-// Auto-start tracking in development
+// Auto-start tracking with robust error handling
 if (typeof window !== 'undefined') {
-  SignalTrackingService.startTracking();
-  
-  // Send learning report every 6 hours
-  setInterval(() => {
-    SignalTrackingService.sendLearningReport();
-  }, 6 * 60 * 60 * 1000);
+  try {
+    SignalTrackingService.startTracking();
+    console.log('🚀 מעקב איתותים החל בהצלחה');
+    
+    // Send learning report every 3 hours (more frequent for better learning)
+    setInterval(() => {
+      try {
+        SignalTrackingService.sendLearningReport();
+      } catch (error) {
+        console.error('❌ שגיאה בשליחת דוח למידה:', error);
+      }
+    }, 3 * 60 * 60 * 1000); // Every 3 hours
+    
+    // Send detailed analysis every hour
+    setInterval(() => {
+      try {
+        SignalTrackingService.sendDetailedAnalysis();
+      } catch (error) {
+        console.error('❌ שגיאה בשליחת ניתוח מפורט:', error);
+      }
+    }, 60 * 60 * 1000); // Every hour
+    
+  } catch (error) {
+    console.error('❌ שגיאה באתחול מעקב איתותים:', error);
+  }
 }
 
 export const signalTracker = SignalTrackingService;

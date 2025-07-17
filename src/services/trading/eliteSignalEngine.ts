@@ -242,7 +242,10 @@ export class EliteSignalEngine {
   }
 
   private async analyzeSymbolElite(symbol: string) {
-    try {
+    // Use robust error handler to prevent system crashes
+    const { RobustErrorHandler } = await import('../trading/robustErrorHandler');
+    
+    await RobustErrorHandler.safeExecute(async () => {
       // Check symbol-specific cooldown
       const lastSymbolSignal = this.lastSymbolSignalTime.get(symbol) || 0;
       const timeSinceLastSymbolSignal = Date.now() - lastSymbolSignal;
@@ -255,11 +258,15 @@ export class EliteSignalEngine {
       
       console.log(`🧠 Deep Analysis: ${symbol}`);
       
-      // 1. Multi-timeframe analysis
-      const timeframeAnalyses = await this.performMultiTimeframeAnalysis(symbol);
+      // 1. Multi-timeframe analysis with error handling
+      const timeframeAnalyses = await RobustErrorHandler.safeExecute(async () => {
+        return await this.performMultiTimeframeAnalysis(symbol);
+      }, symbol, []); // Empty array as fallback
       
-      // 2. Fundamental intelligence check
-      const fundamentalBoost = await this.getFundamentalIntelligence(symbol);
+      // 2. Fundamental intelligence check with error handling
+      const fundamentalBoost = await RobustErrorHandler.safeExecute(async () => {
+        return await this.getFundamentalIntelligence(symbol);
+      }, symbol, 0); // 0 boost as fallback
       
       // 3. Historical performance for this symbol
       const symbolLearning = this.getSymbolLearningData(symbol);
@@ -269,11 +276,13 @@ export class EliteSignalEngine {
       
       // 5. Elite signal criteria check
       if (confluences.length >= this.MIN_CONFLUENCES) {
-        const signal = await this.generateEliteSignal(symbol, timeframeAnalyses, confluences, fundamentalBoost, symbolLearning);
+        const signal = await RobustErrorHandler.safeExecute(async () => {
+          return await this.generateEliteSignal(symbol, timeframeAnalyses, confluences, fundamentalBoost, symbolLearning);
+        }, symbol);
         
-        if (signal.confidence >= this.MIN_ELITE_CONFIDENCE && signal.risk_reward_ratio >= this.MINIMUM_RR_RATIO) {
+        if (signal && signal.confidence >= this.MIN_ELITE_CONFIDENCE && signal.risk_reward_ratio >= this.MINIMUM_RR_RATIO) {
           await this.sendEliteSignal(signal);
-        } else {
+        } else if (signal) {
           const reason = signal.confidence < this.MIN_ELITE_CONFIDENCE 
             ? `Low confidence: ${signal.confidence.toFixed(2)}% vs ${this.MIN_ELITE_CONFIDENCE}%`
             : `Poor R/R: ${signal.risk_reward_ratio.toFixed(2)} vs ${this.MINIMUM_RR_RATIO}`;
@@ -283,9 +292,7 @@ export class EliteSignalEngine {
         await this.logEliteRejection(symbol, 0, confluences, `Insufficient confluences: ${confluences.length}/${this.MIN_CONFLUENCES}`);
       }
       
-    } catch (error) {
-      console.error(`❌ Error in elite analysis for ${symbol}:`, error);
-    }
+    }, symbol);
   }
 
   private async performMultiTimeframeAnalysis(symbol: string): Promise<TimeframeAnalysis[]> {
