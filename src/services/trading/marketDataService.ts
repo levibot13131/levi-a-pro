@@ -93,12 +93,23 @@ export class MarketDataService {
         'AVAXUSDT': 'avalanche-2',
         'DOTUSDT': 'polkadot',
         'LINKUSDT': 'chainlink',
-        'MATICUSDT': 'matic-network'
+        'MATICUSDT': 'matic-network',
+        'TRXUSDT': 'tron',
+        'LTCUSDT': 'litecoin',
+        'BCHUSDT': 'bitcoin-cash',
+        'EOSUSDT': 'eos',
+        'XLMUSDT': 'stellar',
+        'ATOMUSDT': 'cosmos',
+        'VETUSDT': 'vechain',
+        'FILUSDT': 'filecoin',
+        'AAVEUSDT': 'aave',
+        'UNIUSDT': 'uniswap'
       };
 
       const coinId = coinGeckoIds[symbol];
       if (!coinId) {
-        throw new Error(`❌ CRITICAL: Unknown symbol ${symbol} - cannot get real price`);
+        console.warn(`⚠️ Unknown symbol ${symbol} - skipping price fetch`);
+        return null; // Return null instead of throwing error
       }
 
       console.log(`🔍 Fetching LIVE PRICE from CoinGecko: ${symbol} (${coinId})`);

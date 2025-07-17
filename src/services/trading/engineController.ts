@@ -1,5 +1,7 @@
 
 import { tradingEngine } from './tradingEngine';
+import { liveSignalEngine } from './liveSignalEngine';
+import { ContinuousAnalysisEngine } from './continuousAnalysisEngine';
 import { telegramBot } from '../telegram/telegramBot';
 import { toast } from 'sonner';
 
@@ -19,7 +21,7 @@ class EngineController {
 
   public async startEngine(): Promise<boolean> {
     try {
-      console.log('🎯 Starting LeviPro Engine with Personal Method Priority...');
+      console.log('🎯 Starting LeviPro Engine with Continuous Analysis...');
       
       // Check Telegram connection first
       const telegramStatus = telegramBot.getConnectionStatus();
@@ -28,11 +30,17 @@ class EngineController {
         toast.warning('טלגרם לא מחובר - איתותים לא יישלחו');
       }
 
+      // Start the continuous analysis engine (resilient to errors)
+      ContinuousAnalysisEngine.start();
+      
+      // Start the live signal engine
+      liveSignalEngine.start();
+      
       // Start the trading engine
       await tradingEngine.start();
       
-      console.log('✅ LeviPro Engine started successfully');
-      console.log('🧠 Personal Method: 80% weight, immune to disable');
+      console.log('✅ LeviPro Engine started successfully with error resilience');
+      console.log('🔄 Continuous analysis running - will not stop on errors');
       
       return true;
     } catch (error) {
@@ -45,7 +53,12 @@ class EngineController {
   public stopEngine(): void {
     try {
       console.log('⏹️ Stopping LeviPro Engine...');
+      
+      // Stop all engines
+      ContinuousAnalysisEngine.stop();
+      liveSignalEngine.stop();
       tradingEngine.stop();
+      
       console.log('✅ LeviPro Engine stopped');
     } catch (error) {
       console.error('❌ Failed to stop engine:', error);
@@ -54,7 +67,16 @@ class EngineController {
   }
 
   public getStatus() {
-    return tradingEngine.getStatus();
+    const mainStatus = tradingEngine.getStatus();
+    const liveStatus = liveSignalEngine.getEngineStatus();
+    const continuousStatus = ContinuousAnalysisEngine.getStatus();
+    
+    return {
+      ...mainStatus,
+      liveEngine: liveStatus,
+      continuousEngine: continuousStatus,
+      overallHealth: liveStatus.isRunning && continuousStatus.isRunning ? 'HEALTHY' : 'DEGRADED'
+    };
   }
 
   public addStatusListener(listener: (status: any) => void) {

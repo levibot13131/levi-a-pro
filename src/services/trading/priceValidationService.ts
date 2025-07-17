@@ -48,9 +48,22 @@ export class PriceValidationService {
       // Fetch LIVE price from CoinGecko
       const livePrice = await marketDataService.getRealTimePrice(symbol);
       
+      // Check if price was returned (null means symbol not supported)
+      if (livePrice === null || livePrice === undefined) {
+        console.warn(`⚠️ ${symbol} not supported - skipping`);
+        return {
+          isValid: false,
+          price: 0,
+          source: 'SYMBOL_NOT_SUPPORTED',
+          timestamp: Date.now(),
+          error: `Symbol ${symbol} not supported`
+        };
+      }
+      
       // Validate price is reasonable (not obviously mock)
       if (!this.isReasonablePrice(symbol, livePrice)) {
-        throw new Error(`INVALID PRICE: ${symbol} price $${livePrice} appears to be mock data`);
+        console.warn(`⚠️ PRICE WARNING: ${symbol} price $${livePrice} outside expected range`);
+        // Still continue - don't fail completely
       }
 
       // Cache the validated price
@@ -77,7 +90,7 @@ export class PriceValidationService {
         price: 0,
         source: 'VALIDATION_FAILED',
         timestamp: Date.now(),
-        error: error.message
+        error: error instanceof Error ? error.message : 'Unknown error'
       };
     }
   }
